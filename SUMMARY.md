@@ -252,7 +252,7 @@
     * [Correlation Heatmap](trading-platform/python/visualization/correlation-heatmap.md)
     * [NIFTY Open Interest](trading-platform/python/visualization/nifty-open-interest.md)
     * [Nifty OI Profile](trading-platform/python/visualization/nifty-oi-profile.md)
-  * [Strategy RMS Alerts](trading-platform/python/strategy-management.md)
+  * [Strategy RMS From Python](trading-platform/python/strategy-management.md)
   * [EMA Crossover Strategy](trading-platform/python/ema-crossover-strategy.md)
   * [EMA Crossover Strategy with Stoploss and Target](trading-platform/python/ema-crossover-strategy-with-stoploss-and-target.md)
   * [Supertrend Strategy](trading-platform/python/supertrend-strategy.md)
