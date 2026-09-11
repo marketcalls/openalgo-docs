@@ -34,13 +34,14 @@ Two further conditions are checked on the server rather than on this page, and e
 
 ## The Page Itself
 
-Five sections, in this order:
+Six sections, in this order:
 
 1. **Models**, the registry of what you have already added.
 2. **ChatGPT subscription**, the OAuth sign-in for a Plus or Pro plan.
 3. **Trading**, the order switch.
-4. **Providers**, the browsable catalogue.
-5. **Web search**.
+4. **Voice**, the microphone switch, the OpenAI speech key and Vega's settings. See [Voice Agent](voice.md).
+5. **Providers**, the browsable catalogue.
+6. **Web search**.
 
 A header button, **Add model**, opens the same dialog the catalogue uses, with nothing prefilled.
 
@@ -104,7 +105,7 @@ Removing a model warns you when it is the only one, in which case `/agent` goes 
 
 ## Trading
 
-The **Trading** panel is one switch, labelled "Allow the agent to place, modify and cancel orders". **It is on by default**, so a fresh install can reach an order tool without anyone opting in. Turn it off and the order tools are never built into the run's schema at all, so the agent declines to trade rather than asking you to approve anything.
+The **Trading** panel is one switch, labelled "Allow the agent to place, modify and cancel orders". **It is off by default.** Until it is on, the order tools are never built into the run's schema at all, so the agent declines to trade rather than asking you to approve anything. Placing, modifying and cancelling are opt-in.
 
 What the switch does *not* do is place anything. Every order tool pauses the run and shows you its exact arguments, and a risk guard runs after you approve. [What the Agent Can Do](capabilities.md) covers that path in full, including the shipped limits.
 
@@ -170,13 +171,15 @@ There is no "clear key" action, because there is no route for one. Removing the 
 * A passing credential test proves the provider accepted one one-token request. It is not a guarantee of quota, rate limit headroom or of the model's behaviour on a long tool-driven turn.
 * A model that cannot call tools cannot drive this agent at all, whatever else it is good at.
 * Registered keys cannot be read back from any endpoint or any screen. Losing one means pasting it again from wherever you keep it.
+* The voice key is a second, separate credential. It is stored encrypted like every other key here, is never sent back to the browser, and is used only to mint a speech session - the thinking still runs on whichever model you made the default.
 * Everything on this page is instance-wide. OpenAlgo is single user per deployment, so there is no per-session or per-surface override of the model, the trading switch or the search budget.
 * The agent's own routes are rate limited like the rest of the platform: 30 streamed turns a minute, 12 model tests a minute, and 240 other agent API calls a minute. A throttled request comes back as an error in the page rather than as a redirect.
 * With trading on and the platform in live mode, an order you approve reaches your broker with real capital. Test the agent's order path in analyzer mode first.
 
 ## See Also
 
-* [Agent](README.md) for the overview and the two surfaces.
+* [Agent](README.md) for the overview and the three surfaces.
+* [Voice Agent](voice.md) for Vega, the microphone on `/agent`.
 * [ChatGPT Subscription](chatgpt-subscription.md) for the plan billing path, the OAuth sign-in, and which models it covers.
 * [What the Agent Can Do](capabilities.md) for the toolkits a registered model is given, and the order path in full.
 * [Agent by Example](examples.md) for what these settings look like from inside a conversation.

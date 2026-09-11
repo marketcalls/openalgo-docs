@@ -107,7 +107,8 @@ The same applies when a subscription lapses rather than being disconnected. The 
 
 ## See Also
 
-* [Agent](README.md) for the overview and the two surfaces.
+* [Agent](README.md) for the overview and the three surfaces.
+* [Voice Agent](voice.md) for Vega, the microphone on `/agent`.
 * [Agent Configuration](configuration.md) for the rest of `/agent/config`: registering a model, storing an API key, the trading switch and web search.
 * [What the Agent Can Do](capabilities.md) for the toolkits a plan model is given, which are the same ones any other model gets.
 * [Agent by Example](examples.md) for what a plan turn looks like in a conversation.

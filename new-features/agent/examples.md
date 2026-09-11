@@ -175,7 +175,8 @@ That last part is the one to be sure of before you approve anything. With the pl
 
 ## See Also
 
-* [Agent](README.md) for the overview and the two surfaces.
+* [Agent](README.md) for the overview and the three surfaces.
+* [Voice Agent](voice.md) for Vega, the microphone on `/agent`.
 * [What the Agent Can Do](capabilities.md) for the full tool list and the order path.
 * [Agent Configuration](configuration.md) for models, keys, the trading switch and web search.
 * [ChatGPT Subscription](chatgpt-subscription.md) for the plan billing path.

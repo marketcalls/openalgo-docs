@@ -11,6 +11,7 @@
   * [Agent](new-features/agent/README.md)
     * [What the Agent Can Do](new-features/agent/capabilities.md)
     * [Agent Configuration](new-features/agent/configuration.md)
+    * [Voice Agent](new-features/agent/voice.md)
     * [ChatGPT Subscription](new-features/agent/chatgpt-subscription.md)
     * [Agent by Example](new-features/agent/examples.md)
   * [Portfolio Backtester and Analyzer](new-features/portfolio-analytics.md)

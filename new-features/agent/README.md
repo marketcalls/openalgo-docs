@@ -4,7 +4,7 @@ The agent is a large language model wired directly into OpenAlgo's own service l
 
 It runs on your server. The models it talks to are the ones you register, the keys are stored encrypted in this instance's own database, and a local model is supported for operators who want nothing to leave the machine.
 
-## Two Surfaces
+## Three Surfaces
 
 `/agent` is the full page. A conversation list sits on the left, the thread in the middle, and the composer at the bottom carries the model picker, the reasoning control, attachments and the web search switch. Conversations persist, so a thread can be closed and reopened later.
 
@@ -14,11 +14,13 @@ The panel reads the symbol, interval and bars of the focused pane at the moment 
 
 The panel is deliberately narrower in what it offers. It runs whichever model you have registered as the default and shows no model picker, and it is given no order tools at all. Its own empty state says as much: it reads the symbol, interval and bars you are looking at, it can mark up the chart, and it places no orders there.
 
+`/agent` also listens. The microphone in the composer opens a spoken session with **Vega**, which hears the question and reads the answer out while the answer itself still arrives on screen as an ordinary message, with its tool timeline and any chart it drew. It is the same agent on the same tools; only the way you reach it changes. Voice ships off and needs an OpenAI key of its own. See [Voice Agent](voice.md).
+
 `/agent/config` is the configuration screen. It is reachable from the Admin page as **Agent Config**, and from the settings control in the chat header.
 
 ## First Run
 
-A fresh install answers nothing until four things are true, and both surfaces show a setup screen rather than a composer until they are.
+A fresh install answers nothing until four things are true, and the chat page and the chart panel both show a setup screen rather than a composer until they are.
 
 1. **An OpenAlgo API key exists.** Generate one at `/apikey`. This is the platform's own key, not a model provider's: it is what the agent's tools resolve your broker session through, and without it every chat request is refused with "This deployment has no OpenAlgo API key."
 2. **A model is registered** on `/agent/config`, with its provider credential pasted in.
@@ -31,7 +33,9 @@ A fresh install answers nothing until four things are true, and both surfaces sh
 
 Read this section before enabling anything.
 
-**Trading is enabled by default.** On a fresh install, and on an existing install where the setting was never touched, the agent is allowed to reach the order tools. The switch lives on `/agent/config` under **Trading**, labelled "Allow the agent to place, modify and cancel orders". Turned off, the order tools are withheld from the model entirely, so the agent declines to trade rather than asking you to approve anything.
+**Trading is off by default.** On a fresh install the agent is offered no order tools at all, so it declines to trade rather than asking you to approve anything. Placing, modifying and cancelling are opt-in. The switch lives on `/agent/config` under **Trading**, labelled "Allow the agent to place, modify and cancel orders".
+
+An existing install that never touched the setting also picks the new value up on upgrade, so an agent that could trade stops being able to until someone switches it on. An operator who set the switch either way keeps what they set.
 
 **Every order tool pauses for your approval.** There are seven: place order, place smart order, modify order, cancel order, cancel all orders, close position and close all positions. All seven are declared as requiring confirmation, so the run stops before the tool body executes. The conversation then shows an amber block reading "This turn is waiting for your approval.", the exact arguments the model proposed rendered as JSON, and Approve and Reject buttons. Nothing reaches a broker until you press Approve.
 
@@ -114,18 +118,20 @@ API keys are encrypted with Fernet using the same cipher the platform already us
 
 ## Operational Boundaries
 
-* Until a model is registered, enabled and has passed a credential test, both surfaces render a setup screen instead of a composer. A status call that cannot be answered is read as not configured.
+* Until a model is registered, enabled and has passed a credential test, the chat page and the chart panel both render a setup screen instead of a composer. A status call that cannot be answered is read as not configured.
 * The `agno` and `litellm` packages are required. They are pinned dependencies, so a standard `uv sync` install has them.
 * Model and provider availability, context windows, pricing and vision or reasoning support are whatever the installed LiteLLM build reports. The catalogue is advisory: a model missing from it can still be added by hand, and the model test on the configuration page is what answers for a particular account.
 * The agent sees the same market data your broker gives the rest of the platform. Historical range, live fields and depth levels depend on the active broker and account entitlement.
 * A quote, an indicator value or a drawn level is analysis, not a guarantee of execution price.
 * The chart panel is offered no order tools regardless of the trading switch. An order request belongs on `/agent`.
 * Prompts, attachments and tool results are sent to whichever model provider you configured. A local provider is the only configuration in which nothing leaves the machine.
+* Voice is off until you enable it and add an OpenAI key, and spoken orders are off separately. A spoken approval is only as private as the room you are in.
 * Test with the platform in Analyzer mode before letting the agent approve orders against live capital.
 
 ## In This Section
 
 * [What the Agent Can Do](capabilities.md) covers every toolkit in detail: what the agent can read, draw, compute and write, and the order path in full.
 * [Agent Configuration](configuration.md) covers `/agent/config`: registering a model, storing a key, the trading switch, reasoning effort and web search.
+* [Voice Agent](voice.md) covers Vega: the microphone on `/agent`, what speaks and what thinks, spoken orders and what an open session costs.
 * [ChatGPT Subscription](chatgpt-subscription.md) covers running the agent on a ChatGPT Plus or Pro plan instead of an API key.
 * [Agent by Example](examples.md) is a set of worked prompts with what each one actually returns.

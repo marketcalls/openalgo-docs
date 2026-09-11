@@ -91,7 +91,7 @@ Every instrument on a card is a live subscription held for as long as the messag
 
 ## Account and Books
 
-Seven read-only tools answer "what do I have and what did I do": funds, positions, holdings, the order book, the trade book, one open position, and one order's status. They are offered on both surfaces. None of them mutates anything, so none pauses for approval.
+Seven read-only tools answer "what do I have and what did I do": funds, positions, holdings, the order book, the trade book, one open position, and one order's status. They are offered on every surface. None of them mutates anything, so none pauses for approval.
 
 Every result carries a mode of `live` or `analyze`, read at call time from the same platform toggle the services themselves consult, so a sandbox balance is never reported as a live one. An empty book is an answer rather than a failure: if you hold nothing, you are told you hold nothing.
 
@@ -112,7 +112,7 @@ The agent writes OpenAlgo Python in the conversation, in a code block you can co
 
 ## Orders, and the Approval Pause
 
-Trading is **enabled by default**. Read this section before the first live turn.
+Trading is **off by default**. Read this section before switching it on.
 
 Seven order tools exist, all of them on the chat page only: `place_order`, `place_smart_order`, `modify_order`, `cancel_order`, `cancel_all_orders`, `close_position` and `close_all_positions`.
 
@@ -143,7 +143,7 @@ The provenance rules elsewhere on this page belong to the same posture. A chart 
 
 ## Operational Boundaries
 
-* Trading is on by default. A fresh install can reach an order tool from a typed sentence. What stands between that sentence and a broker is the approval pause, the risk guard and the limits above, not an opt-in.
+* Trading is off by default, so a fresh install reaches no order tool at all. Once it is on, what stands between a sentence and a broker is the approval pause, the risk guard and the limits above.
 * The agent never decides live versus sandbox. The platform's own analyzer toggle does. Switch to analyzer mode first if you want approved orders to reach the sandbox. See [API Analyzer](../api-analyzer.md).
 * OpenAlgo has no fundamentals source, so no tool returns a price/earnings ratio, market capitalisation, earnings per share or dividend yield, and no card shows one.
 * Every figure comes from your broker session, so history depth, available intervals, depth levels and entitlements are the broker's, not the agent's. A displayed quote is not a guarantee of execution price.
@@ -159,7 +159,8 @@ The provenance rules elsewhere on this page belong to the same posture. A chart 
 
 ## See Also
 
-* [Agent](README.md) for the overview and the two surfaces.
+* [Agent](README.md) for the overview and the three surfaces.
+* [Voice Agent](voice.md) for Vega, the microphone on `/agent`.
 * [Agent by Example](examples.md) for prompts that reach the tools above, and what the answers look like.
 * [Agent Configuration](configuration.md) for the trading switch, the model registry and the web search providers.
 * [Chart Trading Terminal](../trading-terminal.md) for the chart the panel docks to.
