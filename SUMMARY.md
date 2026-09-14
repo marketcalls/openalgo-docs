@@ -352,6 +352,7 @@
 ## Change Log
 
 * [release](change-log/release/README.md)
+  * [Version 2.0.2.5 Released](change-log/release/version-2.0.2.5-released.md)
   * [Version 2.0.2.4 Released](change-log/release/version-2.0.2.4-released.md)
   * [Version 2.0.2.3 Released](change-log/release/version-2.0.2.3-released.md)
   * [Version 2.0.2.2 Released](change-log/release/version-2.0.2.2-released.md)
