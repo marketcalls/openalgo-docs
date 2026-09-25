@@ -95,7 +95,7 @@ Neither workflow places or modifies orders. See [Portfolio Backtester and Analyz
 
 The `/trading` terminal provides seven persisted layouts, from a single chart to an eight-chart `4×2` grid. Each pane supports its own symbol, interval, chart type, indicators, drawings, history backfill, market depth, and order entry while sharing one drawing toolbar and the application's real-time market-data connection.
 
-<figure><img src=".gitbook/assets/openalgo-ui-trading-terminal.png" alt="Chart trading terminal with candlestick chart, drawing tools and order widget"><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/openalgo-ui-trading-terminal.png" alt="Chart trading terminal showing AXISBANK 15-minute candles with the HalfTrend indicator and its buy and sell signals"><figcaption></figcaption></figure>
 
 See [Chart Trading Terminal](new-features/trading-terminal.md).
 
