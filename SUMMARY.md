@@ -201,6 +201,13 @@
 * [MCP](mcp/README.md)
   * [Remote MCP](mcp/remote-mcp.md)
   * [Tool References](mcp/tool-references.md)
+* [OpenAlgo CLI](cli/README.md)
+  * [Installation](cli/installation.md)
+  * [Authentication and Profiles](cli/authentication.md)
+  * [Command Reference](cli/command-reference.md)
+  * [Output, Errors and Automation](cli/output-and-automation.md)
+  * [Streaming](cli/streaming.md)
+  * [AI Agents](cli/ai-agents.md)
 
 ## Flow Editor
 
