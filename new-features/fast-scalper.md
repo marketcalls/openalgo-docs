@@ -15,6 +15,8 @@ For derivatives, select an underlying and expiry. Options mode provides independ
 
 The terminal shows live LTP and normalized quote fields through OpenAlgo's shared WebSocket feed. When the feed is unavailable, the page identifies its slower REST polling fallback so stale-data risk is visible.
 
+<figure><img src="../.gitbook/assets/openalgo-ui-scalping.png" alt="Scalping terminal with call and put strike selectors and live prices"><figcaption></figcaption></figure>
+
 Charts are optional and disabled by default. Enable them to view 1-minute, 5-minute, or 15-minute candles with volume. The chart toggle and timeframe are saved in the browser.
 
 ## Order Entry

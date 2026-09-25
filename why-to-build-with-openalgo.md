@@ -63,6 +63,8 @@ A full options desk is built in, with real-time Greeks and payoff diagrams:
 | Gamma Density | Futures Arbitrage Scanner | Portfolio Backtester |
 | SIP Backtester | | |
 
+<figure><img src=".gitbook/assets/openalgo-ui-tools-hub.png" alt="Tools page grid of options and analytics tools"><figcaption></figcaption></figure>
+
 #### Action Center
 
 Square off, cancel, and manage open exposure from one screen, with exchange-aligned auto square-off.

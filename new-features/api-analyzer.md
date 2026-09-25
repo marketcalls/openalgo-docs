@@ -66,6 +66,8 @@ Open `/sandbox` to inspect and update settings. Fresh sandbox databases use:
 
 These values configure the local simulator and can be changed. They are not promises about the active broker's live margin or square-off policy.
 
+<figure><img src="../.gitbook/assets/openalgo-ui-sandbox.png" alt="Sandbox configuration page"><figcaption></figcaption></figure>
+
 ### Validation Workflow
 
 1. Confirm `/api/v1/analyzer` reports `analyze_mode: true`.
@@ -75,6 +77,8 @@ These values configure the local simulator and can be changed. They are not prom
 5. Verify square-off and reset configuration instead of assuming defaults.
 6. Review sandbox P&L, order events, and errors.
 7. Before live use, reduce quantity, verify mode again, and monitor the broker terminal.
+
+<figure><img src="../.gitbook/assets/openalgo-ui-analyzer.png" alt="Sandbox request monitor with request log"><figcaption></figcaption></figure>
 
 ### Reset Behavior
 

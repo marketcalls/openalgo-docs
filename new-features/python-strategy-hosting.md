@@ -16,9 +16,13 @@ To begin, log into your OpenAlgo dashboard:
 * Select **Python Strategies** from the dropdown menu.
 * This dashboard provides an overview of your total, running, and scheduled strategies.
 
+<figure><img src="../.gitbook/assets/openalgo-ui-python-strategies.png" alt="Python Strategies dashboard"><figcaption></figcaption></figure>
+
 ### 2. Adding a New Strategy
 
 Click the **Add Strategy** button to open the configuration interface.
+
+<figure><img src="../.gitbook/assets/openalgo-ui-python-new.png" alt="Add Python Strategy form"><figcaption></figcaption></figure>
 
 #### Uploading the Script
 

@@ -26,6 +26,8 @@ Neither workflow places, modifies, or cancels an order.
 6. Configure capital, risk-free rate, slippage, and either the Indian delivery-cost schedule or a flat basis-point cost.
 7. Run the backtest. The results page uses one internally consistent result object; changing tabs does not rerun the simulation.
 
+<figure><img src="../.gitbook/assets/openalgo-ui-portfolio-backtester.png" alt="Portfolio backtester input form"><figcaption></figcaption></figure>
+
 ## Understand the Results
 
 The analysis can include:
@@ -39,6 +41,8 @@ The analysis can include:
 * a portfolio-health grade whose inputs, formulas, and pillar weights are returned with the score.
 
 Use **Download tearsheet** to export the same model as a self-contained `portfolio-tearsheet.html` file.
+
+<figure><img src="../.gitbook/assets/openalgo-ui-portfolio-backtester-results.png" alt="Portfolio backtest report overview"><figcaption></figcaption></figure>
 
 ## Analyze Current Holdings
 

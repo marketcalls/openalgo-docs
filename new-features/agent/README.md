@@ -22,6 +22,8 @@ The panel is deliberately narrower in what it offers. It runs whichever model yo
 
 A fresh install answers nothing until four things are true, and the chat page and the chart panel both show a setup screen rather than a composer until they are.
 
+<figure><img src="../../.gitbook/assets/openalgo-ui-agent.png" alt="Agent setup screen"><figcaption></figcaption></figure>
+
 1. **An OpenAlgo API key exists.** Generate one at `/apikey`. This is the platform's own key, not a model provider's: it is what the agent's tools resolve your broker session through, and without it every chat request is refused with "This deployment has no OpenAlgo API key."
 2. **A model is registered** on `/agent/config`, with its provider credential pasted in.
 3. **Its credential test has passed.** Press Test on the row; a mistyped key is much better found there than at your first question.

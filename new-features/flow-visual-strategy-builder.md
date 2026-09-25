@@ -27,6 +27,8 @@ Flow does not provide loops, foreach/switch nodes, cross-run variables, automati
 7. Use **Run Now** to validate and test a complete graph.
 8. Activate the workflow when its trigger should remain registered.
 
+<figure><img src="../.gitbook/assets/openalgo-ui-flow.png" alt="Flow workflow list page"><figcaption></figcaption></figure>
+
 ## Trigger Types
 
 | Trigger | Behavior | Important configuration |

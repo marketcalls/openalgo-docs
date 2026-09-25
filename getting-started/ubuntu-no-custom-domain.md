@@ -173,6 +173,8 @@ Broker login is usually a manual step. In the workflow described, the broker ses
 
 After connecting the broker, OpenAlgo opens the main dashboard.
 
+<figure><img src="../.gitbook/assets/openalgo-ui-dashboard.png" alt="OpenAlgo dashboard with account summary cards"><figcaption></figcaption></figure>
+
 At this stage, the platform may begin downloading the master contract. Wait until this process finishes completely.
 
 You should only proceed when the dashboard shows that the system is ready.

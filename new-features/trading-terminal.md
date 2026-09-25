@@ -2,6 +2,8 @@
 
 The `/trading` route is OpenAlgo's multi-chart trading workspace. It combines historical and live market data, chart analysis, drawings, market depth, and order entry in one React interface.
 
+<figure><img src="../.gitbook/assets/openalgo-ui-trading-terminal.png" alt="Chart trading terminal with candlestick chart, drawing tools and order widget"><figcaption></figcaption></figure>
+
 ## Layouts and State
 
 Seven persisted layouts are available:

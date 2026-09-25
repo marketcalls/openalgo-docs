@@ -8,6 +8,8 @@ Historify downloads normalized broker candles into a local DuckDB database for r
 
 Open **Profile -> Historify**, or navigate to `/historify` after signing in. The page and its `/historify/api` administration routes use the OpenAlgo browser session.
 
+<figure><img src="../.gitbook/assets/openalgo-ui-historify.png" alt="Historify watchlist and download settings"><figcaption></figcaption></figure>
+
 Historify administration is not part of the public `/api/v1` namespace. Public API clients can read stored candles through `/api/v1/history` with `source: "db"`.
 
 ## Storage

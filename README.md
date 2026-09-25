@@ -95,6 +95,8 @@ Neither workflow places or modifies orders. See [Portfolio Backtester and Analyz
 
 The `/trading` terminal provides seven persisted layouts, from a single chart to an eight-chart `4×2` grid. Each pane supports its own symbol, interval, chart type, indicators, drawings, history backfill, market depth, and order entry while sharing one drawing toolbar and the application's real-time market-data connection.
 
+<figure><img src=".gitbook/assets/openalgo-ui-trading-terminal.png" alt="Chart trading terminal with candlestick chart, drawing tools and order widget"><figcaption></figcaption></figure>
+
 See [Chart Trading Terminal](new-features/trading-terminal.md).
 
 ***
@@ -121,6 +123,8 @@ The `/tools` page collects 18 analytical surfaces:
 
 Coverage of a given underlying still depends on the active broker's option-chain and history entitlement.
 
+<figure><img src=".gitbook/assets/openalgo-ui-tools-hub.png" alt="Tools page grid of options and analytics tools"><figcaption></figcaption></figure>
+
 ***
 
 #### Sandbox Testing Environment
@@ -135,6 +139,8 @@ Sandbox testing provides:
 * Configurable MIS square-off schedules
 * Simulated order and account state isolated from live broker execution
 
+<figure><img src=".gitbook/assets/openalgo-ui-sandbox.png" alt="Sandbox configuration page"><figcaption></figcaption></figure>
+
 ***
 
 #### Order Control and Safety
@@ -146,6 +152,8 @@ OpenAlgo offers optional order approval workflows:
 * Full audit trail of all actions
 
 This helps reduce execution risk and improves transparency.
+
+<figure><img src=".gitbook/assets/openalgo-ui-action-center.png" alt="Action Center with Pending, Approved and Rejected tabs"><figcaption></figcaption></figure>
 
 ***
 

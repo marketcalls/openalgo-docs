@@ -45,6 +45,8 @@ Six sections, in this order:
 
 A header button, **Add model**, opens the same dialog the catalogue uses, with nothing prefilled.
 
+<figure><img src="../../.gitbook/assets/openalgo-ui-agent-config.png" alt="Agent configuration page"><figcaption></figcaption></figure>
+
 ## Choosing a Provider
 
 The Providers section is read live from LiteLLM's own in-package data every time the page loads. There is no catalogue table in the database and no generated list in the frontend, so upgrading the LiteLLM package is the whole maintenance story: new providers and new models appear on their own.

@@ -2,6 +2,8 @@
 
 OpenAlgo ships **18 analytics surfaces** under `/tools`, covering the options desk, portfolio analysis and backtesting. They run inside your own installation against your broker's live data, so nothing here depends on an external service.
 
+<figure><img src=".gitbook/assets/openalgo-ui-tools-hub.png" alt="Tools page grid of options and analytics tools"><figcaption></figcaption></figure>
+
 These are interactive UI tools rather than API endpoints. Several are backed by the [Options API](api-documentation/v1/data-api/option-chain.md), so anything you can see on screen you can also automate.
 
 ***
@@ -16,6 +18,8 @@ These are interactive UI tools rather than API endpoints. Several are backed by 
 | **IV Smile** | `/ivsmile` | Call and put IV curves, ATM IV and skew analysis |
 | **Vol Surface** | `/volsurface` | 3D implied volatility surface across strikes and expiries |
 
+<figure><img src=".gitbook/assets/openalgo-ui-vol-surface.png" alt="3D implied volatility surface for NIFTY"><figcaption></figcaption></figure>
+
 ## Open Interest
 
 | Tool | Path | What it shows |
@@ -26,6 +30,8 @@ These are interactive UI tools rather than API endpoints. Several are backed by 
 | **GEX Dashboard** | `/gex` | Gamma exposure with OI walls, net GEX per strike and the top gamma strikes |
 | **Gamma Density** | `/gammadensity` | Gamma times OI density and convexity zones, intraday and to-expiry, with ATM IV and expected-move bands |
 
+<figure><img src=".gitbook/assets/openalgo-ui-gex.png" alt="GEX dashboard with OI walls and net GEX charts"><figcaption></figcaption></figure>
+
 ## Straddles and Spreads
 
 | Tool | Path | What it shows |
@@ -33,6 +39,8 @@ These are interactive UI tools rather than API endpoints. Several are backed by 
 | **Straddle Chart** | `/straddle` | Dynamic ATM straddle with rolling strike, spot and synthetic futures overlay |
 | **Straddle PnL** | `/straddlepnl` | Simulated intraday ATM straddle P&L with automated adjustments and a trade log |
 | **Arbitrage** | `/arbitrage` | Real-time futures calendar-spread scanner across NFO and MCX, ranked by executable bid and ask spread |
+
+<figure><img src=".gitbook/assets/openalgo-ui-straddle.png" alt="ATM straddle chart for NIFTY"><figcaption></figcaption></figure>
 
 ## Strategy Building
 
@@ -48,6 +56,8 @@ These are interactive UI tools rather than API endpoints. Several are backed by 
 | **Portfolio Backtester** | `/portfolio-backtester` | Weighted portfolio against an index with real delivery costs, rebalancing rules, crisis periods and a full tearsheet |
 | **SIP Backtester** | `/sip-backtester` | What a monthly, weekly or quarterly SIP would have returned: XIRR, rupee-cost averaging, start-date sensitivity and a lumpsum comparison |
 | **Portfolio Analyzer** | `/portfolio-analyzer` | Grades the holdings you actually own: concentration, co-movement, drawdown resilience and behaviour in past crises |
+
+<figure><img src=".gitbook/assets/openalgo-ui-portfolio-backtester-results.png" alt="Portfolio backtest report overview"><figcaption></figcaption></figure>
 
 ***
 
