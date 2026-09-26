@@ -1,0 +1,100 @@
+<style>
+#canvas > .wlabel { position: absolute; }
+.nm { min-width: 0; }
+.nm .tx { align-self: stretch; }
+</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">TradingView and GoCharting</div>
+    <h1>Chart alerts take the same safe order path as everything else</h1>
+    <p style="max-width:1150px">OpenAlgo generates the alert JSON you paste into your charting platform. When the alert fires, it posts to the order API, and OpenAlgo decides whether the order waits for your approval, goes to the sandbox, or goes to your broker.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:36px">
+    <div class="zone" style="--c:var(--client)">
+      <div class="zl"><span data-icon="bell"></span>Alert setup</div>
+      <div class="col" style="gap:60px">
+        <div class="node client nm" id="tv" style="width:215px">
+          <div class="ic" data-icon="chart-candlestick"></div>
+          <div class="tx"><b>TradingView alert</b><span>Pine strategy or line alert; fires a webhook POST</span></div>
+        </div>
+        <div class="node app stack nm" id="gen" style="width:215px">
+          <div class="ic" data-icon="file-json"></div>
+          <div class="tx"><b>OpenAlgo JSON generators</b><span>build the alert message for you</span>
+            <div class="chips"><span class="chip">/tradingview</span><span class="chip">/gocharting</span></div></div>
+        </div>
+        <div class="node client nm" id="gc" style="width:215px">
+          <div class="ic" data-icon="chart-line"></div>
+          <div class="tx"><b>GoCharting alert</b><span>fires a webhook POST</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone" style="--c:var(--app)">
+      <div class="zl"><span data-icon="server"></span>OpenAlgo Flask app</div>
+      <div class="row" style="align-items:center; gap:30px">
+        <div class="node security stack nm" id="rl" style="width:218px">
+          <div class="ic" data-icon="gauge"></div>
+          <div class="tx"><b>Rate limit</b><span>per endpoint, default 10 per second</span>
+            <div class="chips"><span class="chip">ORDER_RATE_LIMIT</span><span class="chip">SMART_ORDER_RATE_LIMIT</span></div></div>
+        </div>
+        <div class="col" style="gap:40px">
+          <div class="node app stack nm" id="po" style="width:228px">
+            <div class="ic" data-icon="send"></div>
+            <div class="tx"><b>Place order</b><span>fixed quantity; TradingView line mode and GoCharting</span>
+              <div class="chips"><span class="chip">POST /api/v1/placeorder</span></div></div>
+          </div>
+          <div class="node app stack nm" id="pso" style="width:228px">
+            <div class="ic" data-icon="target"></div>
+            <div class="tx"><b>Place smart order</b><span>moves your position to a target size; TradingView strategy mode</span>
+              <div class="chips"><span class="chip">/api/v1/placesmartorder</span><span class="chip">position_size</span></div></div>
+          </div>
+        </div>
+        <div class="node service stack hero nm" id="svc" style="width:210px">
+          <div class="ic" data-icon="workflow"></div>
+          <div class="tx"><b>Order services</b><span>check the API key in the alert, then route the order</span>
+            <div class="chips"><span class="chip">place_order</span><span class="chip">place_smart_order</span></div></div>
+        </div>
+        <div class="col" style="gap:120px; margin-left:90px">
+          <div class="node data stack nm" id="ac" style="width:180px">
+            <div class="ic" data-icon="inbox"></div>
+            <div class="tx"><b>Action Center</b><span>semi-auto mode: waits for your approval</span></div>
+          </div>
+          <div class="node data stack nm" id="sb" style="width:180px">
+            <div class="ic" data-icon="flask-conical"></div>
+            <div class="tx"><b>Sandbox</b><span>analyzer mode: simulated fill</span>
+              <div class="chips"><span class="chip">sandbox.db</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="node broker stack nm" id="broker" style="width:160px">
+      <div class="ic" data-icon="landmark"></div>
+      <div class="tx"><b>Your broker</b><span>live mode</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>Your charting platform</span>
+    <span style="--c:var(--security)"><i></i>Protection</span>
+    <span style="--c:var(--app)"><i></i>OpenAlgo API</span>
+    <span style="--c:var(--service)"><i></i>Processing</span>
+    <span style="--c:var(--data)"><i></i>Held or simulated</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+  </div>
+</div>
+<script>
+  connect('gen', 'tv', { color: 'app', dashed: true, label: 'you paste the JSON', from: 'top', to: 'bottom' })
+  connect('gen', 'gc', { color: 'app', dashed: true, label: 'you paste the JSON', from: 'bottom', to: 'top' })
+  connect('tv', 'rl', { color: 'client', from: 'right', to: 'left' })
+  connect('gc', 'rl', { color: 'client', from: 'right', to: 'left' })
+  connect('rl', 'po', { color: 'security', from: 'right', to: 'left' })
+  connect('rl', 'pso', { color: 'security', from: 'right', to: 'left' })
+  connect('po', 'svc', { color: 'app', from: 'right', to: 'left' })
+  connect('pso', 'svc', { color: 'app', from: 'right', to: 'left' })
+  connect('svc', 'ac', { color: 'service', label: 'semi-auto', from: 'right', to: 'left' })
+  connect('svc', 'sb', { color: 'service', label: 'analyzer on', from: 'right', to: 'left' })
+  connect('svc', 'broker', { color: 'broker', label: 'live', from: 'right', to: 'left' })
+  connect('ac', 'broker', { color: 'data', dashed: true, label: 'after you approve', from: 'right', to: 'top' })
+</script>

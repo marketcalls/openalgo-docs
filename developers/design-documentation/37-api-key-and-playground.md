@@ -6,51 +6,7 @@ OpenAlgo provides a secure API key management system and an interactive API Play
 
 ## Architecture Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                             API Key Architecture                              │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-                      Generate API Key Request
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                              API Key Generation                               │
-│                                                                               │
-│  ┌─────────────────────────────────────────────────────────────────────┐      │
-│  │  api_key = secrets.token_hex(32)  # 64 character hex string         │      │
-│  │                                                                      │     │
-│  │  Example: a1b2c3d4e5f6...789012345678901234567890abcdef12345678     │      │
-│  └─────────────────────────────────────────────────────────────────────┘      │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                             Dual Storage Strategy                             │
-│                                                                               │
-│  ┌──────────────────────────────┐  ┌──────────────────────────────────────┐   │
-│  │   Hashed (Argon2 + Pepper)   │  │  Encrypted (Fernet)                  │   │
-│  │   For API authentication     │  │  For TradingView integration         │   │
-│  │                              │  │                                       │  │
-│  │  hash = argon2.hash(        │  │  encrypted = fernet.encrypt(         │    │
-│  │    api_key + pepper         │  │    api_key                            │   │
-│  │  )                          │  │  )                                    │   │
-│  │                              │  │                                       │  │
-│  │  → Stored in api_key_hash   │  │  → Stored in api_key_encrypted        │   │
-│  └──────────────────────────────┘  └──────────────────────────────────────┘   │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            api_keys Table (SQLite)                            │
-│                                                                               │
-│  ┌─────────────────────────────────────────────────────────────────────┐      │
-│  │  id | user_id | api_key_hash | api_key_encrypted | order_mode      │       │
-│  │  ───┼─────────┼──────────────┼───────────────────┼─────────────────│       │
-│  │  1  | admin   | $argon2id... | gAAAAA...         | auto            │       │
-│  └─────────────────────────────────────────────────────────────────────┘      │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-apikey-generation-storage.png" alt="API key generation: POST /apikey creates a 64-hex key, upsert_api_key stores an Argon2 peppered hash and a Fernet-encrypted copy in the api_keys table, then clears all cached logins and API key checks so the old key stops working at once"><figcaption></figcaption></figure>
 
 ## API Key Generation
 
@@ -114,38 +70,7 @@ def upsert_api_key(user_id, api_key):
 
 ### API Key Verification
 
-```
-                         API request with apikey
-                                   │
-                                   ▼
-  ┌────────────────────────────────────────────────────────────────┐
-  │ cache_key = sha256(provided_api_key)                           │
-  └────────────────────────────────────────────────────────────────┘
-                                   │
-                                   ▼
-  ┌────────────────────────────────────────────────────────────────┐
-  │ 1. invalid_api_key_cache  (maxsize 512, TTL 300s)              │
-  │    hit  -> return None, reject                                 │
-  └────────────────────────────────────────────────────────────────┘
-                                   │
-                                   │ miss
-                                   ▼
-  ┌────────────────────────────────────────────────────────────────┐
-  │ 2. verified_api_key_cache (maxsize 1024, TTL 36000s)           │
-  │    hit  -> return the cached user_id                           │
-  └────────────────────────────────────────────────────────────────┘
-                                   │
-                                   │ miss
-                                   ▼
-  ┌────────────────────────────────────────────────────────────────┐
-  │ 3. Argon2 verify provided_api_key + API_KEY_PEPPER             │
-  │    against every stored api_keys.api_key_hash                  │
-  │                                                                │
-  │    match    -> cache and return user_id                        │
-  │    no match -> cache the negative result and record            │
-  │                the attempt via InvalidAPIKeyTracker            │
-  └────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-apikey-verification-flow.png" alt="verify_api_key checks the invalid cache, then the verified cache, then Argon2-verifies against every stored hash and records failed attempts in InvalidAPIKeyTracker"><figcaption></figcaption></figure>
 
 Only the SHA-256 cache key and the resolved `user_id` are cached, never the key itself. `upsert_api_key()` and `update_order_mode()` both call `invalidate_user_cache()`. Order mode is cached separately in `order_mode_cache` (TTLCache, maxsize 128, TTL 60 seconds).
 
@@ -179,39 +104,7 @@ def update_api_key_mode():
 
 ### Architecture
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          API Playground Architecture                          │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            Frontend (React/Jinja2)                            │
-│                                                                               │
-│  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐      │
-│  │   Account     │ │   Orders      │ │    Data       │ │  WebSocket    │      │
-│  │   Endpoints   │ │   Endpoints   │ │   Endpoints   │ │   Testing     │      │
-│  │               │ │               │ │               │ │               │      │
-│  │ - Funds       │ │ - PlaceOrder  │ │ - Quotes      │ │ - Subscribe   │      │
-│  │ - OrderBook   │ │ - ModifyOrder │ │ - Depth       │ │ - Unsubscribe │      │
-│  │ - TradeBook   │ │ - CancelOrder │ │ - History     │ │ - Messages    │      │
-│  │ - Positions   │ │ - SmartOrder  │ │ - Intervals   │ │               │      │
-│  │ - Holdings    │ │ - SplitOrder  │ │ - Symbol      │ │               │      │
-│  └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘      │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            Bruno Collection Parser                            │
-│                                                                               │
-│  Parses .bru files from collections/ directory                                │
-│                                                                               │
-│  ┌─────────────────────────────────────────────────────────────────────┐      │
-│  │  def parse_bru_file(filepath):                                       │     │
-│  │      # Extract: name, method, path, body, params                     │     │
-│  │      # Supports: HTTP (GET, POST, PUT, DELETE) and WebSocket        │      │
-│  └─────────────────────────────────────────────────────────────────────┘      │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-apikey-playground-architecture.png" alt="API Playground: React page loads Bruno endpoints and the decrypted API key from the playground blueprint, sends same-origin HTTP calls to /api/v1 (and /playground/*) and WebSocket messages to the proxy on port 8765"><figcaption></figcaption></figure>
 
 ### Endpoint Categories
 

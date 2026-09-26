@@ -1,0 +1,71 @@
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Event bus</div>
+    <h1>One order event, up to six listeners, zero waiting</h1>
+    <p style="max-width:1100px">When an order is placed or updated, the code that did it just drops an event on the bus and moves on. A small worker pool then tells the logs, the web screen, Telegram, WhatsApp, live WebSocket clients and the strategy book, each one isolated so a slow or failing listener never blocks your order. Some listeners only take certain events.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:34px">
+    <div class="zone" style="--c:var(--app)">
+      <div class="zl"><span data-icon="server"></span>One Flask worker process</div>
+      <div class="row" style="align-items:center; gap:70px">
+
+        <div class="col" style="gap:20px">
+          <div style="font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--ink3);text-transform:uppercase">Publishers</div>
+          <div class="node service" id="svc" style="width:300px"><div class="ic" data-icon="send"></div><div class="tx"><b>Order services and REST endpoints</b><span>place, modify, cancel, basket, split</span>
+            <div class="chips"><span class="chip">*_order_service.py</span><span class="chip">restx_api/*</span><span class="chip">blueprints/orders.py</span></div></div></div>
+          <div class="node service" id="sbx" style="width:300px"><div class="ic" data-icon="flask-conical"></div><div class="tx"><b>Sandbox engine</b><span>simulated fills and updates</span>
+            <div class="chips"><span class="chip">sandbox/*</span></div></div></div>
+          <div class="node service" id="pb" style="width:300px"><div class="ic" data-icon="webhook"></div><div class="tx"><b>Broker order updates</b><span>postbacks and order-update adapters</span>
+            <div class="chips"><span class="chip">blueprints/postback.py</span><span class="chip">order_adapter.py</span></div></div></div>
+        </div>
+
+        <div class="row" style="gap:50px; align-items:center">
+          <div class="node service big hero stack" id="pub" style="width:200px"><div class="ic" data-icon="zap"></div><div class="tx"><b>Drops the event on the bus</b><span>typed event, looks up who listens, returns at once</span>
+            <div class="chips"><span class="chip">EventBus.publish()</span><span class="chip">utils/event_bus.py</span></div></div></div>
+          <div class="node data stack" id="pool" style="width:210px"><div class="ic" data-icon="layers"></div><div class="tx"><b>Worker pool</b><span>runs each listener in the background; if full, new events are dropped, not queued</span>
+            <div class="chips"><span class="chip">10 workers</span><span class="chip">max 1000 pending</span></div></div></div>
+        </div>
+
+        <div class="col" style="gap:14px">
+          <div style="font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--ink3);text-transform:uppercase">Listeners (each one isolated)</div>
+          <div class="node service" id="log" style="width:320px;height:92px"><div class="ic" data-icon="scroll-text"></div><div class="tx"><b>Order log</b><span>log_subscriber, order_logs / analyzer_logs</span></div></div>
+          <div class="node app" id="sio" style="width:320px;height:92px"><div class="ic" data-icon="monitor"></div><div class="tx"><b>Web screen updates</b><span>socketio_subscriber, React UI events</span></div></div>
+          <div class="node service" id="tg" style="width:320px;height:92px"><div class="ic" data-icon="bell"></div><div class="tx"><b>Telegram alerts</b><span>telegram_subscriber</span></div></div>
+          <div class="node service" id="wa" style="width:320px;height:92px"><div class="ic" data-icon="message-circle"></div><div class="tx"><b>WhatsApp alerts</b><span>whatsapp_subscriber</span></div></div>
+          <div class="node service" id="wsp" style="width:320px;height:92px"><div class="ic" data-icon="radio"></div><div class="tx"><b>Live order stream relay</b><span>wsproxy_subscriber, order.update only</span></div></div>
+          <div class="node service" id="sb" style="width:320px;height:92px"><div class="ic" data-icon="book-open"></div><div class="tx"><b>Strategy book</b><span>order.placed, order.update, batch completions</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="gap:14px; padding-top:31px; margin-left:-4px">
+      <div style="height:92px"></div>
+      <div style="height:92px"></div>
+      <div class="node external" id="tgx" style="width:200px;height:92px"><div class="ic" data-icon="send"></div><div class="tx"><b>Telegram</b><span>your bot chat</span></div></div>
+      <div class="node external" id="wax" style="width:200px;height:92px"><div class="ic" data-icon="smartphone"></div><div class="tx"><b>WhatsApp</b><span>your phone</span></div></div>
+      <div class="node data" id="zmq" style="width:200px;height:92px"><div class="ic" data-icon="cable"></div><div class="tx"><b>ZMQ bus</b><span>ZeroMQ port 5555, read by WS proxy</span></div></div>
+      <div style="height:92px"></div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:40px; gap:40px; align-items:flex-start">
+    <div class="legend" style="margin-top:12px">
+      <span style="--c:var(--service)"><i></i>Code that publishes or listens</span>
+      <span style="--c:var(--data)"><i></i>Queue and message bus</span>
+      <span style="--c:var(--app)"><i></i>Web app</span>
+      <span style="--c:var(--external)"><i></i>Outside services</span>
+    </div>
+    <div class="note" style="max-width:640px"><span data-icon="lightbulb"></span><div>The bus lives inside each worker process. An error in one listener is caught and logged by _safe_call, so the others still run.</div></div>
+  </div>
+</div>
+<script>
+  connect('svc', 'pub', { color: 'service', from: 'right', to: 'left', bend: 40 })
+  connect('sbx', 'pub', { color: 'service', from: 'right', to: 'left', bend: 40 })
+  connect('pb', 'pub', { color: 'service', from: 'right', to: 'left', bend: 40 })
+  connect('pub', 'pool', { color: 'service' })
+  for (const s of ['log','sio','tg','wa','wsp','sb']) connect('pool', s, { color: 'data', from: 'right', to: 'left' })
+  connect('tg', 'tgx', { color: 'external' })
+  connect('wa', 'wax', { color: 'external' })
+  connect('wsp', 'zmq', { color: 'data' })
+</script>

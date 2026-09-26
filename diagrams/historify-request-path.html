@@ -1,0 +1,76 @@
+<style>#canvas > .wlabel { position: absolute; } #hs { position: relative; } .anc { position:absolute; bottom:0; width:0; height:0; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Historify</div>
+    <h1>Candles are downloaded once, then served from your own database</h1>
+    <p style="max-width:1100px">Downloads start from the Historify page or a schedule, run in the background with live progress, and land in a local DuckDB file. Later API requests can read that file instead of calling the broker again.</p>
+  </div>
+
+  <div class="col" style="gap:56px; margin-top:96px">
+    <div class="row" style="align-items:flex-start; gap:48px">
+      <div class="node client stack" id="ui" style="width:190px; min-width:0; margin-top:44px">
+        <div class="ic" data-icon="monitor"></div>
+        <div class="tx"><b>Historify page</b><span>pick symbols, start or schedule downloads</span>
+          <div class="chips"><span class="chip">React /historify</span></div></div>
+      </div>
+
+      <div class="zone" style="--c:var(--app)">
+        <div class="zl"><span data-icon="server"></span>OpenAlgo Flask app</div>
+        <div class="grid" style="grid-template-columns: 300px 120px 290px 52px 250px; column-gap:0; row-gap:120px">
+          <div class="node security" id="bp">
+            <div class="ic" data-icon="shield-check"></div>
+            <div class="tx"><b>Historify routes</b><span>your login session is checked</span>
+              <div class="chips"><span class="chip">/historify/api/*</span><span class="chip">blueprints/historify.py</span></div></div>
+          </div>
+          <div></div>
+          <div class="node service hero" id="hs"><i class="anc" id="hs-bl" style="left:22%"></i><i class="anc" id="hs-br" style="left:78%"></i>
+            <div class="ic" data-icon="workflow"></div>
+            <div class="tx"><b>Historify service</b><span>runs download jobs on a thread pool, import and export</span>
+              <div class="chips"><span class="chip">historify_service.py</span></div></div>
+          </div>
+          <div></div>
+          <div class="node service" id="hist">
+            <div class="ic" data-icon="chart-candlestick"></div>
+            <div class="tx"><b>History service</b><span>fetches normalized OHLCV candles</span>
+              <div class="chips"><span class="chip">get_history()</span></div></div>
+          </div>
+          <div class="node service" id="sched">
+            <div class="ic" data-icon="calendar-clock"></div>
+            <div class="tx"><b>Scheduler</b><span>interval and daily schedules start new jobs</span>
+              <div class="chips"><span class="chip">APScheduler</span><span class="chip">timer state in openalgo.db</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="node broker stack" id="broker" style="width:190px; min-width:0; margin-top:44px">
+        <div class="ic" data-icon="trending-up"></div>
+        <div class="tx"><b>Your broker</b><span>historical data API, called with your OpenAlgo API key</span></div>
+      </div>
+    </div>
+
+    <div class="row" style="gap:60px; align-items:center; padding-left:760px">
+      <div class="node data big" id="duck" style="width:400px">
+        <div class="ic" data-icon="database"></div>
+        <div class="tx"><b>historify.duckdb</b><span>your local candle store, also holds jobs and schedules</span>
+          <div class="chips"><span class="chip">market_data</span><span class="chip">catalog</span><span class="chip">jobs</span><span class="chip">schedules</span></div></div>
+      </div>
+      <div class="node app" id="api" style="width:290px">
+        <div class="ic" data-icon="code-xml"></div>
+        <div class="tx"><b>History API</b><span>also served by OpenAlgo (API key auth); with source=db it reads stored candles</span>
+          <div class="chips"><span class="chip">/api/v1/history</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('ui', 'bp', { color: 'client', from: 'right', to: 'left' })
+  connect('bp', 'hs', { color: 'security', label: 'start job', from: 'right', to: 'left' })
+  connect('bp', 'sched', { color: 'security', label: 'manage schedules', from: 'bottom', to: 'top' })
+  connect('sched', 'hs-bl', { color: 'service', label: 'run job', from: 'right', to: 'bottom', bend: 70 })
+  connect('hs', 'hist', { color: 'service', from: 'right', to: 'left' })
+  connect('hist', 'broker', { color: 'broker', from: 'right', to: 'left' })
+  connect('hs-br', 'duck', { color: 'data', label: 'save candles', from: 'bottom', to: 'top' })
+  connect('sched', 'duck', { color: 'data', label: 'schedule list + run history', from: 'bottom', to: 'left' })
+  connect('api', 'duck', { color: 'app', dashed: true, from: 'left', to: 'right' })
+  connect('hs', 'ui', { color: 'client', dashed: true, label: 'Socket.IO progress', from: 'top', to: 'top', bend: 120 })
+</script>

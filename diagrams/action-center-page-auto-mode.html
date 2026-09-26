@@ -1,0 +1,56 @@
+<style>#canvas > .wlabel { position: absolute; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Action Center · Auto mode</div>
+    <h1>In Auto mode, your signal becomes an order with no click from you</h1>
+    <p style="max-width:1000px">OpenAlgo checks the order, then sends it straight to your broker. If Analyzer mode is on, it goes to the sandbox instead so no real money moves.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:30px; margin-top:20px">
+    <div class="step" style="--c:var(--client); align-items:center"><div class="n">1</div>
+      <div class="node client big" id="sig" style="width:250px">
+        <div class="ic" data-icon="zap"></div>
+        <div class="tx"><b>Trading signal</b><span>from your strategy, TradingView or the Python SDK</span></div>
+      </div>
+    </div>
+
+    <div class="step" style="--c:var(--security); align-items:center"><div class="n">2</div>
+      <div class="node security big" id="oa" style="width:320px">
+        <div class="ic" data-icon="shield-check"></div>
+        <div class="tx"><b>OpenAlgo checks it</b><span>your API key and the order details</span>
+          <div class="chips"><span class="chip">/api/v1</span></div></div>
+      </div>
+    </div>
+
+    <div class="step" style="--c:var(--service); align-items:center"><div class="n">3</div>
+      <div class="node service big" id="mode" style="width:320px">
+        <div class="ic" data-icon="split"></div>
+        <div class="tx"><b>Analyzer mode on?</b><span>live or sandbox mode</span></div>
+      </div>
+    </div>
+
+    <div class="col" style="gap:70px; margin-left:90px">
+      <div class="step" id="st4a" style="--c:var(--broker); align-items:center"><div class="n">4a</div>
+      <div class="node broker big hero" id="broker" style="width:260px">
+        <div class="ic" data-icon="radio-tower"></div>
+        <div class="tx"><b>Your broker</b><span>order placed immediately</span></div>
+      </div></div>
+      <div class="step" id="st4b" style="--c:var(--data); align-items:center"><div class="n">4b</div>
+      <div class="node data big" id="sb" style="width:260px">
+        <div class="ic" data-icon="test-tube-diagonal"></div>
+        <div class="tx"><b>Sandbox</b><span>virtual fill, no real money</span>
+          <div class="chips"><span class="chip">sandbox.db</span></div></div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:48px; gap:40px">
+    <div class="note" style="max-width:900px"><span data-icon="lightbulb"></span><div>Auto is the default. Switch to Semi-auto if you want each order to wait in the Action Center for your approval.</div></div>
+  </div>
+</div>
+<script>
+  connect('sig', 'oa', { color: 'client' })
+  connect('oa', 'mode', { color: 'security' })
+  connect('mode', 'st4a', { color: 'broker', label: 'off: live', from: 'right', to: 'left' })
+  connect('mode', 'st4b', { color: 'data', label: 'on: sandbox', from: 'right', to: 'left' })
+</script>

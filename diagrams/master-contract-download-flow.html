@@ -1,0 +1,149 @@
+<style>
+  #canvas > .wlabel { position:absolute; }
+  .mg { display:grid; grid-template-columns: 240px 250px 60px 290px 290px 290px; column-gap:28px; row-gap:64px; align-items:center; }
+  .mg .step { display:block; }
+  .mg .step .n { position:absolute; top:-16px; left:-16px; z-index:3; }
+  .mg .chip { overflow-wrap:anywhere; }
+  .mg .node { position:relative; }
+  .anc { position:absolute; width:2px; height:2px; }
+  .mg > * { position:relative; z-index:1; }
+  .mg > .zone { z-index:0; align-self:stretch; margin:-34px -20px -22px -20px; }
+  .mg > .r1 { margin-bottom:56px; }
+  .mg > .r4 { margin-top:56px; }
+  .mg .node { min-width:0; }
+</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Master contract download</div>
+    <h1>Fresh symbols once a day, reused the rest of the time</h1>
+    <p style="max-width:1100px">When you log in (or press Force Download), OpenAlgo checks whether today's symbol list (after the 8 AM cutoff) is already saved. If not, it downloads it from your broker in the background, stores it and loads it into memory for fast order lookups.</p>
+  </div>
+
+  <div class="mg">
+    <!-- row 1: outside world and storage above the worker -->
+    <div class="node broker r1" id="bapi" style="grid-column:4; grid-row:1">
+      <div class="ic" data-icon="radio-tower"></div>
+      <div class="tx"><b>Your broker</b><span>instrument file or API</span></div>
+    </div>
+    <div class="node data r1" id="sym" style="grid-column:5; grid-row:1">
+      <div class="ic" data-icon="database"></div>
+      <div class="tx"><b>Symbol table</b><span>every tradable instrument</span>
+        <div class="chips"><span class="chip">openalgo.db · symtoken</span></div></div>
+    </div>
+    <div class="node data r1" id="mem" style="grid-column:6; grid-row:1">
+      <div class="ic" data-icon="cpu"></div>
+      <div class="tx"><b>Memory cache</b><span>filled from the table in step 4</span>
+        <div class="chips"><span class="chip">token_db_enhanced</span></div></div>
+    </div>
+
+    <!-- worker zone -->
+    <div class="zone" style="--c:var(--service); grid-column:4 / 7; grid-row:2 / 4">
+      <div class="zl" style="left:auto; right:22px"><span data-icon="refresh-cw"></span>Background thread (daemon)</div>
+      <i class="anc" id="zoneB" style="left:74%;bottom:0"></i>
+    </div>
+
+    <!-- row 2 -->
+    <div class="node app stack" id="force" style="grid-column:1; grid-row:2">
+      <div class="ic" data-icon="download"></div>
+      <div class="tx"><b>Download API call</b><span>Force Download button sends force = true</span>
+        <div class="chips"><span class="chip">POST /api/master-contract<wbr>/download</span></div></div>
+    </div>
+    <div class="step" style="--c:var(--service); grid-column:4; grid-row:2">
+      <div class="n">1</div>
+      <div class="node service stack" id="dl"><i class="anc" id="dlL" style="left:0;top:78%"></i>
+        <div class="ic" data-icon="play"></div>
+        <div class="tx"><b>Start download</b><span>status: downloading</span>
+          <div class="chips"><span class="chip">async_master_contract_<wbr>download()</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--broker); grid-column:5; grid-row:2">
+      <div class="n">2</div>
+      <div class="node broker stack" id="bmod"><i class="anc" id="bmodL" style="left:22%;top:0"></i><i class="anc" id="bmodR" style="left:62%;top:0"></i>
+        <div class="ic" data-icon="plug-zap"></div>
+        <div class="tx"><b>Broker module</b><span>fetch, parse, map to OpenAlgo symbols, replace all symtoken rows, notify the browser (Socket.IO)</span>
+          <div class="chips"><span class="chip">broker/&lt;name&gt;/database/</span><span class="chip">master_contract_db.py</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--service); grid-column:6; grid-row:2">
+      <div class="n">3</div>
+      <div class="node service stack" id="norm">
+        <div class="ic" data-icon="list-checks"></div>
+        <div class="tx"><b>Tidy and record</b><span>fix derivative underlyings, then status: success, symbol count, download stats</span>
+          <div class="chips"><span class="chip">normalize_derivative_<wbr>underlyings()</span></div></div>
+      </div>
+    </div>
+
+    <!-- row 3 -->
+    <div class="node app stack" id="login" style="grid-column:1; grid-row:3">
+      <div class="ic" data-icon="log-in"></div>
+      <div class="tx"><b>You log in to your broker</b><span>session saved, broker status reset</span>
+        <div class="chips"><span class="chip">handle_auth_success()</span></div></div>
+    </div>
+    <div class="node service hero stack" id="decide" style="grid-column:2; grid-row:3"><i class="anc" id="decT" style="left:82%;top:0"></i>
+      <div class="ic" data-icon="calendar-clock"></div>
+      <div class="tx"><b>Symbols out of date?</b><span>yes if first run, broker changed, new day, or last download was before the 08:00 IST cutoff (00:00 UTC for crypto)</span>
+        <div class="chips"><span class="chip">MASTER_CONTRACT_<wbr>CUTOFF_TIME</span><span class="chip">should_download_<wbr>master_contract()</span></div></div>
+    </div>
+    <div class="node service stack" id="load" style="grid-column:4; grid-row:3">
+      <div class="ic" data-icon="archive-restore"></div>
+      <div class="tx"><b>Reuse saved symbols</b><span>login path only: mark ready from existing rows</span>
+        <div class="chips"><span class="chip">load_existing_<wbr>master_contract()</span></div></div>
+    </div>
+    <div class="step" style="--c:var(--service); grid-column:5; grid-row:3">
+      <div class="n">4</div>
+      <div class="node service stack" id="hook">
+        <div class="ic" data-icon="zap"></div>
+        <div class="tx"><b>Load into memory</b><span>fill the symbol cache, restore Python strategies</span>
+          <div class="chips"><span class="chip">hook_into_master_<wbr>contract_download()</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--external); grid-column:6; grid-row:3">
+      <div class="n">5</div>
+      <div class="node external stack" id="catchup">
+        <div class="ic" data-icon="flask-conical"></div>
+        <div class="tx"><b>Sandbox catch-up</b><span>T+1 settlement, daily PnL reset</span>
+          <div class="chips"><span class="chip">run_catch_up_tasks()</span></div></div>
+      </div>
+    </div>
+
+    <!-- row 4 -->
+    <div class="r4 node external" id="skipped" style="grid-column:2; grid-row:4">
+      <div class="ic" data-icon="circle-slash"></div>
+      <div class="tx"><b>Nothing downloaded</b><span>API call without force returns status: skipped</span></div>
+    </div>
+    <div class="r4 note" style="grid-column:4; grid-row:4; max-width:none">
+      <span data-icon="lightbulb"></span>
+      <div>Force Download never reuses saved symbols: with force = true it always downloads, without it an up-to-date list is simply skipped.</div>
+    </div>
+    <div class="r4 node data" id="status" style="grid-column:5 / 7; grid-row:4">
+      <div class="ic" data-icon="activity"></div>
+      <div class="tx"><b>Download status</b><span>pending, downloading, success or error, with symbol count</span>
+        <div class="chips"><span class="chip">openalgo.db · master_contract_status</span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--app)"><i></i>Triggers</span>
+    <span style="--c:var(--service)"><i></i>Processing steps</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+    <span style="--c:var(--data)"><i></i>Storage</span>
+    <span style="--c:var(--external)"><i></i>Skipped / sandbox</span>
+  </div>
+</div>
+<script>
+  connect('force', 'dl', { color: 'app', label: 'force = true', from: 'right', to: 'left' })
+  connect('force', 'decide', { color: 'app', label: 'force = false', from: 'bottom', to: 'top', bend: 50 })
+  connect('login', 'decide', { color: 'app', from: 'right', to: 'left' })
+  connect('decT', 'dlL', { color: 'service', label: 'out of date', from: 'top', to: 'left', bend: 70 })
+  connect('decide', 'load', { color: 'service', label: 'fresh, login', from: 'right', to: 'left' })
+  connect('decide', 'skipped', { color: 'muted', label: 'fresh, API call', from: 'bottom', to: 'top' })
+  connect('dl', 'bmod', { color: 'service' })
+  connect('bmodL', 'bapi', { color: 'broker', label: 'HTTP', both: true, from: 'top', to: 'bottom' })
+  connect('bmodR', 'sym', { color: 'data', label: 'write rows', from: 'top', to: 'bottom' })
+  connect('bmod', 'norm', { color: 'service', from: 'right', to: 'left' })
+  connect('norm', 'hook', { color: 'service', from: 'bottom', to: 'top' })
+  connect('load', 'hook', { color: 'service', from: 'right', to: 'left' })
+  connect('hook', 'catchup', { color: 'service', from: 'right', to: 'left' })
+  connect('sym', 'mem', { color: 'data', from: 'right', to: 'left' })
+  connect('zoneB', 'status', { color: 'data', label: 'status updates', dashed: true, from: 'bottom', to: 'top' })
+</script>

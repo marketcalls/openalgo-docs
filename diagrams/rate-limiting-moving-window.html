@@ -1,0 +1,98 @@
+<style>
+  #canvas > .wlabel { position:absolute; }
+  .tl { position:relative; height:190px; margin:6px 10px 56px; }
+  .tl .axis { position:absolute; left:0; right:0; top:110px; height:2px; background:rgba(148,163,184,.35); }
+  .tl .win { position:absolute; left:760px; width:760px; top:56px; height:110px; border-radius:16px;
+    background:rgba(251,191,36,.07); border:1.5px dashed rgba(251,191,36,.55); }
+  .tl .win .wl { position:absolute; top:-15px; left:50%; transform:translateX(-50%); font-size:13px; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--data); background:var(--bg1); border:1px solid rgba(251,191,36,.45); padding:4px 12px; border-radius:999px; white-space:nowrap; }
+  .tl .dot { position:absolute; top:99px; width:24px; height:24px; margin-left:-12px; border-radius:50%; }
+  .tl .dot.old { background:#334155; border:2px solid #64748b; }
+  .tl .dot.in { background:var(--data); box-shadow:0 0 18px -2px var(--data); }
+  .tl .dot.now { width:34px; height:34px; top:94px; margin-left:-17px; background:var(--client); box-shadow:0 0 26px 0 var(--client); }
+  .tl .lab { position:absolute; top:140px; transform:translateX(-50%); font-size:14px; color:var(--ink3); white-space:nowrap; }
+  .tl .lab b { color:var(--ink); }
+  .tl .cap { position:absolute; top:10px; font-size:14px; color:var(--ink3); }
+  .tl .cap b { color:var(--ink2); }
+  .fg { display:grid; grid-template-columns: 250px 290px 250px 270px 240px; column-gap:56px; row-gap:60px; align-items:stretch; }
+  .fg .node { min-width:0; }
+  .fg .step { display:block; position:relative; }
+  .fg .step .n { position:absolute; top:-16px; left:-16px; z-index:3; }
+  .fg .step > .node { height:100%; box-sizing:border-box; }
+  .fg > .note, .fg > #deny { align-self:center; }
+</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Moving window</div>
+    <h1>The limit looks back over a sliding window, not a clock minute</h1>
+    <p style="max-width:1100px">Every new request looks at how many requests the same caller made in the window just before it. Old requests drop out as time moves on, so there is no burst at the start of each minute.</p>
+  </div>
+
+  <div class="tl">
+    <div class="cap">Example: a route limited to <b>5 per minute</b></div>
+    <div class="axis"></div>
+    <div class="win"><div class="wl">window: last 60 seconds</div></div>
+    <div class="dot old" style="left:160px"></div>
+    <div class="dot old" style="left:380px"></div>
+    <div class="dot old" style="left:600px"></div>
+    <div class="lab" style="left:380px">older hits have <b>fallen out</b>, not counted</div>
+    <div class="dot in" style="left:880px"></div>
+    <div class="dot in" style="left:1040px"></div>
+    <div class="dot in" style="left:1200px"></div>
+    <div class="dot in" style="left:1330px"></div>
+    <div class="lab" style="left:1105px"><b>4 hits</b> inside the window: below 5, so allowed</div>
+    <div class="dot now" style="left:1520px"></div>
+    <div class="lab" style="left:1440px; top:66px"><b>new request at t</b></div>
+    <div class="lab" style="left:760px; top:172px">t - 60s</div>
+  </div>
+
+  <div class="fg">
+    <div class="step" style="--c:var(--client)"><div class="n">1</div>
+      <div class="node client stack" id="hit">
+        <div class="ic" data-icon="send"></div>
+        <div class="tx"><b>Request arrives</b><span>at time t, keyed by caller</span></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--service)"><div class="n">2</div>
+      <div class="node service stack" id="count">
+        <div class="ic" data-icon="history"></div>
+        <div class="tx"><b>Count recent hits</b><span>stored hits for this key with a timestamp after t - window; older hits are ignored</span></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--security)"><div class="n">3</div>
+      <div class="node security hero stack" id="cmp">
+        <div class="ic" data-icon="gauge"></div>
+        <div class="tx"><b>Below the limit?</b><span>count compared with the route's limit</span></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--data); margin-left:34px"><div class="n">4</div>
+      <div class="node data stack" id="rec">
+        <div class="ic" data-icon="memory-stick"></div>
+        <div class="tx"><b>Record this hit at t</b><span>added to the caller's history</span>
+          <div class="chips"><span class="chip">memory://</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--app)"><div class="n">5</div>
+      <div class="node app big stack" id="ok">
+        <div class="ic" data-icon="circle-check"></div>
+        <div class="tx"><b>Allow</b><span>the request runs</span></div>
+      </div>
+    </div>
+
+    <div class="note" style="grid-column:1 / 3; grid-row:2; max-width:none">
+      <span data-icon="lightbulb"></span>
+      <div>More accurate than a fixed window: a caller cannot send the full limit at 9:14:59 and again at 9:15:00.</div>
+    </div>
+    <div class="node security stack" id="deny" style="grid-column:3 / 5; grid-row:2; position:relative"><i id="denyT" style="position:absolute; left:21.7%; top:0; width:2px; height:2px"></i>
+      <div class="ic" data-icon="octagon-x"></div>
+      <div class="tx"><b>Reject with 429</b><span>keeps rejecting until the oldest hit leaves the window, then requests are allowed again</span></div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('hit', 'count', { color: 'client', from: 'right', to: 'left' })
+  connect('count', 'cmp', { color: 'service', from: 'right', to: 'left' })
+  connect('cmp', 'rec', { color: 'data', label: 'yes', from: 'right', to: 'left' })
+  connect('rec', 'ok', { color: 'app', from: 'right', to: 'left' })
+  connect('cmp', 'denyT', { color: 'security', label: 'no', from: 'bottom', to: 'top' })
+</script>

@@ -1,0 +1,84 @@
+<div id="canvas" style="width:1680px">
+  <style>#canvas > .wlabel { position: absolute; }</style>
+  <div class="title">
+    <div class="eyebrow">Browser security</div>
+    <h1>Every browser request passes five guards, in order</h1>
+    <p style="max-width:1100px">Before a page load or button click reaches your account, OpenAlgo blocks banned addresses, forged requests and stale sessions, checks who you are, then hardens the reply and its cookies.</p>
+  </div>
+
+  <div class="row" style="align-items:stretch; gap:40px">
+    <div class="zone" style="--c:var(--security); display:flex">
+      <div class="zl"><span data-icon="shield"></span>WSGI layer</div>
+      <div class="step" style="flex-direction:column; align-items:center; gap:12px; --c:var(--security)">
+        <div class="n">1</div>
+        <div class="node security stack" id="ipb" style="width:215px; min-width:215px; flex:1">
+          <div class="ic" data-icon="ban"></div>
+          <div class="tx"><b>Blocks banned IPs</b><span>a banned address gets 403 before Flask even runs</span>
+            <div class="chips"><span class="chip">SecurityMiddleware</span><span class="chip">logs.db ip_bans</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone" style="--c:var(--app); flex:1">
+      <div class="zl"><span data-icon="server"></span>Flask app (app.py)</div>
+      <div class="row" style="align-items:stretch; gap:34px">
+        <div class="step" style="flex-direction:column; align-items:center; gap:12px; flex:1; --c:var(--security)">
+          <div class="n">2</div>
+          <div class="node security stack" id="csrf" style="align-self:stretch; flex:1">
+            <div class="ic" data-icon="shield-check"></div>
+            <div class="tx"><b>Stops forged forms</b><span>CSRF token check, when CSRF_ENABLED</span>
+              <div class="chips"><span class="chip">CSRFProtect</span><span class="chip">exempt: /api/v1</span><span class="chip">webhooks</span><span class="chip">broker callbacks</span></div></div>
+          </div>
+        </div>
+        <div class="step" style="flex-direction:column; align-items:center; gap:12px; flex:1; --c:var(--security)">
+          <div class="n">3</div>
+          <div class="node security stack" id="exp" style="align-self:stretch; flex:1">
+            <div class="ic" data-icon="calendar-clock"></div>
+            <div class="tx"><b>Ends stale sessions</b><span>past the daily cut-off (03:00 IST default): revoke tokens and clear the session</span>
+              <div class="chips"><span class="chip">check_session_expiry</span><span class="chip">SESSION_EXPIRY_TIME</span></div></div>
+          </div>
+        </div>
+        <div class="step" style="flex-direction:column; align-items:center; gap:12px; flex:1; --c:var(--app)">
+          <div class="n">4</div>
+          <div class="node app stack" id="route" style="align-self:stretch; flex:1">
+            <div class="ic" data-icon="key-round"></div>
+            <div class="tx"><b>Checks who you are</b><span>each page checks that your session is still valid</span>
+              <div class="chips"><span class="chip">@check_session_validity</span></div>
+              <span style="margin-top:14px">at login only: password verified, optional TOTP, login attempts limited</span>
+              <div class="chips"><span class="chip">Argon2 + pepper</span><span class="chip">TOTP</span><span class="chip">5/min, 25/hour</span></div></div>
+          </div>
+        </div>
+        <div class="step" style="flex-direction:column; align-items:center; gap:12px; flex:1.3; --c:var(--security)">
+          <div class="n">5</div>
+          <div class="node security stack" id="hdr" style="align-self:stretch; flex:1">
+            <div class="ic" data-icon="scroll-text"></div>
+            <div class="tx"><b>Hardens the reply</b><span>security headers added after the route</span>
+              <div class="chips"><span class="chip">CSP if CSP_ENABLED</span><span class="chip">X-Frame-Options DENY</span><span class="chip">nosniff</span><span class="chip">Referrer-Policy</span><span class="chip">Permissions-Policy</span><span class="chip">CORS on /api/* if CORS_ENABLED</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:90px; justify-content:space-between; align-items:center">
+    <div class="node client big" id="br" style="width:267px">
+      <div class="ic" data-icon="monitor"></div>
+      <div class="tx"><b>Your browser</b><span>the React web app</span></div>
+    </div>
+    <div class="node security big" id="ck" style="width:640px">
+      <div class="ic" data-icon="cookie"></div>
+      <div class="tx"><b>Session and CSRF cookies</b><span>page scripts cannot read them and other sites cannot send them</span>
+        <div class="chips"><span class="chip">HttpOnly</span><span class="chip">SameSite=Lax</span><span class="chip">Secure + __Secure- prefix on HTTPS</span></div></div>
+    </div>
+  </div>
+  <div class="note" style="max-width:820px; margin-top:44px"><span data-icon="lightbulb"></span><div>Calls to /api/v1 skip the CSRF check: they prove who you are with your API key, not with a browser cookie.</div></div>
+</div>
+<script>
+  connect('br', 'ipb', { color: 'client', label: 'request', from: 'top', to: 'bottom' })
+  connect('ipb', 'csrf', { color: 'security' })
+  connect('csrf', 'exp', { color: 'security' })
+  connect('exp', 'route', { color: 'security' })
+  connect('route', 'hdr', { color: 'app' })
+  connect('hdr', 'ck', { color: 'security', label: 'Set-Cookie', from: 'bottom', to: 'top' })
+  connect('ck', 'br', { color: 'security', from: 'left', to: 'right', label: 'sent back with every request' })
+</script>

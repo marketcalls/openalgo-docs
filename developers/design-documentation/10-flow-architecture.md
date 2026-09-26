@@ -6,47 +6,7 @@ Flow is OpenAlgo's visual workflow automation system built with XYFlow (React Fl
 
 ## Architecture Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                               Flow Architecture                               │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                         React Flow Canvas (Frontend)                          │
-│                                                                               │
-│  ┌────────────┐     ┌────────────┐     ┌────────────┐     ┌────────────┐      │
-│  │  Trigger   │────▶│  Condition │────▶│   Action   │────▶│   Output   │      │
-│  │   Nodes    │     │   Nodes    │     │   Nodes    │     │   Nodes    │      │
-│  └────────────┘     └────────────┘     └────────────┘     └────────────┘      │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        │ Save/Execute
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            Flow Blueprint (/flow)                             │
-│                                                                               │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐             │
-│  │  Workflow CRUD   │  │  Webhook Handler │  │  Scheduler Jobs  │             │
-│  │  /api/workflows  │  │  /webhook/{token}│  │  APScheduler     │             │
-│  └──────────────────┘  └──────────────────┘  └──────────────────┘             │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                             Flow Execution Engine                             │
-│                                                                               │
-│  WorkflowContext ─── Variables, Conditions, Interpolation                     │
-│  NodeExecutor ────── 60+ Node Type Handlers                                   │
-│  FlowOpenAlgoClient ─ OpenAlgo API Wrapper                                    │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                               Database (SQLite)                               │
-│                                                                               │
-│  flow_workflows │ flow_workflow_executions │ flow_apscheduler_jobs            │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-flow-architecture-overview.png" alt="Flow architecture: editor and webhook enter the /flow blueprint, triggers call execute_workflow, the executor calls OpenAlgo services, state in openalgo.db"><figcaption></figcaption></figure>
 
 ## Node Types
 
@@ -198,34 +158,7 @@ CREATE TABLE flow_workflow_executions (
 
 ### Execution Flow
 
-```
-1. Trigger received (webhook/schedule/manual)
-           │
-           ▼
-2. Load workflow (nodes + edges)
-           │
-           ▼
-3. Initialize context (variables, conditions)
-           │
-           ▼
-4. Find trigger node in graph
-           │
-           ▼
-5. Execute nodes sequentially
-   ┌───────┴───────┐
-   │ For each node │
-   │   • Get input │
-   │   • Execute   │
-   │   • Store out │
-   │   • Log result│
-   └───────┬───────┘
-           │
-           ▼
-6. Handle conditions (yes/no branching)
-           │
-           ▼
-7. Complete execution, save logs
-```
+<figure><img src="../../.gitbook/assets/diagram-flow-workflow-execution-steps.png" alt="Flow execution: lock, load, strict validation, execution record, depth-first node walk with branching, completed or failed"><figcaption></figcaption></figure>
 
 ### Safety Limits
 
@@ -373,21 +306,7 @@ An unrecognized condition is logged as an error rather than silently evaluating 
 
 ### Monitor Lifecycle
 
-```
-1. Workflow activated with priceAlert trigger
-           │
-           ▼
-2. Add alert to monitor (symbol, condition, price)
-           │
-           ▼
-3. Monitor polls every 5 seconds
-           │
-           ▼
-4. Condition met → Execute workflow
-           │
-           ▼
-5. Remove alert from monitor
-```
+<figure><img src="../../.gitbook/assets/diagram-flow-price-alert-monitor.png" alt="Price alert monitor loop: 5 second poll, expiry check, LTP fetch, condition, queued run, one-shot retire or every_time re-watch"><figcaption></figcaption></figure>
 
 ## API Endpoints
 

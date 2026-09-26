@@ -1,0 +1,101 @@
+<style>#canvas > .wlabel { position: absolute; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Security architecture</div>
+    <h1>Every request passes several locked doors first</h1>
+    <p style="max-width:1100px">Web and API traffic goes through your reverse proxy, then OpenAlgo's own middleware, login checks and request rules. Live market data has its own authenticated WebSocket door, and the internal message bus is never exposed.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:50px; margin-top:10px">
+    <div class="node client stack" id="client" style="width:170px; min-width:0; margin-right:70px">
+      <div class="ic" data-icon="users"></div>
+      <div class="tx"><b>Clients</b><span>browser, SDKs, TradingView, MCP clients</span></div>
+    </div>
+
+    <div class="col" style="gap:110px">
+      <div class="zone" style="--c:var(--security)">
+        <div class="zl"><span data-icon="user"></span>Operator-owned</div>
+        <div class="node security" id="proxy" style="width:320px">
+          <div class="ic" data-icon="lock"></div>
+          <div class="tx"><b>TLS proxy + firewall</b><span>your reverse proxy ends HTTPS; trust proxy headers only behind it</span>
+            <div class="chips"><span class="chip">nginx</span><span class="chip">ufw</span><span class="chip">TRUST_PROXY_HEADERS</span></div></div>
+        </div>
+      </div>
+      <div class="zone" style="--c:var(--service)">
+        <div class="zl"><span data-icon="radio"></span>WebSocket proxy · port 8765</div>
+        <div class="node security" id="wsauth" style="width:320px">
+          <div class="ic" data-icon="key-round"></div>
+          <div class="tx"><b>API-key handshake</b><span>each live-data connection must authenticate</span></div>
+        </div>
+      </div>
+      <div class="node external" id="zmq" style="width:372px">
+        <div class="ic" data-icon="cable"></div>
+        <div class="tx"><b>ZeroMQ bus</b><span>unauthenticated, keep it on loopback only</span>
+          <div class="chips"><span class="chip">port 5555</span></div></div>
+      </div>
+    </div>
+
+    <div class="zone" style="--c:var(--app)">
+      <div class="zl"><span data-icon="server"></span>Flask app · Gunicorn eventlet, 1 worker</div>
+      <div class="col" style="gap:34px">
+        <div class="step" style="--c:var(--security)"><div class="n">1</div>
+          <div class="node security" id="mw" style="width:330px">
+            <div class="ic" data-icon="ban"></div>
+            <div class="tx"><b>Blocks banned IPs</b><span>traffic is logged, then banned addresses get 403</span>
+              <div class="chips"><span class="chip">WSGI middleware</span><span class="chip">IP bans in logs.db</span></div></div>
+          </div>
+        </div>
+        <div class="step" style="--c:var(--security)"><div class="n">2</div>
+          <div class="node security" id="authn" style="width:330px">
+            <div class="ic" data-icon="shield-check"></div>
+            <div class="tx"><b>Checks who you are</b><span>login session, API key, webhook ID or OAuth</span>
+              <div class="chips"><span class="chip">session</span><span class="chip">API key</span><span class="chip">webhook ID</span><span class="chip">OAuth (Remote MCP)</span></div></div>
+          </div>
+        </div>
+        <div class="step" style="--c:var(--security)"><div class="n">3</div>
+          <div class="node security" id="policy" style="width:330px">
+            <div class="ic" data-icon="filter"></div>
+            <div class="tx"><b>Checks the request is valid and not too fast</b><span>bad input is refused, rate limits apply</span>
+              <div class="chips"><span class="chip">schema</span><span class="chip">CSRF (/api/v1 exempt)</span><span class="chip">Flask-Limiter</span></div></div>
+          </div>
+        </div>
+        <div class="step" style="--c:var(--service)"><div class="n">4</div>
+          <div class="node service hero" id="svc" style="width:330px">
+            <div class="ic" data-icon="workflow"></div>
+            <div class="tx"><b>Decides where the order goes</b><span>Action Center and analyzer routing send it live or to the sandbox</span>
+              <div class="chips"><span class="chip">service layer</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="gap:30px; align-self:flex-end; margin-left:36px">
+      <div class="node broker" id="broker" style="width:300px">
+        <div class="ic" data-icon="trending-up"></div>
+        <div class="tx"><b>Broker APIs</b><span>live mode</span></div>
+      </div>
+      <div class="node service" id="sandbox" style="width:300px">
+        <div class="ic" data-icon="flask-conical"></div>
+        <div class="tx"><b>Sandbox engine</b><span>analyzer mode, no real orders</span></div>
+      </div>
+      <div class="node data" id="stores" style="width:300px">
+        <div class="ic" data-icon="database"></div>
+        <div class="tx"><b>Isolated local stores</b><span>one file per concern</span>
+          <div class="chips"><span class="chip">openalgo.db</span><span class="chip">logs.db</span><span class="chip">latency.db</span><span class="chip">health.db</span><span class="chip">sandbox.db</span><span class="chip">historify.duckdb</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('client', 'proxy', { color: 'client', from: 'right', to: 'left', label: 'HTTPS / WSS' })
+  connect('proxy', 'wsauth', { color: 'client', dashed: true, from: 'bottom', to: 'top', label: 'market data (WSS)' })
+  connect('proxy', 'mw', { color: 'security', from: 'right', to: 'left' })
+  connect('mw', 'authn', { color: 'security', from: 'bottom', to: 'top' })
+  connect('authn', 'policy', { color: 'security', from: 'bottom', to: 'top' })
+  connect('policy', 'svc', { color: 'security', from: 'bottom', to: 'top' })
+  connect('svc', 'broker', { color: 'broker', from: 'right', to: 'left' })
+  connect('svc', 'sandbox', { color: 'service', from: 'right', to: 'left' })
+  connect('svc', 'stores', { color: 'data', from: 'right', to: 'left' })
+  connect('sandbox', 'stores', { color: 'data', from: 'bottom', to: 'top' })
+  connect('zmq', 'wsauth', { color: 'external', dashed: true, from: 'top', to: 'bottom', label: 'live ticks (internal)' })
+</script>

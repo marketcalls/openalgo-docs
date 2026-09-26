@@ -1,0 +1,65 @@
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Admin section</div>
+    <h1>Six admin screens share one protected settings service</h1>
+    <p style="max-width:1100px">Every admin page talks to the same admin API through a login and rate-limit check. Behind it, settings live in openalgo.db tables, diagnostics come from log files, and Remote MCP settings are written to .env.</p>
+  </div>
+
+  <div class="row" style="gap:76px; align-items:center">
+    <div class="zone" id="pages" style="--c:var(--client)">
+      <div class="zl"><span data-icon="monitor"></span>React admin pages</div>
+      <div class="col" style="gap:12px">
+        <div class="node client" style="width:270px; padding:12px 16px"><div class="ic" data-icon="layout-dashboard"></div><div class="tx"><b>Admin home</b><span>summary counts</span><div class="chips" style="margin-top:4px"><span class="chip">/admin</span><span class="chip">/api/stats</span></div></div></div>
+        <div class="node client" style="width:270px; padding:12px 16px"><div class="ic" data-icon="snowflake"></div><div class="tx"><b>Freeze quantities</b><div class="chips" style="margin-top:4px"><span class="chip">/admin/freeze</span></div></div></div>
+        <div class="node client" style="width:270px; padding:12px 16px"><div class="ic" data-icon="calendar-days"></div><div class="tx"><b>Holidays</b><div class="chips" style="margin-top:4px"><span class="chip">/admin/holidays</span></div></div></div>
+        <div class="node client" style="width:270px; padding:12px 16px"><div class="ic" data-icon="clock"></div><div class="tx"><b>Market timings</b><div class="chips" style="margin-top:4px"><span class="chip">/admin/timings</span></div></div></div>
+        <div class="node client" style="width:270px; padding:12px 16px"><div class="ic" data-icon="stethoscope"></div><div class="tx"><b>Diagnostics</b><div class="chips" style="margin-top:4px"><span class="chip">/admin/diagnostics</span></div></div></div>
+        <div class="node client" style="width:270px; padding:12px 16px"><div class="ic" data-icon="bot"></div><div class="tx"><b>Remote MCP</b><div class="chips" style="margin-top:4px"><span class="chip">/admin/remote-mcp</span></div></div></div>
+      </div>
+    </div>
+
+    <div class="node security stack" id="sec" style="width:270px">
+      <div class="ic" data-icon="shield-check"></div>
+      <div class="tx"><b>Login and rate limit</b><span>Only a signed-in session gets through, with a request limit on every route.</span>
+        <div class="chips"><span class="chip">check_session_validity</span><span class="chip">API_RATE_LIMIT</span><span class="chip">10/min: CSV upload, diagnostics, report, MCP kill switch</span><span class="chip">30/min: MCP settings, client errors</span></div></div>
+    </div>
+
+    <div class="node app big hero stack" id="bp" style="width:250px">
+      <div class="ic" data-icon="server"></div>
+      <div class="tx"><b>Admin API</b><span>JSON only. The pages render in React; this API just reads and writes data.</span>
+        <div class="chips"><span class="chip">admin_bp</span><span class="chip">blueprints/admin.py</span><span class="chip">/admin/api/*</span></div></div>
+    </div>
+
+    <div class="col" style="gap:40px; width:470px">
+      <div class="zone" style="--c:var(--data)">
+        <div class="zl"><span data-icon="database"></span>openalgo.db</div>
+        <div class="col" style="gap:12px">
+          <div class="node data" id="qf"><div class="ic" data-icon="snowflake"></div><div class="tx"><b>Freeze quantities</b><span>qty_freeze, plus an in-memory cache</span><div class="chips"><span class="chip">/api/freeze</span></div></div></div>
+          <div class="node data" id="cal"><div class="ic" data-icon="calendar-days"></div><div class="tx"><b>Market calendar</b><span>market_holidays, market_holiday_exchanges, market_timings</span><div class="chips"><span class="chip">/api/holidays</span><span class="chip">/api/timings</span></div></div></div>
+          <div class="node data" id="oc"><div class="ic" data-icon="key-round"></div><div class="tx"><b>MCP OAuth clients</b><span>oauth_clients</span><div class="chips"><span class="chip">/api/oauth/clients</span></div></div></div>
+        </div>
+      </div>
+      <div class="zone" style="--c:var(--data)">
+        <div class="zl"><span data-icon="folder-cog"></span>Files on disk</div>
+        <div class="col" style="gap:12px">
+          <div class="node data" id="err"><div class="ic" data-icon="file-warning"></div><div class="tx"><b>log/errors.jsonl</b><span>server and client errors</span><div class="chips"><span class="chip">/api/errors*</span><span class="chip">/api/system/report</span></div></div></div>
+          <div class="node data" id="mja"><div class="ic" data-icon="scroll-text"></div><div class="tx"><b>log/mcp.jsonl</b><span>MCP audit trail</span><div class="chips"><span class="chip">/api/mcp/audit</span></div></div></div>
+          <div class="node data" id="env"><div class="ic" data-icon="settings"></div><div class="tx"><b>.env</b><span>MCP settings, restart required</span><div class="chips"><span class="chip">/api/mcp/settings</span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>Admin pages</span>
+    <span style="--c:var(--security)"><i></i>Access check</span>
+    <span style="--c:var(--app)"><i></i>Backend API</span>
+    <span style="--c:var(--data)"><i></i>Where data is kept</span>
+  </div>
+</div>
+<style>#canvas > .wlabel { position: absolute; }</style>
+<script>
+  connect('pages', 'sec', { color: 'client', from: 'right', to: 'left' })
+  connect('sec', 'bp', { color: 'security', from: 'right', to: 'left' })
+  for (const id of ['qf', 'cal', 'oc', 'err', 'mja', 'env']) connect('bp', id, { color: 'data', from: 'right', to: 'left' })
+</script>

@@ -8,41 +8,9 @@ The Admin section provides system configuration and management capabilities incl
 
 ## Architecture Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          Admin Section Architecture                           │
-└───────────────────────────────────────────────────────────────────────────────┘
+<figure><img src="../../.gitbook/assets/diagram-admin-section-architecture.png" alt="React admin pages call admin_bp JSON endpoints under /admin/api, backed by openalgo.db tables, log files and .env"><figcaption></figcaption></figure>
 
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                               React Admin Pages                               │
-│                                                                               │
-│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │
-│  │ Freeze        │  │ Holiday       │  │ Market        │  │ Diagnostics,  │   │
-│  │ quantities    │  │ calendar      │  │ timings       │  │ Remote MCP    │   │
-│  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘   │
-│          │                  │                  │                  │           │
-│          └──────────────────┴────────┬─────────┴──────────────────┘           │
-│                                      │                                        │
-│                                      ▼                                        │
-│               ┌────────────────────────────────────────────┐                  │
-│               │ blueprints/admin.py, url_prefix /admin     │                  │
-│               │ JSON only, every route is /admin/api/*     │                  │
-│               └────────────────────────────────────────────┘                  │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                             Monitoring Dashboards                             │
-│                                                                               │
-│  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐ │
-│  │ Security             │  │ Traffic              │  │ Latency              │ │
-│  │ /security            │  │ /traffic             │  │ /latency             │ │
-│  │                      │  │                      │  │                      │ │
-│  │ - IP bans            │  │ - HTTP logs          │  │ - Order RTT          │ │
-│  │ - 404 tracking       │  │ - Requests per second│  │ - Percentiles        │ │
-│  │ - API-key abuse      │  │ - Error rates        │  │ - SLA buckets        │ │
-│  └──────────────────────┘  └──────────────────────┘  └──────────────────────┘ │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-admin-section-monitoring-dashboards.png" alt="React /logs/security, /logs/traffic and /logs/latency pages backed by security_bp, traffic_bp and latency_bp over logs.db, latency.db and openalgo.db"><figcaption></figcaption></figure>
 
 ## Freeze Quantity Management
 

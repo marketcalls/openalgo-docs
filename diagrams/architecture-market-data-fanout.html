@@ -1,0 +1,78 @@
+<style>#canvas > .wlabel { position: absolute; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Live market data</div>
+    <h1>One broker feed, shared by every screen and strategy</h1>
+    <p style="max-width:1080px">Ten strategies watching NIFTY do not open ten broker connections. OpenAlgo receives each tick once and hands it to every tool and feature that subscribed to it.</p>
+  </div>
+
+  <div class="row" style="align-items:flex-start; gap:50px">
+    <div class="node broker big hero" id="feed" style="width:250px; margin-top:164px">
+      <div class="ic" data-icon="radio-tower"></div>
+      <div class="tx"><b>Your broker</b><span>live price feed</span></div>
+    </div>
+
+    <div class="col" style="gap:40px; margin-top:60px">
+      <div class="zone" style="--c:var(--app)">
+        <div class="zl"><span data-icon="radio"></span>WebSocket proxy · separate process</div>
+        <div class="row" style="gap:50px; align-items:stretch">
+          <div class="node service stack" id="adapter" style="width:200px">
+            <div class="ic" data-icon="plug-zap"></div>
+            <div class="tx"><b>Broker adapter</b><span>turns broker ticks into OpenAlgo symbols; adds connections when you watch many symbols</span>
+              <div class="chips"><span class="chip">broker/*/streaming</span><span class="chip">max 3 connections</span></div></div>
+          </div>
+          <div class="node data stack" id="zmq" style="width:200px">
+            <div class="ic" data-icon="cable"></div>
+            <div class="tx"><b>Internal message bus</b><span>never exposed outside</span>
+              <div class="chips"><span class="chip">ZeroMQ</span><span class="chip">port 5555</span></div></div>
+          </div>
+          <div class="node app stack" id="hub" style="width:220px; position:relative">
+            <i id="h1" style="position:absolute; left:100%; top:20%"></i><i id="h2" style="position:absolute; left:100%; top:40%"></i><i id="h3" style="position:absolute; left:100%; top:60%"></i><i id="h4" style="position:absolute; left:100%; top:80%"></i>
+            <div class="ic" data-icon="radio"></div>
+            <div class="tx"><b>Sign-in and broadcast</b><span>checks your API key, sends each client the symbols it asked for</span>
+              <div class="chips"><span class="chip">port 8765</span><span class="chip">LTP · Quote · Depth</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="padding-left:176px">
+        <div class="node service" id="cache" style="width:400px">
+          <div class="ic" data-icon="refresh-cw"></div>
+          <div class="tx"><b>Cache refresh signals</b><span>sent from the OpenAlgo app over the same bus</span>
+            <div class="chips"><span class="chip">same app as right-hand box</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="gap:16px">
+      <div class="node client" id="xl" style="width:300px"><div class="ic" data-icon="sheet"></div><div class="tx"><b>Excel</b><span>live cells</span></div></div>
+      <div class="node client" id="py" style="width:300px"><div class="ic" data-icon="code-xml"></div><div class="tx"><b>Python SDK</b><span>your strategies</span></div></div>
+      <div class="node client" id="ui" style="width:300px"><div class="ic" data-icon="chart-candlestick"></div><div class="tx"><b>Browser</b><span>charts and terminals</span></div></div>
+      <div class="zone" id="inapp" style="--c:var(--service); padding:36px 16px 16px; width:300px">
+        <div class="zl" id="inappL"><span data-icon="server"></span>Inside the OpenAlgo app</div>
+        <div class="col" style="gap:10px">
+          <div class="node service" style="min-width:0; padding:10px 14px"><div class="ic" data-icon="workflow"></div><div class="tx"><b>Flow automations</b></div></div>
+          <div class="node service" style="min-width:0; padding:10px 14px"><div class="ic" data-icon="test-tube-diagonal"></div><div class="tx"><b>Sandbox engine</b></div></div>
+          <div class="node service" style="min-width:0; padding:10px 14px"><div class="ic" data-icon="gauge"></div><div class="tx"><b>Strategies and scalping risk</b></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+    <span style="--c:var(--service)"><i></i>Adapter and in-app features</span>
+    <span style="--c:var(--data)"><i></i>Internal bus</span>
+    <span style="--c:var(--app)"><i></i>WebSocket proxy</span>
+    <span style="--c:var(--client)"><i></i>Your tools</span>
+  </div>
+</div>
+<script>
+  connect('feed', 'adapter', { color: 'broker' })
+  connect('adapter', 'zmq', { color: 'service' })
+  connect('zmq', 'hub', { color: 'data' })
+  connect('cache', 'zmq', { color: 'service', dashed: true, from: 'top', to: 'bottom' })
+  connect('h1', 'xl', { color: 'client', from: 'right', to: 'left' })
+  connect('h2', 'py', { color: 'client', from: 'right', to: 'left' })
+  connect('h3', 'ui', { color: 'client', from: 'right', to: 'left' })
+  connect('h4', 'inappL', { color: 'service', from: 'right', to: 'left' })
+</script>

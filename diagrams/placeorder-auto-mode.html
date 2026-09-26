@@ -1,0 +1,30 @@
+<style>#canvas > .wlabel{position:absolute} .step.v{flex-direction:column; align-items:center; gap:14px} .step.v{align-self:stretch} .step.v .chip{display:inline-block; line-height:1.45; white-space:nowrap} .step.v > .node{width:228px; min-width:0; flex:1; justify-content:flex-start}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Auto mode</div>
+    <h1>In auto mode your order goes straight through</h1>
+    <p style="max-width:1100px">No one has to approve it. The order is checked, matched to your broker session, and executed at once: with your broker when live, or in the sandbox when analyzer mode is on.</p>
+  </div>
+
+  <div class="row" style="align-items:stretch; gap:34px; padding-top:10px">
+    <div class="step v" style="--c:var(--client)"><div class="n">1</div>
+      <div class="node client stack" id="req"><div class="ic" data-icon="file-check"></div><div class="tx"><b>Your order arrives</b><span>from your strategy or platform; required fields are checked first</span><div class="chips"><span class="chip">/api/v1/placeorder</span><span class="chip">OrderSchema</span></div></div></div></div>
+    <div class="step v" style="--c:var(--service)"><div class="n">2</div>
+      <div class="node service stack" id="route"><div class="ic" data-icon="split"></div><div class="tx"><b>Mode check</b><span>auto, so it is not queued for approval</span><div class="chips"><span class="chip">should_route_to_pending</span></div></div></div></div>
+    <div class="step v" style="--c:var(--service)"><div class="n">3</div>
+      <div class="node service stack" id="val"><div class="ic" data-icon="list-checks"></div><div class="tx"><b>Validate</b><span>symbol, quantity, price type, product</span><div class="chips"><span class="chip">validate_order_data</span></div></div></div></div>
+    <div class="step v" style="--c:var(--security)"><div class="n">4</div>
+      <div class="node security stack" id="auth"><div class="ic" data-icon="key-round"></div><div class="tx"><b>Authenticate</b><span>API key to your broker session</span><div class="chips"><span class="chip">get_auth_token_broker</span></div></div></div></div>
+    <div class="step v" style="--c:var(--broker)"><div class="n">5</div>
+      <div class="node broker stack hero" id="exec"><div class="ic" data-icon="rocket"></div><div class="tx"><b>Execute</b><span>live: sent to your broker<br>analyzer mode: filled in the sandbox</span><div class="chips"><span class="chip">place_order_with_auth</span></div></div></div></div>
+    <div class="step v" style="--c:var(--client)"><div class="n">6</div>
+      <div class="node client stack" id="resp"><div class="ic" data-icon="reply"></div><div class="tx"><b>Response</b><span>order id, or an error with its status code</span><div class="chips"><span class="chip">JSON + status</span></div></div></div></div>
+  </div>
+</div>
+<script>
+  connect('req', 'route', { color: 'client', from: 'right', to: 'left' })
+  connect('route', 'val', { color: 'service', from: 'right', to: 'left' })
+  connect('val', 'auth', { color: 'service', from: 'right', to: 'left' })
+  connect('auth', 'exec', { color: 'security', from: 'right', to: 'left' })
+  connect('exec', 'resp', { color: 'broker', from: 'right', to: 'left' })
+</script>

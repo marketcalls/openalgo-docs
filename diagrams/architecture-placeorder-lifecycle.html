@@ -1,0 +1,70 @@
+<style>#canvas > .wlabel { position: absolute; }
+.lg .step { align-items: center; }
+.lg .step .node { flex: 1; }
+.lg .node { min-width: 0; position: relative; }
+.anc { position: absolute; width: 0; height: 0; }
+.lg .r6 { margin-top: 36px; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Placing an order</div>
+    <h1>Every order takes the same safe path</h1>
+    <p style="max-width:1080px">Whether it comes from TradingView, the Python SDK, Excel or the terminal, your order is checked, routed to your broker or the sandbox, and announced to logs and alerts before you get the reply.</p>
+  </div>
+
+  <div class="grid lg" style="grid-template-columns:400px 500px 440px; column-gap:110px; row-gap:30px; align-items:center">
+    <!-- row 1 -->
+    <div style="grid-row:1; grid-column:2" class="step" ><div class="n" style="--c:var(--client)">1</div>
+      <div class="node client" id="s1"><div class="ic" data-icon="send"></div><div class="tx"><b>You send an order</b><span>order details plus your API key</span>
+        <div class="chips"><span class="chip">/api/v1/placeorder</span></div></div></div></div>
+    <!-- row 2 -->
+    <div style="grid-row:2; grid-column:2" class="step"><div class="n" style="--c:var(--security)">2</div>
+      <div class="node security" id="s2"><div class="ic" data-icon="shield-check"></div><div class="tx"><b>Gatekeeper checks</b><span>too many orders too fast? missing fields?</span>
+        <div class="chips"><span class="chip">rate limit</span><span class="chip">schema check</span></div></div></div></div>
+    <!-- row 3 -->
+    <div style="grid-row:3; grid-column:1" class="node security" id="ac"><div class="ic" data-icon="hand"></div><div class="tx"><b>Waits in the Action Center</b><span>for your approval; the flow stops here</span></div></div>
+    <div style="grid-row:3; grid-column:2" class="step" id="st3"><div class="n" style="--c:var(--service)">3</div>
+      <div class="node service" id="s3"><div class="ic" data-icon="user-check"></div><div class="tx"><b>Semi-auto mode on?</b><span>if not, the order carries on automatically</span></div></div></div>
+    <!-- row 4 -->
+    <div style="grid-row:4; grid-column:2" class="step"><div class="n" style="--c:var(--service)">4</div>
+      <div class="node service" id="s4"><div class="ic" data-icon="key-round"></div><div class="tx"><b>Validates and finds your broker login</b><span>order values checked, API key matched to your session</span></div></div></div>
+    <!-- row 5 -->
+    <div style="grid-row:5; grid-column:1" class="node data" id="sb"><div class="ic" data-icon="test-tube-diagonal"></div><div class="tx"><b>Sandbox</b><span>virtual order, no real money; returns a sandbox order id</span>
+      <div class="chips"><span class="chip">sandbox_place_order</span></div></div><i class="anc" id="sbR" style="left:100%; top:82%"></i></div>
+    <div style="grid-row:5; grid-column:2" class="step" id="st5"><div class="n" style="--c:var(--service)">5</div>
+      <div class="node service hero" id="s5"><div class="ic" data-icon="split"></div><div class="tx"><b>Analyzer mode on?</b><span>sandbox mode or live trading</span></div></div></div>
+    <div style="grid-row:5; grid-column:3" class="node broker" id="plug"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Broker plugin</b><span>translates symbol and order type for your broker</span>
+      <div class="chips"><span class="chip">place_order_api</span></div></div></div>
+    <!-- row 6 -->
+    <div style="grid-row:6; grid-column:1" class="node external r6" id="subs"><div class="ic" data-icon="bell"></div><div class="tx"><b>Who hears about it</b><span>order log, live screen update, Telegram, WhatsApp, strategy book (placed orders)</span></div></div>
+    <div style="grid-row:6; grid-column:2" class="step r6" id="st6"><div class="n" style="--c:var(--service)">6</div>
+      <div class="node service" id="s6"><i class="anc" id="s6T" style="left:12%; top:0"></i><div class="ic" data-icon="megaphone"></div><div class="tx"><b>Result is announced</b><span>once the broker or sandbox has answered</span>
+        <div class="chips"><span class="chip">order.placed</span><span class="chip">order.failed</span></div></div></div></div>
+    <div style="grid-row:6; grid-column:3" class="node broker r6" id="brk"><div class="ic" data-icon="radio-tower"></div><div class="tx"><b>Your broker</b><span>places the order, returns an order id</span></div></div>
+    <!-- row 7 -->
+    <div style="grid-row:7; grid-column:2" class="step"><div class="n" style="--c:var(--client)">7</div>
+      <div class="node client" id="s7"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>You get the reply</b><span>status and order id</span></div></div></div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>You</span>
+    <span style="--c:var(--security)"><i></i>Checks and approval</span>
+    <span style="--c:var(--service)"><i></i>OpenAlgo order service</span>
+    <span style="--c:var(--data)"><i></i>Sandbox</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+    <span style="--c:var(--external)"><i></i>Logs and alerts</span>
+  </div>
+</div>
+<script>
+  connect('s1', 's2', { color: 'client', from: 'bottom', to: 'top' })
+  connect('s2', 's3', { color: 'security', from: 'bottom', to: 'top' })
+  connect('st3', 'ac', { color: 'security', dashed: true, label: 'yes', from: 'left', to: 'right' })
+  connect('s3', 's4', { color: 'service', from: 'bottom', to: 'top' })
+  connect('s4', 's5', { color: 'service', from: 'bottom', to: 'top' })
+  connect('st5', 'sb', { color: 'data', label: 'on', from: 'left', to: 'right' })
+  connect('s5', 'plug', { color: 'broker', label: 'off', from: 'right', to: 'left' })
+  connect('plug', 'brk', { color: 'broker', from: 'bottom', to: 'top' })
+  connect('sbR', 's6T', { color: 'data', dashed: true, label: 'sandbox order id', from: 'right', to: 'top', bend: 70 })
+  connect('brk', 's6', { color: 'broker', dashed: true, label: 'order id', from: 'left', to: 'right' })
+  connect('st6', 'subs', { color: 'external', from: 'left', to: 'right' })
+  connect('s6', 's7', { color: 'service', from: 'bottom', to: 'top' })
+</script>

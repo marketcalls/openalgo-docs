@@ -1,0 +1,80 @@
+<div id="canvas" style="width:1680px">
+  <style>#canvas > .wlabel { position: absolute; }</style>
+  <div class="title">
+    <div class="eyebrow">API Playground</div>
+    <h1>Try every API call from the browser, with your own key filled in</h1>
+    <p style="max-width:1080px">The Playground page lists the ready-made requests from the Bruno collection, fetches your API key for you, and sends test calls to the same REST API and WebSocket feed your strategies use.</p>
+  </div>
+
+  <div class="row" style="align-items:stretch; gap:90px">
+    <div class="zone" style="--c:var(--client); width:330px">
+      <div class="zl"><span data-icon="monitor"></span>Your browser</div>
+      <div class="grid" style="grid-template-rows:400px 160px 270px; gap:26px; align-items:stretch">
+        <div class="step" style="--c:var(--client); align-items:center; height:100%"><div class="n">1</div>
+          <div class="node client stack" id="list" style="width:230px; justify-content:center; align-self:stretch; margin:40px 0 0"><div class="ic" data-icon="list-checks"></div><div class="tx"><b>Endpoint list</b><span>five groups of ready requests</span>
+            <div class="chips"><span class="chip">account</span><span class="chip">orders</span><span class="chip">data</span><span class="chip">utilities</span><span class="chip">websocket</span></div></div></div>
+        </div>
+        <div class="step" style="--c:var(--client); align-items:center; height:100%"><div class="n">2</div>
+          <div class="node client" id="http" style="width:230px; align-self:stretch; margin:14px 0"><div class="ic" data-icon="send"></div><div class="tx"><b>HTTP request panel</b><span>edit and send a call</span></div></div>
+        </div>
+        <div class="step" style="--c:var(--client); align-items:center; height:100%"><div class="n">3</div>
+          <div class="node client" id="wst" style="width:230px; align-self:stretch; margin:20px 0"><div class="ic" data-icon="radio"></div><div class="tx"><b>WebSocket tester</b><span>authenticate, subscribe, unsubscribe</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone" style="--c:var(--app); flex:1">
+      <div class="zl"><span data-icon="server"></span>Your OpenAlgo server</div>
+      <div class="grid" style="grid-template-rows:400px 160px 270px; grid-template-columns:330px 1fr 280px; gap:26px 56px; align-items:center">
+        <div class="zone" style="--c:var(--security); padding:40px 20px 20px">
+          <div class="zl"><span data-icon="lock"></span>/playground · login required</div>
+          <div class="col" style="gap:16px">
+            <div class="node app" id="ep"><div class="ic" data-icon="file-text"></div><div class="tx"><b>Endpoint catalogue</b><span>GET /playground/endpoints</span></div></div>
+            <div class="node app" id="ak"><div class="ic" data-icon="key-round"></div><div class="tx"><b>Your API key</b><span>GET /playground/api-key, decrypted</span></div></div>
+            <div class="node external" id="col" style="opacity:.6; border-style:dashed"><div class="ic" data-icon="file-text"></div><div class="tx"><b>Raw collections</b><span>GET /playground/collections, not used by the page</span></div></div>
+          </div>
+        </div>
+        <div class="col" style="gap:60px; align-self:start; margin-top:40px">
+          <div class="node service" id="parser"><div class="ic" data-icon="filter"></div><div class="tx"><b>Reads and sorts the requests</b><span>name, order, method, URL, body</span>
+            <div class="chips"><span class="chip">parse_bru_file()</span><span class="chip">categorize_endpoint()</span><span class="chip">GET POST PUT DELETE PATCH + ws</span></div></div></div>
+          <div class="node data" id="keys" style="align-self:flex-start"><div class="ic" data-icon="database"></div><div class="tx"><b>API keys table</b><span>stored encrypted</span>
+            <div class="chips"><span class="chip">api_keys.api_key_encrypted</span></div></div></div>
+        </div>
+        <div class="node data stack" id="bru" style="align-self:start; margin-top:40px"><div class="ic" data-icon="hard-drive"></div><div class="tx"><b>Bruno .bru files</b><span>stock or crypto set, picked by your broker type</span>
+          <div class="chips"><span class="chip">collections/openalgo/IN_stock</span><span class="chip">.../crypto</span></div></div></div>
+
+        <div class="node app" id="rest" style="grid-column:1 / span 2; width:420px"><div class="ic" data-icon="code-xml"></div><div class="tx"><b>REST API</b><span>same-origin call, API key in body or query</span>
+          <div class="chips"><span class="chip">/api/v1/*</span><span class="chip">also /playground/*</span><span class="chip">CSRF token on non-GET</span></div></div></div>
+        <div></div>
+
+        <div class="col" style="grid-column:1 / span 2; gap:22px">
+          <div class="node app" id="wscfg" style="width:420px"><div class="ic" data-icon="settings"></div><div class="tx"><b>Feed address and key</b><span>tells the tester where to connect</span>
+            <div class="chips"><span class="chip">/api/websocket/config</span><span class="chip">/api/websocket/apikey</span></div></div></div>
+          <div class="node service" id="proxy" style="width:420px"><div class="ic" data-icon="radio-tower"></div><div class="tx"><b>WebSocket proxy</b><span>live market data feed, authenticate then subscribe</span>
+            <div class="chips"><span class="chip">port 8765</span><span class="chip">ws:// or wss://</span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:40px; gap:40px; align-items:flex-start">
+    <div class="legend" style="margin-top:12px">
+      <span style="--c:var(--client)"><i></i>Your browser</span>
+      <span style="--c:var(--security)"><i></i>Login-protected routes</span>
+      <span style="--c:var(--app)"><i></i>OpenAlgo server</span>
+      <span style="--c:var(--service)"><i></i>Processing</span>
+      <span style="--c:var(--data)"><i></i>Stored data</span>
+    </div>
+    <div class="note" style="max-width:640px; margin-left:auto"><span data-icon="lightbulb"></span><div>Test calls hit the real API with your real key. With the analyzer off, an order sent here goes to your broker.</div></div>
+  </div>
+</div>
+<script>
+  connect('list', 'ep', { color: 'client', label: 'load list' })
+  connect('list', 'ak', { color: 'client', label: 'fill key' })
+  connect('ep', 'parser', { color: 'app' })
+  connect('parser', 'bru', { color: 'service' })
+  connect('ak', 'keys', { color: 'app', from: 'right', to: 'left' })
+  connect('http', 'rest', { color: 'client', label: 'test call' })
+  connect('wst', 'wscfg', { color: 'client', label: '1. get URL + key', from: 'right', to: 'left' })
+  connect('wst', 'proxy', { color: 'client', label: '2. connect', from: 'right', to: 'left' })
+</script>

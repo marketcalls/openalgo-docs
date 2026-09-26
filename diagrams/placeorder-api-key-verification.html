@@ -1,0 +1,92 @@
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">API key verification</div>
+    <h1>Four checks stand between your API key and your broker session</h1>
+    <p style="max-width:1100px">Cheap memory lookups answer most requests. The slow Argon2 check runs only for a key OpenAlgo has not seen recently, and every answer, good or bad, is remembered by the key's fingerprint.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns:repeat(5, 1fr); column-gap:46px; row-gap:96px; align-items:stretch">
+    <!-- Row 1: finding who owns the key -->
+    <div class="node security stack" id="fp">
+      <div class="ic" data-icon="fingerprint"></div>
+      <div class="tx"><b>Fingerprint the key</b><span>The plain key is hashed. Caches store only the hash, never the key itself.</span>
+        <div class="chips"><span class="chip">get_auth_token_broker()</span><span class="chip">SHA-256</span></div></div>
+    </div>
+    <div class="node data stack" id="ac">
+      <div class="ic" data-icon="database-zap"></div>
+      <div class="tx"><b>1. Recent answers</b><span>Seen this key lately? Still re-checks the key is valid and not revoked.</span>
+        <span style="color:#fda4af">Revoked: go to Rejected</span>
+        <span style="color:#fda4af">Remembered rejection: go to Rejected</span>
+        <span>Not seen, or no longer valid: go to step 2</span>
+        <div class="chips"><span class="chip">auth_cache</span><span class="chip">5 min to 24 h</span><span class="chip">Auth.is_revoked</span></div></div>
+    </div>
+    <div class="node data stack" id="inv">
+      <div class="ic" data-icon="list-x"></div>
+      <div class="tx"><b>2. Known bad keys</b><span>Keys that failed recently are turned away at once.</span>
+        <span style="color:#fda4af">Found: go to Rejected</span>
+        <span>Not found: go to step 3</span>
+        <div class="chips"><span class="chip">invalid_api_key_cache</span><span class="chip">5 min</span></div></div>
+    </div>
+    <div class="node data stack" id="ver">
+      <div class="ic" data-icon="user-check"></div>
+      <div class="tx"><b>3. Known good keys</b><span>Keys verified recently map straight to their user.</span>
+        <span style="color:#86efac">Found: user identified</span>
+        <span>Not found: go to step 4</span>
+        <div class="chips"><span class="chip">verified_api_key_cache</span><span class="chip">10 h</span><span class="chip">user_id only</span></div></div>
+    </div>
+    <div class="node security stack" id="argon">
+      <div class="ic" data-icon="key-round"></div>
+      <div class="tx"><b>4. Full password-grade check</b><span>Key plus server pepper compared with the stored hashes.</span>
+        <span style="color:#86efac">Match: remember user</span>
+        <span style="color:#fda4af">No match: remember as bad, count toward an IP ban</span>
+        <div class="chips"><span class="chip">Argon2</span><span class="chip">API_KEY_PEPPER</span><span class="chip">InvalidAPIKeyTracker</span></div></div>
+    </div>
+
+    <!-- Row 2: outcomes -->
+    <div class="note" style="align-self:center; max-width:none">
+      <span data-icon="lightbulb"></span>
+      <div>Rejections are remembered too: a wrong key in step 2, a revoked or missing login in step 1, so neither can hammer the database.</div>
+    </div>
+    <div class="node broker big hero stack" id="ok">
+      <div class="ic" data-icon="circle-check"></div>
+      <div class="tx"><b>Allowed</b><span>Broker token and broker name go back to the order service, and the answer is saved in step 1.</span>
+        <div class="chips"><span class="chip">(auth_token, broker)</span></div></div>
+    </div>
+    <div class="node security stack" id="fernet">
+      <div class="ic" data-icon="lock-keyhole-open"></div>
+      <div class="tx"><b>Decrypt broker token</b><span>Your stored broker login is unlocked only now.</span>
+        <div class="chips"><span class="chip">Fernet</span><span class="chip">PBKDF2(pepper + FERNET_SALT)</span></div></div>
+    </div>
+    <div class="node data stack" id="row">
+      <div class="ic" data-icon="user-round-search"></div>
+      <div class="tx"><b>Load user record</b><span style="color:#86efac">Present and active: continue</span>
+        <span style="color:#fda4af">Missing or revoked: go to Rejected</span>
+        <div class="chips"><span class="chip">Auth row</span><span class="chip">openalgo.db</span></div></div>
+    </div>
+    <div class="node security big stack" id="deny" style="--c:#f43f5e">
+      <div class="ic" data-icon="shield-x"></div>
+      <div class="tx"><b>Rejected</b><span>Returns None, and the API answers 403 "Invalid openalgo apikey". A wrong key is remembered in step 2; a revoked or missing login is remembered in step 1.</span>
+        <div class="chips"><span class="chip">HTTP 403</span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--security)"><i></i>Security check</span>
+    <span style="--c:var(--data)"><i></i>Cache or database lookup</span>
+    <span style="--c:var(--broker)"><i></i>Allowed</span>
+  </div>
+</div>
+<style>#canvas > .wlabel { position: absolute; }</style>
+<script>
+  connect('fp', 'ac', { color: 'security' })
+  connect('ac', 'inv', { color: 'data' })
+  connect('inv', 'ver', { color: 'data' })
+  connect('ver', 'argon', { color: 'data' })
+  connect('ac', 'ok', { color: 'broker', label: 'hit, not revoked (good answer)', from: 'bottom', to: 'top' })
+  connect('ver', 'row', { color: 'broker', label: 'user_id', from: 'bottom', to: 'top' })
+  connect('argon', 'row', { color: 'broker', label: 'match', from: 'bottom', to: 'top', bend: 45 })
+  connect('row', 'deny', { color: 'security', from: 'right', to: 'left' })
+  connect('argon', 'deny', { color: 'security', label: 'no match', from: 'bottom', to: 'top' })
+  connect('row', 'fernet', { color: 'broker', from: 'left', to: 'right' })
+  connect('fernet', 'ok', { color: 'broker', from: 'left', to: 'right' })
+</script>

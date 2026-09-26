@@ -1,0 +1,68 @@
+<style>#canvas > .wlabel { position: absolute; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Caching</div>
+    <h1>Hot answers stay in memory, the database is the fallback</h1>
+    <p style="max-width:1100px">Symbol lookups, broker tokens and API key checks happen on almost every request, so each OpenAlgo process keeps them in memory. Only a cache miss or a reload goes to the database, which keeps orders and quotes fast.</p>
+  </div>
+
+  <div class="row center" style="margin-bottom:80px">
+    <div class="node app big" id="callers" style="width:760px"><div class="ic" data-icon="server"></div><div class="tx"><b>Code in the Flask process that needs an answer</b><span>REST API services, WebSocket and market data, and the broker login callback</span></div></div>
+  </div>
+
+  <div class="zone" id="mem" style="--c:var(--data)">
+    <div class="zl"><span data-icon="memory-stick"></span>In-memory caches · one set per process</div>
+    <div class="row" style="gap:30px; align-items:stretch">
+
+      <div class="zone" id="symc" style="--c:var(--ink3); width:420px; padding-top:38px; display:flex; flex-direction:column">
+        <div class="zl" style="font-size:12px"><span data-icon="file-code"></span>database/token_db_enhanced.py</div>
+        <div class="col" style="gap:14px; flex:1">
+          <div class="node data" id="sym" style="flex:1"><div class="ic" data-icon="list"></div><div class="tx"><b>Symbol cache</b><span>every tradable symbol and token (100K+, about 500 bytes each); reset daily at session expiry, reloaded after the next master contract download</span>
+            <div class="chips"><span class="chip">BrokerSymbolCache</span><span class="chip">daily reset</span></div></div></div>
+          <div class="node data" id="idx" style="flex:1"><div class="ic" data-icon="search"></div><div class="tx"><b>Fast lookup indexes</b><span>find a symbol by name, token or broker symbol instantly</span>
+            <div class="chips"><span class="chip">by_symbol_exchange</span><span class="chip">by_token_exchange</span><span class="chip">by_brsymbol_exchange</span><span class="chip">by_token</span><span class="chip">by_exchange</span></div></div></div>
+        </div>
+      </div>
+
+      <div class="zone" id="authc" style="--c:var(--ink3); width:640px; padding-top:38px; display:flex; flex-direction:column">
+        <div class="zl" style="font-size:12px"><span data-icon="file-code"></span>database/auth_db.py · login caches</div>
+        <div class="grid" style="grid-template-columns:1fr 1fr; grid-auto-rows:1fr; gap:14px; flex:1">
+          <div class="node data" style="min-width:0"><div class="ic" data-icon="key-round"></div><div class="tx"><b>Broker auth token</b><span>kept up to one day</span>
+            <div class="chips"><span class="chip">auth_cache</span><span class="chip">until session expiry</span></div></div></div>
+          <div class="node data" style="min-width:0"><div class="ic" data-icon="radio"></div><div class="tx"><b>Feed token</b><span>kept up to one day</span>
+            <div class="chips"><span class="chip">feed_token_cache</span><span class="chip">until session expiry</span></div></div></div>
+          <div class="node data" style="min-width:0"><div class="ic" data-icon="landmark"></div><div class="tx"><b>Broker name</b><span>kept for 50 minutes</span>
+            <div class="chips"><span class="chip">broker_cache</span><span class="chip">3000 s</span></div></div></div>
+          <div class="node data" style="min-width:0"><div class="ic" data-icon="toggle-left"></div><div class="tx"><b>Order mode</b><span>kept for 60 seconds</span>
+            <div class="chips"><span class="chip">order_mode_cache</span><span class="chip">60 s</span></div></div></div>
+        </div>
+        <div style="margin-top:14px; font-size:13px; color:var(--ink3)">Up to one day: the time left until SESSION_EXPIRY_TIME when the server starts.</div>
+      </div>
+
+      <div class="zone" id="keyc" style="--c:var(--ink3); flex:1; padding-top:38px; display:flex; flex-direction:column">
+        <div class="zl" style="font-size:12px"><span data-icon="file-code"></span>database/auth_db.py · API key caches</div>
+        <div class="col" style="gap:14px; flex:1">
+          <div class="node data" style="min-width:0; flex:1"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>Known good keys</b><span>remembered for 10 hours</span>
+            <div class="chips"><span class="chip">verified_api_key_cache</span><span class="chip">36000 s</span></div></div></div>
+          <div class="node data" style="min-width:0; flex:1"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>Known bad keys</b><span>remembered for 5 minutes</span>
+            <div class="chips"><span class="chip">invalid_api_key_cache</span><span class="chip">300 s</span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="zone" style="--c:var(--data); margin-top:78px">
+    <div class="zl" style="left:390px"><span data-icon="database"></span>db/openalgo.db · only on a cache miss</div>
+    <div class="row" style="gap:30px">
+      <div class="node data" id="t1" style="width:420px"><div class="ic" data-icon="table"></div><div class="tx"><b>Master contract</b><span>all symbols and tokens</span><div class="chips"><span class="chip">symtoken</span></div></div></div>
+      <div class="node data" id="t2" style="width:640px"><div class="ic" data-icon="lock"></div><div class="tx"><b>Broker logins</b><span>encrypted broker tokens</span><div class="chips"><span class="chip">auth</span></div></div></div>
+      <div class="node data" id="t3" style="flex:1"><div class="ic" data-icon="shield-check"></div><div class="tx"><b>API keys</b><span>stored as Argon2 hashes</span><div class="chips"><span class="chip">api_keys</span></div></div></div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('callers', 'mem', { color: 'app', from: 'bottom', to: 'top', label: 'lookup' })
+  connect('symc', 't1', { color: 'data', from: 'bottom', to: 'top', label: 'miss / reload' })
+  connect('authc', 't2', { color: 'data', from: 'bottom', to: 'top', label: 'miss' })
+  connect('keyc', 't3', { color: 'data', from: 'bottom', to: 'top', label: 'miss' })
+</script>

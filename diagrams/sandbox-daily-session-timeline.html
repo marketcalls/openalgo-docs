@@ -1,0 +1,71 @@
+<style>
+#canvas > .wlabel{position:absolute;z-index:3}
+.tl { display:grid; gap:16px; position:relative; }
+.tl::before { content:""; position:absolute; left:10px; right:10px; top:62px; height:2px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 20%, transparent), color-mix(in srgb, var(--c) 70%, transparent), color-mix(in srgb, var(--c) 20%, transparent)); }
+.slot { display:flex; flex-direction:column; align-items:center; gap:0; }
+.time { font: 700 17px 'JetBrains Mono', monospace; color: var(--ink); background: rgba(15,23,42,.9);
+  border:1px solid color-mix(in srgb, var(--c) 55%, transparent); padding:6px 12px; border-radius:999px; white-space:nowrap; }
+.time.muted { font: 600 15px 'Inter', sans-serif; color: var(--ink3); border-style:dashed; letter-spacing:.02em; padding:7px 14px; line-height:20px; }
+.dot { width:16px; height:16px; border-radius:50%; background: var(--c); margin:14px 0 18px; box-shadow: 0 0 16px var(--c); position:relative; z-index:1; }
+.slot .node { width:100%; min-width:0; padding:16px 14px; align-self:stretch; flex:1; }
+</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Sandbox daily schedule</div>
+    <h1>What the sandbox does automatically every day</h1>
+    <p style="max-width:1400px">Like a real broker, the sandbox squares off intraday (MIS) positions at each exchange's cut-off, snapshots the day's P&amp;L, settles delivery trades overnight and starts a fresh session. Times are IST defaults; square-off times can be changed in sandbox settings.</p>
+  </div>
+
+  <div class="row" style="gap:28px; align-items:stretch">
+    <div class="zone" style="--c:var(--service); flex:5">
+      <div class="zl"><span data-icon="sun"></span>Market day · default times, changeable in sandbox settings</div>
+      <div class="tl" style="grid-template-columns:repeat(5, minmax(0,1fr))">
+        <div class="slot"><div class="time muted">market hours</div><div class="dot"></div>
+          <div class="node service stack"><div class="ic" data-icon="activity"></div><div class="tx"><b>Trading hours</b><span>engine fills orders on live prices; MTM refreshed whenever positions are read</span></div></div></div>
+        <div class="slot"><div class="time">15:15</div><div class="dot"></div>
+          <div class="node security stack"><div class="ic" data-icon="alarm-clock"></div><div class="tx"><b>Square-off</b><span>MIS on equity and equity F&amp;O</span><div class="chips"><span class="chip">NSE</span><span class="chip">BSE</span><span class="chip">NFO</span><span class="chip">BFO</span></div></div></div></div>
+        <div class="slot"><div class="time">16:45</div><div class="dot"></div>
+          <div class="node security stack"><div class="ic" data-icon="alarm-clock"></div><div class="tx"><b>Square-off</b><span>MIS on currency</span><div class="chips"><span class="chip">CDS</span><span class="chip">BCD</span></div></div></div></div>
+        <div class="slot"><div class="time">17:00</div><div class="dot"></div>
+          <div class="node security stack"><div class="ic" data-icon="alarm-clock"></div><div class="tx"><b>Square-off</b><span>MIS on agri commodities</span><div class="chips"><span class="chip">NCDEX</span></div></div></div></div>
+        <div class="slot"><div class="time">23:30</div><div class="dot"></div>
+          <div class="node security stack"><div class="ic" data-icon="alarm-clock"></div><div class="tx"><b>Square-off</b><span>MIS on commodities</span><div class="chips"><span class="chip">MCX</span></div></div></div></div>
+      </div>
+    </div>
+    <div class="zone" style="--c:var(--data); flex:3.9">
+      <div class="zl"><span data-icon="moon"></span>Overnight</div>
+      <div class="tl" style="grid-template-columns:repeat(3, minmax(0,1fr))">
+        <div class="slot"><div class="time">23:59</div><div class="dot"></div>
+          <div class="node data stack"><div class="ic" data-icon="camera"></div><div class="tx"><b>P&amp;L snapshot</b><span>day's result saved; skipped on market holidays</span><div class="chips"><span class="chip">sandbox_daily_pnl</span></div></div></div></div>
+        <div class="slot"><div class="time">00:00</div><div class="dot"></div>
+          <div class="node data stack"><div class="ic" data-icon="briefcase"></div><div class="tx"><b>T+1 settlement</b><span>CNC buys move to holdings; CNC sells reduce holdings and credit the proceeds</span></div></div></div>
+        <div class="slot"><div class="time">03:00</div><div class="dot"></div>
+          <div class="node data stack"><div class="ic" data-icon="rotate-ccw"></div><div class="tx"><b>New session</b><span>Today's realized P&amp;L resets to zero on funds and positions. Default 03:00, set in your .env</span><div class="chips"><span class="chip">SESSION_EXPIRY_TIME</span></div></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="gap:28px; margin-top:56px; align-items:stretch">
+    <div class="zone" style="--c:var(--security); flex:5; display:flex; flex-direction:column; justify-content:center">
+      <div class="zl"><span data-icon="alarm-clock"></span>What every square-off does</div>
+      <div class="grid" style="grid-template-columns:0.88fr 1.12fr; gap:64px; align-items:stretch">
+        <div class="step" style="--c:var(--security); min-width:0"><div class="n">1</div>
+          <div class="node security" id="sq1" style="min-width:0; flex:1"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>Cancel pending orders</b><span>open MIS orders and orders on expired contracts; settle expired F&amp;O positions</span><div class="chips"><span class="chip">check_and_square_off</span></div></div></div></div>
+        <div class="step" style="--c:var(--security); min-width:0"><div class="n">2</div>
+          <div class="node security" id="sq2" style="min-width:0; flex:1"><div class="ic" data-icon="repeat"></div><div class="tx"><b>Close open MIS positions</b><span>a reverse MARKET order that fills immediately at the live price</span><div class="chips"><span class="chip">PositionManager.close_position</span></div></div></div></div>
+      </div>
+    </div>
+    <div class="zone" style="--c:var(--external); flex:3.9; padding:36px 18px 18px">
+      <div class="zl"><span data-icon="life-buoy"></span>Safety nets and options</div>
+      <div class="col" style="gap:12px">
+        <div class="node external" style="min-width:0; padding:12px 14px"><div class="ic" data-icon="timer"></div><div class="tx"><b>Backup check, every 1 min</b><span>squares off anything past its time</span></div></div>
+        <div class="node external" style="min-width:0; padding:12px 14px"><div class="ic" data-icon="log-in"></div><div class="tx"><b>Catch-up on login</b><span>runs missed square-off, T+1, P&amp;L jobs and GTTs</span></div></div>
+        <div class="node external" style="min-width:0; padding:12px 14px"><div class="ic" data-icon="calendar-sync"></div><div class="tx"><b>Weekly auto-reset</b><span>own schedule; reset day default Never</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('sq1', 'sq2', { color: 'security' })
+</script>

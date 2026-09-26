@@ -1,0 +1,77 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">WhatsApp order alerts</div>
+    <h1>How an order becomes a WhatsApp message on your phone</h1>
+    <p style="max-width:1100px">Placing an order never waits for WhatsApp. OpenAlgo announces the order internally, checks it is yours, and a background worker sends the alert to your own WhatsApp number.</p>
+  </div>
+
+  <div class="zone" style="--c:var(--app); margin-top:10px">
+    <div class="zl"><span data-icon="server"></span>Inside your OpenAlgo server</div>
+    <div class="grid" style="grid-template-columns:270px 305px 290px 300px; column-gap:90px; row-gap:80px; align-items:start">
+      <div class="step" style="--c:var(--client); flex-direction:column; gap:12px">
+        <div class="n">1</div>
+        <div class="node client stack" id="order" style="width:270px">
+          <div class="ic" data-icon="send"></div>
+          <div class="tx"><b>An order is placed</b><span>from your strategy, charting tool or the web app</span>
+            <div class="chips"><span class="chip">POST /api/v1/placeorder</span></div></div>
+        </div>
+      </div>
+      <div class="step" style="--c:var(--data); flex-direction:column; gap:12px">
+        <div class="n">2</div>
+        <div class="node data stack" id="bus" style="width:305px">
+          <div class="ic" data-icon="megaphone"></div>
+          <div class="tx"><b>OpenAlgo announces it</b><span>an "order placed" event goes to every listener, handled by background workers</span>
+            <div class="chips"><span class="chip">EventBus</span><span class="chip">10 workers</span></div></div>
+        </div>
+      </div>
+      <div class="step" style="--c:var(--security); flex-direction:column; gap:12px">
+        <div class="n">3</div>
+        <div class="node security stack" id="owner" style="width:290px">
+          <div class="ic" data-icon="user-check"></div>
+          <div class="tx"><b>Only your own orders</b><span>only if WhatsApp is paired and the API key's user is the owner who paired it</span>
+            <div class="chips"><span class="chip">is_paired</span><span class="chip">owner_username</span></div></div>
+        </div>
+      </div>
+      <div class="step" style="--c:var(--service); flex-direction:column; gap:12px">
+        <div class="n">4</div>
+        <div class="node service stack" id="queue" style="width:300px; position:relative">
+          <div class="ic" data-icon="list-ordered"></div>
+          <div class="tx"><b>Alert is queued</b><span>a sender worker picks it up; skipped quietly if the bot is not connected</span>
+            <div class="chips"><span class="chip">alert_executor</span><span class="chip">5 workers</span></div></div>
+        </div>
+      </div>
+
+      <div></div>
+      <div class="node external" id="others" style="width:290px; margin-top:50px">
+        <div class="ic" data-icon="layers"></div>
+        <div class="tx"><b>Other listeners</b><span>order log, live web app, Telegram, strategy book</span></div>
+      </div>
+      <div></div>
+      <div class="step" style="--c:var(--app); flex-direction:column; gap:12px">
+        <div class="n">5</div>
+        <div class="node app stack" id="bot" style="width:300px; position:relative">
+          <div class="ic" data-icon="message-circle"></div>
+          <div class="tx"><b>WhatsApp bot sends it</b><span>to your own chat, then tells the sender whether the send succeeded</span>
+            <div class="chips"><span class="chip">bot thread</span><span class="chip">own_jid</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row" style="justify-content:flex-end; margin-top:70px; padding-right:74px; gap:40px">
+    <div class="note" style="max-width:560px"><span data-icon="lightbulb"></span><div>Alerts go only to the WhatsApp account you paired, as a message to yourself. Your order is already placed before the alert is sent.</div></div>
+    <div class="node broker hero" id="phone" style="width:340px">
+      <div class="ic" data-icon="smartphone"></div>
+      <div class="tx"><b>Your phone</b><span>alert arrives in your own chat</span></div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('order', 'bus', { color: 'client', label: 'order placed' })
+  connect('bus', 'owner', { color: 'data' })
+  connect('owner', 'queue', { color: 'security', label: 'yours' })
+  connect('bus', 'others', { color: 'external', dashed: true, from: 'bottom', to: 'top' })
+  connect('queue', 'bot', { color: 'service', from: 'bottom', to: 'top' })
+  connect('bot', 'queue', { color: 'app', label: 'send result', dashed: true, from: 'right', to: 'right', bend: 45 })
+  connect('bot', 'phone', { color: 'broker', label: 'WhatsApp', from: 'bottom', to: 'top' })
+</script>

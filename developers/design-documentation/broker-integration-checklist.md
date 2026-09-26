@@ -10,12 +10,7 @@ The Flask-RESTX `Api` is configured with `doc=False`. Swagger/OpenAPI UI is inte
 
 Most resources follow this sequence:
 
-```text
-request JSON/query
-  -> Marshmallow schema
-  -> service call
-  -> jsonify normalized wrapper
-```
+<figure><img src="../../.gitbook/assets/diagram-restapi-resource-pattern.png" alt="REST resource pattern in four steps: Flask-Limiter rate limit (429), Marshmallow field check (400), service function with API key check (403), jsonify response; unexpected errors return 500 JSON"><figcaption></figcaption></figure>
 
 Schemas are split by domain:
 

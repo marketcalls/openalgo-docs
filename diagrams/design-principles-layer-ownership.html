@@ -1,0 +1,70 @@
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Design principles</div>
+    <h1>Each part has one job, and one central step decides where your order goes</h1>
+    <p style="max-width:1100px">A request is parsed and checked at the edge, then a service picks where the work happens: your broker, the sandbox, the database or a calculator. Logging and alerts ride along without ever blocking the order.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns:260px 260px 300px 470px; column-gap:84px; row-gap:120px; align-items:center">
+    <div class="node app stack" id="req">
+      <div class="ic" data-icon="globe"></div>
+      <div class="tx"><b>1. Entry point</b><span>Reads the request, checks who you are, sets the HTTP status.</span>
+        <div class="chips"><span class="chip">restx_api/</span><span class="chip">blueprints/</span></div></div>
+    </div>
+    <div class="node security stack" id="val">
+      <div class="ic" data-icon="shield-check"></div>
+      <div class="tx"><b>2. Validation</b><span>Rejects bad fields or an expired session before any work.</span>
+        <div class="chips"><span class="chip">marshmallow schema</span><span class="chip">check_session_validity</span></div></div>
+    </div>
+    <div class="node service big hero stack" id="svc">
+      <div class="ic" data-icon="workflow"></div>
+      <div class="tx"><b>3. Service</b><span>Picks live or analyze mode, applies policy and runs the steps in order.</span>
+        <div class="chips"><span class="chip">services/*_service.py</span></div></div>
+    </div>
+    <div class="zone" style="--c:var(--ink3)">
+      <div class="zl"><span data-icon="layers"></span>4. Where the work happens</div>
+      <div class="col" style="gap:16px">
+        <div class="node broker" id="brk"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Broker module</b><span>maps symbols and fields for your broker</span><div class="chips"><span class="chip">broker/&lt;name&gt;/</span></div></div></div>
+        <div class="node service" id="sbx"><div class="ic" data-icon="flask-conical"></div><div class="tx"><b>Sandbox</b><span>analyze mode, simulated fills</span><div class="chips"><span class="chip">sandbox.db</span></div></div></div>
+        <div class="node data" id="db"><div class="ic" data-icon="database"></div><div class="tx"><b>Database modules</b><span>read and store records</span><div class="chips"><span class="chip">database/*_db.py</span></div></div></div>
+        <div class="node service" id="calc"><div class="ic" data-icon="calculator"></div><div class="tx"><b>Calculation module</b><span>Greeks, margin, indicators</span><div class="chips"><span class="chip">option_greeks_service.py</span><span class="chip">margin_service.py</span><span class="chip">indicator_service.py</span></div></div></div>
+      </div>
+    </div>
+
+    <div class="node external" id="ac" style="grid-column:1 / span 2; justify-self:center; width:420px">
+      <div class="ic" data-icon="inbox"></div>
+      <div class="tx"><b>Action Center queue</b><span>Semi-auto mode: the order waits for your approval instead of executing.</span></div>
+    </div>
+    <div class="node app big stack" id="resp">
+      <div class="ic" data-icon="braces"></div>
+      <div class="tx"><b>5. Normalized response</b><span>Same OpenAlgo JSON shape whichever broker or mode did the work.</span>
+        <div class="chips"><span class="chip">result tuple</span></div></div>
+    </div>
+    <div class="node external" id="bus">
+      <div class="ic" data-icon="megaphone"></div>
+      <div class="tx"><b>Side effects: logs, live updates, Telegram</b><span>Best-effort extras that never block the order</span>
+        <div class="chips"><span class="chip">EventBus</span><span class="chip">logging</span><span class="chip">Socket.IO</span><span class="chip">Telegram</span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--app)"><i></i>Edge and response</span>
+    <span style="--c:var(--security)"><i></i>Validation</span>
+    <span style="--c:var(--service)"><i></i>Orchestration and processing</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+    <span style="--c:var(--data)"><i></i>Storage</span>
+    <span style="--c:var(--external)"><i></i>Side paths (dashed)</span>
+  </div>
+</div>
+<style>#canvas > .wlabel { position: absolute; }</style>
+<script>
+  connect('req', 'val', { color: 'app' })
+  connect('val', 'svc', { color: 'security' })
+  connect('svc', 'brk', { color: 'broker', from: 'right', to: 'left' })
+  connect('svc', 'sbx', { color: 'service', from: 'right', to: 'left' })
+  connect('svc', 'db', { color: 'data', from: 'right', to: 'left' })
+  connect('svc', 'calc', { color: 'service', from: 'right', to: 'left' })
+  connect('svc', 'resp', { color: 'app', from: 'bottom', to: 'top', label: 'result' })
+  connect('svc', 'ac', { color: 'muted', dashed: true, from: 'bottom', to: 'top', label: 'semi-auto: queue' })
+  connect('svc', 'bus', { color: 'muted', dashed: true, from: 'bottom', to: 'top', label: 'publish event' })
+</script>

@@ -6,66 +6,7 @@ OpenAlgo provides a cross-platform Python strategy hosting system that allows us
 
 ## Architecture Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                     Python Strategy Hosting Architecture                      │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            Web Interface (/python)                            │
-│                                                                               │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐          │
-│  │    Upload    │ │    Start     │ │   Schedule   │ │    Delete    │          │
-│  │   Strategy   │ │   Strategy   │ │   Strategy   │ │   Strategy   │          │
-│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘          │
-│         │                │                │                │                  │
-└─────────┴────────────────┴────────────────┴────────────────┴──────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                           Strategy Management Layer                           │
-│                                                                               │
-│  ┌─────────────────────────────────────────────────────────────────────┐      │
-│  │  RUNNING_STRATEGIES = {}   # {strategy_id: {'process', 'started'}} │       │
-│  │  STRATEGY_CONFIGS = {}     # {strategy_id: config_dict}             │      │
-│  │  SCHEDULER (APScheduler)   # Background job scheduler               │      │
-│  │  PROCESS_LOCK              # Thread-safe process operations         │      │
-│  └─────────────────────────────────────────────────────────────────────┘      │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            Process Isolation Layer                            │
-│                                                                               │
-│  ┌────────────────┐ ┌────────────────┐ ┌────────────────┐                     │
-│  │  Strategy 1    │ │  Strategy 2    │ │  Strategy 3    │  ...                │
-│  │  (subprocess)  │ │  (subprocess)  │ │  (subprocess)  │                     │
-│  │                │ │                │ │                │                     │
-│  │  - Own PID     │ │  - Own PID     │ │  - Own PID     │                     │
-│  │  - Own memory  │ │  - Own memory  │ │  - Own memory  │                     │
-│  │  - Own stdout  │ │  - Own stdout  │ │  - Own stdout  │                     │
-│  │  - Own stderr  │ │  - Own stderr  │ │  - Own stderr  │                     │
-│  └────────────────┘ └────────────────┘ └────────────────┘                     │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                                  File System                                  │
-│                                                                               │
-│  strategies/                                                                  │
-│  ├── scripts/                    # Strategy Python files                      │
-│  │   ├── strategy_1.py                                                        │
-│  │   ├── strategy_2.py                                                        │
-│  │   └── ...                                                                  │
-│  └── strategy_configs.json       # Persistent configuration                   │
-│                                                                               │
-│  log/                                                                         │
-│  └── strategies/                 # One log file per run, IST stamped          │
-│      ├── 1_20260823_091500_IST.log                                            │
-│      ├── 1_20260822_091500_IST.log                                            │
-│      └── ...                                                                  │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-pystrategy-hosting-architecture.png" alt="Python strategy hosting: React /python pages call python_strategy_bp, which with APScheduler launches one subprocess per strategy that logs to log/strategies and calls the OpenAlgo REST API"><figcaption></figcaption></figure>
 
 ## Directory Structure
 
@@ -162,46 +103,7 @@ IS_LINUX = OS_TYPE == 'linux'
 
 ## Strategy Lifecycle
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                        Strategy Lifecycle                        │
-└──────────────────────────────────────────────────────────────────┘
-
-    ┌────────────────────────────────────────────────────────────┐
-    │ Upload a .py file through POST /python/new                 │
-    │ Scheduling is mandatory: is_scheduled is set to True and   │
-    │ /python/unschedule/<id> always returns 400                 │
-    └────────────────────────────────────────────────────────────┘
-                                   │
-                                   ▼
-    ┌────────────────────────────────────────────────────────────┐
-    │ Scheduled in APScheduler                                   │
-    │ schedule_start, schedule_stop, schedule_days, exchange     │
-    └────────────────────────────────────────────────────────────┘
-                                   │
-                                   │ start time, or POST /python/start/<id>
-                                   ▼
-    ┌────────────────────────────────────────────────────────────┐
-    │ Running as a subprocess                                    │
-    │ Own stdout and stderr, own per-run log file,               │
-    │ STRATEGY_MEMORY_LIMIT_MB and CPU limits applied            │
-    └────────────────────────────────────────────────────────────┘
-                                   │
-                                   │ stop time, POST /python/stop/<id> or reap_dead_strategies
-                                   ▼
-    ┌────────────────────────────────────────────────────────────┐
-    │ Stopped                                                    │
-    │ Restarts on the next scheduled start while the strategy    │
-    │ stays enabled                                              │
-    └────────────────────────────────────────────────────────────┘
-                                   │
-                                   │ POST /python/delete/<id>
-                                   ▼
-    ┌────────────────────────────────────────────────────────────┐
-    │ Deleted                                                    │
-    │ Script, config entry and logs removed                      │
-    └────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-pystrategy-lifecycle.png" alt="Python strategy lifecycle: scheduled, running, paused on closed exchange days, manually stopped, error after failed restart, and deleted"><figcaption></figcaption></figure>
 
 ## Scheduling with APScheduler
 

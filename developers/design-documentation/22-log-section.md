@@ -6,33 +6,7 @@ OpenAlgo provides comprehensive log viewing and management through the web inter
 
 ## Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                          Log Section Architecture                            │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                                  Log Types                                   │
-│                                                                              │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐               │
-│  │   API Logs      │  │  Analyzer Logs  │  │  Application    │               │
-│  │   /logs         │  │                 │  │  Logs           │               │
-│  │                 │  │                 │  │                 │               │
-│  │  - placeorder   │  │  - Analyzer     │  │  - log/*.log    │               │
-│  │  - cancelorder  │  │    orders       │  │  - Console      │               │
-│  │  - modifyorder  │  │  - Sandbox      │  │  - Rotating     │               │
-│  │  - Response     │  │    trades       │  │                 │               │
-│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘               │
-│           │                    │                    │                        │
-│           └────────────────────┼────────────────────┘                        │
-│                                │                                             │
-│                                ▼                                             │
-│           ┌─────────────────────────────────────────────────────────┐        │
-│           │               Main Database (openalgo.db)                │       │
-│           │               order_logs / analyzer_logs                 │       │
-│           └─────────────────────────────────────────────────────────┘        │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-log-section-architecture.png" alt="Order events flow through the EventBus log subscriber into order_logs or analyzer_logs in openalgo.db, served by log_bp and analyzer_bp; application logs go to console, dated log files and errors.jsonl"><figcaption></figcaption></figure>
 
 ## Log Types
 

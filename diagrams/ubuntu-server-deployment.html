@@ -1,0 +1,94 @@
+<style>#canvas > .wlabel { position: absolute; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Ubuntu server deployment</div>
+    <h1>One secure front door, one app service, one live-data process</h1>
+    <p style="max-width:1100px">Nginx takes every HTTPS request and hands it to the OpenAlgo app or to the live-data WebSocket. A single systemd service runs both, and everything is stored in the app directory.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:40px">
+    <div class="node client big stack" id="users" style="width:180px; min-width:0">
+      <div class="ic" data-icon="users"></div>
+      <div class="tx"><b>You and your tools</b><span>browsers, SDKs and webhooks</span>
+        <div class="chips"><span class="chip">TradingView</span><span class="chip">Chartink</span><span class="chip">Flow</span><span class="chip">MCP</span></div></div>
+    </div>
+
+    <div class="zone" style="--c:var(--ink3)">
+      <div class="zl"><span data-icon="server"></span>Ubuntu server</div>
+      <div class="row" style="align-items:flex-start; gap:50px">
+        <div class="node security stack" id="nginx" style="width:190px; margin-top:150px">
+          <div class="ic" data-icon="shield-check"></div>
+          <div class="tx"><b>Nginx reverse proxy</b><span>HTTPS with Let's Encrypt; plain HTTP is redirected</span>
+            <div class="chips"><span class="chip">:80 to :443</span><span class="chip">TLS</span></div></div>
+        </div>
+
+        <div class="col" style="gap:56px">
+          <div class="zone" id="unit" style="--c:var(--app)">
+            <div class="zl"><span data-icon="cog"></span>systemd unit: openalgo.service</div>
+            <div class="col" style="gap:100px; align-items:flex-end">
+              <div class="node app hero big" id="gunicorn" style="width:480px">
+                <div class="ic" id="gicon" data-icon="server"></div>
+                <div class="tx"><b>OpenAlgo app (Gunicorn)</b><span>Flask app, Socket.IO and the React web UI</span>
+                  <div class="chips"><span class="chip">eventlet</span><span class="chip">1 worker (-w 1)</span><span class="chip">127.0.0.1:5000 or unix socket</span></div></div>
+              </div>
+              <div class="zone" style="--c:var(--service)">
+                <div class="zl" style="left:auto; right:22px"><span data-icon="git-branch"></span>Separate child process</div>
+                <div class="row" style="gap:44px">
+                  <div class="node app stack" id="wsp" style="width:180px">
+                    <div class="ic" data-icon="radio"></div>
+                    <div class="tx"><b>WebSocket proxy</b><span>streams live prices to clients</span>
+                      <div class="chips"><span class="chip">127.0.0.1:8765</span></div></div>
+                  </div>
+                  <div class="node data stack" id="zmq" style="width:180px">
+                    <div class="ic" data-icon="cable"></div>
+                    <div class="tx"><b>ZeroMQ bus</b><span>internal message bus; SUB side binds</span>
+                      <div class="chips"><span class="chip">ZMQ_PORT 5555</span></div></div>
+                  </div>
+                  <div class="node broker stack" id="adapters" style="width:180px; margin-left:110px">
+                    <div class="ic" data-icon="plug-zap"></div>
+                    <div class="tx"><b>Broker streaming adapters</b><span>receive the broker's live feed</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="zone" id="fs" style="--c:var(--data)">
+            <div class="zl"><span data-icon="folder"></span>App directory, e.g. /opt/openalgo</div>
+            <div class="row" style="gap:20px; align-items:stretch">
+              <div class="node data stack" style="width:190px; min-width:0"><div class="ic" data-icon="key-round"></div><div class="tx"><b>.env</b><span>configuration and secrets</span></div></div>
+              <div class="node data stack" style="width:270px; min-width:0"><div class="ic" data-icon="database"></div><div class="tx"><b>db/</b><span>5 SQLite databases plus historify.duckdb</span>
+                <div class="chips"><span class="chip">openalgo.db</span><span class="chip">logs.db</span><span class="chip">latency.db</span><span class="chip">health.db</span><span class="chip">sandbox.db</span></div></div></div>
+              <div class="node data stack" style="width:190px; min-width:0"><div class="ic" data-icon="scroll-text"></div><div class="tx"><b>log/</b><span>errors.jsonl and dated log files</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="node broker big stack" id="brokers" style="width:170px; min-width:0">
+      <div class="ic" data-icon="landmark"></div>
+      <div class="tx"><b>Broker APIs</b><span>orders, quotes and the live market feed</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>You and your tools</span>
+    <span style="--c:var(--security)"><i></i>Protection</span>
+    <span style="--c:var(--app)"><i></i>OpenAlgo server</span>
+    <span style="--c:var(--data)"><i></i>Bus and storage</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+  </div>
+</div>
+<script>
+  connect('users', 'nginx', { color: 'client', label: 'HTTPS / WSS', from: 'right', to: 'left' })
+  connect('nginx', 'gunicorn', { color: 'security', label: '/ and /socket.io/', from: 'right', to: 'left' })
+  connect('nginx', 'wsp', { color: 'security', label: '/ws upgrade', from: 'right', to: 'left' })
+  connect('gicon', 'wsp', { color: 'app', dashed: true, label: 'spawns: python -m websocket_proxy.server', from: 'bottom', to: 'top' })
+  connect('gunicorn', 'zmq', { color: 'app', label: 'cache invalidation', from: 'bottom', to: 'top' })
+  connect('gunicorn', 'brokers', { color: 'broker', label: 'REST orders, quotes', from: 'right', to: 'top' })
+  connect('brokers', 'adapters', { color: 'broker', label: 'market data', from: 'left', to: 'right' })
+  connect('adapters', 'zmq', { color: 'broker', label: 'prices (PUB)', from: 'left', to: 'right' })
+  connect('zmq', 'wsp', { color: 'data', from: 'left', to: 'right' })
+  connect('unit', 'fs', { color: 'data', label: 'reads config, writes data and logs', from: 'bottom', to: 'top' })
+</script>

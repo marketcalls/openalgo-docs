@@ -1,0 +1,66 @@
+<style>#canvas > .wlabel { position: absolute; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">WebSocket and ZeroMQ</div>
+    <h1>Every live update meets on one private bus</h1>
+    <p style="max-width:1100px">Market ticks from your broker and internal messages from the web app are all published to a single local ZeroMQ address. The WebSocket proxy is the only listener: it picks up everything and forwards each message to the signed-in clients that subscribed to it.</p>
+  </div>
+
+  <div class="row" style="align-items:flex-start; gap:34px">
+    <div class="node broker big stack" id="feed" style="width:210px; min-width:0; margin-top:60px"><div class="ic" data-icon="radio-tower"></div><div class="tx"><b>Your broker</b><span>market-data feeds</span></div></div>
+
+    <div class="zone" style="--c:var(--app)">
+      <div class="zl"><span data-icon="radio"></span>WebSocket proxy · separate process (eventlet)</div>
+      <div class="row" style="gap:40px; align-items:stretch">
+        <div class="node service stack" id="ad" style="width:200px; min-width:0"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Broker streaming adapters</b><span>turn broker ticks into OpenAlgo messages</span>
+          <div class="chips"><span class="chip">PUB · connect</span></div></div></div>
+        <div style="width:72px; margin:0 -22px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--ink3); font-size:13px; font-weight:600; text-align:center; line-height:1.25"><div data-icon="arrow-down-up" style="width:22px;height:22px"></div>via the bus</div>
+        <div class="node service stack" id="sub" style="width:200px; min-width:0"><div class="ic" data-icon="ear"></div><div class="tx"><b>Bus listener</b><span>listens on the bus address and hears every message</span>
+          <div class="chips"><span class="chip">SUB · bind</span></div></div></div>
+        <div class="node app stack" id="idx" style="width:200px; min-width:0"><div class="ic" data-icon="list-filter"></div><div class="tx"><b>Subscription index</b><span>finds who asked for each symbol and forwards every tick</span>
+          <div class="chips"><span class="chip">zmq_listener</span></div></div></div>
+        <div class="node app stack" id="srv" style="width:200px; min-width:0"><div class="ic" data-icon="radio"></div><div class="tx"><b>WebSocket server</b><span>sign-in with your API key, then live stream</span>
+          <div class="chips"><span class="chip">port 8765</span><span class="chip">WEBSOCKET_PORT</span></div></div></div>
+      </div>
+    </div>
+
+    <div class="node client stack" id="cl" style="width:220px; min-width:0; margin-top:44px"><div class="ic" data-icon="users"></div><div class="tx"><b>Your connected tools</b><span>authenticated WebSocket clients</span>
+      <div class="chips"><span class="chip">SDKs</span><span class="chip">React market data</span><span class="chip">risk monitor</span></div></div></div>
+  </div>
+
+  <div class="row" style="align-items:center; gap:0; margin-top:96px">
+    <div class="node data big hero" id="bus" style="width:470px; margin-left:300px; justify-content:center; position:relative">
+      <div id="busL" style="position:absolute; left:40px; top:0; width:20px; height:1px"></div>
+      <div id="busR" style="position:absolute; right:40px; top:0; width:20px; height:1px"></div>
+      <div class="ic" data-icon="cable"></div>
+      <div class="tx"><b>Internal ZeroMQ bus</b><span>local only, never exposed to the internet</span>
+        <div class="chips"><span class="chip">tcp://127.0.0.1:5555</span><span class="chip">ZMQ_HOST : ZMQ_PORT</span></div></div>
+    </div>
+
+    <div class="zone" style="--c:var(--ink3); margin-left:120px">
+      <div class="zl"><span data-icon="server"></span>Flask web app process</div>
+      <div class="node service" id="shp" style="width:340px"><div class="ic" data-icon="megaphone"></div><div class="tx"><b>Shared publisher</b><span>cache-invalidation and order-update messages</span>
+        <div class="chips"><span class="chip">SharedZmqPublisher</span><span class="chip">PUB · connect</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:40px; gap:40px; align-items:flex-start">
+    <div class="legend" style="margin-top:12px">
+      <span style="--c:var(--broker)"><i></i>Broker</span>
+      <span style="--c:var(--service)"><i></i>Publishers and listener</span>
+      <span style="--c:var(--data)"><i></i>Message bus</span>
+      <span style="--c:var(--app)"><i></i>WebSocket proxy</span>
+      <span style="--c:var(--client)"><i></i>Your tools</span>
+    </div>
+    <div class="note" style="max-width:640px"><span data-icon="lightbulb"></span><div>On the dev server (uv run app.py) the proxy runs as a thread inside the Flask process instead of its own process; the wiring is the same.</div></div>
+  </div>
+</div>
+<script>
+  connect('feed', 'ad', { color: 'broker' })
+  connect('ad', 'busL', { color: 'service', from: 'bottom', to: 'top', label: 'publish' })
+  connect('busR', 'sub', { color: 'data', from: 'top', to: 'bottom', label: 'every message' })
+  connect('sub', 'idx', { color: 'service' })
+  connect('idx', 'srv', { color: 'app' })
+  connect('srv', 'cl', { color: 'client' })
+  connect('shp', 'bus', { color: 'service', dashed: true, from: 'left', to: 'right', label: 'publish' })
+</script>

@@ -6,72 +6,7 @@ The Action Center is a centralized order approval system for semi-automated trad
 
 ## Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                        Action Center Architecture                            │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-                           External Order Request
-                           (TradingView, API, etc.)
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                             Order Router Service                             │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  should_route_to_pending(api_key, api_type)                          │    │
-│  │                                                                      │    │
-│  │  Check 1: Is user in semi_auto mode?                                │     │
-│  │  Check 2: Is this a restricted operation?                           │     │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-│                                    │                                         │
-│              ┌─────────────────────┴─────────────────────┐                   │
-│              │                                           │                   │
-│          Auto Mode                                   Semi-Auto Mode          │
-│          or Restricted                               (Queue Order)           │
-│              │                                           │                   │
-│              ▼                                           ▼                   │
-│      Execute Immediately                        Create Pending Order         │
-│      with Broker                                in Action Center             │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                               Action Center UI                               │
-│                                /action-center                                │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  [Pending (3)]  [Approved]  [Rejected]  [All Orders]                │     │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  Statistics                                                          │    │
-│  │  Pending: 3  │  Buy: 2  │  Sell: 1  │  Approved: 15  │  Rejected: 2 │     │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  Strategy │ Symbol │ Exchange │ Action │ Qty │ Price │ Actions      │     │
-│  ├─────────────────────────────────────────────────────────────────────┤     │
-│  │  MyStrat  │ SBIN   │ NSE      │ BUY    │ 100 │ MKT   │ Approve      │     │
-│  │           │        │          │        │     │       │ Reject       │     │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-│                                                                              │
-│                            [Approve All Pending]                             │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                          User clicks Approve
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                       Pending Order Execution Service                        │
-│                                                                              │
-│  1. Mark order status = 'approved'                                           │
-│  2. Execute order with broker API                                            │
-│  3. Get broker order status                                                  │
-│  4. Update broker_order_id and broker_status                                 │
-│  5. Emit SocketIO event                                                      │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-action-center-architecture.png" alt="Action Center architecture: order services call should_route_to_pending, semi-auto orders are queued to pending_orders and surfaced via Socket.IO in the React Action Center, approved orders are executed by execute_approved_order"><figcaption></figcaption></figure>
 
 ## Order Mode Configuration
 
@@ -96,42 +31,7 @@ Both `user_id` and `mode` are required. `mode` must be exactly `auto` or `semi_a
 
 ## Semi-Auto Workflow
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            Semi-Auto Order Flow                             │
-│                                                                             │
-│  1. Order Received ────────────────────────────────────────────────────►    │
-│           │                                                                 │
-│           ▼                                                                 │
-│  2. Check Order Mode ──────────────────────────────────────────────────►    │
-│           │                                                                 │
-│           │ semi_auto = True                                                │
-│           ▼                                                                 │
-│  3. Create Pending Order ──────────────────────────────────────────────►    │
-│           │                                                                 │
-│           ├──► Store in pending_orders table                                │
-│           │                                                                 │
-│           ├──► Emit 'pending_order_created' SocketIO event                  │
-│           │                                                                 │
-│           └──► Return pending_order_id to caller                            │
-│                       │                                                     │
-│                       ▼                                                     │
-│  4. User Reviews in Action Center ─────────────────────────────────────►    │
-│           │                                                                 │
-│           ├──────────────────┬──────────────────┐                           │
-│           │                  │                  │                           │
-│                Approve            Reject             Ignore                 │
-│           │                  │                  │                           │
-│           ▼                  ▼                  ▼                           │
-│  5a. Execute Order    5b. Mark Rejected    5c. Stays Pending                │
-│      with Broker          Store reason                                      │
-│           │                  │                                              │
-│           ▼                  ▼                                              │
-│  6. Update Broker      Emit SocketIO                                        │
-│     Status                Event                                             │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-action-center-semi-auto-flow.png" alt="Semi-auto flow: immediate-execution check, order mode check, queue_order stores and emits, then approve, reject or ignore in the Action Center"><figcaption></figcaption></figure>
 
 ## Database Schema
 

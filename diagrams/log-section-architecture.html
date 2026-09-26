@@ -1,0 +1,85 @@
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Logging</div>
+    <h1>Order logs go to the database, server logs go to files</h1>
+    <p style="max-width:1100px">Every API order request and response is saved in openalgo.db, split into live and analyzer (sandbox) logs, and shown on two log pages. The server's own diagnostic messages never touch a database: they go to the console, optional daily files and an errors file.</p>
+  </div>
+
+  <div style="font-size:14px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink3); margin-bottom:22px">A. Order request logs</div>
+  <div class="grid" style="grid-template-columns:180px 180px 200px 92px 270px 200px 210px; column-gap:38px; align-items:center">
+    <div class="node service stack" id="svc" style="height:240px">
+      <div class="ic" data-icon="workflow"></div>
+      <div class="tx"><b>Order and account services</b><span>live and analyze mode</span></div>
+    </div>
+    <div class="node service stack" id="bus" style="height:240px">
+      <div class="ic" data-icon="megaphone"></div>
+      <div class="tx"><b>EventBus</b><span>announces each order event</span>
+        <div class="chips"><span class="chip">utils/event_bus.py</span></div></div>
+    </div>
+    <div class="node service stack" id="sub" style="height:240px">
+      <div class="ic" data-icon="split"></div>
+      <div class="tx"><b>Log subscriber</b><span>sorts by mode: live or analyze</span>
+        <div class="chips"><span class="chip">log_subscriber</span><span class="chip">event.mode</span></div></div>
+    </div>
+    <div></div>
+    <div class="zone" style="--c:var(--data); padding:28px 16px 28px">
+      <div class="zl"><span data-icon="database"></span>openalgo.db</div>
+      <div class="col" style="gap:36px">
+        <div class="node data" id="ol" style="min-width:0; height:150px"><div class="ic" data-icon="list-checks"></div><div class="tx"><b>order_logs</b><span>live API request and response</span></div></div>
+        <div class="node data" id="al" style="min-width:0; height:150px"><div class="ic" data-icon="flask-conical"></div><div class="tx"><b>analyzer_logs</b><span>analyze-mode request and response</span></div></div>
+      </div>
+    </div>
+    <div class="col" style="gap:36px">
+      <div class="node app" id="lbp" style="min-width:0; height:150px"><div class="ic" data-icon="server"></div><div class="tx"><b>Log API</b><span>list, filter, export</span><div class="chips"><span class="chip">log_bp</span><span class="chip">/logs</span></div></div></div>
+      <div class="node app" id="abp" style="min-width:0; height:150px"><div class="ic" data-icon="server"></div><div class="tx"><b>Analyzer API</b><span>data, stats, clear, export</span><div class="chips"><span class="chip">analyzer_bp</span><span class="chip">/analyzer</span></div></div></div>
+    </div>
+    <div class="col" style="gap:36px">
+      <div class="node client" id="live" style="min-width:0; height:150px"><div class="ic" data-icon="monitor"></div><div class="tx"><b>API logs page</b><div class="chips"><span class="chip">/logs/live</span></div></div></div>
+      <div class="node client" id="sand" style="min-width:0; height:150px"><div class="ic" data-icon="monitor"></div><div class="tx"><b>Analyzer logs page</b><div class="chips"><span class="chip">/logs/sandbox</span></div></div></div>
+    </div>
+  </div>
+
+  <div style="height:1px; background:var(--line); margin:48px 0 30px"></div>
+
+  <div style="font-size:14px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink3); margin-bottom:22px">B. Application logs (no database)</div>
+  <div class="grid" style="grid-template-columns:180px 180px 200px 92px 270px 200px 210px; column-gap:38px; align-items:center">
+    <div class="node service big stack" id="lg" style="grid-column:1 / span 4; justify-self:center; width:300px">
+      <div class="ic" data-icon="terminal"></div>
+      <div class="tx"><b>Python loggers</b><span>every module logs through one shared setup</span>
+        <div class="chips"><span class="chip">get_logger(__name__)</span><span class="chip">utils/logging.py</span></div></div>
+    </div>
+    <div class="col" style="gap:18px; grid-column:5 / span 2; width:480px">
+      <div class="node external" id="con"><div class="ic" data-icon="square-terminal"></div><div class="tx"><b>Console</b><span>always on</span><div class="chips"><span class="chip">StreamHandler</span></div></div></div>
+      <div class="node data" id="file"><div class="ic" data-icon="file-clock"></div><div class="tx"><b>Daily log files</b><span>only when LOG_TO_FILE=True, rotated daily, kept for LOG_RETENTION days</span><div class="chips"><span class="chip">LOG_DIR/openalgo_&lt;date&gt;.log</span></div></div></div>
+      <div class="node data" id="ej"><div class="ic" data-icon="file-warning"></div><div class="tx"><b>Errors file</b><span>always on, ERROR and above as JSON lines</span><div class="chips"><span class="chip">LOG_DIR/errors.jsonl</span></div></div></div>
+    </div>
+    <div class="node client stack" id="diag" style="grid-column:7">
+      <div class="ic" data-icon="stethoscope"></div>
+      <div class="tx"><b>Diagnostics page</b><span>shows recent errors to the admin</span>
+        <div class="chips"><span class="chip">/admin/diagnostics</span><span class="chip">/admin/api/errors</span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--service)"><i></i>Processing</span>
+    <span style="--c:var(--data)"><i></i>Where logs are kept</span>
+    <span style="--c:var(--app)"><i></i>Backend API</span>
+    <span style="--c:var(--client)"><i></i>Pages you open</span>
+    <span style="--c:var(--external)"><i></i>Console</span>
+  </div>
+</div>
+<style>#canvas > .wlabel { position: absolute; white-space: normal; max-width: 160px; text-align: center; }</style>
+<script>
+  connect('svc', 'bus', { color: 'service' })
+  connect('bus', 'sub', { color: 'service' })
+  connect('sub', 'ol', { color: 'data', from: 'right', to: 'left', label: 'live · async_log_order' })
+  connect('sub', 'al', { color: 'data', from: 'right', to: 'left', label: 'analyze · async_log_analyzer' })
+  connect('ol', 'lbp', { color: 'app', from: 'right', to: 'left' })
+  connect('al', 'abp', { color: 'app', from: 'right', to: 'left' })
+  connect('lbp', 'live', { color: 'client', from: 'right', to: 'left' })
+  connect('abp', 'sand', { color: 'client', from: 'right', to: 'left' })
+  connect('lg', 'con', { color: 'external', from: 'right', to: 'left' })
+  connect('lg', 'file', { color: 'data', from: 'right', to: 'left' })
+  connect('lg', 'ej', { color: 'data', from: 'right', to: 'left' })
+  connect('ej', 'diag', { color: 'client', from: 'right', to: 'left' })
+</script>

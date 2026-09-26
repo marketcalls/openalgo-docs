@@ -8,46 +8,7 @@ Latency records live in their own database, `LATENCY_DATABASE_URL` (default `sql
 
 ## Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                       Latency Monitoring Architecture                        │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-                              Order Request
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                           Latency Tracking Points                            │
-│                                                                              │
-│  T0: Request Received ───────────────────────────────────────────────────►   │
-│           │                                                                  │
-│           ▼                                                                  │
-│  ┌─────────────────┐                                                         │
-│  │  Validation     │  ← T1: validation_latency_ms                            │
-│  │  (API key,      │                                                         │
-│  │   schema)       │                                                         │
-│  └────────┬────────┘                                                         │
-│           │                                                                  │
-│           ▼                                                                  │
-│  ┌─────────────────┐                                                         │
-│  │  Broker API     │  ← T2: rtt_ms (Round-Trip Time)                         │
-│  │  Request/       │                                                         │
-│  │  Response       │                                                         │
-│  └────────┬────────┘                                                         │
-│           │                                                                  │
-│           ▼                                                                  │
-│  ┌─────────────────┐                                                         │
-│  │  Response       │  ← T3: response_latency_ms                              │
-│  │  Processing     │                                                         │
-│  └────────┬────────┘                                                         │
-│           │                                                                  │
-│           ▼                                                                  │
-│  T4: Response Sent ─────────────────────────────────────────────────────►    │
-│                                                                              │
-│  total_latency_ms = T4 - T0                                                  │
-│  overhead_ms = validation_ms + response_ms                                   │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-latency-monitor-architecture.png" alt="Latency monitor: track_latency stages, httpx broker timing, async executor writing latency.db, and the /latency API feeding the dashboard"><figcaption></figcaption></figure>
 
 ## Metrics Tracked
 

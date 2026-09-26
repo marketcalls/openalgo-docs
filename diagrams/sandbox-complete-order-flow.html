@@ -1,0 +1,121 @@
+<style>#canvas > .wlabel{position:absolute;z-index:3}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Sandbox order lifecycle</div>
+    <h1>From your order to a simulated fill</h1>
+    <p style="max-width:1150px">A sandbox order goes through the same checks as a live one. With analyzer mode on, the sandbox then checks the order and your virtual margin, saves it, and fills it at once if the price allows, or hands it to the background engine to fill on a later tick.</p>
+  </div>
+
+  <div class="row" style="gap:56px; align-items:stretch">
+    <div class="node client stack" id="req" style="width:210px">
+      <div class="ic" data-icon="send"></div>
+      <div class="tx"><b>1. You place an order</b><span>from any tool or strategy</span>
+        <div class="chips"><span class="chip">POST /api/v1/placeorder</span></div></div>
+    </div>
+    <div class="node service stack" id="semi" style="width:230px">
+      <div class="ic" data-icon="user-check"></div>
+      <div class="tx"><b>2. Semi-auto mode?</b><span>checked first</span></div>
+    </div>
+    <div class="node security stack" id="vod" style="width:260px">
+      <div class="ic" data-icon="shield-check"></div>
+      <div class="tx"><b>3. Order and key checks</b><span>400 if fields are invalid, 403 if the API key is wrong</span>
+        <div class="chips"><span class="chip">validate_order_data</span></div></div>
+    </div>
+    <div class="node app stack hero" id="mode" style="width:240px">
+      <div class="ic" data-icon="split"></div>
+      <div class="tx"><b>4. Analyzer mode on?</b><span>live or sandbox</span>
+        <div class="chips"><span class="chip">get_analyze_mode()</span></div></div>
+    </div>
+    <div class="node broker stack" id="live" style="width:220px">
+      <div class="ic" data-icon="landmark"></div>
+      <div class="tx"><b>Live broker</b><span>real order placed</span>
+        <div class="chips"><span class="chip">place_order_api</span></div></div>
+    </div>
+  </div>
+
+  <div class="row" style="gap:56px; margin-top:40px">
+    <div style="width:210px"></div>
+    <div class="node external" id="acq" style="width:230px; min-width:0">
+      <div class="ic" data-icon="list-checks"></div>
+      <div class="tx"><b>Action Center</b><span>queued for your approval</span></div>
+    </div>
+  </div>
+
+  <div class="zone" style="--c:var(--service); margin-top:40px">
+    <div class="zl"><span data-icon="flask-conical"></span>Sandbox · OrderManager.place_order</div>
+    <div class="row" style="gap:0; justify-content:space-between; align-items:stretch">
+      <div class="node service stack" id="now" style="width:330px; position:relative">
+        <div class="ic" data-icon="zap"></div>
+        <div id="nowno" style="position:absolute;bottom:0;left:25%;width:1px;height:1px"></div><div id="nowyes" style="position:absolute;bottom:0;left:85%;width:1px;height:1px"></div><div class="tx"><b>8. Fill right now?</b><span>MARKET, marketable LIMIT or SL already triggered; skipped if the quote looks stale</span></div>
+      </div>
+      <div class="node service stack" id="ins" style="width:330px">
+        <div class="ic" data-icon="database"></div>
+        <div class="tx"><b>7. Block margin, save order</b><span>stored in sandbox.db</span>
+          <div class="chips"><span class="chip">SandboxOrders</span><span class="chip">open / trigger pending</span></div></div>
+      </div>
+      <div class="node service stack" id="chk" style="width:330px">
+        <div class="ic" data-icon="wallet"></div>
+        <div class="tx"><b>6. Enough margin?</b><span>value / leverage vs available balance; zero when the order only reduces a position</span>
+          <div class="chips"><span class="chip" style="color:var(--security)">no: rejected, 400</span></div></div>
+      </div>
+      <div class="node service stack" id="val" style="width:330px">
+        <div class="ic" data-icon="list-checks"></div>
+        <div class="tx"><b>5. Sandbox checks</b><span>symbol exists, F&amp;O lot size, MIS time window, CNC SELL needs holdings</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="gap:40px; margin-top:96px; margin-left:26px; align-items:stretch">
+    <div class="node service stack" id="reg" style="width:200px; min-width:0; position:relative">
+      <div id="regin" style="position:absolute;top:0;left:41%;width:1px;height:1px"></div>
+      <div class="ic" data-icon="bell-plus"></div>
+      <div class="tx"><b>Hand to engine</b><span>order stays open or trigger pending; your reply is sent now</span></div>
+    </div>
+    <div class="node service stack hero" id="exe" style="width:230px; min-width:0; position:relative">
+      <div id="exein" style="position:absolute;top:0;left:18%;width:1px;height:1px"></div>
+      <div id="exebot" style="position:absolute;bottom:0;left:45%;width:1px;height:1px"></div>
+      <div class="ic" data-icon="receipt"></div>
+      <div class="tx"><b>Fill the order</b><span>trade row written, order complete</span>
+        <div class="chips"><span class="chip">_execute_order</span></div></div>
+    </div>
+    <div class="node service stack" id="pos" style="width:300px; min-width:0">
+      <div class="ic" data-icon="trending-up"></div>
+      <div class="tx"><b>Update position</b><span>netting, margin release, realized P&amp;L, margin consistency check</span>
+        <div class="chips"><span class="chip">_update_position</span></div></div>
+    </div>
+    <div class="note" style="align-self:center; max-width:560px"><span data-icon="lightbulb"></span><div>A marketable order is filled before you get the reply. A waiting order gets its reply at once and is filled later by the engine.</div></div>
+  </div>
+
+  <div class="row" style="gap:40px; margin-top:120px; align-items:flex-start">
+    <div class="zone" id="eng" style="--c:var(--data); padding:38px 22px 44px">
+      <div class="zl" style="left:150px"><span data-icon="cpu"></span>Background engine</div>
+      <div class="row" style="gap:34px">
+        <div class="node data" id="tick" style="width:210px; min-width:0"><div class="ic" data-icon="radio"></div><div class="tx"><b>Next price</b><span>WebSocket tick, or multiquotes poll every 5 s</span></div></div>
+        <div class="node service" id="cond" style="width:210px; min-width:0"><div class="ic" data-icon="target"></div><div class="tx"><b>Price met?</b><span>fill rule for the type</span></div></div>
+      </div>
+    </div>
+    <div class="node client" id="ret" style="width:640px; margin-top:38px; position:relative"><div id="retin" style="position:absolute;top:0;left:145px;width:1px;height:1px"></div>
+      <div class="ic" data-icon="message-square-reply"></div>
+      <div class="tx"><b>Reply to you</b><span>sent right after the inline fill, or as soon as the engine has the order</span><div class="chips"><span class="chip">orderid, mode "analyze"</span><span class="chip">OrderPlacedEvent if emit_event</span></div></div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('req', 'semi', { color: 'client' })
+  connect('semi', 'acq', { color: 'external', dashed: true, label: 'yes', from: 'bottom', to: 'top' })
+  connect('semi', 'vod', { color: 'service', label: 'no' })
+  connect('vod', 'mode', { color: 'security' })
+  connect('mode', 'live', { color: 'broker', label: 'off' })
+  connect('mode', 'val', { color: 'service', label: 'on', from: 'bottom', to: 'top' })
+  connect('val', 'chk', { color: 'service' })
+  connect('chk', 'ins', { color: 'service', label: 'yes' })
+  connect('ins', 'now', { color: 'service' })
+  connect('nowno', 'regin', { color: 'service', label: 'no', from: 'bottom', to: 'top' })
+  connect('nowyes', 'exein', { color: 'service', label: 'yes: fill inline', from: 'bottom', to: 'top' })
+  connect('reg', 'tick', { color: 'data', dashed: true, label: 'later ticks', from: 'bottom', to: 'top' })
+  connect('tick', 'cond', { color: 'data' })
+  connect('cond', 'tick', { color: 'external', dashed: true, label: 'no', from: 'bottom', to: 'bottom', bend: 26 })
+  connect('cond', 'exebot', { color: 'service', label: 'yes', from: 'top', to: 'bottom' })
+  connect('exe', 'pos', { color: 'service' })
+  connect('pos', 'retin', { color: 'client', dashed: true, label: 'inline fill', from: 'bottom', to: 'top' })
+</script>

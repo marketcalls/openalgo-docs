@@ -6,59 +6,7 @@ OpenAlgo implements a multi-layer caching system to achieve high performance wit
 
 ## Cache Architecture Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                              Cache Architecture                               │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                               Application Layer                               │
-│                                                                               │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐   │
-│  │  REST API   │  │  WebSocket  │  │  Services   │  │  Broker Callbacks   │   │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘   │
-│         │                │                │                     │             │
-│         └────────────────┴────────────────┴─────────────────────┘             │
-│                                   │                                           │
-└───────────────────────────────────┼───────────────────────────────────────────┘
-                                    ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                             In-Memory Cache Layer                             │
-│                                                                               │
-│  ┌──────────────────────┐  ┌──────────────────────┐  ┌────────────────────┐   │
-│  │   Symbol Cache       │  │    Auth Caches       │  │   API Key Caches   │   │
-│  │   (BrokerSymbolCache)│  │                      │  │                    │   │
-│  │                      │  │  ┌────────────────┐  │  │  ┌──────────────┐  │   │
-│  │  • 100K+ symbols     │  │  │  auth_cache    │  │  │  │  verified_   │  │   │
-│  │  • Multi-index maps  │  │  │  TTL: session  │  │  │  │  api_key     │  │   │
-│  │  • O(1) lookups      │  │  └────────────────┘  │  │  │  TTL: 10hr   │  │   │
-│  │  • ~50MB memory      │  │                      │  │  └──────────────┘  │   │
-│  │                      │  │  ┌────────────────┐  │  │                    │   │
-│  │  Indexes:            │  │  │ feed_token_    │  │  │  ┌──────────────┐  │   │
-│  │  • by_symbol_exchange│  │  │ cache          │  │  │  │  invalid_    │  │   │
-│  │  • by_token_exchange │  │  │ TTL: session   │  │  │  │  api_key     │  │   │
-│  │  • by_brsymbol       │  │  └────────────────┘  │  │  │  TTL: 5min   │  │   │
-│  │  • by_token          │  │                      │  │  └──────────────┘  │   │
-│  │                      │  │  ┌────────────────┐  │  │                    │   │
-│  │                      │  │  │ broker_cache   │  │  │                    │   │
-│  │                      │  │  │ TTL: 50min     │  │  │                    │   │
-│  │                      │  │  └────────────────┘  │  │                    │   │
-│  └──────────────────────┘  └──────────────────────┘  └────────────────────┘   │
-│                                                                               │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        │ Cache Miss
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                                Database Layer                                 │
-│                                                                               │
-│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐                   │
-│  │   symtoken     │  │     auth       │  │   api_keys     │                   │
-│  │   (symbols)    │  │   (tokens)     │  │   (hashes)     │                   │
-│  └────────────────┘  └────────────────┘  └────────────────┘                   │
-│                                                                               │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-cache-architecture-overview.png" alt="OpenAlgo in-memory caches: BrokerSymbolCache, auth, feed token, broker and order mode caches, API key caches, backed by symtoken, auth and api_keys tables in db/openalgo.db"><figcaption></figcaption></figure>
 
 ## Cache Types
 
@@ -192,39 +140,7 @@ def get_session_based_cache_ttl():
 
 **Three-Level API Key Verification:**
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                    API Key Verification Flow                     │
-└──────────────────────────────────────────────────────────────────┘
-
-API Request with Key
-        │
-        ▼
-┌─────────────────┐     Found      ┌─────────────────┐
-│ invalid_api_key │───────────────►│ REJECT (Fast)   │
-│ cache (5min)    │                │ Return 401      │
-└────────┬────────┘                └─────────────────┘
-         │ Not Found
-         ▼
-┌─────────────────┐     Found      ┌─────────────────┐
-│ verified_api_   │───────────────►│ ACCEPT (Fast)   │
-│ key cache (10hr)│                │ Return user_id  │
-└────────┬────────┘                └─────────────────┘
-         │ Not Found
-         ▼
-┌─────────────────┐                ┌─────────────────┐
-│ Database Query  │───────────────►│ Argon2 Verify   │
-│ (Expensive)     │                │ (Slow)          │
-└─────────────────┘                └────────┬────────┘
-                                            │
-              ┌─────────────────────────────┴─────────────────────────────┐
-              │                                                           │
-              ▼ Valid                                              Invalid ▼
-    ┌─────────────────┐                                      ┌─────────────────┐
-    │ Add to verified │                                      │ Add to invalid  │
-    │ cache (10hr)    │                                      │ cache (5min)    │
-    └─────────────────┘                                      └─────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-cache-architecture-apikey-lookup.png" alt="verify_api_key flow: sha256 cache key, invalid cache, verified cache, then Argon2 verification against api_keys with results cached and invalid attempts tracked"><figcaption></figcaption></figure>
 
 **Implementation:**
 ```python

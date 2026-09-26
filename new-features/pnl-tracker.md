@@ -35,18 +35,7 @@ A camera control captures the metrics and the chart together as a single image f
 
 ### How the Curve Is Built
 
-```
-1. Fetch the tradebook and the position book through the service layer
-   (so Analyzer mode returns sandbox state, not broker state)
-   |
-2. Fetch 1-minute historical candles for every symbol involved
-   |
-3. Mark each trade and each open position to the candle close, minute by minute
-   |
-4. Sum the per-symbol series into one portfolio series from 09:00 IST
-   |
-5. Derive the drawdown series from the running peak of that curve
-```
+<figure><img src="../.gitbook/assets/diagram-newfeatures-pnl-tracker-curve-build.png" alt="PnL curve build: tradebook and position book, position windows, 1-minute broker candles, minute-by-minute MTM, portfolio sum from 09:15, drawdown from running peak"><figcaption></figcaption></figure>
 
 For an executed trade:
 

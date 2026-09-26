@@ -1,0 +1,59 @@
+<style>#canvas > .wlabel{position:absolute} .g .node{min-width:0; width:100%; position:relative; align-self:stretch} .g > .col .node{align-self:auto} .r3 .node{min-width:0; position:relative} .r3 .col .node{width:100%} .bd{position:absolute; top:-15px; left:-15px; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:15px; color:#0b1120; background:var(--c); box-shadow:0 0 20px -4px var(--c)}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Analyzer mode &middot; sandbox execution</div>
+    <h1>The sandbox fills orders like a broker would, with virtual money</h1>
+    <p style="max-width:1150px">When analyzer mode is on, the order never reaches your broker. The sandbox validates it, blocks margin from your virtual funds, and fills it at once or on a later price tick, all inside <b>sandbox.db</b>.</p>
+  </div>
+
+  <div class="zone" style="--c:var(--service); padding:48px 76px 30px 26px">
+    <div class="zl"><span data-icon="flask-conical"></span>Sandbox &middot; sandbox.db holds orders, trades, positions and funds</div>
+    <div class="grid g" style="grid-template-columns:repeat(5, minmax(0,1fr)); column-gap:46px; row-gap:70px; align-items:center">
+      <!-- Row 1 -->
+      <div class="node security" id="uid"><div class="bd" style="--c:var(--security)">1</div><div class="ic" data-icon="key-round"></div><div class="tx"><b>Who is trading?</b><span>user found from the API key</span><div class="chips"><span class="chip">sandbox_place_order</span><span class="chip">invalid &rarr; 403</span></div></div></div>
+      <div class="node service" id="val"><div class="bd" style="--c:var(--service)">2</div><div class="ic" data-icon="list-checks"></div><div class="tx"><b>Order rules</b><span>lot size, MIS square-off window, and a CNC sell must be covered by your holdings</span><div class="chips"><span class="chip">OrderManager</span></div></div></div>
+      <div class="node service" id="price"><div class="bd" style="--c:var(--service)">3</div><div class="ic" data-icon="chart-candlestick"></div><div class="tx"><b>Find the price</b><span>live quote or LTP for MARKET; your limit or trigger otherwise</span></div></div>
+      <div class="node data" id="margin"><div class="bd" style="--c:var(--data)">4</div><div class="ic" data-icon="wallet"></div><div class="tx"><b>Block margin</b><span>from virtual funds, 1 Crore to start by default. CNC sells skip this</span><div class="chips"><span class="chip">FundManager</span></div></div></div>
+      <div class="node security" id="cnc"><div class="bd" style="--c:var(--security)">5</div><div class="ic" data-icon="split"></div><div class="tx"><b>Holdings were short?</b><span>a CNC sell that failed the holdings check in step 2</span></div></div>
+
+      <!-- Row 2: the two refusals -->
+      <div class="note" style="grid-column:1 / span 3; align-self:center"><span data-icon="lightbulb"></span><div>Two ways the sandbox refuses an order: not enough virtual funds (nothing is saved), or a CNC sell without enough holdings (saved as a rejected order so it shows in your order book).</div></div>
+      <div class="node external" id="nofunds"><div class="ic" data-icon="wallet-cards"></div><div class="tx"><b>Not enough virtual funds</b><span>rejected, nothing recorded</span><div class="chips"><span class="chip">400</span></div></div></div>
+      <div class="node external" id="rej"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>Rejected</b><span>saved as a rejected order, no margin held</span><div class="chips"><span class="chip">OrderUpdateEvent</span><span class="chip">400</span></div></div></div>
+    </div>
+
+    <!-- Row 3: reads right to left, continuing from step 5 -->
+    <div class="row r3" style="justify-content:space-between; align-items:center; margin-top:56px">
+      <div class="node client" id="resp" style="width:calc((100% - 184px) / 5)"><div class="bd" style="--c:var(--client)">8</div><div class="ic" data-icon="reply"></div><div class="tx"><b>Reply</b><span>success with the order id</span><div class="chips"><span class="chip">mode: analyze</span></div></div></div>
+      <div class="col" style="gap:26px; width:calc((100% - 184px) / 5)">
+        <div class="node service" id="ee"><div class="ic" data-icon="zap"></div><div class="tx"><b>Filled now</b><span>trade and position updated</span><div class="chips"><span class="chip">ExecutionEngine</span></div></div></div>
+        <div class="node service" id="ws"><div class="ic" data-icon="activity"></div><div class="tx"><b>Filled later</b><span>on a coming price tick</span><div class="chips"><span class="chip">WebSocket engine</span></div></div></div>
+      </div>
+      <div class="node service" id="fill" style="width:calc((100% - 184px) / 5)"><div class="bd" style="--c:var(--service)">7</div><div class="ic" data-icon="gauge"></div><div class="tx"><b>Can it fill now?</b><span>MARKET, a marketable LIMIT, or trigger already met, with a fresh quote</span></div></div>
+      <div class="node service" id="row" style="width:calc((100% - 184px) / 5)"><div class="bd" style="--c:var(--service)">6</div><div class="ic" data-icon="file-text"></div><div class="tx"><b>Order recorded</b><span>status open, or trigger pending</span><div class="chips"><span class="chip">SandboxOrders</span><span class="chip">OrderUpdateEvent</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="row" style="gap:46px; margin-top:44px; align-items:center">
+    <div class="step" style="--c:var(--app)"><div class="n">9</div>
+      <div class="node app" id="ev" style="width:380px"><div class="ic" data-icon="megaphone"></div><div class="tx"><b>Order announced</b><span>by the order service, after the sandbox replies</span><div class="chips"><span class="chip">OrderPlacedEvent mode=analyze</span><span class="chip">place_order_with_auth</span></div></div></div></div>
+    <div class="node data" id="logs" style="width:300px"><div class="ic" data-icon="scroll-text"></div><div class="tx"><b>Analyzer log</b><span>what you see in the Analyzer page</span><div class="chips"><span class="chip">analyzer_logs</span><span class="chip">log_subscriber</span></div></div></div>
+    <div class="note" style="max-width:520px"><span data-icon="lightbulb"></span><div>The sandbox itself only writes to sandbox.db. Logging, the live UI and alerts all come from the event, the same way as for live orders.</div></div>
+  </div>
+</div>
+<script>
+  connect('uid', 'val', { color: 'security', from: 'right', to: 'left' })
+  connect('val', 'price', { color: 'service', from: 'right', to: 'left' })
+  connect('price', 'margin', { color: 'service', from: 'right', to: 'left' })
+  connect('margin', 'cnc', { color: 'data', from: 'right', to: 'left' })
+  connect('margin', 'nofunds', { color: 'security', from: 'bottom', to: 'top', label: 'short' })
+  connect('cnc', 'rej', { color: 'security', from: 'bottom', to: 'top', label: 'yes' })
+  connect('cnc', 'row', { color: 'service', from: 'right', to: 'right', label: 'no', bend: 62 })
+  connect('row', 'fill', { color: 'service', from: 'left', to: 'right' })
+  connect('fill', 'ee', { color: 'service', from: 'left', to: 'right', label: 'yes', bend: 12 })
+  connect('fill', 'ws', { color: 'service', from: 'left', to: 'right', label: 'no', dashed: true, bend: 12 })
+  connect('ee', 'resp', { color: 'client', from: 'left', to: 'right', bend: 12 })
+  connect('ws', 'resp', { color: 'client', from: 'left', to: 'right', dashed: true, bend: 12 })
+  connect('resp', 'ev', { color: 'app', from: 'bottom', to: 'top' })
+  connect('ev', 'logs', { color: 'app', from: 'right', to: 'left' })
+</script>

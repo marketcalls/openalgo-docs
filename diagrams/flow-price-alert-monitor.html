@@ -1,0 +1,80 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Flow price alerts</div>
+    <h1>A price alert checks the market every 5 seconds and starts your flow once the price crosses</h1>
+    <p style="max-width:1150px">The watcher never waits for your flow to finish: it queues the run and keeps polling. A one-time alert then switches the workflow off; an every-time alert keeps watching for the next fresh cross.</p>
+  </div>
+
+  <div class="row" style="align-items:stretch; gap:64px; margin-bottom:64px">
+    <div class="step" style="--c:var(--app)"><div class="n">1</div>
+      <div class="node app" id="act" style="width:430px"><div class="ic" data-icon="power"></div><div class="tx"><b>Workflow activated</b><span>with a priceAlert trigger, or restored at startup for workflows that are still active</span>
+        <div class="chips"><span class="chip">restore_price_alerts()</span></div></div></div></div>
+    <div class="step" style="--c:var(--service)"><div class="n">2</div>
+      <div class="node service" id="add" style="width:400px"><div class="ic" data-icon="bell-plus"></div><div class="tx"><b>Alert registered</b><span>symbol, condition, price, once or every time, expiry</span>
+          <div class="chips"><span class="chip">add_alert</span></div></div></div></div>
+    <div class="note" style="max-width:none; flex:1; align-self:center">
+      <span data-icon="lightbulb"></span><div>The monitor never waits for your flow: it hands the run to a worker and keeps polling on the next tick.</div></div>
+  </div>
+
+  <div class="row" style="align-items:flex-start; gap:64px; padding-left:70px">
+
+    <!-- monitor thread -->
+    <div class="zone" id="mon" style="--c:var(--service)">
+      <div class="zl"><span data-icon="refresh-cw"></span>3 · Monitor thread</div>
+      <div class="grid" style="grid-template-columns: 350px 240px 140px; column-gap:56px; row-gap:30px; align-items:center">
+        <div class="node service" id="loop" style="grid-column:1"><div class="ic" data-icon="timer"></div><div class="tx"><b>Wake up</b><span>every 5 seconds, for each alert</span></div></div>
+        <div></div><div></div>
+        <div class="node security" id="exp" style="grid-column:1"><div class="ic" data-icon="hourglass"></div><div class="tx"><b>Expired?</b>
+          <div class="chips"><span class="chip">1h</span><span class="chip">4h</span><span class="chip">1d</span><span class="chip">1w</span></div></div></div>
+        <div class="node external" id="drop" style="grid-column:2; justify-self:start"><div class="ic" data-icon="trash-2"></div><div class="tx"><b>Remove alert</b></div></div>
+        <div class="node service stack" id="back" style="grid-column:3; grid-row:3 / span 2; align-self:center; min-width:0; width:140px"><div class="ic" data-icon="repeat"></div><div class="tx"><b>Try again</b><span>on the next tick</span></div></div>
+        <div class="node service" id="quote" style="grid-column:1"><div class="ic" data-icon="chart-candlestick"></div><div class="tx"><b>Fetch last price</b><span>asks OpenAlgo for the latest price</span>
+          <div class="chips"><span class="chip">FlowOpenAlgoClient.get_quotes</span></div></div></div>
+        <div class="node external" id="bad" style="grid-column:2"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>Skip this tick</b><span>quote failed, or price missing or zero</span></div></div>
+        <div class="node security" id="cond" style="grid-column:1"><div class="ic" data-icon="crosshair"></div><div class="tx"><b>Condition met?</b><span>price crossed your level</span></div></div>
+        <div class="node external" id="keep" style="grid-column:2"><div class="ic" data-icon="save"></div><div class="tx"><b>Remember this price</b><span>check again next tick</span>
+          <div class="chips"><span class="chip">last_price</span></div></div></div>
+        <div class="node service" id="arm" style="grid-column:1"><div class="ic" data-icon="flag"></div><div class="tx"><b>Mark as fired</b><span>once: set the triggered latch · every time: store last_price</span></div></div>
+        <div class="node service" id="queue" style="grid-column:1"><div class="ic" data-icon="list-restart"></div><div class="tx"><b>Queue one run, keep polling</b><span>bounded pool; at most one pending run per workflow</span>
+          <div class="chips"><span class="chip">FLOW_PRICE_ALERT_WORKERS</span></div></div></div>
+      </div>
+    </div>
+
+    <!-- worker -->
+    <div class="col" style="flex:1; gap:0">
+    <div class="zone" id="wk" style="--c:var(--app); margin-top:400px">
+      <div class="zl"><span data-icon="cpu"></span>4 · Pool worker</div>
+      <div class="col" style="gap:40px">
+        <div class="node service" id="run"><div class="ic" data-icon="play"></div><div class="tx"><b>Run the workflow</b><span>only if the alert is still registered and the workflow is still active</span>
+          <div class="chips"><span class="chip">execute_workflow</span></div></div></div>
+        <div class="node security" id="mode" style="align-self:center; margin-bottom:24px"><div class="ic" data-icon="split"></div><div class="tx"><b>Which trigger mode?</b></div></div>
+        <div class="row" style="gap:28px; align-items:stretch">
+          <div class="node app stack" id="retire" style="flex:1"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>Once: retire</b><span>removes the alert and deactivates the workflow; re-armed instead if the run did not execute</span></div></div>
+          <div class="node app stack" id="again" style="flex:1"><div class="ic" data-icon="repeat"></div><div class="tx"><b>Every time: keep watching</b><span>alert stays registered; fires again only on a fresh cross</span></div></div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('act', 'add', { color: 'app', from: 'right', to: 'left' })
+  connect('add', 'loop', { color: 'service', from: 'bottom', to: 'right' })
+  connect('bad', 'back', { color: 'external', dashed: true, from: 'right', to: 'left' })
+  connect('keep', 'back', { color: 'external', dashed: true, from: 'right', to: 'left' })
+  connect('back', 'loop', { color: 'service', dashed: true, label: 'next tick', from: 'top', to: 'right', bend: 260 })
+  connect('loop', 'exp', { color: 'service' })
+  connect('exp', 'drop', { color: 'external', label: 'yes', from: 'right', to: 'left' })
+  connect('exp', 'quote', { color: 'security', label: 'no' })
+  connect('quote', 'bad', { color: 'external', label: 'error', from: 'right', to: 'left' })
+  connect('quote', 'cond', { color: 'service', label: 'ok' })
+  connect('cond', 'keep', { color: 'external', label: 'no', from: 'right', to: 'left' })
+  connect('cond', 'arm', { color: 'security', label: 'yes' })
+  connect('arm', 'queue', { color: 'service' })
+  connect('queue', 'loop', { color: 'service', dashed: true, label: 'next tick', from: 'left', to: 'left', bend: 70 })
+  connect('queue', 'run', { color: 'app', dashed: true, label: 'submit', from: 'right', to: 'left', bend: 30 })
+  connect('run', 'mode', { color: 'service' })
+  connect('mode', 'retire', { color: 'app', label: 'once', from: 'bottom', to: 'top', bend: 40 })
+  connect('mode', 'again', { color: 'app', label: 'every time', from: 'bottom', to: 'top', bend: 40 })
+</script>

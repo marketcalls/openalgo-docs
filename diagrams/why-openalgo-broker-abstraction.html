@@ -1,0 +1,86 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Write once, trade with any broker</div>
+    <h1>Your strategy talks to OpenAlgo, OpenAlgo talks to your broker</h1>
+    <p style="max-width:1100px">Your code, charts and sheets use one OpenAlgo format. The broker plugin you choose translates it, so changing broker does not mean rewriting your strategy.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:56px; margin-top:20px">
+    <div class="zone" style="--c:var(--client)">
+      <div class="zl"><span data-icon="user"></span>Written once</div>
+      <div class="col" style="gap:26px">
+        <div class="node client" id="tv" style="width:215px">
+          <div class="ic" data-icon="chart-candlestick"></div>
+          <div class="tx"><b>Charting tools</b><span>TradingView, Amibroker, Excel</span></div>
+        </div>
+        <div class="node client" id="sdk" style="width:215px">
+          <div class="ic" data-icon="code-xml"></div>
+          <div class="tx"><b>Your code</b><span>Python and other SDKs</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone" style="--c:var(--app)">
+      <div class="zl"><span data-icon="server"></span>OpenAlgo</div>
+      <div class="grid" style="grid-template-columns:235px 255px; column-gap:50px; row-gap:74px; align-items:center">
+        <div></div>
+        <div class="node app" id="flow" style="width:255px">
+          <div class="ic" data-icon="workflow"></div>
+          <div class="tx"><b>Flow</b><span>built-in visual workflows</span></div>
+        </div>
+        <div class="node app" id="api" style="width:235px">
+          <div class="ic" data-icon="webhook"></div>
+          <div class="tx"><b>Order API</b><span>orders, positions, quotes</span>
+            <div class="chips"><span class="chip">REST /api/v1</span></div></div>
+        </div>
+        <div class="node service hero" id="svc" style="width:255px">
+          <div class="ic" data-icon="layers"></div>
+          <div class="tx"><b>Common trading layer</b><span>one symbol format and one set of order rules</span>
+            <div class="chips"><span class="chip">services</span></div></div>
+        </div>
+        <div class="node app" id="ws" style="width:235px">
+          <div class="ic" data-icon="radio"></div>
+          <div class="tx"><b>Live prices</b><span>streaming market data</span>
+            <div class="chips"><span class="chip">WebSocket :8765</span></div></div>
+        </div>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="zone" id="plugins" style="--c:var(--broker); position:relative; margin-left:34px">
+      <i id="pHi" style="position:absolute; left:0; top:40%; width:1px; height:1px"></i>
+      <i id="pLo" style="position:absolute; left:0; top:62%; width:1px; height:1px"></i>
+      <div class="zl"><span data-icon="puzzle"></span>36 broker plugins</div>
+      <div class="col" style="gap:18px">
+        <div class="node broker" style="width:250px">
+          <div class="ic" data-icon="building-2"></div>
+          <div class="tx"><b>34 stock brokers</b><span>each has api, mapping and streaming parts</span></div>
+        </div>
+        <div class="node broker" style="width:250px">
+          <div class="ic" data-icon="bitcoin"></div>
+          <div class="tx"><b>Delta Exchange</b><span>crypto derivatives</span></div>
+        </div>
+        <div class="node broker" style="width:250px">
+          <div class="ic" data-icon="flask-conical"></div>
+          <div class="tx"><b>Dhan sandbox</b><span>practice account</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="node broker big stack" id="bapi" style="width:205px; min-width:0">
+      <div class="ic" data-icon="landmark"></div>
+      <div class="tx"><b>Your broker</b><span>broker's own API</span></div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('tv', 'api', { color: 'client', from: 'right', to: 'left' })
+  connect('sdk', 'api', { color: 'client', from: 'right', to: 'left' })
+  connect('sdk', 'ws', { color: 'app', from: 'right', to: 'left', both: true })
+  connect('api', 'svc', { color: 'app' })
+  connect('flow', 'svc', { color: 'app', label: 'in-process', from: 'bottom', to: 'top' })
+  connect('svc', 'pHi', { color: 'service', label: 'orders', from: 'right', to: 'left' })
+  connect('ws', 'pLo', { color: 'app', label: 'live prices', from: 'right', to: 'left', both: true })
+  connect('plugins', 'bapi', { color: 'broker', from: 'right', to: 'left' })
+</script>

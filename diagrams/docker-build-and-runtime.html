@@ -1,0 +1,75 @@
+<style>#canvas > .wlabel{position:absolute} .chip{font-variant-ligatures:none; font-feature-settings:"liga" 0,"calt" 0}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Docker</div>
+    <h1>Built in three stages, started by one safe script</h1>
+    <p style="max-width:1150px">The image is assembled from a Python build, a web-app build and a slim final image. When the container starts, it checks its settings, updates the databases, then starts the live-data proxy and the web server. Only ports 5000 and 8765 reach your computer.</p>
+  </div>
+
+  <!-- build -->
+  <div class="row" style="align-items:center; gap:80px; margin-bottom:70px">
+    <div class="col" style="gap:22px; width:400px">
+      <div class="node service" id="pyb"><div class="ic" data-icon="package"></div><div class="tx"><b>Stage 1 · Python build</b><span>installs packages into a virtual env with uv</span>
+        <div class="chips"><span class="chip">python:3.12-trixie</span><span class="chip">gunicorn&gt;=25.0,&lt;26</span><span class="chip">eventlet==0.41.2</span></div></div></div>
+      <div class="node app" id="feb"><div class="ic" data-icon="monitor"></div><div class="tx"><b>Stage 2 · Web app build</b><span>npm ci, npm run build: the React interface</span>
+        <div class="chips"><span class="chip">node:22-trixie-slim</span><span class="chip">frontend/dist</span></div></div></div>
+    </div>
+    <div class="col" style="flex:1; gap:26px">
+    <div class="node service big hero" id="prod"><div class="ic" data-icon="container"></div><div class="tx"><b>Stage 3 · Final image</b><span>slim image with India time (IST), runtime libraries and Chromium; runs as a normal user, not root; copies the venv, source and web app</span>
+      <div class="chips"><span class="chip">python:3.12-slim-trixie</span><span class="chip">appuser 1000:1000</span><span class="chip">dirs: log db tmp strategies keys</span><span class="chip">keys dir 700</span><span class="chip">limits CPU threads to 2</span><span class="chip">EXPOSE 5000</span></div></div></div>
+    </div>
+  </div>
+
+  <!-- runtime -->
+  <div class="zone" id="runz" style="--c:var(--app)">
+    <div class="zl"><span data-icon="terminal"></span>Container start · start.sh as appuser</div>
+    <div id="mountpt" style="position:absolute; left:300px; bottom:0; width:2px; height:2px"></div>
+    <div class="grid" style="grid-template-columns: 380px 420px 1fr; column-gap:80px; row-gap:40px; align-items:center">
+      <div class="step" style="--c:var(--security); grid-column:1; grid-row:1"><div class="n">1</div>
+        <div class="node security" id="env" style="flex:1"><div class="ic" data-icon="file-cog"></div><div class="tx"><b>Settings file present?</b><span>looks for .env</span></div></div></div>
+      <div class="node service" id="gen" style="grid-column:2; grid-row:1"><div class="ic" data-icon="file-text"></div><div class="tx"><b>Write .env from environment variables</b><span>only when HOST_SERVER is set; otherwise stop with exit 1</span></div></div>
+
+      <div class="step" style="--c:var(--security); grid-column:1; grid-row:2"><div class="n">2</div>
+        <div class="node security" id="key" style="flex:1"><div class="ic" data-icon="shield-alert"></div><div class="tx"><b>Refuse sample keys</b><span>blocks the known sample APP_KEY / pepper when /app is not writable, since it cannot be rotated</span></div></div></div>
+      <div class="step" style="--c:var(--service); grid-column:1; grid-row:3"><div class="n">3</div>
+        <div class="node service" id="mig" style="flex:1"><div class="ic" data-icon="database"></div><div class="tx"><b>Update databases</b><span>a failed migration stops startup</span>
+          <div class="chips"><span class="chip">upgrade/migrate_all.py</span></div></div></div></div>
+
+      <div class="note" style="grid-column:3; grid-row:1; max-width:none">
+        <span data-icon="lightbulb"></span><div>The internal message bus on port 5555 stays inside the container. It is never exposed or published.</div></div>
+      <div class="node data" id="zmq" style="grid-column:3; grid-row:2; justify-self:end; margin-bottom:70px"><div class="ic" data-icon="cable"></div><div class="tx"><b>Internal message bus</b><span>ZeroMQ, proxy binds, publishers connect</span>
+        <div class="chips"><span class="chip">127.0.0.1:5555</span></div></div></div>
+
+      <div class="step" style="--c:var(--service); grid-column:2; grid-row:3"><div class="n">4</div>
+        <div class="node service" id="wsp" style="flex:1; position:relative"><i id="a-sub" style="position:absolute; left:82%; top:0; width:0; height:0; display:block"></i><div class="ic" data-icon="radio"></div><div class="tx"><b>WebSocket proxy</b><span>runs in the background; stopped by a SIGTERM/SIGINT trap</span>
+          <div class="chips"><span class="chip">websocket_proxy.server</span><span class="chip">:8765</span></div></div></div></div>
+      <div class="step" style="--c:var(--app); grid-column:3; grid-row:3"><div class="n">5</div>
+        <div class="node app hero" id="gun" style="flex:1"><div class="ic" data-icon="server"></div><div class="tx"><b>Gunicorn web server</b><span>eventlet, 1 worker; timeout 300 s, graceful stop 30 s</span>
+          <div class="chips"><span class="chip">:5000 or PORT</span><span class="chip">/tmp/gunicorn_workers</span></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- host side -->
+  <div class="row" style="gap:80px; margin-top:70px; align-items:stretch">
+    <div class="node data" id="vols" style="width:560px"><div class="ic" data-icon="hard-drive"></div><div class="tx"><b>Your data survives restarts</b><span>named volumes plus your .env file mounted from the host</span>
+      <div class="chips"><span class="chip">db</span><span class="chip">log</span><span class="chip">strategies</span><span class="chip">keys</span><span class="chip">tmp</span><span class="chip">./.env</span></div></div></div>
+    <div class="node client" id="host" style="flex:1"><div class="ic" data-icon="monitor"></div><div class="tx"><b>Your browser and tools</b><span>ports published by docker-compose.yaml</span>
+      <div class="chips"><span class="chip">5000 web app</span><span class="chip">8765 live data</span></div></div></div>
+  </div>
+</div>
+<script>
+  connect('pyb', 'prod', { color: 'service', label: '.venv', from: 'right', to: 'left' })
+  connect('feb', 'prod', { color: 'app', label: 'frontend/dist', from: 'right', to: 'left' })
+  connect('prod', 'runz', { color: 'service', label: 'container starts', from: 'bottom', to: 'top' })
+  connect('env', 'gen', { color: 'security', label: 'no', from: 'right', to: 'left' })
+  connect('env', 'key', { color: 'security', label: 'yes' })
+  connect('gen', 'key', { color: 'service', from: 'bottom', to: 'right' })
+  connect('key', 'mig', { color: 'security' })
+  connect('mig', 'wsp', { color: 'service', from: 'right', to: 'left' })
+  connect('wsp', 'gun', { color: 'service', from: 'right', to: 'left' })
+  connect('gun', 'zmq', { color: 'data', dashed: true, label: 'PUB connect', from: 'top', to: 'bottom' })
+  connect('zmq', 'a-sub', { color: 'data', dashed: true, label: 'SUB', from: 'left', to: 'top' })
+  connect('vols', 'mountpt', { color: 'data', dashed: true, label: 'mounted into /app', from: 'top', to: 'bottom', bend: 30 })
+  connect('host', 'gun', { color: 'client', label: '5000', from: 'top', to: 'bottom', bend: 40 })
+  connect('host', 'wsp', { color: 'client', label: '8765', from: 'top', to: 'bottom', bend: 40 })
+</script>

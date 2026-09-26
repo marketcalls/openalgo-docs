@@ -44,16 +44,7 @@ Supported scopes are:
 
 ## Remote Request Flow
 
-```text
-hosted MCP client
-  -> OAuth discovery / registration
-  -> local-user consent (and fresh TOTP for write when configured)
-  -> authorization-code + PKCE token exchange
-  -> bearer token with scopes
-  -> /mcp JSON-RPC or SSE transport
-  -> scoped tool dispatch
-  -> OpenAlgo service/API behavior
-```
+<figure><img src="../../.gitbook/assets/diagram-mcp-remote-oauth-flow.png" alt="Remote MCP sequence: 401 challenge, OAuth discovery and client registration, consent with optional fresh TOTP, PKCE token exchange, then scoped JSON-RPC tool dispatch to /api/v1 via the SDK loopback"><figcaption></figcaption></figure>
 
 The public origin anchors issuer/audience behavior. Production exposure requires HTTPS, a restricted CORS allowlist, strong signing keys, and deliberate write/approval settings.
 

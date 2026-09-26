@@ -8,51 +8,7 @@ Two properties of the current setup matter before reading the numbers below. `li
 
 ## Architecture Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          Rate Limiting Architecture                           │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-                           Incoming Request
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                                 Flask-Limiter                                 │
-│                                                                               │
-│  ┌─────────────────────────────────────────────────────────────────────────┐  │
-│  │                      Configuration                                       │ │
-│  │  key_func = get_remote_address   (Rate limit by IP)                     │  │
-│  │  storage_uri = "memory://"       (In-memory storage)                    │  │
-│  │  strategy = "moving-window"      (Sliding window algorithm)             │  │
-│  └─────────────────────────────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          Endpoint Category Detection                          │
-│                                                                               │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │
-│  │   Login     │ │   API       │ │   Order     │ │  Webhook    │              │
-│  │ Endpoints   │ │ Endpoints   │ │ Endpoints   │ │ Endpoints   │              │
-│  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘              │
-│         │               │               │               │                     │
-│         ▼               ▼               ▼               ▼                     │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │
-│  │ 5/min       │ │ 50/sec      │ │ 10/sec      │ │ 100/min     │              │
-│  │ 25/hour     │ │             │ │             │ │             │              │
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘              │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                  │
-                    ┌─────────────┴─────────────┐
-                    │                           │
-              Under Limit                  Over Limit
-                    │                           │
-                    ▼                           ▼
-           ┌───────────────┐          ┌───────────────┐
-           │   Process     │          │   429 Error   │
-           │   Request     │          │ Too Many Reqs │
-           └───────────────┘          └───────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-rate-limiting-architecture.png" alt="Flask-Limiter flow: decorated routes keyed by caller IP, moving-window check against memory storage, 429 handling"><figcaption></figcaption></figure>
 
 ## Rate Limit Categories
 
@@ -69,7 +25,7 @@ LOGIN_RATE_LIMIT_HOUR = "25 per hour"
 RESET_RATE_LIMIT = "15 per hour"
 
 # General API endpoints (data queries)
-API_RATE_LIMIT="50 per second"
+API_RATE_LIMIT="100 per second"
 
 # Order endpoints (trading operations)
 ORDER_RATE_LIMIT="10 per second"
@@ -92,11 +48,11 @@ STRATEGY_RATE_LIMIT="200 per minute"
 |----------|------------|-----------|---------|
 | **Login** | 5/min, 25/hr | `/auth/login`, `/<broker>/callback` | Prevent brute force |
 | **Password reset** | 15/hr | `/auth/reset-password` | Prevent reset abuse |
-| **API** | 50/sec | `/api/v1/quotes`, `/api/v1/positionbook`, etc. | General data access |
+| **API** | 100/sec | `/api/v1/quotes`, `/api/v1/positionbook`, etc. | General data access |
 | **Order** | 10/sec | `/api/v1/placeorder`, `/api/v1/modifyorder`, `/api/v1/cancelorder` | Trading rate control |
 | **Smart Order** | 10/sec | `/api/v1/placesmartorder` | Automated order rate control |
 | **Webhook** | 100/min | `/chartink/webhook`, `/strategy/webhook` | External integrations |
-| **Strategy** | 200/min | Strategy CRUD views in `blueprints/strategy.py` and `blueprints/chartink.py` | Strategy execution |
+| **Strategy** | 200/min | Strategy CRUD views in `blueprints/strategy_module.py` and `blueprints/chartink.py` | Strategy execution |
 
 ### Code Defaults Differ From The Sample Values
 
@@ -107,7 +63,7 @@ The number that applies when a key is absent from `.env` is the second argument 
 | `50 per second` | `blueprints/admin.py`, `blueprints/orders.py`, `blueprints/sandbox.py`, `restx_api/margin.py` |
 | `10 per second` | the other 32 `restx_api/*.py` modules, including `quotes.py`, `orderbook.py`, `holdings.py`, `funds.py`, `depth.py`, `history.py` and `cancel_all_order.py` |
 
-Because `.sample.env` sets `API_RATE_LIMIT="50 per second"`, a standard install gets 50/sec everywhere. Removing the key from `.env` silently drops most data endpoints to 10/sec. Keep the key present.
+Because `.sample.env` sets `API_RATE_LIMIT="100 per second"`, a standard install gets 100/sec everywhere. Removing the key from `.env` silently drops most data endpoints to 10/sec. Keep the key present.
 
 ### Additional Rate Limit Variables
 
@@ -296,19 +252,19 @@ def place_order_with_retry(order_data, max_retries=3):
 | `/api/v1/placeorder` | ORDER_RATE_LIMIT | 10/sec |
 | `/api/v1/modifyorder` | ORDER_RATE_LIMIT | 10/sec |
 | `/api/v1/cancelorder` | ORDER_RATE_LIMIT | 10/sec |
-| `/api/v1/cancelallorder` | API_RATE_LIMIT | 50/sec (10/sec if the key is unset) |
+| `/api/v1/cancelallorder` | API_RATE_LIMIT | 100/sec (10/sec if the key is unset) |
 | `/api/v1/placesmartorder` | SMART_ORDER_RATE_LIMIT | 10/sec |
-| `/api/v1/quotes` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/multiquotes` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/positionbook` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/orderbook` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/tradebook` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/holdings` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/funds` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/history` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/depth` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/ping` | API_RATE_LIMIT | 50/sec |
-| `/api/v1/intervals` | API_RATE_LIMIT | 50/sec |
+| `/api/v1/quotes` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/multiquotes` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/positionbook` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/orderbook` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/tradebook` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/holdings` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/funds` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/history` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/depth` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/ping` | API_RATE_LIMIT | 100/sec |
+| `/api/v1/intervals` | API_RATE_LIMIT | 100/sec |
 | `/api/v1/optionsmultiorder` | ORDER_RATE_LIMIT | 10/sec |
 
 ### Authentication Endpoints
@@ -328,29 +284,11 @@ def place_order_with_retry(order_data, max_retries=3):
 | `/chartink/webhook` | WEBHOOK_RATE_LIMIT | 100/min |
 | `/strategy/webhook` | WEBHOOK_RATE_LIMIT | 100/min |
 
-`STRATEGY_RATE_LIMIT` is applied to the strategy management views in `blueprints/strategy.py` and `blueprints/chartink.py`, not to the webhook receivers. The Flow webhook receivers `/flow/webhook/<token>` and `/flow/webhook/<token>/<symbol>` carry no `@limiter.limit` decorator at all; they are CSRF-exempt and unlimited, so front them with a reverse proxy limit if they are internet-facing.
+`STRATEGY_RATE_LIMIT` is applied to the strategy management views in `blueprints/strategy_module.py` and `blueprints/chartink.py`, not to the webhook receivers. The Flow webhook receivers `/flow/webhook/<token>` and `/flow/webhook/<token>/<symbol>` are CSRF-exempt and share `WEBHOOK_RATE_LIMIT` through two `shared_limit` scopes in `blueprints/flow.py`: one keyed by caller IP and one keyed by webhook token.
 
 ## Moving Window Strategy
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                      Moving Window Strategy                      │
-└──────────────────────────────────────────────────────────────────┘
-
-Time →  |-------- 1 minute window --------|
-        ↓                                  ↓
-        [==============================]
-                                       ↑
-                                   Current time
-
-As time advances, the window slides:
-        |-------- 1 minute window --------|
-                 ↓                         ↓
-             [==============================]
-
-Old requests fall out, new ones enter.
-More accurate than fixed-window approach.
-```
+<figure><img src="../../.gitbook/assets/diagram-rate-limiting-moving-window.png" alt="Moving-window rate limit: a timeline example (5 per minute) where older hits fall out of the last 60 seconds, then the steps: count hits for the key within the window, record and allow if under the limit, otherwise 429 until the oldest hit leaves the window"><figcaption></figcaption></figure>
 
 ### Algorithm Benefits
 
@@ -438,5 +376,5 @@ limiter = Limiter(
 | `blueprints/auth.py` | Login and password-reset rate limits |
 | `blueprints/brlogin.py` | Broker callback rate limits |
 | `blueprints/chartink.py` | Chartink webhook and strategy rate limits |
-| `blueprints/strategy.py` | Strategy webhook and strategy rate limits |
+| `blueprints/strategy_module.py` | Strategy webhook and strategy rate limits |
 | `blueprints/mcp_http.py` | Remote MCP dispatch, SSE and per-scope quotas |

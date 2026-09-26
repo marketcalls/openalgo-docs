@@ -1,0 +1,86 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Connection pooling</div>
+    <h1>A few broker connections carry thousands of symbols</h1>
+    <p style="max-width:1100px">OpenAlgo spreads your subscriptions across a small pool of broker connections, then every tick meets on one internal bus before it reaches your tools. Only the proxy binds the bus; everyone else connects to it.</p>
+  </div>
+
+  <div class="row" style="align-items:flex-start; gap:40px">
+    <div class="col" style="padding-top:120px">
+      <div class="node broker big hero stack" id="feeds" style="width:205px">
+        <div class="ic" data-icon="radio-tower"></div>
+        <div class="tx"><b>Your broker</b><span>live market data feeds<br>(upstream WebSockets)</span></div>
+      </div>
+    </div>
+
+    <div class="zone" style="--c:var(--app); padding:46px 30px 30px">
+      <div class="zl"><span data-icon="container"></span>WebSocket proxy process &middot; gunicorn / eventlet</div>
+      <div class="row" style="align-items:center; gap:50px">
+        <div class="zone" style="--c:var(--broker); padding:40px 20px 20px">
+          <div class="zl" style="white-space:nowrap"><span data-icon="layers"></span>Pool per broker + user &middot; max 3 connections</div>
+          <div class="col" style="gap:16px">
+            <div class="node broker" id="a1" style="width:330px"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Adapter 1</b><span>holds up to 1000 symbols</span><div class="chips"><span class="chip">MAX_SYMBOLS_PER_WEBSOCKET</span></div></div></div>
+            <div class="node broker" id="a2" style="width:330px"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Adapter 2</b><span>opens when adapter 1 is full</span></div></div>
+            <div class="node broker" id="a3" style="width:330px"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Adapter N</b><span>last one allowed</span><div class="chips"><span class="chip">MAX_WEBSOCKET_CONNECTIONS</span><span class="chip">3 x 1000 = 3000 symbols</span></div></div></div>
+          </div>
+        </div>
+        <div class="col" style="gap:150px">
+          <div class="node service stack" id="pub" style="width:215px">
+            <div class="ic" data-icon="send"></div>
+            <div class="tx"><b>Shared publisher</b><span>one per process; every adapter sends ticks through it</span><div class="chips"><span class="chip">SharedZmqPublisher</span><span class="chip">PUB connects</span></div></div>
+          </div>
+        </div>
+        <div class="node app stack" id="proxy" style="width:215px">
+          <div class="ic" data-icon="radio"></div>
+          <div class="tx"><b>WebSocket proxy</b><span>tracks who subscribed to what and fans each tick out</span><div class="chips"><span class="chip">WebSocketProxy</span><span class="chip">SUB binds</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="padding-top:120px">
+      <div class="node client stack big" id="clients"  style="width:200px">
+        <div class="ic" data-icon="users"></div>
+        <div class="tx"><b>Your tools</b><span>signed-in WebSocket clients</span><div class="chips"><span class="chip">port 8765</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="align-items:center; gap:0; margin-top:70px">
+    <div class="zone" id="flask" style="--c:var(--ink3); padding:44px 24px 24px">
+      <div class="zl"><span data-icon="server"></span>Flask app process</div>
+      <div class="row" style="gap:22px">
+        <div class="node external" id="inv" style="width:260px"><div class="ic" data-icon="refresh-cw"></div><div class="tx"><b>Cache invalidation</b><span>tells the proxy to drop stale cache</span><div class="chips"><span class="chip">PUB connects</span></div></div></div>
+        <div class="node external" id="ord" style="width:330px"><div class="ic" data-icon="list-checks"></div><div class="tx"><b>Order updates</b><span>pushes order status to your tools</span><div class="chips"><span class="chip">wsproxy_subscriber</span><span class="chip">*_orders topics</span></div></div></div>
+      </div>
+    </div>
+    <div style="width:120px"></div>
+    <div class="node data big" id="zmq" style="width:330px">
+      <div class="ic" data-icon="cable"></div>
+      <div class="tx"><b>Internal message bus</b><span>ZeroMQ, never exposed</span><div class="chips"><span class="chip">tcp://ZMQ_HOST:5555</span></div></div>
+    </div>
+    <div style="width:60px"></div>
+    <div class="note" style="max-width:330px"><span data-icon="lightbulb"></span><div><b>Dev server</b> (uv run app.py): the proxy runs as a thread inside the Flask process instead of its own process.</div></div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--broker)"><i></i>Broker connections</span>
+    <span style="--c:var(--service)"><i></i>Publisher</span>
+    <span style="--c:var(--data)"><i></i>Internal bus</span>
+    <span style="--c:var(--app)"><i></i>Proxy</span>
+    <span style="--c:var(--external)"><i></i>Other publishers</span>
+    <span style="--c:var(--client)"><i></i>Your tools</span>
+  </div>
+</div>
+<script>
+  connect('feeds', 'a1', { color: 'broker', from: 'right', to: 'left' })
+  connect('feeds', 'a2', { color: 'broker', from: 'right', to: 'left' })
+  connect('feeds', 'a3', { color: 'broker', from: 'right', to: 'left' })
+  connect('a1', 'pub', { color: 'broker', from: 'right', to: 'left' })
+  connect('a2', 'pub', { color: 'broker', from: 'right', to: 'left' })
+  connect('a3', 'pub', { color: 'broker', from: 'right', to: 'left' })
+  connect('pub', 'zmq', { color: 'service', from: 'bottom', to: 'top', label: 'ticks in (connect)' })
+  connect('zmq', 'proxy', { color: 'data', from: 'right', to: 'bottom', label: 'ticks out (bind, only binder)' })
+  connect('flask', 'zmq', { color: 'external', dashed: true, from: 'right', to: 'left', label: 'connect' })
+  connect('proxy', 'clients', { color: 'client', from: 'right', to: 'left' })
+</script>

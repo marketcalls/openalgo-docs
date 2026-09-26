@@ -1,0 +1,84 @@
+<style>#canvas > .wlabel{position:absolute} .g { align-items:center; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">P&amp;L Tracker · calculation</div>
+    <h1>How one Refresh turns your trades into a P&amp;L curve</h1>
+    <p style="max-width:1150px">The tracker checks your login, pulls trades and positions, replays each symbol on 1-minute bars, then adds everything into one portfolio curve with drawdown. If there is nothing to show, it returns a flat zero.</p>
+  </div>
+
+  <div class="grid g" style="grid-template-columns:repeat(4, 330px); column-gap:80px; row-gap:80px; margin-left:20px">
+    <!-- row 1 -->
+    <div class="step" style="--c:var(--security); grid-column:1; grid-row:1"><div class="n">1</div>
+      <div class="node security" id="auth" style="width:276px"><div class="ic" data-icon="shield-check"></div>
+        <div class="tx"><b>Check your login</b><span>broker from session; auth token and API key from auth_db (400 / 401 if missing)</span>
+          <div class="chips"><span class="chip">/pnltracker/api/pnl</span></div></div></div></div>
+    <div class="step" style="--c:var(--service); grid-column:2; grid-row:1"><div class="n">2</div>
+      <div class="node service" id="fetch" style="width:276px"><div class="ic" data-icon="download"></div>
+        <div class="tx"><b>Fetch trades and positions</b><span>if trades cannot be fetched you see that error; if positions fail, the tracker carries on without them</span>
+          <div class="chips"><span class="chip">tradebook + positionbook</span></div></div></div></div>
+    <div class="step" style="--c:var(--app); grid-column:3; grid-row:1"><div class="n"><span data-icon="diamond"></span></div>
+      <div class="node app" id="gateA" style="width:276px"><div class="ic" data-icon="split"></div>
+        <div class="tx"><b>No trades and no positions?</b><span>nothing traded or held today</span></div></div></div>
+    <div class="node external" id="zero" style="grid-column:4; grid-row:1; --c:#64748b"><div class="ic" data-icon="circle-dashed"></div>
+      <div class="tx"><b>Zero P&amp;L</b><span>returned with empty series when there is nothing to plot</span></div></div>
+
+    <!-- row 2 -->
+    <div class="step" style="--c:var(--service); grid-column:1; grid-row:2"><div class="n">3</div>
+      <div class="node service" id="grp" style="width:276px"><div class="ic" data-icon="layers"></div>
+        <div class="tx"><b>Build position windows</b><span>find first trade time and date, group trades by symbol and exchange</span></div></div></div>
+    <div class="step" style="--c:var(--service); grid-column:2; grid-row:2"><div class="n">4</div>
+      <div class="node service" id="loop" style="width:276px"><div class="ic" data-icon="repeat"></div>
+        <div class="tx"><b>Replay each symbol</b><span>wait for rate limit, load 1m bars, MTM for open windows, realized P&amp;L for closed ones</span>
+          <div class="chips"><span class="chip">history_rate_limiter</span></div></div></div></div>
+    <div class="step" style="--c:var(--service); grid-column:3; grid-row:2"><div class="n">5</div>
+      <div class="node service" id="cf" style="width:276px"><div class="ic" data-icon="calendar-clock"></div>
+        <div class="tx"><b>Carry-forward positions</b><span>open with no trades today, or exit-only today: rate-limited 1m bars from market open</span></div></div></div>
+    <div class="step" style="--c:var(--app); grid-column:4; grid-row:2"><div class="n"><span data-icon="diamond"></span></div>
+      <div class="node app" id="gateB" style="width:276px"><div class="ic" data-icon="split"></div>
+        <div class="tx"><b>Series built from trades?</b><span>did steps 4 and 5 produce a curve</span></div></div></div>
+
+    <!-- row 3 -->
+    <div class="node broker" id="hist" style="grid-column:2; grid-row:3; justify-self:end; width:276px"><div class="ic" data-icon="chart-candlestick"></div>
+      <div class="tx"><b>1-minute prices</b><span>fetched from your broker for steps 4 and 5</span>
+        <div class="chips"><span class="chip">history_service</span><span class="chip">Broker API</span></div></div></div>
+    <div class="node external" id="pos" style="grid-column:3; grid-row:3; justify-self:end; width:276px; --c:#64748b"><div class="ic" data-icon="briefcase"></div>
+      <div class="tx"><b>Positions fallback</b><span>history per open position; otherwise a flat line from 09:00 at the positionbook P&amp;L</span></div></div>
+    <div class="step" style="--c:var(--service); grid-column:4; grid-row:3"><div class="n">6</div>
+      <div class="node service" id="fill" style="width:276px"><div class="ic" data-icon="arrow-left-to-line"></div>
+        <div class="tx"><b>Zero-fill from 09:15</b><span>flat until the first trade; skipped when carry-forward exists</span></div></div></div>
+
+    <!-- row 4 -->
+    <div class="step" style="--c:var(--service); grid-column:3; grid-row:4"><div class="n">7</div>
+      <div class="node service" id="agg" style="width:276px"><div class="ic" data-icon="sigma"></div>
+        <div class="tx"><b>Portfolio total and drawdown</b><span>Total_PnL (forward-filled), running peak, drawdown; current, max, min MTM</span></div></div></div>
+    <div class="step" style="--c:var(--app); grid-column:4; grid-row:4"><div class="n">8</div>
+      <div class="node app" id="res" style="width:276px"><div class="ic" data-icon="file-json"></div>
+        <div class="tx"><b>JSON to the page</b><span>metrics plus both series</span>
+          <div class="chips"><span class="chip">pnl_series</span><span class="chip">drawdown_series</span></div></div></div></div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--security)"><i></i>Login checks</span>
+    <span style="--c:var(--service)"><i></i>Calculation steps</span>
+    <span style="--c:var(--app)"><i></i>Decisions and response</span>
+    <span style="--c:var(--broker)"><i></i>Broker data</span>
+    <span style="--c:#64748b"><i></i>Fallbacks</span>
+  </div>
+</div>
+<script>
+  connect('auth', 'fetch', { color: 'security' })
+  connect('fetch', 'gateA', { color: 'service' })
+  connect('gateA', 'zero', { color: 'muted', label: 'yes' })
+  connect('gateA', 'grp', { color: 'app', label: 'no', from: 'bottom', to: 'top', bend: 60 })
+  connect('grp', 'loop', { color: 'service' })
+  connect('loop', 'cf', { color: 'service' })
+  connect('cf', 'gateB', { color: 'service' })
+  connect('hist', 'loop', { color: 'broker', dashed: true, from: 'top', to: 'bottom', label: '1m bars' })
+  connect('hist', 'cf', { color: 'broker', dashed: true, from: 'top', to: 'bottom' })
+  connect('gateB', 'zero', { color: 'muted', label: 'no, nothing', from: 'top', to: 'bottom' })
+  connect('gateB', 'fill', { color: 'app', label: 'yes', from: 'bottom', to: 'top' })
+  connect('gateB', 'pos', { color: 'muted', label: 'no, positions exist', from: 'bottom', to: 'top' })
+  connect('fill', 'agg', { color: 'service', from: 'bottom', to: 'top' })
+  connect('pos', 'agg', { color: 'muted', from: 'bottom', to: 'top' })
+  connect('agg', 'res', { color: 'service' })
+</script>

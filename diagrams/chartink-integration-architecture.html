@@ -1,0 +1,98 @@
+<style>#canvas > .wlabel { position: absolute; } .g .node { height: 100%; min-width: 0; justify-content: flex-start; } .g .node .tx { align-self: stretch; } .g .node { position: relative; } .bn { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 15px; color: #0b1120; background: var(--c); box-shadow: 0 0 22px -4px var(--c); }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Chartink integration</div>
+    <h1>Scanner alerts become paced orders through the normal order path</h1>
+    <p style="max-width:1150px">A Chartink alert is checked and turned into orders, which wait in a queue and are sent at a safe pace through the same REST API as every other order. Intraday strategies are squared off on schedule.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns:180px auto; column-gap:56px; row-gap:56px; align-items:start">
+    <div></div>
+    <div class="row" style="align-items:center; gap:52px">
+      <div class="note" style="width:560px; max-width:none"><span data-icon="lightbulb"></span><div>The webhook never calls the broker directly. Queued orders re-enter OpenAlgo through /api/v1, so Action Center, sandbox mode and order checks apply exactly as for any other order. Follow the numbers: left to right along the top, then back right to left along the bottom.</div></div>
+      <div class="node data" id="db" style="width:376px; min-width:0">
+        <div class="ic" data-icon="database"></div>
+        <div class="tx"><b>openalgo.db</b><span>strategies, symbol mappings, API key</span>
+          <div class="chips"><span class="chip">chartink_strategies</span><span class="chip">chartink_symbol_mappings</span><span class="chip">api_keys</span></div></div>
+      </div>
+    </div>
+
+    <div class="col g" style="padding-top:44px; gap:80px">
+      <div style="height:290px"><div class="node client stack big" id="ck" style="padding:18px"><div class="bn" style="--c:var(--client)">1</div>
+        <div class="ic" data-icon="scan-search"></div>
+        <div class="tx"><b>Chartink scanner alert</b><span>your scan fires and posts the matching stocks, trigger prices and scan_name</span></div>
+      </div></div>
+      <div style="height:290px"><div class="node broker stack big" id="broker" style="padding:18px"><div class="bn" style="--c:var(--broker)">9</div>
+        <div class="ic" data-icon="landmark"></div>
+        <div class="tx"><b>Your broker</b><span>broker APIs, in live mode</span></div>
+      </div></div>
+    </div>
+
+    <div class="zone" style="--c:var(--app)">
+      <div class="zl"><span data-icon="server"></span>OpenAlgo Flask app (gunicorn worker)</div>
+      <div class="grid g" style="grid-template-columns:repeat(4,260px); grid-template-rows:290px 290px; column-gap:56px; row-gap:80px">
+        <div class="node security stack" id="rl"><div class="bn" style="--c:var(--security)">2</div>
+          <div class="ic" data-icon="shield-check"></div>
+          <div class="tx"><b>Rate limit</b><span>protects the webhook; CSRF exempt so Chartink can post</span>
+            <div class="chips"><span class="chip">WEBHOOK_RATE_LIMIT</span><span class="chip">100 per minute</span></div></div>
+        </div>
+        <div class="node app stack" id="wh"><div class="bn" style="--c:var(--app)">3</div>
+          <div class="ic" data-icon="webhook"></div>
+          <div class="tx"><b>Webhook endpoint</b><span>one unique URL per strategy</span>
+            <div class="chips"><span class="chip">POST</span><span class="chip">/chartink/webhook/&lt;id&gt;</span></div></div>
+        </div>
+        <div class="node service stack" id="handler"><div class="bn" style="--c:var(--service)">4</div>
+          <div class="ic" data-icon="list-checks"></div>
+          <div class="tx"><b>Webhook handler</b><span>reads BUY, SELL, SHORT or COVER from scan_name, checks the intraday time window, maps symbols</span></div>
+        </div>
+        <div class="node service stack" id="sched">
+          <div class="ic" data-icon="calendar-clock"></div>
+          <div class="tx"><b>Intraday square-off job</b><span>at square-off time, queues orders that close each mapped position (target size 0)</span>
+            <div class="chips"><span class="chip">placesmartorder, position_size 0</span><span class="chip">APScheduler, Asia/Kolkata</span></div></div>
+        </div>
+
+        <div class="node service stack" id="osvc"><div class="bn" style="--c:var(--service)">8</div>
+          <div class="ic" data-icon="workflow"></div>
+          <div class="tx"><b>Order services</b><span>route each order to the right place</span>
+            <div class="chips"><span class="chip">Action Center</span><span class="chip">sandbox</span><span class="chip">live broker</span></div></div>
+        </div>
+        <div class="node app stack" id="api"><div class="bn" style="--c:var(--app)">7</div>
+          <div class="ic" data-icon="code-xml"></div>
+          <div class="tx"><b>REST API /api/v1</b><span>the same API every tool uses</span>
+            <div class="chips"><span class="chip">placeorder</span><span class="chip">placesmartorder</span></div></div>
+        </div>
+        <div class="node service stack" id="worker"><div class="bn" style="--c:var(--service)">6</div>
+          <div class="ic" data-icon="timer"></div>
+          <div class="tx"><b>Order processor thread</b><span>sends queued orders back into OpenAlgo at a safe pace</span>
+            <div class="chips"><span class="chip">HTTP to HOST_SERVER</span><span class="chip">smart: 1/sec</span><span class="chip">regular: up to 10/sec</span></div></div>
+        </div>
+        <div class="node data stack" id="q"><div class="bn" style="--c:var(--data)">5</div>
+          <div class="ic" data-icon="layers"></div>
+          <div class="tx"><b>In-memory order queues</b><span>orders wait here before sending</span>
+            <div class="chips"><span class="chip">regular_order_queue</span><span class="chip">smart_order_queue</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>You and your tools</span>
+    <span style="--c:var(--security)"><i></i>Protection</span>
+    <span style="--c:var(--app)"><i></i>OpenAlgo server</span>
+    <span style="--c:var(--service)"><i></i>Processing</span>
+    <span style="--c:var(--data)"><i></i>Queue and storage</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+  </div>
+</div>
+<script>
+  connect('ck', 'rl', { color: 'client', label: 'HTTP POST' })
+  connect('rl', 'wh', { color: 'security' })
+  connect('wh', 'handler', { color: 'app' })
+  connect('db', 'handler', { color: 'data', label: 'strategy, mappings, API key', from: 'bottom', to: 'top' })
+  connect('handler', 'q', { color: 'service', label: 'entries and exits', from: 'bottom', to: 'top', bend: 50 })
+  connect('sched', 'q', { color: 'service', from: 'bottom', to: 'top', bend: 30 })
+  connect('q', 'worker', { color: 'data' })
+  connect('worker', 'api', { color: 'service' })
+  connect('api', 'osvc', { color: 'app' })
+  connect('osvc', 'broker', { color: 'broker' })
+</script>

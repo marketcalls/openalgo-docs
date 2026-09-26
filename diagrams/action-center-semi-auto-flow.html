@@ -1,0 +1,110 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Action Center · semi-auto mode</div>
+    <h1>New orders wait for your approval before they reach the broker</h1>
+    <p style="max-width:1100px">In semi-auto mode, orders from your strategies are parked in the Action Center. Nothing is sent until you approve it; exits, cancels and read-only calls never wait in the queue.</p>
+  </div>
+
+  <!-- Row A: request and the two checks -->
+  <div class="row" style="align-items:flex-start; gap:70px">
+    <div class="step" style="--c:var(--client)"><div class="n">1</div>
+      <div class="node client" id="recv" style="width:250px"><div class="ic" data-icon="webhook"></div>
+        <div class="tx"><b>Order request arrives</b><span>from your strategy via the API key</span>
+          <div class="chips"><span class="chip">order service</span></div></div></div>
+    </div>
+
+    <div class="col" style="gap:56px">
+      <div class="node security" id="imm" style="width:350px"><div class="ic" data-icon="split"></div>
+        <div class="tx"><b>Close, cancel, modify or a lookup?</b><span>these always skip the queue</span>
+          <div class="chips"><span class="chip">IMMEDIATE_EXECUTION_OPERATIONS</span></div></div></div>
+      <div class="node external" id="block" style="width:350px; --c:#64748b"><div class="ic" data-icon="circle-slash"></div>
+        <div class="tx"><b>Never queued</b><span>close, cancel, modify: refused (403) in semi-auto unless Analyzer is on, else executed. Read-only calls just run.</span></div></div>
+    </div>
+
+    <div class="col" style="gap:56px">
+      <div class="node security" id="mode" style="width:280px"><div class="ic" data-icon="user-cog"></div>
+        <div class="tx"><b>Is your order mode semi-auto?</b><span>per-user setting</span>
+          <div class="chips"><span class="chip">get_order_mode()</span><span class="chip">auth_db</span></div></div></div>
+      <div class="node broker" id="run" style="width:280px"><div class="ic" data-icon="zap"></div>
+        <div class="tx"><b>Executes right away</b><span>auto mode: live broker, or sandbox when Analyzer is on</span></div></div>
+    </div>
+
+    <div class="zone" style="--c:var(--service)">
+      <div class="zl"><span data-icon="inbox"></span>2 · Parked in the queue</div>
+      <div class="col" style="gap:16px">
+        <div class="node data" id="store" style="width:330px"><div class="ic" data-icon="database"></div>
+          <div class="tx"><b>Saved as a pending order</b><span>status = pending</span>
+            <div class="chips"><span class="chip">queue_order()</span><span class="chip">pending_orders</span></div></div></div>
+        <div class="node service" id="emitc" style="width:330px"><div class="ic" data-icon="bell"></div>
+          <div class="tx"><b>Alerts the Action Center</b><span>Socket.IO, best-effort</span>
+            <div class="chips"><span class="chip">pending_order_created</span></div></div></div>
+        <div class="node app" id="ret" style="width:330px"><div class="ic" data-icon="reply"></div>
+          <div class="tx"><b>Replies to your strategy</b><span>HTTP 200, mode = semi_auto</span>
+            <div class="chips"><span class="chip">pending_order_id</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row B: review and outcomes -->
+  <div class="row" style="align-items:flex-start; gap:80px; margin-top:50px">
+    <div class="step" style="--c:var(--app); margin-top:0px"><div class="n">3</div>
+      <div class="node app big hero" id="review" style="width:290px"><div class="ic" data-icon="list-checks"></div>
+        <div class="tx"><b>You review it in the Action Center</b><span>approve, reject, or leave it</span></div></div>
+    </div>
+
+    <div class="col" style="gap:22px; margin-top:70px">
+      <div class="row" style="gap:48px">
+        <div class="step" style="--c:var(--broker)"><div class="n">4a</div>
+          <div class="node service" id="appr" style="width:290px"><div class="ic" data-icon="circle-check"></div>
+            <div class="tx"><b>Approve</b><span>status = approved</span>
+              <div class="chips"><span class="chip">approve_pending_order()</span></div></div></div></div>
+        <div class="node broker" id="exe" style="width:300px"><div class="ic" data-icon="send"></div>
+          <div class="tx"><b>Order placed</b><span>through the normal order service with your auth token (sandbox if Analyzer is on)</span>
+            <div class="chips"><span class="chip">execute_approved_order()</span></div></div></div>
+        <div class="node data" id="upd" style="width:300px"><div class="ic" data-icon="refresh-cw"></div>
+          <div class="tx"><b>Broker result saved</b><span>broker_order_id, and broker_status via orderstatus when available</span></div></div>
+      </div>
+      <div class="row" style="gap:48px">
+        <div class="step" style="--c:var(--security)"><div class="n">4b</div>
+          <div class="node service" id="rej" style="width:290px"><div class="ic" data-icon="circle-x"></div>
+            <div class="tx"><b>Reject</b><span>status = rejected, reason stored</span>
+              <div class="chips"><span class="chip">reject_pending_order()</span></div></div></div></div>
+        <div class="node service" id="emitu" style="width:300px; margin-left:348px"><div class="ic" data-icon="bell-ring"></div>
+          <div class="tx"><b>Screens update live</b><span>emitted after both approve and reject</span>
+            <div class="chips"><span class="chip">pending_order_updated</span></div></div></div>
+      </div>
+      <div class="row" style="gap:48px">
+        <div class="step" style="--c:#64748b"><div class="n">4c</div>
+          <div class="node external" id="wait" style="width:290px; --c:#64748b"><div class="ic" data-icon="hourglass"></div>
+            <div class="tx"><b>Ignore</b><span>order stays pending</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>Your strategy</span>
+    <span style="--c:var(--security)"><i></i>Checks</span>
+    <span style="--c:var(--app)"><i></i>OpenAlgo app</span>
+    <span style="--c:var(--service)"><i></i>Queue actions</span>
+    <span style="--c:var(--data)"><i></i>Database</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+  </div>
+</div>
+<script>
+  connect('recv', 'imm', { color: 'client' })
+  connect('imm', 'block', { color: 'muted', label: 'yes', from: 'bottom', to: 'top' })
+  connect('imm', 'mode', { color: 'security', label: 'no', from: 'right', to: 'left' })
+  connect('mode', 'run', { color: 'broker', label: 'no (auto)', from: 'bottom', to: 'top' })
+  connect('mode', 'store', { color: 'security', label: 'yes', from: 'right', to: 'left' })
+  connect('store', 'emitc', { color: 'data' })
+  connect('emitc', 'ret', { color: 'service' })
+  connect('ret', 'review', { color: 'app', from: 'bottom', to: 'top', bend: 50 })
+  connect('review', 'appr', { color: 'broker', from: 'right', to: 'left', bend: 60 })
+  connect('review', 'rej', { color: 'security', from: 'bottom', to: 'left', bend: 80 })
+  connect('review', 'wait', { color: 'muted', from: 'bottom', to: 'left', dashed: true, bend: 120 })
+  connect('appr', 'exe', { color: 'service' })
+  connect('exe', 'upd', { color: 'broker' })
+  connect('upd', 'emitu', { color: 'data', from: 'bottom', to: 'top' })
+  connect('rej', 'emitu', { color: 'service', from: 'right', to: 'left' })
+</script>

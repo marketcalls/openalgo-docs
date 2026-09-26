@@ -6,64 +6,7 @@ OpenAlgo provides a secure multi-step password reset flow that supports both ema
 
 ## Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                        Password Reset Architecture                           │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                         Step 1: identify the account                         │
-│                   POST /auth/reset-password  step="email"                    │
-│                                                                              │
-│   React /reset-password page posts the email address.                        │
-│   find_user_by_email(email)                                                  │
-│                                                                              │
-│   Match      -> session["reset_email"] = email                               │
-│   No match   -> nothing stored                                               │
-│                                                                              │
-│   Both branches return the same success body, so the response                │
-│   never reveals whether the account exists.                                  │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│              Step 2: choose and complete a verification method               │
-│                                                                              │
-│   step="select_totp"                 step="select_email"                     │
-│   ──────────────────────────────────                                         │
-│   session["reset_method"]="totp"     Refused with 400 when the account       │
-│                                      has password-reset TOTP required,       │
-│                                      or when SMTP is not configured.         │
-│                                      Otherwise mails a link built from       │
-│                                      HOST_SERVER, storing only               │
-│                                      sha256(token) in the session.           │
-│                                                                              │
-│   step="totp"                        GET /auth/reset-password-email/<token>  │
-│   ──────────────────────────────────                                         │
-│   user.verify_totp(totp_code)        Validates the emailed token, then       │
-│   returns a fresh token to the SPA   stores session["email_reset_token"]     │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                         Step 3: set the new password                         │
-│                  POST /auth/reset-password  step="password"                  │
-│                                                                              │
-│   secrets.compare_digest(sha256(token), session token)                       │
-│   and email == session["reset_email"]      failure -> 400                    │
-│                                                                              │
-│   validate_password_strength(password)     failure -> 400                    │
-│     8+ chars, upper, lower, digit, one of !@#$%^&*                           │
-│                                                                              │
-│   user.set_password(password)   Argon2 with API_KEY_PEPPER                   │
-│   clear_user_sessions(username) and force_logout                             │
-│   session keys popped: reset_token, email_reset_token,                       │
-│   reset_email, reset_method                                                  │
-│   SPA redirects to /login                                                    │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-password-reset-flow.png" alt="Password reset sequence: email step, TOTP or emailed-link verification stored as hashed tokens in the Flask session, then password step that rehashes and clears sessions"><figcaption></figcaption></figure>
 
 ## Database Schema
 

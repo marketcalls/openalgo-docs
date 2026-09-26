@@ -1,0 +1,68 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Place order call flow</div>
+    <h1>Every order passes the same gates before it reaches your broker</h1>
+    <p style="max-width:1150px">A <b>POST /api/v1/placeorder</b> is screened at the front door, checked and authenticated by the order service, then sent either to your broker (live) or to the sandbox (analyzer mode). Each outcome is announced on the event bus.</p>
+  </div>
+
+  <div class="row" style="align-items:flex-start; gap:85px">
+    <!-- Column A: front door -->
+    <div class="zone" style="--c:var(--app); padding:44px 22px 22px">
+      <div class="zl"><span data-icon="door-open"></span>API front door</div>
+      <div class="col" style="gap:30px">
+        <div class="step" style="--c:var(--client)"><div class="n">1</div>
+          <div class="node client" id="s1" style="width:310px"><div class="ic" data-icon="code-xml"></div><div class="tx"><b>Your app sends an order</b><span>strategy, script or platform</span><div class="chips"><span class="chip">POST /api/v1/placeorder</span></div></div></div></div>
+        <div class="step" style="--c:var(--security)"><div class="n">2</div>
+          <div class="node security" id="s2" style="width:310px"><div class="ic" data-icon="shield-ban"></div><div class="tx"><b>Banned IP check</b><span>blocked addresses stop here</span><div class="chips"><span class="chip">SecurityMiddleware</span><span class="chip">403</span></div></div></div></div>
+        <div class="step" style="--c:var(--security)"><div class="n">3</div>
+          <div class="node security" id="s3" style="width:310px"><div class="ic" data-icon="gauge"></div><div class="tx"><b>Speed limit and format</b><span>too many orders, or missing fields, are refused</span><div class="chips"><span class="chip">10 per second &rarr; 429</span><span class="chip">OrderSchema &rarr; 400</span></div></div></div></div>
+      </div>
+    </div>
+
+    <!-- Column B: order service -->
+    <div class="zone" style="--c:var(--service); padding:44px 22px 22px">
+      <div class="zl"><span data-icon="workflow"></span>place_order service</div>
+      <div class="col" style="gap:30px">
+        <div class="step" style="--c:var(--service)"><div class="n">4</div>
+          <div class="node service" id="s4" style="width:320px; position:relative"><span class="wlabel" style="left:calc(100% + 54px); top:calc(50% - 24px); border-color:#fbbf2466">semi-auto</span><div class="ic" data-icon="split"></div><div class="tx"><b>Auto or semi-auto?</b><span>semi-auto orders wait for your approval</span><div class="chips"><span class="chip">should_route_to_pending</span></div></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">5</div>
+          <div class="node service" id="s5" style="width:320px"><div class="ic" data-icon="list-checks"></div><div class="tx"><b>Validate the order</b><span>symbol, quantity, price type</span><div class="chips"><span class="chip">validate_order_data</span><span class="chip">400</span><span class="chip">OrderFailedEvent</span></div></div></div></div>
+        <div class="step" style="--c:var(--security)"><div class="n">6</div>
+          <div class="node security" id="s6" style="width:320px"><div class="ic" data-icon="key-round"></div><div class="tx"><b>Find your broker session</b><span>API key to broker token</span><div class="chips"><span class="chip">get_auth_token_broker</span><span class="chip">auth_db</span><span class="chip">none &rarr; 403</span></div></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">7</div>
+          <div class="node service" id="s7" style="width:320px; position:relative"><span class="wlabel" style="left:calc(100% + 54px); top:calc(50% - 28px); border-color:#4ade8066">live</span><span class="wlabel" style="left:calc(100% + 54px); top:calc(50% + 30px); border-color:#a78bfa66">analyzer on</span><div class="ic" data-icon="flask-conical"></div><div class="tx"><b>Analyzer mode on?</b><span>decides live or practice</span><div class="chips"><span class="chip">get_analyze_mode()</span></div></div></div></div>
+      </div>
+    </div>
+
+    <!-- Column C: destinations -->
+    <div class="col" style="gap:24px; padding-top:44px; padding-bottom:12px; align-self:stretch; justify-content:space-between">
+      <div class="node data" id="semi" style="width:550px"><div class="ic" data-icon="inbox"></div><div class="tx"><b>Queued for your approval</b><span>replies at once with a pending order id; nothing is sent yet</span><div class="chips"><span class="chip">queue_order</span><span class="chip">pending_order_id</span></div></div></div>
+      <div class="node broker big hero" id="brk" style="width:550px"><div class="ic" data-icon="landmark"></div><div class="tx"><b>Your broker (live)</b><span>loads the broker plugin, converts the symbol, sends the order</span><div class="chips"><span class="chip">import_broker_module &rarr; 404</span><span class="chip">place_order_api</span><span class="chip">transform_data + get_br_symbol</span><span class="chip">httpx POST</span></div></div></div>
+      <div class="row" style="gap:14px; margin-top:6px">
+        <div class="node broker" id="ok" style="min-width:0; width:268px; padding:12px 14px"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>200</b><span>OrderPlacedEvent live</span></div></div>
+        <div class="node security" id="err" style="min-width:0; width:268px; padding:12px 14px"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>Error</b><span>OrderFailedEvent, broker status or 500</span></div></div>
+      </div>
+      <div class="node service" id="sbx" style="width:550px"><div class="ic" data-icon="flask-conical"></div><div class="tx"><b>Sandbox fills it (analyzer mode)</b><span>simulated order with virtual funds</span><div class="chips"><span class="chip">sandbox_place_order</span><span class="chip">OrderPlacedEvent analyze</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="row" style="align-items:stretch; gap:28px; margin-top:44px">
+    <div class="step" style="--c:var(--client)"><div class="n">8</div>
+      <div class="node client" id="resp" style="width:470px"><div class="ic" data-icon="reply"></div><div class="tx"><b>Reply to your app</b><span>JSON result with its status code; timing is saved in the background</span><div class="chips"><span class="chip">track_latency("PLACE")</span><span class="chip">order_latency</span><span class="chip">latency.db (off-thread)</span></div></div></div></div>
+    <div class="node data" id="bus" style="flex:1"><div class="ic" data-icon="megaphone"></div><div class="tx"><b>Event bus tells everyone</b><span>placed and failed orders: log, live UI (Socket.IO), Telegram, WhatsApp. Placed orders only: strategy book.</span><div class="chips"><span class="chip">OrderPlacedEvent</span><span class="chip">OrderFailedEvent</span><span class="chip">AnalyzerErrorEvent (analyze-mode 400)</span></div></div></div>
+  </div>
+</div>
+<script>
+  connect('s1', 's2', { color: 'client' })
+  connect('s2', 's3', { color: 'security' })
+  connect('s3', 's4', { color: 'security', from: 'right', to: 'left' })
+  connect('s4', 's5', { color: 'service', label: 'auto' })
+  connect('s5', 's6', { color: 'service' })
+  connect('s6', 's7', { color: 'security' })
+  connect('s4', 'semi', { color: 'data', dashed: true, from: 'right', to: 'left' })
+  connect('s7', 'sbx', { color: 'service', from: 'right', to: 'left' })
+  connect('s7', 'brk', { color: 'broker', from: 'right', to: 'left' })
+  connect('brk', 'ok', { color: 'broker', from: 'bottom', to: 'top' })
+  connect('brk', 'err', { color: 'security', from: 'bottom', to: 'top' })
+</script>

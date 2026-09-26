@@ -1,0 +1,101 @@
+<style>#canvas > .wlabel{position:absolute;z-index:3}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Sandbox architecture</div>
+    <h1>One switch decides: your real broker or the sandbox</h1>
+    <p style="max-width:1150px">Your API calls look the same in both modes. With analyzer mode on, the service layer sends them to the sandbox managers, which keep simulated orders, funds and positions in their own database while background workers fill orders on live prices.</p>
+  </div>
+
+  <div class="row" style="gap:48px; align-items:center">
+    <div class="node client stack" id="req" style="width:230px">
+      <div class="ic" data-icon="send"></div>
+      <div class="tx"><b>Your API call</b><span>orders, account and GTT requests</span>
+        <div class="chips"><span class="chip">/api/v1</span></div></div>
+    </div>
+    <div class="col" style="gap:26px">
+      <div class="node service stack" id="svc" style="width:250px">
+        <div class="ic" data-icon="layers"></div>
+        <div class="tx"><b>Service layer</b><span>same code path for live and sandbox</span>
+          <div class="chips"><span class="chip">place_order_service</span><span class="chip">and peers</span></div></div>
+      </div>
+    </div>
+    <div class="node app stack hero" id="mode" style="width:270px">
+      <div class="ic" data-icon="split"></div>
+      <div class="tx"><b>Analyzer mode on?</b><span>the switch from Settings, checked on every call</span>
+        <div class="chips"><span class="chip">get_analyze_mode()</span><span class="chip">db/openalgo.db</span></div></div>
+    </div>
+    <div class="node broker stack" id="live" style="width:250px; margin-left:60px">
+      <div class="ic" data-icon="plug-zap"></div>
+      <div class="tx"><b>Live broker adapter</b><span>places real orders</span>
+        <div class="chips"><span class="chip">broker/&lt;name&gt;/api</span></div></div>
+    </div>
+    <div class="node broker stack" id="bapi" style="width:210px">
+      <div class="ic" data-icon="landmark"></div>
+      <div class="tx"><b>Your broker</b><span>broker APIs</span></div>
+    </div>
+  </div>
+
+  <div class="row" style="gap:48px; margin-top:64px; align-items:flex-start">
+    <div style="width:230px"></div>
+    <div class="node external" id="ac" style="width:250px; min-width:0">
+      <div class="ic" data-icon="list-checks"></div>
+      <div class="tx"><b>Action Center</b><span>semi-auto mode: order waits for your approval first</span></div>
+    </div>
+  </div>
+
+  <div class="zone" style="--c:var(--service); margin-top:48px">
+    <div class="zl"><span data-icon="flask-conical"></span>Sandbox · analyzer mode on</div>
+    <div id="sbin" style="position:absolute;top:0;left:710px;width:1px;height:1px"></div>
+    <div class="row" style="gap:0; align-items:center; justify-content:space-between">
+      <div class="zone" id="mgrs" style="--c:var(--service); padding:38px 18px 18px">
+        <div class="zl"><span data-icon="boxes"></span>Sandbox managers · sandbox/</div>
+        <div class="grid" style="grid-template-columns:230px 230px; gap:14px">
+          <div class="node service" style="min-width:0"><div class="ic" data-icon="file-text"></div><div class="tx"><b>Orders</b><span>validate, block margin, store</span><div class="chips"><span class="chip">OrderManager</span></div></div></div>
+          <div class="node service" style="min-width:0"><div class="ic" data-icon="wallet"></div><div class="tx"><b>Funds</b><span>1 Cr capital, margin, P&amp;L</span><div class="chips"><span class="chip">FundManager</span></div></div></div>
+          <div class="node service" style="min-width:0"><div class="ic" data-icon="trending-up"></div><div class="tx"><b>Positions</b><span>netting, MTM on read</span><div class="chips"><span class="chip">PositionManager</span></div></div></div>
+          <div class="node service" style="min-width:0"><div class="ic" data-icon="briefcase"></div><div class="tx"><b>Holdings</b><span>CNC moves in at T+1</span><div class="chips"><span class="chip">HoldingsManager</span></div></div></div>
+          <div class="node service" style="min-width:0; grid-column:span 2"><div class="ic" data-icon="target"></div><div class="tx"><b>GTT orders</b><span>single and OCO legs</span><div class="chips"><span class="chip">GTTManager</span></div></div></div>
+        </div>
+      </div>
+
+      <div class="node data stack big" id="db" style="width:250px; min-width:0">
+        <div class="ic" data-icon="database"></div>
+        <div class="tx"><b>Sandbox database</b><span>kept apart from live data</span>
+          <div class="chips"><span class="chip">db/sandbox.db</span><span class="chip">orders</span><span class="chip">trades</span><span class="chip">positions</span><span class="chip">holdings</span><span class="chip">funds</span><span class="chip">daily_pnl</span><span class="chip">config</span><span class="chip">gtt</span><span class="chip">gtt_legs</span></div></div>
+      </div>
+
+      <div class="zone" id="bg" style="--c:var(--data); padding:38px 18px 18px">
+        <div class="zl"><span data-icon="cpu"></span>Background workers</div>
+        <div class="col" style="gap:14px">
+          <div class="node service" id="wse" style="width:300px"><div class="ic" data-icon="radio"></div><div class="tx"><b>Live-tick engine</b><span>default; fills on WebSocket ticks</span><div class="chips"><span class="chip">proxy port 8765</span></div></div></div>
+          <div class="node service" id="poll" style="width:300px"><div class="ic" data-icon="refresh-cw"></div><div class="tx"><b>Polling engine</b><span>fallback, multiquotes every 5 s</span></div></div>
+          <div class="node service" style="width:300px"><div class="ic" data-icon="timer"></div><div class="tx"><b>GTT maintenance</b><span>reclaim legs 60 s, expiry hourly</span></div></div>
+          <div class="node service" style="width:300px"><div class="ic" data-icon="calendar-clock"></div><div class="tx"><b>Scheduler</b><span>MIS square-off, T+1, P&amp;L snapshot and reset</span><div class="chips"><span class="chip">APScheduler</span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:34px; justify-content:space-between; align-items:flex-end">
+    <div class="legend" style="margin-top:0">
+      <span style="--c:var(--client)"><i></i>Your tools</span>
+      <span style="--c:var(--app)"><i></i>Mode switch</span>
+      <span style="--c:var(--service)"><i></i>Services and workers</span>
+      <span style="--c:var(--data)"><i></i>Database</span>
+      <span style="--c:var(--broker)"><i></i>Live broker</span>
+      <span style="--c:var(--external)"><i></i>Approval queue</span>
+    </div>
+    <div class="note" style="max-width:640px"><span data-icon="lightbulb"></span><div>Workers start when analyzer mode is switched on. The live-tick engine drops to polling if the WebSocket proxy is down or its data goes stale.</div></div>
+  </div>
+</div>
+<script>
+  connect('req', 'svc', { color: 'client' })
+  connect('svc', 'mode', { color: 'service' })
+  connect('svc', 'ac', { color: 'external', dashed: true, label: 'semi-auto', from: 'bottom', to: 'top' })
+  connect('mode', 'live', { color: 'broker', label: 'off: live' })
+  connect('live', 'bapi', { color: 'broker' })
+  connect('mode', 'sbin', { color: 'service', label: 'on: sandbox_service.py', from: 'bottom', to: 'top' })
+  connect('mgrs', 'db', { color: 'data' })
+  connect('bg', 'db', { color: 'data', from: 'left', to: 'right' })
+  connect('wse', 'poll', { color: 'service', dashed: true, from: 'left', to: 'left', bend: 60, label: 'if stale or proxy down' })
+</script>

@@ -1,0 +1,77 @@
+<div id="canvas" style="width:1680px">
+  <style>#canvas > .wlabel { position: absolute; }</style>
+  <div class="title">
+    <div class="eyebrow">Python strategy hosting</div>
+    <h1>Every strategy runs as its own separate program, on your schedule</h1>
+    <p style="max-width:1100px">You upload a script, OpenAlgo saves it, and a built-in scheduler starts and stops it in market hours. Each running strategy is its own process with its own log, and it places orders through the same OpenAlgo API as any other tool.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns:250px 1fr 400px; grid-template-rows:auto auto; gap:64px 64px; align-items:center">
+    <!-- row 1 -->
+    <div class="node client" id="ui" style="align-self:start; margin-top:40px"><div class="ic" data-icon="monitor"></div><div class="tx"><b>Strategy pages</b><span>upload, edit, start, stop, schedule, logs</span>
+      <div class="chips"><span class="chip">React /python</span></div></div></div>
+
+    <div class="zone" style="--c:var(--app)">
+      <div class="zl"><span data-icon="server"></span>Your OpenAlgo server<span class="chip" style="text-transform:none; letter-spacing:0; margin-left:4px; padding:2px 8px">Flask process</span></div>
+      <div class="col" style="gap:34px">
+        <div class="node app hero" id="bp" style="align-self:stretch; position:relative"><i id="bpS" style="position:absolute;bottom:0;left:calc((100% - 84px) / 4);width:1px;height:1px"></i><i id="bpT" style="position:absolute;bottom:0;left:calc(75% + 21px);width:1px;height:1px"></i><i id="bpA" style="position:absolute;left:0;top:28%;width:1px;height:1px"></i><i id="bpB" style="position:absolute;left:0;top:78%;width:1px;height:1px"></i><div class="ic" data-icon="code-xml"></div><div class="tx"><b>Strategy manager</b><span>new, start, stop, schedule, delete, logs, live status (SSE)</span>
+          <div class="chips"><span class="chip">python_strategy_bp</span><span class="chip">/python</span><span class="chip">/python/api/events</span></div></div></div>
+        <div class="row" style="gap:84px; align-items:stretch">
+          <div class="node service" id="sched" style="flex:1; position:relative"><div class="wlabel" style="left:calc(100% + 42px); top:calc(50% - 22px); border-color:#a78bfa66">start / stop</div><div class="ic" data-icon="calendar-clock"></div><div class="tx"><b>Scheduler (IST)</b><span>start and stop time per strategy, plus housekeeping jobs</span>
+            <div class="chips"><span class="chip">APScheduler</span><span class="chip">trading-day check 00:01</span><span class="chip">hours enforcer 1 min</span><span class="chip">reap dead 60 s</span></div></div></div>
+          <div class="node service" id="state" style="flex:1"><div class="ic" data-icon="layers"></div><div class="tx"><b>Live process table</b><span>what is running, starting or stopping, kept in memory</span>
+            <div class="chips"><span class="chip">RUNNING_STRATEGIES</span><span class="chip">PROCESS_LOCK</span></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone" style="--c:var(--service)">
+      <div class="zl"><span data-icon="cpu"></span>One process per strategy</div>
+      <div class="col" style="gap:20px">
+        <div class="node security" id="lim"><div class="ic" data-icon="shield-check"></div><div class="tx"><b>Resource limits (Unix only)</b><span>stops a runaway script hurting the server</span>
+          <div class="chips"><span class="chip">memory 1024 MB default</span><span class="chip">CPU 3600 s</span><span class="chip">256 files</span><span class="chip">256 procs</span></div></div></div>
+        <div class="node service big" id="s1"><div class="ic" data-icon="terminal"></div><div class="tx"><b>Your strategy script</b><span>own process ID and session, gets its ID, host and API key as environment variables</span>
+          <div class="chips"><span class="chip">python -u</span><span class="chip">STRATEGY_ID</span><span class="chip">OPENALGO_HOST</span><span class="chip">OPENALGO_API_KEY</span></div></div></div>
+      </div>
+    </div>
+
+    <!-- row 2 -->
+    <div class="node data stack" id="scripts"><div class="ic" data-icon="file-code"></div><div class="tx"><b>Script files</b><span>strategies/scripts/</span>
+      <div class="chips"><span class="chip">&lt;name&gt;_&lt;timestamp&gt;.py</span></div></div></div>
+
+    <div class="row" style="gap:84px; align-items:stretch; padding:0 26px">
+      <div class="node data" id="cal" style="flex:1"><div class="ic" data-icon="calendar"></div><div class="tx"><b>Market calendar</b><span>holidays and trading sessions per exchange</span>
+        <div class="chips"><span class="chip">market_calendar_db</span></div></div></div>
+      <div class="node data" id="cfg" style="flex:1"><div class="ic" data-icon="file-text"></div><div class="tx"><b>Strategy settings</b><span>strategies/ folder, schedules and status flags</span>
+        <div class="chips"><span class="chip">strategy_configs.json</span></div></div></div>
+    </div>
+
+    <div class="col" style="gap:26px">
+      <div class="node data" id="logs"><div class="ic" data-icon="scroll-text"></div><div class="tx"><b>One log file per run</b><span>print output and errors together</span>
+        <div class="chips"><span class="chip">log/strategies/</span><span class="chip">&lt;id&gt;_&lt;date&gt;_&lt;time&gt;_IST.log</span></div></div></div>
+      <div class="node app" id="api"><div class="ic" data-icon="send"></div><div class="tx"><b>OpenAlgo REST API</b><span>the script places orders and reads data here, like any other client</span>
+        <div class="chips"><span class="chip">/api/v1 via OPENALGO_HOST</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>Your screens</span>
+    <span style="--c:var(--app)"><i></i>OpenAlgo server</span>
+    <span style="--c:var(--service)"><i></i>Scheduler and processes</span>
+    <span style="--c:var(--security)"><i></i>Protection</span>
+    <span style="--c:var(--data)"><i></i>Stored data</span>
+  </div>
+</div>
+<script>
+  connect('ui', 'bpA', { color: 'client', from: 'right', to: 'left' })
+  connect('bpS', 'sched', { color: 'app', from: 'bottom', to: 'top' })
+  connect('bpT', 'state', { color: 'app', from: 'bottom', to: 'top' })
+  connect('sched', 'state', { color: 'service' })
+  connect('sched', 'cal', { color: 'data', dashed: true, label: 'trading day?', from: 'bottom', to: 'top' })
+  connect('state', 'cfg', { color: 'service', label: 'saves status', from: 'bottom', to: 'top' })
+  connect('bpB', 'scripts', { color: 'app', label: 'saves script', from: 'left', to: 'top' })
+  connect('lim', 's1', { color: 'security', dashed: true, from: 'bottom', to: 'top' })
+  connect('state', 's1', { color: 'service', label: 'launch', from: 'right', to: 'left' })
+  connect('s1', 'logs', { color: 'service', from: 'bottom', to: 'top', label: 'stdout + stderr' })
+  connect('s1', 'api', { color: 'service', from: 'right', to: 'right', bend: 40 })
+</script>

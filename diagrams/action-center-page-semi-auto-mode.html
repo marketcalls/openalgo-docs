@@ -1,0 +1,70 @@
+<style>#canvas > .wlabel { position: absolute; } #ac { position: relative; } .anc { position:absolute; right:0; width:0; height:0; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Semi-auto mode</div>
+    <h1>No order reaches your broker until you approve it</h1>
+    <p style="max-width:1080px">In semi-auto mode OpenAlgo holds every new order in a queue. You review it in the Action Center, then approve it to place the order or reject it so it is never sent.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:56px">
+    <div class="col" style="gap:40px">
+      <div class="node client" id="sig" style="width:250px">
+        <div class="ic" data-icon="zap"></div>
+        <div class="tx"><b>Trading signal</b><span>from your strategy, TradingView or SDK</span></div>
+      </div>
+    </div>
+
+    <div class="col" style="gap:70px; align-items:center">
+      <div class="node security" id="oa" style="width:300px">
+        <div class="ic" data-icon="shield-check"></div>
+        <div class="tx"><b>OpenAlgo checks it</b><span>verifies your API key and sees semi-auto is on</span>
+          <div class="chips"><span class="chip">/api/v1</span><span class="chip">semi_auto</span></div></div>
+      </div>
+      <div class="node external" id="ack" style="width:300px">
+        <div class="ic" data-icon="send"></div>
+        <div class="tx"><b>Instant reply</b><span>caller is told the order is waiting for approval</span>
+          <div class="chips"><span class="chip">pending_order_id</span></div></div>
+      </div>
+    </div>
+
+    <div class="node data" id="q" style="width:240px">
+      <div class="ic" data-icon="list-checks"></div>
+      <div class="tx"><b>Waiting queue</b><span>order saved with status pending</span>
+        <div class="chips"><span class="chip">pending_orders</span></div></div>
+    </div>
+
+    <div class="node app big hero stack" id="ac" style="width:250px"><i class="anc" id="ac-up" style="top:22%"></i><i class="anc" id="ac-lo" style="top:78%"></i>
+      <div class="ic" data-icon="user"></div>
+      <div class="tx"><b>Action Center</b><span>you review the order and decide</span></div>
+    </div>
+
+    <div class="col" style="gap:70px">
+      <div class="col" style="gap:56px">
+        <div class="node service" id="exe" style="width:270px">
+          <div class="ic" data-icon="circle-check"></div>
+          <div class="tx"><b>Checked again and sent</b><span>the order is validated once more, then sent out</span>
+            <div class="chips"><span class="chip">approval executor</span></div></div>
+        </div>
+        <div class="node broker" id="broker" style="width:270px">
+          <div class="ic" data-icon="trending-up"></div>
+          <div class="tx"><b>Order placed at your broker</b><span>or in the sandbox if Analyzer mode is on</span></div>
+        </div>
+      </div>
+      <div class="node security" id="rej" style="width:270px">
+        <div class="ic" data-icon="circle-x"></div>
+        <div class="tx"><b>Rejected</b><span>reason saved, never sent to the broker</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="max-width:1000px; margin-top:44px"><span data-icon="lightbulb"></span><div>Only new orders wait for approval. Cancel, modify and close-position requests are blocked in semi-auto mode; switch to Auto to use them. Read-only calls such as order book and positions run at once.</div></div>
+</div>
+<script>
+  connect('sig', 'oa', { color: 'client' })
+  connect('oa', 'q', { color: 'security' })
+  connect('oa', 'ack', { color: 'external', dashed: true, from: 'bottom', to: 'top' })
+  connect('q', 'ac', { color: 'data' })
+  connect('ac-up', 'exe', { color: 'broker', label: 'Approve', from: 'right', to: 'left' })
+  connect('exe', 'broker', { color: 'service', from: 'bottom', to: 'top' })
+  connect('ac-lo', 'rej', { color: 'security', label: 'Reject', from: 'right', to: 'left' })
+</script>

@@ -1,0 +1,90 @@
+<div id="canvas" style="width:1680px">
+  <style>#canvas > .wlabel { position: absolute; }</style>
+  <div class="title">
+    <div class="eyebrow">Browser security</div>
+    <h1>Your login session: signed in once, cleared every day</h1>
+    <p style="max-width:1100px">You only count as logged in after the password, the optional TOTP code, and either a stored broker token or a fresh broker login. Each request then re-checks the session, and it ends at logout or at the daily expiry time.</p>
+  </div>
+
+  <div class="zone" style="--c:var(--security)">
+    <div class="zl"><span data-icon="log-in"></span>Signing in</div>
+    <div class="row" style="gap:80px; align-items:center">
+      <div class="node security stack" id="pw" style="width:220px; min-width:220px">
+        <div class="ic" data-icon="key-round"></div>
+        <div class="tx"><b>Password check</b><span>verified with Argon2</span>
+          <div class="chips"><span class="chip">POST /auth/login</span></div></div>
+      </div>
+      <div class="node security stack" id="totp" style="width:270px; min-width:270px">
+        <div class="ic" data-icon="smartphone"></div>
+        <div class="tx"><b>TOTP code</b><span>only if login TOTP is required; no session user until it is valid</span>
+          <div class="chips"><span class="chip">pending_totp_user</span><span class="chip">POST /auth/login/totp</span></div></div>
+      </div>
+      <div class="node app stack" id="user" style="width:200px; min-width:200px">
+        <div class="ic" data-icon="user"></div>
+        <div class="tx"><b>User known</b><span>session user is set</span>
+          <div class="chips"><span class="chip">session['user']</span></div></div>
+      </div>
+      <div class="col" style="gap:30px; margin-left:auto; margin-right:110px">
+        <div class="node broker" id="resume" style="width:370px">
+          <div class="ic" data-icon="refresh-cw"></div>
+          <div class="tx"><b>Resume broker token</b><span>a stored broker token is still usable</span></div>
+        </div>
+        <div class="node broker" id="bauth" style="width:370px">
+          <div class="ic" data-icon="plug-zap"></div>
+          <div class="tx"><b>Broker login</b><span>no resumable token; finish the broker login and callback</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:80px; align-items:center; justify-content:flex-start; gap:90px; padding-right:137.5px">
+    <div class="col" style="gap:30px; width:300px">
+      <div class="node client big" id="out" style="width:300px">
+        <div class="ic" data-icon="log-out"></div>
+        <div class="tx"><b>Back to login</b><span>page requests redirect to /login; background (AJAX) calls get a 401 JSON reply</span></div>
+      </div>
+      <div class="note" style="max-width:300px"><span data-icon="lightbulb"></span><div>A session that started before today's expiry time is cleared on the first request after it, so you log in again each trading day.</div></div>
+    </div>
+    <div class="node security stack" id="clr" style="width:220px; min-width:220px">
+      <div class="ic" data-icon="eraser"></div>
+      <div class="tx"><b>Session cleared</b><span>broker tokens revoked, session wiped</span>
+        <div class="chips"><span class="chip">revoke_user_tokens()</span><span class="chip">session.clear()</span></div></div>
+    </div>
+    <div class="col" style="gap:30px">
+      <div class="node security" id="logout" style="width:230px; min-width:230px">
+        <div class="ic" data-icon="door-open"></div>
+        <div class="tx"><b>You log out</b><span>/auth/logout</span></div>
+      </div>
+      <div class="node security" id="exp" style="width:230px; min-width:230px">
+        <div class="ic" data-icon="calendar-clock"></div>
+        <div class="tx"><b>Daily expiry</b><span>now past the cut-off and login was before it</span></div>
+      </div>
+    </div>
+    <div class="node app big hero stack" id="act" style="width:370px; margin-left:auto">
+      <div class="ic" data-icon="shield-check"></div>
+      <div class="tx"><b>Active session</b><span>set up by handle_auth_success, then re-checked on every request</span>
+        <div class="chips"><span class="chip">logged_in</span><span class="chip">login_time (IST)</span><span class="chip">session.permanent</span><span class="chip">lifetime up to next SESSION_EXPIRY_TIME</span><span class="chip">is_session_valid()</span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--security)"><i></i>Security check</span>
+    <span style="--c:var(--app)"><i></i>Session state</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+    <span style="--c:var(--client)"><i></i>What you see</span>
+  </div>
+</div>
+<script>
+  connect('pw', 'totp', { color: 'security', label: 'TOTP required' })
+  connect('totp', 'user', { color: 'security', label: 'valid' })
+  connect('pw', 'user', { color: 'app', label: 'TOTP not required', from: 'bottom', to: 'bottom', bend: 80 })
+  connect('user', 'resume', { color: 'broker' })
+  connect('user', 'bauth', { color: 'broker' })
+  connect('bauth', 'act', { color: 'broker', label: 'callback OK', from: 'bottom', to: 'top' })
+  connect('resume', 'act', { color: 'broker', from: 'right', to: 'right', bend: 70, label: 'token still valid' })
+  connect('act', 'logout', { color: 'security', from: 'left', to: 'right', label: 'click logout', bend: 60 })
+  connect('act', 'exp', { color: 'security', from: 'left', to: 'right', label: 'after cut-off', bend: 60 })
+  connect('logout', 'clr', { color: 'security', from: 'left', to: 'right' })
+  connect('exp', 'clr', { color: 'security', from: 'left', to: 'right' })
+  connect('clr', 'out', { color: 'client' })
+</script>

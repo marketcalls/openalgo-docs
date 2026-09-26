@@ -1,0 +1,75 @@
+<div id="canvas" style="width:1680px">
+  <style>#canvas > .wlabel { position: absolute; }</style>
+  <div class="title">
+    <div class="eyebrow">Service layer</div>
+    <h1>Every caller uses the same service, so the rules run once</h1>
+    <p style="max-width:1150px">Whether a request comes from the SDK, the web app, a webhook or a Flow, the route only checks the input. The domain service applies the policy, picks where the work runs and hands back a plain result.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:46px; margin-top:80px">
+    <div class="node client stack" id="caller" style="width:190px; min-width:190px">
+      <div class="ic" data-icon="users"></div>
+      <div class="tx"><b>Caller</b><span>SDK, web app, webhook or Flow</span></div>
+    </div>
+    <div class="node app stack" id="route" style="width:240px; min-width:240px">
+      <div class="ic" data-icon="route"></div>
+      <div class="tx"><b>Route checks input</b><span>rate limit, then schema or session validation</span>
+        <div class="chips"><span class="chip">RESTX resource</span><span class="chip">or blueprint</span></div></div>
+    </div>
+    <div class="node service stack big hero" id="svc" style="width:300px; min-width:300px">
+      <div class="ic" data-icon="workflow"></div>
+      <div class="tx"><b>Domain service</b><span>plain values in, plain result out</span>
+        <div class="chips"><span class="chip">services/&lt;domain&gt;_service.py</span></div></div>
+    </div>
+    <div class="node security stack" id="policy" style="width:260px; min-width:260px">
+      <div class="ic" data-icon="shield-check"></div>
+      <div class="tx"><b>Auth and mode policy</b><span>who you are and where the work should go</span>
+        <div class="chips"><span class="chip">Action Center routing</span><span class="chip">API key to broker</span><span class="chip">analyzer mode check</span></div></div>
+    </div>
+    <div class="zone" style="--c:var(--ink3)">
+      <div class="zl"><span data-icon="split"></span>Execution target</div>
+      <div class="col" style="gap:18px">
+        <div class="node broker" id="brk" style="width:250px"><div class="ic" data-icon="plug-zap"></div>
+          <div class="tx"><b>Broker module</b><span>loaded on demand</span><div class="chips"><span class="chip">broker/&lt;name&gt;/api</span></div></div></div>
+        <div class="node service" id="sbx" style="width:250px"><div class="ic" data-icon="flask-conical"></div>
+          <div class="tx"><b>Sandbox manager</b><span>analyzer mode</span></div></div>
+        <div class="node data" id="dbs" style="width:250px"><div class="ic" data-icon="database"></div>
+          <div class="tx"><b>Database</b><span>reads and writes</span></div></div>
+        <div class="node service" id="calc" style="width:250px"><div class="ic" data-icon="calculator"></div>
+          <div class="tx"><b>Pure calculation</b><span>no outside call</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="align-items:flex-start; gap:46px; margin-top:-40px; padding-left:236px">
+    <div class="node app" id="resp" style="width:240px; min-width:240px">
+      <div class="ic" data-icon="file-json"></div>
+      <div class="tx"><b>HTTP response</b><span>JSON + status code</span></div>
+    </div>
+    <div class="node data" id="bus" style="width:300px; min-width:300px">
+      <div class="ic" data-icon="radio"></div>
+      <div class="tx"><b>EventBus</b><span>typed event, async subscribers</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>Caller</span>
+    <span style="--c:var(--app)"><i></i>HTTP layer</span>
+    <span style="--c:var(--service)"><i></i>Service and engines</span>
+    <span style="--c:var(--security)"><i></i>Policy</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+    <span style="--c:var(--data)"><i></i>Data and events</span>
+  </div>
+</div>
+<script>
+  connect('caller','route',{color:'client'})
+  connect('route','svc',{color:'app'})
+  connect('svc','route',{color:'service', from:'top', to:'top', bend:70, label:'result back to route (success, data, status)'})
+  connect('svc','policy',{color:'service'})
+  connect('policy','brk',{color:'security', from:'right', to:'left'})
+  connect('policy','sbx',{color:'security', from:'right', to:'left'})
+  connect('policy','dbs',{color:'security', from:'right', to:'left'})
+  connect('policy','calc',{color:'security', from:'right', to:'left'})
+  connect('route','resp',{color:'app', from:'bottom', to:'top', label:'builds'})
+  connect('svc','bus',{color:'data', dashed:true, from:'bottom', to:'top', label:'publish'})
+</script>

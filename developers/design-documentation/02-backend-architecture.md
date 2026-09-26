@@ -25,22 +25,7 @@ Flask-RESTX's Swagger UI is intentionally disabled through `doc=False`. The [API
 
 ## Service Flow
 
-```text
-HTTP resource or blueprint
-        |
-        v
-schema/session validation
-        |
-        v
-service orchestration
-   |          |          |
-   v          v          v
-live broker  sandbox   Action Center
-module       manager   pending execution
-        |
-        v
-typed EventBus events -> log / Socket.IO / Telegram / WhatsApp / proxy-relay / strategy-book subscribers
-```
+<figure><img src="../../.gitbook/assets/diagram-backend-service-request-path.png" alt="Backend request path: resource or blueprint, schema validation, service, Action Center or analyzer/live routing, EventBus subscribers"><figcaption></figcaption></figure>
 
 Order services strip sensitive fields before logging events. Analyzer mode routes supported operations to sandbox managers. Semi-auto mode queues eligible operations in Action Center and blocks specific destructive calls according to each service's policy.
 

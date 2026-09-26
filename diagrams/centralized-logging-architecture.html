@@ -1,0 +1,106 @@
+<style>
+#canvas > .wlabel { position: absolute; }
+.nm { min-width: 0; }
+.nm .tx { align-self: stretch; }
+.hr .node { height: 150px; } .pair .node { height: 200px; }
+</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Centralized logging</div>
+    <h1>Every log line is cleaned of secrets before it is written anywhere</h1>
+    <p style="max-width:1150px">All OpenAlgo code and the libraries it uses log through one root logger. A redaction filter removes keys, tokens and passwords, then three outputs write the same message to the console, a daily file and an errors-only file.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:30px">
+    <div class="zone" style="--c:var(--app)">
+      <div class="zl"><span data-icon="cpu"></span>Runs in every process: gunicorn worker and WebSocket proxy child</div>
+      <div class="row" style="align-items:center; gap:28px">
+        <div class="col pair" style="gap:60px">
+          <div class="node app stack nm" id="mods" style="width:176px">
+            <div class="ic" data-icon="code-xml"></div>
+            <div class="tx"><b>OpenAlgo modules</b><span>blueprints, restx_api, services, broker, websocket_proxy</span></div>
+          </div>
+          <div class="node external stack nm" id="third" style="width:176px">
+            <div class="ic" data-icon="package"></div>
+            <div class="tx"><b>Library loggers</b><span>werkzeug, websockets, apscheduler, httpx and others</span></div>
+          </div>
+        </div>
+        <div class="col pair" style="gap:60px">
+          <div class="node service stack nm" id="getlog" style="width:222px">
+            <div class="ic" data-icon="terminal"></div>
+            <div class="tx"><b>get_logger(__name__)</b><span>thin wrapper over logging.getLogger</span></div>
+          </div>
+          <div class="node security stack nm" id="noise" style="width:222px">
+            <div class="ic" data-icon="volume-x"></div>
+            <div class="tx"><b>Quiet the noise</b><span>mostly raised to WARNING; extra filters on werkzeug and websockets only</span></div>
+          </div>
+        </div>
+        <div class="node service stack hero nm" id="root" style="width:195px">
+          <div class="ic" data-icon="git-merge"></div>
+          <div class="tx"><b>Root logger</b><span>set up once by setup_logging() at import</span>
+            <div class="chips"><span class="chip">LOG_LEVEL</span><span class="chip">eventlet-safe locks</span></div></div>
+        </div>
+        <div class="node security stack nm" id="redact" style="width:205px">
+          <div class="ic" data-icon="eye-off"></div>
+          <div class="tx"><b>Secret redaction</b><span>masks API keys, tokens and passwords on every output</span>
+            <div class="chips"><span class="chip">SensitiveDataFilter</span></div></div>
+        </div>
+        <div id="jn" style="flex:none; width:12px; height:12px; border-radius:50%; background:var(--security); box-shadow:0 0 14px var(--security); margin:0 12px 0 0"></div>
+        <div class="col hr" style="gap:28px">
+          <div class="node service nm" id="h1" style="width:264px">
+            <div class="ic" data-icon="monitor"></div>
+            <div class="tx"><b>Console</b><span>coloured text (LOG_COLORS), always on</span>
+              <div class="chips"><span class="chip">StreamHandler</span></div></div>
+          </div>
+          <div class="node service nm" id="h2" style="width:264px">
+            <div class="ic" data-icon="calendar-days"></div>
+            <div class="tx"><b>Daily log file</b><span>TimedRotatingFileHandler at midnight; only when LOG_TO_FILE is on</span>
+              <div class="chips"><span class="chip">LOG_RETENTION</span></div></div>
+          </div>
+          <div class="node service nm" id="h3" style="width:264px">
+            <div class="ic" data-icon="triangle-alert"></div>
+            <div class="tx"><b>Errors as JSON</b><span>FileHandler at level ERROR, always on</span>
+              <div class="chips"><span class="chip">JSONErrorFormatter</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col hr" style="gap:28px; margin-top:16px">
+      <div class="node data nm" id="o1" style="width:262px">
+        <div class="ic" data-icon="scroll-text"></div>
+        <div class="tx"><b>stderr</b><span>read with the systemd journal or docker logs</span></div>
+      </div>
+      <div class="node data nm" id="o2" style="width:262px">
+        <div class="ic" data-icon="file-text"></div>
+        <div class="tx"><b>openalgo_&lt;date&gt;.log</b><span>in LOG_DIR; old files removed at startup</span></div>
+      </div>
+      <div class="node data nm" id="o3" style="width:262px">
+        <div class="ic" data-icon="file-warning"></div>
+        <div class="tx"><b>errors.jsonl</b><span>in LOG_DIR; trimmed to the last 1000 lines at startup</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--app)"><i></i>OpenAlgo code</span>
+    <span style="--c:var(--external)"><i></i>Libraries</span>
+    <span style="--c:var(--service)"><i></i>Logging pipeline</span>
+    <span style="--c:var(--security)"><i></i>Filters</span>
+    <span style="--c:var(--data)"><i></i>Where logs end up</span>
+  </div>
+</div>
+<script>
+  connect('mods', 'getlog', { color: 'app' })
+  connect('third', 'noise', { color: 'external' })
+  connect('getlog', 'root', { color: 'service', from: 'right', to: 'left' })
+  connect('noise', 'root', { color: 'security', from: 'right', to: 'left' })
+  connect('root', 'redact', { color: 'service' })
+  connect('redact', 'jn', { color: 'security', from: 'right', to: 'left' })
+  connect('jn', 'h1', { color: 'security', from: 'right', to: 'left' })
+  connect('jn', 'h2', { color: 'security', from: 'right', to: 'left' })
+  connect('jn', 'h3', { color: 'security', from: 'right', to: 'left' })
+  connect('h1', 'o1', { color: 'service' })
+  connect('h2', 'o2', { color: 'service' })
+  connect('h3', 'o3', { color: 'service' })
+</script>

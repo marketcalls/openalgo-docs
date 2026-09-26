@@ -1,0 +1,62 @@
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Monitoring dashboards</div>
+    <h1>Three dashboards watch security, traffic and order speed</h1>
+    <p style="max-width:1100px">Each React page under /logs calls its own backend API. Security and traffic data share logs.db, order timing has its own latency.db, and security settings and sign-ins come from openalgo.db.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns:repeat(3, 1fr); column-gap:90px; row-gap:84px; align-items:stretch">
+    <div class="node client" id="ps"><div class="ic" data-icon="shield-alert"></div><div class="tx"><b>Security dashboard</b><span>who is blocked and why</span><div class="chips"><span class="chip">/logs/security</span></div></div></div>
+    <div class="node client" id="pt"><div class="ic" data-icon="activity"></div><div class="tx"><b>Traffic dashboard</b><span>every HTTP request to your server</span><div class="chips"><span class="chip">/logs/traffic</span></div></div></div>
+    <div class="node client" id="pl"><div class="ic" data-icon="timer"></div><div class="tx"><b>Latency dashboard</b><span>how fast orders reach your broker</span><div class="chips"><span class="chip">/logs/latency</span></div></div></div>
+
+    <div class="node security" id="bs" style="position:relative"><i id="bsA" style="position:absolute; right:40px; bottom:0; width:1px; height:1px"></i>
+      <div class="ic" data-icon="shield-check"></div>
+      <div class="tx"><b>Security API</b><span>IP bans, 404 probing, API-key abuse, login activity and active sessions</span>
+        <div class="chips"><span class="chip">security_bp</span><span class="chip">/security</span></div></div>
+    </div>
+    <div class="node app" id="bt">
+      <div class="ic" data-icon="globe"></div>
+      <div class="tx"><b>Traffic API</b><span>request logs, statistics and export</span>
+        <div class="chips"><span class="chip">traffic_bp</span><span class="chip">/traffic</span></div></div>
+    </div>
+    <div class="node app" id="bl">
+      <div class="ic" data-icon="gauge"></div>
+      <div class="tx"><b>Latency API</b><span>order round-trip times, percentiles and SLA</span>
+        <div class="chips"><span class="chip">latency_bp</span><span class="chip">/latency</span></div></div>
+    </div>
+
+    <div class="node data" id="dset">
+      <div class="ic" data-icon="database"></div>
+      <div class="tx"><b>openalgo.db</b><span>security settings, login attempts, active sessions</span>
+        <div class="chips"><span class="chip">DATABASE_URL</span></div></div>
+    </div>
+    <div class="node data" id="dlogs" style="position:relative"><i id="dlA" style="position:absolute; left:40px; top:0; width:1px; height:1px"></i>
+      <div class="ic" data-icon="database"></div>
+      <div class="tx"><b>logs.db</b><span>ip_bans, error_404_tracker, invalid_api_key_tracker, traffic_logs</span>
+        <div class="chips"><span class="chip">LOGS_DATABASE_URL</span></div></div>
+    </div>
+    <div class="node data" id="dlat">
+      <div class="ic" data-icon="database"></div>
+      <div class="tx"><b>latency.db</b><span>order_latency</span>
+        <div class="chips"><span class="chip">LATENCY_DATABASE_URL</span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>React pages</span>
+    <span style="--c:var(--security)"><i></i>Security check API</span>
+    <span style="--c:var(--app)"><i></i>Backend API</span>
+    <span style="--c:var(--data)"><i></i>Databases</span>
+  </div>
+</div>
+<style>#canvas > .wlabel { position: absolute; }</style>
+<script>
+  connect('ps', 'bs', { color: 'client', from: 'bottom', to: 'top' })
+  connect('pt', 'bt', { color: 'client', from: 'bottom', to: 'top' })
+  connect('pl', 'bl', { color: 'client', from: 'bottom', to: 'top' })
+  connect('bs', 'dset', { color: 'security', from: 'bottom', to: 'top' })
+  connect('bsA', 'dlA', { color: 'security', from: 'bottom', to: 'top', label: 'bans, 404s, bad keys' })
+  connect('bt', 'dlogs', { color: 'app', from: 'bottom', to: 'top' })
+  connect('bl', 'dlat', { color: 'app', from: 'bottom', to: 'top' })
+</script>

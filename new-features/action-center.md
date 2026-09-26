@@ -39,20 +39,13 @@ Think of it as a **safety checkpoint** between your trading strategy and your re
 
 **1. Auto Mode (Default) - Fully Automated**
 
-```
-Trading Signal → OpenAlgo → Broker → Order Executed
-                (instant)
-```
+<figure><img src="../.gitbook/assets/diagram-action-center-page-auto-mode.png" alt="Auto mode: signal to OpenAlgo /api/v1, then broker, or sandbox when analyzer mode is on"><figcaption></figcaption></figure>
 
 Orders execute immediately without any manual intervention.
 
 **2. Semi-Auto Mode - Manual Approval Required**
 
-```
-Trading Signal → OpenAlgo → Action Center (WAIT) → You Approve → Broker → Order Executed
-                            (paused here)              ↓
-                                                 You Reject → Order Cancelled
-```
+<figure><img src="../.gitbook/assets/diagram-action-center-page-semi-auto-mode.png" alt="Semi-auto mode: each new order is queued in pending_orders and reviewed in Action Center; approved orders are checked again and placed at the broker (or sandbox), rejected orders are never sent; cancel, modify and close-position requests are blocked in semi-auto mode"><figcaption></figcaption></figure>
 
 Orders wait in Action Center for you to review and approve.
 

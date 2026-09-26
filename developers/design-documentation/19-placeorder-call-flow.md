@@ -6,95 +6,7 @@ The PlaceOrder API is the core order execution endpoint in OpenAlgo. It handles 
 
 ## Complete Flow Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                           PlaceOrder Complete Flow                           │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-                             Client Request (JSON)
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  Layer 1: REST resource   restx_api/place_order.py                           │
-│  POST /api/v1/placeorder  ->  class PlaceOrder(Resource).post                │
-│                                                                              │
-│  @limiter.limit(ORDER_RATE_LIMIT)      10 per second by default              │
-│  track_latency("PLACE")                wrapped onto the Resource at          │
-│                                        startup by utils/latency_monitor.py   │
-│                                                                              │
-│  order_data = OrderSchema().load(request.json)                               │
-│  ValidationError  ->  400 without reaching the service layer                 │
-│  api_key = order_data.get("apikey")                                          │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  Layer 2: services/place_order_service.py   place_order(...)                 │
-│                                                                              │
-│  Step 1  Action Center routing                                               │
-│          should_route_to_pending(api_key, "placeorder")                      │
-│          semi-auto  ->  queue_order(...) and return here                     │
-│          auto       ->  continue                                             │
-│                                                                              │
-│  Step 2  validate_order_data(order_data)                                     │
-│          REQUIRED_ORDER_FIELDS, VALID_EXCHANGES, VALID_ACTIONS,              │
-│          VALID_PRICE_TYPES, VALID_PRODUCT_TYPES, then OrderSchema again      │
-│          failure  ->  OrderFailedEvent, or AnalyzerErrorEvent in             │
-│                       analyzer mode  ->  400                                 │
-│                                                                              │
-│  Step 3  get_auth_token_broker(api_key)      database/auth_db.py             │
-│          None  ->  403 "Invalid openalgo apikey", deliberately not           │
-│                    logged so a key-guessing loop cannot flood the DB         │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  Layer 3: place_order_with_auth(...)   mode routing                          │
-│                                                                              │
-│  if get_analyze_mode():                database/settings_db.py               │
-│      services/sandbox_service.py  ->  sandbox_place_order(...)               │
-│      sandbox/order_manager.py     ->  OrderManager(user_id).place_order()    │
-│      bus.publish(OrderPlacedEvent(mode="analyze", ...)) and return           │
-│  else:                                                                       │
-│      import_broker_module(broker_name)                                       │
-│      importlib.import_module(f"broker.{broker_name}.api.order_api")          │
-│      import failure  ->  OrderFailedEvent  ->  404                           │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  Layer 4: broker plugin                                                      │
-│  broker_module.place_order_api(order_data, auth_token)                       │
-│                                                                              │
-│  A  transform_data(data)     broker/<key>/mapping/transform_data.py          │
-│     OpenAlgo field names  ->  broker field names                             │
-│                                                                              │
-│  B  get_br_symbol(symbol, exchange)      database/token_db.py                │
-│     "SBIN" + "NSE"  ->  "SBIN-EQ" for Zerodha                                │
-│                                                                              │
-│  C  get_httpx_client().post(<broker order URL>, ...)                         │
-│     shared pooled HTTP client, broker auth header                            │
-│                                                                              │
-│  D  return (response, response_data, order_id)                               │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  Layer 5: result handling and fan-out                                        │
-│                                                                              │
-│  res.status == 200                   res.status != 200, or exception         │
-│  bus.publish(                        bus.publish(                            │
-│      OrderPlacedEvent(...))              OrderFailedEvent(...))              │
-│                                                                              │
-│  subscribers/__init__.py fans "order.placed" and "order.failed" out to       │
-│  log, socketio, telegram and whatsapp subscribers on the EventBus pool.      │
-│  log_subscriber writes order_logs (live) or analyzer_logs (analyze).         │
-│                                                                              │
-│  restx_api/place_order.py returns                                            │
-│  make_response(jsonify(response_data), status_code)                          │
-│  track_latency then writes order_latency off-thread.                         │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-placeorder-call-flow.png" alt="Numbered placeorder flow: IP ban check, rate limit and OrderSchema, semi-auto routing to the approval queue, validate_order_data, broker session lookup in auth_db, then the sandbox in analyzer mode or the broker plugin when live, with the reply to the client and events fanned out on the event bus"><figcaption></figcaption></figure>
 
 ## Request Format
 
@@ -181,24 +93,13 @@ Defaults when the field is omitted come from `OrderSchema` and `utils/constants.
 
 ### Auto Mode (Default)
 
-```
-Request → Validate → Authenticate → Execute → Response
-```
+<figure><img src="../../.gitbook/assets/diagram-placeorder-auto-mode.png" alt="Auto mode path: request, OrderSchema, mode check, validate, authenticate, execute, response"><figcaption></figcaption></figure>
 
 Orders are executed immediately without manual intervention.
 
 ### Semi-Auto Mode
 
-```
-Request → Validate → Queue to Action Center → Await Approval
-                                                    │
-                                              ┌─────┴─────┐
-                                              │           │
-                                          Approved    Rejected
-                                              │           │
-                                              ▼           ▼
-                                          Execute     Discard
-```
+<figure><img src="../../.gitbook/assets/diagram-placeorder-semi-auto-mode.png" alt="Semi-auto mode: order queued to pending_orders and the Action Center, then approved and executed or rejected and kept for audit"><figcaption></figcaption></figure>
 
 Orders require manual approval before execution.
 
@@ -206,19 +107,7 @@ Orders require manual approval before execution.
 
 When `analyze_mode = True`:
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                        Sandbox Execution                         │
-│                                                                  │
-│  1. Initialize OrderManager(user_id)                             │
-│  2. Check sandbox funds (₹1 Crore default)                       │
-│  3. Calculate margin requirements                                │
-│  4. Simulate order execution                                     │
-│  5. Update sandbox positions                                     │
-│  6. Log to analyzer_db                                           │
-│  7. Return same response format as live                          │
-└──────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-placeorder-sandbox-execution.png" alt="Analyzer mode sandbox execution: validation including the CNC sell holdings check, pricing, margin block (skipped for CNC sells, 400 with nothing recorded if virtual funds are short), a rejected order row when holdings were short, otherwise a SandboxOrders insert with an immediate or tick-driven fill, then the reply and OrderPlacedEvent to analyzer_logs"><figcaption></figcaption></figure>
 
 ## Broker Integration
 
@@ -308,24 +197,7 @@ See [53-event-bus](53-event-bus.md) for full architecture details.
 
 ### API Key Verification
 
-```
-┌─────────────────────────────────────────┐
-│ 1. Add pepper to provided API key       │
-│    peppered = api_key + API_KEY_PEPPER  │
-├─────────────────────────────────────────┤
-│ 2. Check invalid cache (5-min TTL)      │
-│    Fast rejection of bad keys           │
-├─────────────────────────────────────────┤
-│ 3. Check verified cache (10-hour TTL)   │
-│    Fast path for good keys              │
-├─────────────────────────────────────────┤
-│ 4. Argon2 hash comparison               │
-│    Full verification if cache miss      │
-├─────────────────────────────────────────┤
-│ 5. Decrypt auth token with Fernet       │
-│    AES-128 CBC encryption               │
-└─────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-placeorder-api-key-verification.png" alt="API key verification: auth_cache, invalid and verified key caches, Argon2 with pepper, Auth row lookup and Fernet decryption, with negative results cached"><figcaption></figcaption></figure>
 
 ### Request Sanitization
 

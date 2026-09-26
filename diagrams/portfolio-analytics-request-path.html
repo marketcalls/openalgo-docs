@@ -1,0 +1,78 @@
+<style>#canvas > .wlabel { position: absolute; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Portfolio analytics</div>
+    <h1>From one click to a full portfolio report</h1>
+    <p style="max-width:1100px">A backtest or portfolio analysis request passes the usual API checks, then one service loads prices, runs the portfolio maths and builds the statistics. Prices come from your local Historify store or from your broker; live holdings always come from your broker.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:110px">
+    <!-- request path -->
+    <div class="col" style="gap:30px; width:380px">
+      <div class="step" style="--c:var(--client)"><div class="n">1</div>
+        <div class="node client" id="ui" style="width:326px"><div class="ic" data-icon="chart-line"></div><div class="tx"><b>You open a portfolio tool</b><span>Backtester, SIP Backtester or Portfolio Analyzer in the web app</span>
+          <div class="chips"><span class="chip">src/api/portfolio.ts</span></div></div></div></div>
+      <div class="step" style="--c:var(--app)"><div class="n">2</div>
+        <div class="node app" id="api" style="width:326px"><div class="ic" data-icon="globe"></div><div class="tx"><b>Portfolio API</b><span>/api/v1/portfolio/*</span>
+          <div class="chips"><span class="chip">benchmarks</span><span class="chip">backtest</span><span class="chip">tearsheet</span><span class="chip">holdings</span></div></div></div></div>
+      <div class="step" style="--c:var(--security)"><div class="n">3</div>
+        <div class="node security" id="sec" style="width:326px"><div class="ic" data-icon="shield-check"></div><div class="tx"><b>Request checks</b><span>input schema, API key, rate limit; broker session only when prices or holdings come from the broker</span></div></div></div>
+      <div class="step" style="--c:var(--service)"><div class="n">4</div>
+        <div class="node service hero" id="svc" style="width:326px"><div class="ic" data-icon="cpu"></div><div class="tx"><b>Portfolio service</b><span>coordinates the whole job</span>
+          <div class="chips"><span class="chip">portfolio_service.py</span></div></div></div></div>
+    </div>
+
+    <!-- what the service calls -->
+    <div class="col" style="gap:26px; width:500px">
+      <div class="zone" style="--c:var(--service)" id="pkg">
+        <div class="zl"><span data-icon="package"></span>portfolio/ package</div>
+        <div class="col" style="gap:16px">
+          <div class="node service" id="data"><div class="ic" data-icon="download"></div><div class="tx"><b>Price loader</b><span>loads daily prices, keeps the last 16 sets cached</span>
+            <div class="chips"><span class="chip">data.py</span><span class="chip">16-entry LRU</span></div></div></div>
+          <div class="node service" id="eng"><div class="ic" data-icon="scale"></div><div class="tx"><b>Portfolio engine</b><span>allocation, rebalancing, turnover and costs</span>
+            <div class="chips"><span class="chip">engine.py</span><span class="chip">rebalance.py</span><span class="chip">costs.py</span></div></div></div>
+          <div class="node service" id="ana"><div class="ic" data-icon="chart-pie"></div><div class="tx"><b>Analysis modules</b><span>attribution, stress tests, health checks, insights and a holdings breakdown</span>
+            <div class="chips"><span class="chip">analytics</span><span class="chip">attribution</span><span class="chip">grouping</span><span class="chip">walkforward</span><span class="chip">compare</span><span class="chip">crisis</span><span class="chip">health</span><span class="chip">insights</span><span class="chip">holdings (analysis)</span></div></div></div>
+        </div>
+      </div>
+      <div class="node service" id="stz"><div class="ic" data-icon="file-text"></div><div class="tx"><b>Statistics and tearsheet</b><span>performance stats and the HTML tearsheet</span>
+        <div class="chips"><span class="chip">openstatz</span></div></div></div>
+      <div class="node service" id="hold"><div class="ic" data-icon="wallet"></div><div class="tx"><b>Live holdings</b><span>your current holdings, for the Analyzer</span>
+        <div class="chips"><span class="chip">holdings_service</span></div></div></div>
+    </div>
+
+    <!-- sources -->
+    <div class="col" style="gap:60px; width:400px; align-self:stretch; justify-content:space-between; padding-top:20px">
+      <div class="zone" style="--c:var(--data)" id="src">
+        <div class="zl"><span data-icon="database"></span>Where prices come from</div>
+        <div class="col" style="gap:16px">
+          <div class="node data" id="duck"><div class="ic" data-icon="database"></div><div class="tx"><b>Historify store</b><span>local DuckDB, no broker calls</span>
+            <div class="chips"><span class="chip">source=db</span></div></div></div>
+          <div class="node service" id="hist"><div class="ic" data-icon="history"></div><div class="tx"><b>History service</b><span>asks your broker, one call per symbol</span>
+            <div class="chips"><span class="chip">source=api</span><span class="chip">history_service</span></div></div></div>
+        </div>
+      </div>
+      <div class="node broker big" id="brk" style="margin-bottom:10px"><div class="ic" data-icon="landmark"></div><div class="tx"><b>Your broker</b><span>history and holdings APIs</span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>You</span>
+    <span style="--c:var(--app)"><i></i>OpenAlgo API</span>
+    <span style="--c:var(--security)"><i></i>Checks</span>
+    <span style="--c:var(--service)"><i></i>Processing</span>
+    <span style="--c:var(--data)"><i></i>Local data</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+  </div>
+</div>
+<script>
+  connect('ui', 'api', { color: 'client' })
+  connect('api', 'sec', { color: 'app' })
+  connect('sec', 'svc', { color: 'security' })
+  connect('svc', 'pkg', { color: 'service', from: 'right', to: 'left', bend: 60 })
+  connect('svc', 'stz', { color: 'service', from: 'right', to: 'left', bend: 50 })
+  connect('svc', 'hold', { color: 'service', from: 'right', to: 'left', bend: 50 })
+  connect('src', 'data', { color: 'data', from: 'left', to: 'right', label: 'prices' })
+  connect('hist', 'brk', { color: 'broker', from: 'bottom', to: 'top' })
+  connect('hold', 'brk', { color: 'broker', from: 'right', to: 'left' })
+</script>

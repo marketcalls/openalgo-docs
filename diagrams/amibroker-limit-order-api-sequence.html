@@ -1,0 +1,95 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">AmiBroker limit orders</div>
+    <h1>Your limit order chases the price until it fills or is cancelled</h1>
+    <p style="max-width:1100px">The AFL places a limit order near the current quote, keeps checking it, moves the price if it is still waiting, and cancels it after the last retry. Every request goes to OpenAlgo on your computer.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns:270px 300px 270px 300px; column-gap:130px; row-gap:70px; align-items:start; margin-top:190px">
+    <div class="step" style="--c:var(--client); flex-direction:column; gap:12px">
+      <div class="n">1</div>
+      <div class="node client stack" id="place" style="width:270px">
+        <div class="ic" data-icon="mouse-pointer-click"></div>
+        <div class="tx"><b>Place the order</b><span>You press Buy or Sell. It reads bid and ask, sets the limit price from your price mode, rounds it to the tick size and sends a LIMIT order.</span>
+          <div class="chips"><span class="chip">quotes</span><span class="chip">placeorder</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--app); flex-direction:column; gap:12px">
+      <div class="n">2</div>
+      <div class="node app stack" id="watch" style="width:300px; position:relative">
+        <i id="watchT" style="position:absolute; left:32%; top:0; width:1px; height:1px"></i>
+        <i id="watchTR" style="position:absolute; left:74%; top:0; width:1px; height:1px"></i>
+        <i id="watchBR" style="position:absolute; left:86%; bottom:0; width:1px; height:1px"></i>
+        <div class="ic" data-icon="eye"></div>
+        <div class="tx"><b>Watch the order</b><span>After each retry delay it asks OpenAlgo for the order status and the average fill price.</span>
+          <div class="chips"><span class="chip">orderstatus</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--service); flex-direction:column; gap:12px">
+      <div class="n">3</div>
+      <div class="node service stack" id="chase" style="width:270px">
+        <div class="ic" data-icon="refresh-cw"></div>
+        <div class="tx"><b>Chase the price</b><span>Still open or pending with retries left: fetch a fresh bid and ask and move the limit price. Retry count goes up by one.</span>
+          <div class="chips"><span class="chip">quotes</span><span class="chip">modifyorder</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--security); flex-direction:column; gap:12px">
+      <div class="n">4</div>
+      <div class="node security stack" id="cancel" style="width:300px; position:relative">
+        <i id="cancelBL" style="position:absolute; left:0; top:93%; width:1px; height:1px"></i>
+        <div class="ic" data-icon="ban"></div>
+        <div class="tx"><b>Cancel and check once more</b><span>When no retries are left or a price change fails: cancels the order, waits one retry delay and checks the status a final time. Your Cancel button starts this step at any time.</span>
+          <div class="chips"><span class="chip">cancelorder</span><span class="chip">orderstatus</span><span class="chip">Cancel button</span></div></div>
+      </div>
+    </div>
+
+    <div class="node security" id="rej1" style="width:270px">
+      <div class="ic" data-icon="circle-x"></div>
+      <div class="tx"><b>Rejected</b><span>the order was not accepted</span></div>
+    </div>
+    <div class="node broker" id="done1" style="width:300px">
+      <div class="ic" data-icon="circle-check"></div>
+      <div class="tx"><b>Complete</b><span>filled</span></div>
+    </div>
+    <div class="col" style="gap:40px">
+      <div class="node security" id="rej2" style="width:270px">
+        <div class="ic" data-icon="circle-x"></div>
+        <div class="tx"><b>Rejected</b><span>the broker rejected or cancelled it</span></div>
+      </div>
+      <div class="note" id="tip">
+        <span data-icon="lightbulb"></span>
+        <div>All calls go to OpenAlgo at 127.0.0.1:5000, which talks to your broker.</div>
+      </div>
+    </div>
+    <div class="col" style="gap:16px">
+      <div class="node broker" id="done2" style="width:300px">
+        <div class="ic" data-icon="circle-check"></div>
+        <div class="tx"><b>Complete</b><span>it filled while cancelling</span></div>
+      </div>
+      <div class="node external" id="canceled" style="width:300px">
+        <div class="ic" data-icon="circle-x"></div>
+        <div class="tx"><b>Canceled</b><span>not filled</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--broker)"><i></i>Filled</span>
+    <span style="--c:var(--security)"><i></i>Rejected or cancel step</span>
+    <span style="--c:var(--external)"><i></i>Canceled</span>
+    <span style="--c:var(--service)"><i></i>Retry loop</span>
+  </div>
+</div>
+<script>
+  connect('place', 'watch', { color: 'client' })
+  connect('watch', 'chase', { color: 'service', label: 'open, retries left', from: 'right', to: 'left' })
+  connect('chase', 'watchTR', { color: 'service', label: 'new price, check again', from: 'top', to: 'top', bend: 105, dashed: true })
+  connect('watchT', 'cancel', { color: 'security', label: 'still open, no retries left', from: 'top', to: 'top', bend: 200 })
+  connect('chase', 'cancel', { color: 'security', label: 'price change failed', from: 'right', to: 'left' })
+  connect('place', 'rej1', { color: 'security', label: 'order failed', from: 'bottom', to: 'top' })
+  connect('watch', 'done1', { color: 'broker', label: 'filled', from: 'bottom', to: 'top' })
+  connect('watchBR', 'rej2', { color: 'security', label: 'rejected', from: 'bottom', to: 'left' })
+  connect('cancel', 'done2', { color: 'broker', label: 'filled', from: 'bottom', to: 'top' })
+  connect('cancelBL', 'canceled', { color: 'external', label: 'not filled', from: 'left', to: 'left', bend: 40 })
+</script>

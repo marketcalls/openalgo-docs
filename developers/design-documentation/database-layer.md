@@ -4,15 +4,7 @@
 
 OpenAlgo is a self-hosted trading application. The application enforces authentication, request validation, rate limits, IP bans, browser protections, and encrypted token persistence. The operator owns host hardening, TLS termination, reverse-proxy trust, firewall policy, secrets, backups, and broker-account controls.
 
-```text
-client
-  -> TLS/reverse proxy and host firewall
-  -> Flask security and IP-ban middleware
-  -> session, API-key, webhook, or OAuth authentication
-  -> schema/CSRF/rate-limit policy
-  -> service and broker/sandbox boundary
-  -> isolated local stores
-```
+<figure><img src="../../.gitbook/assets/diagram-security-architecture-trust-boundaries.png" alt="Request trust boundaries: reverse proxy and firewall, WSGI traffic log and IP-ban middleware, authentication, request policy, service layer, broker or sandbox, isolated local stores; market data enters through the WebSocket proxy API-key handshake on 8765, fed by the loopback-only ZeroMQ bus on 5555"><figcaption></figcaption></figure>
 
 The internal ZeroMQ market-data endpoint is unauthenticated and must remain private. The public market-data WebSocket has its own API-key authentication handshake.
 

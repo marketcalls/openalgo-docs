@@ -1,0 +1,82 @@
+<style>
+#canvas > .wlabel { position: absolute; }
+.chip.fail { color: #fda4af; border-color: rgba(251,113,133,.45); background: rgba(251,113,133,.08); }
+.chip.skip { color: var(--ink2); border-color: rgba(148,163,184,.4); }
+.chk .step { align-items: center; }
+.chk .node { width: 350px; height: 172px; min-width: 0; }
+.chk .node .tx { align-self: stretch; }
+</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Chartink webhook processing</div>
+    <h1>Six checks, then every stock in the alert becomes a queued order</h1>
+    <p style="max-width:1150px">Each alert is checked in a fixed order and the first check that fails stops it with a clear response. Only an alert that passes all six has its stocks turned into entry or exit orders.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:44px">
+    <div class="node client stack big" id="start" style="width:180px; min-width:0">
+      <div class="ic" data-icon="webhook"></div>
+      <div class="tx"><b>Alert arrives</b><span>Chartink posts to the strategy's webhook URL</span>
+        <div class="chips"><span class="chip">POST</span></div></div>
+    </div>
+
+    <div class="zone chk" id="checks" style="--c:var(--app)">
+      <div class="zl"><span data-icon="list-checks"></span>Checks, in order: the first failure stops here</div>
+      <div id="pass" style="position:absolute; bottom:0; left:50%; width:2px; height:2px"></div>
+      <div class="grid" style="grid-template-columns:repeat(3,auto); column-gap:36px; row-gap:26px">
+        <div class="step" style="--c:var(--app)"><div class="n">1</div>
+          <div class="node app"><div class="ic" data-icon="search"></div><div class="tx"><b>Known strategy?</b><span>webhook_id must match a Chartink strategy</span>
+            <div class="chips"><span class="chip fail">no: 404 Invalid webhook ID</span></div></div></div></div>
+        <div class="step" style="--c:var(--app)"><div class="n">2</div>
+          <div class="node app"><div class="ic" data-icon="power"></div><div class="tx"><b>Strategy active?</b><span>an inactive strategy ignores alerts</span>
+            <div class="chips"><span class="chip skip">no: 200, alert ignored</span></div></div></div></div>
+        <div class="step" style="--c:var(--app)"><div class="n">3</div>
+          <div class="node app"><div class="ic" data-icon="file-json"></div><div class="tx"><b>JSON body present?</b><span>the alert must carry data</span>
+            <div class="chips"><span class="chip fail">no: 400 error</span></div></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">4</div>
+          <div class="node service"><div class="ic" data-icon="tag"></div><div class="tx"><b>Action in scan_name?</b><span>looks for BUY, SELL, SHORT, COVER in that order</span>
+            <div class="chips"><span class="chip fail">none: 400 error</span></div></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">5</div>
+          <div class="node service"><div class="ic" data-icon="clock"></div><div class="tx"><b>Inside the strategy's time window?</b><span>intraday only: any order from start_time to squareoff_time; new entries only before end_time</span>
+            <div class="chips"><span class="chip fail">outside: 400 error</span></div></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">6</div>
+          <div class="node service"><div class="ic" data-icon="key-round"></div><div class="tx"><b>Symbols and API key set up?</b><span>strategy needs symbol mappings, user needs an API key</span>
+            <div class="chips"><span class="chip fail">no mappings: 400</span><span class="chip fail">no key: 401</span></div></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="align-items:center; gap:80px; margin-top:80px; margin-left:266px">
+    <div class="node service stack" id="loop" style="width:250px">
+      <div class="ic" data-icon="repeat"></div>
+      <div class="tx"><b>For each stock in the alert</b><span>a stock with no mapping is logged and skipped</span></div>
+    </div>
+    <div class="col" style="gap:40px">
+      <div class="node service" id="entry" style="width:400px">
+        <div class="ic" data-icon="log-in"></div>
+        <div class="tx"><b>Entry: BUY, or SHORT sent as SELL</b><span>placeorder, mapped quantity, MARKET</span></div>
+      </div>
+      <div class="node service" id="exit" style="width:400px">
+        <div class="ic" data-icon="log-out"></div>
+        <div class="tx"><b>Exit: SELL, or COVER sent as BUY</b><span>placesmartorder, quantity 0, position_size 0</span></div>
+      </div>
+    </div>
+    <div class="node data stack" id="queue" style="width:230px">
+      <div class="ic" data-icon="layers"></div>
+      <div class="tx"><b>Queued for paced sending</b><span>tagged with the strategy name</span></div>
+    </div>
+    <div class="node app stack" id="ok" style="width:230px">
+      <div class="ic" data-icon="circle-check"></div>
+      <div class="tx"><b>200 success</b><span>lists the queued orders, or a warning if nothing was queued</span></div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('start', 'checks', { color: 'client' })
+  connect('pass', 'loop', { color: 'service', label: 'all six pass', from: 'bottom', to: 'top' })
+  connect('loop', 'entry', { color: 'service', from: 'right', to: 'left' })
+  connect('loop', 'exit', { color: 'service', from: 'right', to: 'left' })
+  connect('entry', 'queue', { color: 'service', from: 'right', to: 'left' })
+  connect('exit', 'queue', { color: 'service', from: 'right', to: 'left' })
+  connect('queue', 'ok', { color: 'data' })
+</script>

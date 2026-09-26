@@ -390,7 +390,7 @@ Per-user notification toggles (`order_notifications`, `trade_notifications`, `pn
    * Handles pair flow (temp wars instance plus `wait_until_ready` as the authoritative "paired" signal), connection lifecycle, slash-command dispatch, and SDK-backed query handlers (`/orderbook`, `/positions`, and the rest).
 2. **`services/whatsapp_alert_service.py`**: `WhatsAppAlertService`
    * Outbound notifier. Formats order/position/batch events into plain-text WhatsApp messages with a LIVE or ANALYZE mode prefix.
-   * Single-user owner resolution: matches the event's `api_key` to a username via `auth_db.get_username_by_apikey`, then checks against `whatsapp_config.owner_username` captured at pair time. If matched, fires a self-send through wars's single-arg `send("text")` form (no need to know own JID, because wars knows its own identity internally).
+   * Single-user owner resolution: matches the event's `api_key` to a username via `auth_db.get_username_by_apikey`, then checks against `whatsapp_config.owner_username` captured at pair time. If matched, fires a self-send to the captured `own_jid` (`send(own_jid, text)`) when it is available, and falls back to wars's single-arg `send(text)` form only when `own_jid` has not been captured yet.
 3. **`subscribers/whatsapp_subscriber.py`**: Event-bus subscriber
    * Registered alongside `telegram_subscriber` in `subscribers/__init__.register_all()` on 22 topics: the 14 order, position, batch and analyzer topics plus the 8 GTT topics.
    * Mirrors the Telegram convention: failure events (`order.failed`, `order.modify_failed`, `order.cancel_failed`, the three GTT failure topics, `analyzer.error`) are silently dropped.
@@ -409,35 +409,7 @@ Per-user notification toggles (`order_notifications`, `trade_notifications`, `pn
 
 **Event Flow**
 
-```
-POST /api/v1/placeorder
-        │
-        ▼
-services/place_order_service.place_order(...)
-        │
-        ▼
-bus.publish(OrderPlacedEvent(api_key, ...))
-        │
-        ├──> log_subscriber          (writes to log/orders.jsonl)
-        ├──> socketio_subscriber     (emits order_event for the dashboard)
-        ├──> telegram_subscriber     (queues telegram_alert)
-        └──> whatsapp_subscriber     (queues whatsapp_alert)
-             │
-             ▼
-             whatsapp_alert_service.send_order_alert
-             │
-             ▼ alert_executor (5-worker thread pool)
-             whatsapp_bot_service.send_sync(to=None, text=msg)
-             │
-             ▼ enqueue on _cmd_queue
-             WhatsAppBotThread picks up the command
-             │
-             ▼
-             self._wa.send(msg)   (wars's single-arg form goes to the owner)
-             │
-             ▼
-             WhatsApp servers deliver to the operator's phone
-```
+<figure><img src="../.gitbook/assets/diagram-whatsapp-order-alert-flow.png" alt="How an order becomes a WhatsApp alert: the placed order is announced on the EventBus (also to the order log, web app, Telegram and strategy book), only orders from the owner who paired WhatsApp pass, the alert is queued for a sender worker, and the WhatsApp bot sends it to your own chat and returns the send result"><figcaption></figcaption></figure>
 
 **Threading Model**
 

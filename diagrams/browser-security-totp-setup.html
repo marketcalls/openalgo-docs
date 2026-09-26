@@ -1,0 +1,79 @@
+<div id="canvas" style="width:1680px">
+  <style>#canvas > .wlabel { position: absolute; } .node.w { width:100%; min-width:0 } .step{align-items:center}</style>
+  <div class="title">
+    <div class="eyebrow">Two-factor login (TOTP)</div>
+    <h1>2FA switches on only after you prove a code</h1>
+    <p style="max-width:1150px">The secret is created and encrypted when you set up the admin account. You first see its QR code on the Profile page, and turning 2FA on needs a valid code from your authenticator app.</p>
+  </div>
+
+  <div class="row" style="align-items:stretch; gap:56px">
+    <div class="zone" style="--c:var(--app); flex:1">
+      <div class="zl"><span data-icon="user-plus"></span>A. Account setup</div>
+      <div class="col" style="gap:26px">
+        <div class="step" style="--c:var(--client)"><div class="n">1</div>
+          <div class="node client w" id="a1"><div class="ic" data-icon="user-plus"></div>
+            <div class="tx"><b>Create the admin account</b><span>setup page in the web app</span><div class="chips"><span class="chip">POST /setup</span></div></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">2</div>
+          <div class="node service w" id="a2"><div class="ic" data-icon="key-round"></div>
+            <div class="tx"><b>Secret generated</b><span>random base32 TOTP secret</span><div class="chips"><span class="chip">pyotp.random_base32()</span></div></div></div></div>
+        <div class="step" style="--c:var(--data)"><div class="n">3</div>
+          <div class="node data w" id="a3"><div class="ic" data-icon="database"></div>
+            <div class="tx"><b>Stored encrypted</b><span>Fernet-encrypted totp_secret</span><div class="chips"><span class="chip">openalgo.db users</span></div></div></div></div>
+        <div class="step" style="--c:var(--app)"><div class="n">4</div>
+          <div class="node app w" id="a4"><div class="ic" data-icon="log-in"></div>
+            <div class="tx"><b>Sent to the login page</b><span>redirect; the QR is not shown yet</span><div class="chips"><span class="chip">302 to login</span></div></div></div></div>
+      </div>
+    </div>
+
+    <div class="zone" style="--c:var(--client); flex:1">
+      <div class="zl"><span data-icon="qr-code"></span>B. See the QR on Profile</div>
+      <div class="col" style="gap:26px">
+        <div class="step" style="--c:var(--client)"><div class="n">5</div>
+          <div class="node client w" id="b1"><div class="ic" data-icon="log-in"></div>
+            <div class="tx"><b>Log in, open Profile</b><span>after logout and a fresh login</span><div class="chips"><span class="chip">GET /auth/profile-data</span></div></div></div></div>
+        <div class="step" style="--c:var(--data)"><div class="n">6</div>
+          <div class="node data w" id="b2"><div class="ic" data-icon="lock-open"></div>
+            <div class="tx"><b>Secret decrypted</b><span>read back from the users table</span><div class="chips"><span class="chip">get_totp_secret()</span></div></div></div></div>
+        <div class="step" style="--c:var(--app)"><div class="n">7</div>
+          <div class="node app w" id="b3"><div class="ic" data-icon="qr-code"></div>
+            <div class="tx"><b>QR code and secret shown</b><span>the first place you can see them</span></div></div></div>
+        <div class="step" style="--c:var(--client)"><div class="n">8</div>
+          <div class="node client w" id="b4"><div class="ic" data-icon="smartphone"></div>
+            <div class="tx"><b>Scan with your phone</b><span>any authenticator app</span></div></div></div>
+      </div>
+    </div>
+
+    <div class="zone" style="--c:var(--security); flex:1.1">
+      <div class="zl"><span data-icon="shield-check"></span>C. Turn on 2FA</div>
+      <div class="col" style="gap:26px">
+        <div class="step" style="--c:var(--client)"><div class="n">9</div>
+          <div class="node client w" id="c1"><div class="ic" data-icon="list-checks"></div>
+            <div class="tx"><b>Pick where 2FA applies</b><span>master switch + purpose flags, plus the current code</span><div class="chips"><span class="chip">POST /auth/2fa/configure</span></div></div></div></div>
+        <div class="step" style="--c:var(--security)"><div class="n">10</div>
+          <div class="node security w" id="c2"><div class="ic" data-icon="shield-question"></div>
+            <div class="tx"><b>Code checked</b><span>must match the stored secret right now</span><div class="chips"><span class="chip">verify_totp(code)</span></div></div></div></div>
+        <div class="row" style="gap:18px; align-items:stretch; margin-left:54px; margin-top:60px">
+          <div class="node broker stack" id="ok" style="flex:1; min-width:0">
+            <div class="ic" data-icon="circle-check"></div>
+            <div class="tx"><b>Valid: 2FA on</b><span>flags saved, session marked as just verified</span>
+              <div class="chips"><span class="chip">totp_enabled</span><span class="chip">totp_verified_at</span><span class="chip">200</span></div></div></div>
+          <div class="node security stack" id="bad" style="flex:1; min-width:0">
+            <div class="ic" data-icon="circle-x"></div>
+            <div class="tx"><b>Invalid: nothing changes</b><span>you get an error and can retry</span>
+              <div class="chips"><span class="chip">401 Invalid TOTP code</span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="max-width:900px; margin-top:44px"><span data-icon="lightbulb"></span><div>Enabling 2FA never creates or stores a new secret. It only switches on the checks for the secret made at setup.</div></div>
+</div>
+<script>
+  connect('a1','a2',{color:'app'}); connect('a2','a3',{color:'app'}); connect('a3','a4',{color:'app'})
+  connect('a4','b1',{color:'client', from:'right', to:'left'})
+  connect('b1','b2',{color:'client'}); connect('b2','b3',{color:'client'}); connect('b3','b4',{color:'client'})
+  connect('b4','c1',{color:'security', from:'right', to:'left'})
+  connect('c1','c2',{color:'security'})
+  connect('c2','ok',{color:'broker', from:'bottom', to:'top', bend:15, label:'code matches'})
+  connect('c2','bad',{color:'security', from:'bottom', to:'top', bend:15, label:'wrong code'})
+</script>

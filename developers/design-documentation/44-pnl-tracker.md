@@ -6,81 +6,7 @@ The PnL (Profit & Loss) Tracker provides real-time intraday P&L monitoring by co
 
 ## Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                          PnL Tracker Architecture                            │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                                 Data Sources                                 │
-│                                                                              │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐               │
-│  │  Tradebook      │  │  Position Book  │  │  History API    │               │
-│  │  (Broker API)   │  │  (Broker API)   │  │  (1-minute bars)│               │
-│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘               │
-│           │                    │                    │                        │
-│           └────────────────────┼────────────────────┘                        │
-│                                │                                             │
-│                                ▼                                             │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                  PnL Calculation (blueprints/pnltracker.py)                  │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │                    Position Window Tracking                          │    │
-│  │                                                                      │    │
-│  │  1. Parse trades from tradebook                                     │     │
-│  │  2. Group by symbol/exchange                                        │     │
-│  │  3. Create position windows (start_time, end_time, qty, price)      │     │
-│  │  4. Apply rate limiting (2 calls/sec for history API)               │     │
-│  │  5. Calculate MTM using historical close prices                     │     │
-│  │  6. Aggregate all symbols into portfolio P&L                        │     │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-│                                    │                                         │
-│                                    ▼                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │                    P&L Calculation Formula                           │    │
-│  │                                                                      │    │
-│  │  For LONG positions:                                                 │    │
-│  │    MTM P&L = (Current Price - Entry Price) × Quantity               │     │
-│  │                                                                      │    │
-│  │  For SHORT positions:                                                │    │
-│  │    MTM P&L = (Entry Price - Current Price) × Quantity               │     │
-│  │                                                                      │    │
-│  │  Realized P&L = (Exit Price - Entry Price) × Quantity  [Long]       │     │
-│  │                = (Entry Price - Exit Price) × Quantity  [Short]     │     │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                               Frontend Display                               │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  Metrics Cards                                                       │    │
-│  │                                                                      │    │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐              │       │
-│  │  │ Current  │ │   Max    │ │   Min    │ │   Max    │              │       │
-│  │  │   MTM    │ │   MTM    │ │   MTM    │ │ Drawdown │              │       │
-│  │  │ +₹3,750  │ │ +₹4,200  │ │ +₹1,000  │ │  -₹800   │              │       │
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘              │       │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  P&L Chart (LightWeight Charts)                                     │     │
-│  │                                                                      │    │
-│  │       ₹                                                              │    │
-│  │    4000│        ╭──────╮                                            │     │
-│  │    3000│    ╭───╯      ╰──╮                                         │     │
-│  │    2000│╭───╯              ╰──────                                  │     │
-│  │    1000│                                                            │     │
-│  │       0├────────────────────────────► Time                          │     │
-│  │        9:15  10:00  11:00  12:00  1:00                              │     │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-pnl-tracker-architecture.png" alt="PnL tracker architecture: React page posts to /pnltracker/api/pnl, which reads tradebook, positionbook and 1-minute history services and builds position-window MTM, portfolio P&L and drawdown"><figcaption></figcaption></figure>
 
 ## Implementation Details
 
@@ -217,52 +143,7 @@ Cookie: session=...
 
 ## Calculation Flow
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                       P&L Calculation Flow                       │
-└──────────────────────────────────────────────────────────────────┘
-
-Request arrives at /pnltracker/api/pnl
-              │
-              ▼
-┌─────────────────────────┐
-│ Get broker from session │
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐     ┌───────────────────────┐
-│ Get tradebook via       │────▶│ services/tradebook    │
-│ get_tradebook(api_key)  │     │ _service.py           │
-└───────────┬─────────────┘     └───────────────────────┘
-            │
-            ▼
-┌─────────────────────────┐     ┌───────────────────────┐
-│ Get positions via       │────▶│ services/positionbook │
-│ get_positionbook()      │     │ _service.py           │
-└───────────┬─────────────┘     └───────────────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ Group trades by symbol  │
-│ Create position windows │
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ For each symbol:        │
-│ 1. Rate limit wait      │
-│ 2. Get 1m history       │
-│ 3. Calculate MTM        │
-│ 4. Track realized P&L   │
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ Aggregate portfolio     │
-│ Calculate drawdown      │
-│ Return JSON response    │
-└─────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-pnl-tracker-calculation-flow.png" alt="PnL calculation flow from session and auth checks through tradebook, positions, per-symbol rate-limited history, carry-forward handling, zero fill and drawdown to the JSON response"><figcaption></figcaption></figure>
 
 ## Data Dependencies
 

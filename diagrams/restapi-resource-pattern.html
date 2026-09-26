@@ -1,0 +1,65 @@
+<style>#canvas > .wlabel{position:absolute;z-index:3}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">REST API pattern</div>
+    <h1>Every API call follows the same four steps</h1>
+    <p style="max-width:1100px">Each /api/v1 endpoint limits how often you can call it, checks your fields, hands the work to a service and returns its answer.</p>
+  </div>
+
+  <div class="row" style="gap:46px; align-items:stretch">
+    <div class="node client stack" id="req" style="width:230px">
+      <div class="ic" data-icon="send"></div>
+      <div class="tx"><b>Your request</b><span>JSON body (POST) or query args, sent to an /api/v1 endpoint</span>
+        <div class="chips"><span class="chip">request.json</span></div></div>
+    </div>
+    <div class="node security stack" id="lim" style="width:250px">
+      <div class="ic" data-icon="gauge"></div>
+      <div class="tx"><b>1. Rate limit</b><span>stops you if you send too many requests too fast</span>
+        <div class="chips"><span class="chip">Flask-Limiter decorator</span><span class="chip">API / ORDER limit</span></div></div>
+    </div>
+    <div class="node app stack" id="sch" style="width:250px">
+      <div class="ic" data-icon="list-checks"></div>
+      <div class="tx"><b>2. Check the fields</b><span>required fields, types and allowed values</span>
+        <div class="chips"><span class="chip">Marshmallow</span><span class="chip">schema.load()</span></div></div>
+    </div>
+    <div class="node service stack hero" id="svc" style="width:270px">
+      <div class="ic" data-icon="cpu"></div>
+      <div class="tx"><b>3. Service does the work</b><span>API key, broker or sandbox call; returns a result and a status</span>
+        <div class="chips"><span class="chip">services/*</span><span class="chip">(success, body, status)</span></div></div>
+    </div>
+    <div class="node app stack" id="resp" style="width:290px">
+      <div class="ic" data-icon="circle-check"></div>
+      <div class="tx"><b>4. Send the answer</b><span>service body as JSON with the service's status code</span>
+        <div class="chips"><span class="chip">jsonify(body)</span><span class="chip">make_response(..., status)</span></div></div>
+    </div>
+  </div>
+
+  <div class="row" style="gap:46px; margin-top:70px; align-items:flex-start">
+    <div style="width:230px"></div>
+    <div class="node security" id="e429" style="width:250px">
+      <div class="ic" data-icon="circle-x"></div>
+      <div class="tx"><b>429 Too many</b><span>limit exceeded</span></div>
+    </div>
+    <div class="node security" id="e400" style="width:250px">
+      <div class="ic" data-icon="circle-x"></div>
+      <div class="tx"><b>400 Bad request</b><span>ValidationError messages</span></div>
+    </div>
+    <div class="node security" id="e403" style="width:270px">
+      <div class="ic" data-icon="circle-x"></div>
+      <div class="tx"><b>403 Forbidden</b><span>invalid API key</span></div>
+    </div>
+    <div class="note" style="max-width:290px">
+      <span data-icon="lightbulb"></span>
+      <div>Anything unexpected is caught and returned as a 500 error, so you always get a JSON reply.</div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('req', 'lim', { color: 'client' })
+  connect('lim', 'sch', { color: 'security' })
+  connect('sch', 'svc', { color: 'app' })
+  connect('svc', 'resp', { color: 'service' })
+  connect('lim', 'e429', { color: 'security', dashed: true, from: 'bottom', to: 'top' })
+  connect('sch', 'e400', { color: 'security', dashed: true, from: 'bottom', to: 'top' })
+  connect('svc', 'e403', { color: 'security', dashed: true, from: 'bottom', to: 'top' })
+</script>

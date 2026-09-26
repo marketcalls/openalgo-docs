@@ -1,0 +1,90 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Running a workflow</div>
+    <h1>How a flow runs, node by node</h1>
+    <p style="max-width:1100px">A run is checked before anything is recorded, then the engine follows your nodes from the trigger outwards. A node that fails stops only its own branch; the run is marked failed at the end if any node failed.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 420px 250px 1fr; column-gap:96px; row-gap:24px; align-items:center">
+
+    <!-- column 1: getting ready -->
+    <div class="step" style="--c:var(--client); grid-column:1; grid-row:1">
+      <div class="n">1</div>
+      <div class="node client" id="trig" style="flex:1"><div class="ic" data-icon="zap"></div><div class="tx"><b>A trigger fires</b><span>schedule, webhook, price alert, order update or Run Now</span></div></div>
+    </div>
+    <div class="step" style="--c:var(--security); grid-column:1; grid-row:2">
+      <div class="n">2</div>
+      <div class="node security" id="lock" style="flex:1"><div class="ic" data-icon="lock"></div><div class="tx"><b>Take the workflow's lock</b><span>tried once, never waits</span></div></div>
+    </div>
+    <div class="step" style="--c:var(--security); grid-column:1; grid-row:3">
+      <div class="n">3</div>
+      <div class="node security" id="val" style="flex:1"><div class="ic" data-icon="scan-search"></div><div class="tx"><b>Load and strictly validate</b><span>nodes and edges from flow_workflows</span>
+        <div class="chips"><span class="chip">flow_workflow_validator</span></div></div></div>
+    </div>
+    <div class="step" style="--c:var(--service); grid-column:1; grid-row:4">
+      <div class="n">4</div>
+      <div class="node service" id="prep" style="flex:1"><div class="ic" data-icon="file-text"></div><div class="tx"><b>Open a run record</b><span>status running; builds WorkflowContext and NodeExecutor; needs an API key</span>
+        <div class="chips"><span class="chip">trigger data as {{webhook.*}}</span></div></div></div>
+    </div>
+    <div class="step" style="--c:var(--service); grid-column:1; grid-row:5">
+      <div class="n">5</div>
+      <div class="node service" id="start" style="flex:1"><div class="ic" data-icon="flag"></div><div class="tx"><b>Find the trigger node</b>
+        <div class="chips"><span class="chip">start</span><span class="chip">webhookTrigger</span><span class="chip">priceAlert</span><span class="chip">orderUpdateTrigger</span></div></div></div>
+    </div>
+
+    <!-- column 2: early exits -->
+    <div class="node external" id="busy" style="grid-column:2; grid-row:2"><div class="ic" data-icon="hourglass"></div><div class="tx"><b>Already running</b><span>returns already_running</span></div></div>
+    <div class="node external" id="rej" style="grid-column:2; grid-row:3"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>Rejected</b><span>not found or invalid; no run record</span></div></div>
+
+    <!-- column 3: the walk -->
+    <div class="note" style="grid-column:3; grid-row:1 / span 3; max-width:none; margin-left:54px">
+      <span data-icon="lightbulb"></span><div>A run that is already running or rejected leaves no run record. Once the record is opened in step 4, the run always ends as completed or failed, with its logs saved.</div></div>
+
+    <div class="step" style="--c:var(--service); grid-column:3; grid-row:4 / span 3; align-self:start">
+      <div class="n">6</div>
+      <div class="zone" id="walk" style="--c:var(--service); flex:1"><i id="a-walk" style="position:absolute; left:0; width:0; height:0; display:block"></i>
+        <div class="zl"><span data-icon="git-branch"></span>Walk the graph, depth-first</div>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; column-gap:100px; row-gap:64px">
+          <div class="node security" id="guard"><div class="ic" data-icon="gauge"></div><div class="tx"><b>Within limits?</b><span>if not, the run stops with an error and ends as Failed</span>
+            <div class="chips"><span class="chip">depth 100</span><span class="chip">visits 500</span></div></div></div>
+          <div class="node service" id="node"><div class="ic" data-icon="play"></div><div class="tx"><b>Run the node</b><span>an order node with an unfilled {{...}} is failed, not sent</span></div></div>
+          <div class="node service" id="branch"><div class="ic" data-icon="split"></div><div class="tx"><b>Pick the next nodes</b><span>conditions follow yes/true or no/false; gates wait for all inputs</span></div></div>
+          <div class="node security" id="fail"><div class="ic" data-icon="triangle-alert"></div><div class="tx"><b>Node returned an error?</b></div></div>
+          <div></div>
+          <div class="node external" id="stop"><div class="ic" data-icon="octagon"></div><div class="tx"><b>Record error, stop this branch</b><span>other branches carry on; an errored condition continues only on pass-through edges</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- finish, under step 5 -->
+    <div class="col" style="grid-column:1 / span 2; grid-row:6; align-self:start; margin-top:36px; padding-left:56px; gap:64px; align-items:flex-start">
+      <div class="node security" id="done" style="width:420px"><div class="ic" data-icon="list-checks"></div><div class="tx"><b>Any node error or exception?</b><span>checked when the walk ends, or when the limits are hit</span></div></div>
+      <div class="row" style="gap:40px">
+        <div class="node data" id="ok" style="width:240px"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>Completed</b><span>logs saved</span></div></div>
+        <div class="node data" id="bad" style="width:240px"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>Failed</b><span>error and logs saved</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  window.addEventListener('load', () => document.fonts.ready.then(() => {
+    const z = document.getElementById('walk').getBoundingClientRect(), d = document.getElementById('done').getBoundingClientRect()
+    document.getElementById('a-walk').style.top = Math.min(z.height - 30, d.top + d.height / 2 - z.top) + 'px'
+  }))
+  connect('trig', 'lock', { color: 'client' })
+  connect('lock', 'val', { color: 'security', label: 'got it' })
+  connect('lock', 'busy', { color: 'external', label: 'held', from: 'right', to: 'left' })
+  connect('val', 'rej', { color: 'external', label: 'fails', from: 'right', to: 'left' })
+  connect('val', 'prep', { color: 'security', label: 'valid' })
+  connect('prep', 'start', { color: 'service' })
+  connect('start', 'guard', { color: 'service', from: 'right', to: 'left', label: 'start here' })
+  connect('guard', 'node', { color: 'security', label: 'yes', from: 'right', to: 'left' })
+  connect('node', 'fail', { color: 'service', from: 'bottom', to: 'top' })
+  connect('fail', 'branch', { color: 'security', label: 'no', from: 'left', to: 'right' })
+  connect('fail', 'stop', { color: 'external', label: 'yes', from: 'bottom', to: 'top' })
+  connect('branch', 'guard', { color: 'service', label: 'each child', from: 'top', to: 'bottom' })
+  connect('a-walk', 'done', { color: 'service', label: 'walk finished', from: 'left', to: 'right' })
+  connect('done', 'ok', { color: 'data', label: 'no', from: 'bottom', to: 'top' })
+  connect('done', 'bad', { color: 'data', label: 'yes', from: 'bottom', to: 'top' })
+</script>

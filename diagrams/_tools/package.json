@@ -1,0 +1,13 @@
+{
+  "name": "openalgo-docs-diagrams",
+  "private": true,
+  "type": "module",
+  "description": "Renders the infographic sources in diagrams/*.html to .gitbook/assets/diagram-*.png",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "lucide-static": "^1.48.0",
+    "puppeteer-core": "^25.12.0"
+  }
+}

@@ -1,0 +1,118 @@
+<style>
+  #canvas > .wlabel { position:absolute; }
+  .ag { padding-top:50px; display:grid; grid-template-columns: 250px 260px 300px 260px 330px; column-gap:40px; row-gap:56px; align-items:center; }
+  .ag > * { position:relative; z-index:1; }
+  .ag > .zone { z-index:0; align-self:stretch; margin:-42px -20px -20px -20px; }
+  .ag .node { min-width:0; position:relative; }
+  .ag .step { display:block; }
+  .ag .step .n { position:absolute; top:-16px; left:-16px; z-index:3; }
+  .anc { position:absolute; width:2px; height:2px; }
+</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">API key</div>
+    <h1>Your API key is stored twice: once to check it, once to show it back</h1>
+    <p style="max-width:1100px">When you generate a key, OpenAlgo saves a one-way hash that every API call is checked against, plus an encrypted copy that only the server can open to show the key on your screens and pass it to your strategies.</p>
+  </div>
+
+  <div class="ag">
+    <div class="zone" style="--c:var(--security); grid-column:3; grid-row:1 / 4">
+      <div class="zl"><span data-icon="lock"></span>Dual storage</div>
+    </div>
+
+    <!-- column 1: the request -->
+    <div class="step" style="--c:var(--client); grid-column:1; grid-row:1"><div class="n">1</div>
+      <div class="node client stack" id="user">
+        <div class="ic" data-icon="mouse-pointer-click"></div>
+        <div class="tx"><b>You click Generate</b><span>on the API Key page</span>
+          <div class="chips"><span class="chip">ApiKey.tsx</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--app); grid-column:1; grid-row:2"><div class="n">2</div>
+      <div class="node app stack" id="route">
+        <div class="ic" data-icon="user-check"></div>
+        <div class="tx"><b>Signed-in check</b><span>only your logged-in session can do this</span>
+          <div class="chips"><span class="chip">POST /apikey</span><span class="chip">@check_session_validity</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--service); grid-column:1; grid-row:3"><div class="n">3</div>
+      <div class="node service stack" id="gen">
+        <i class="anc" id="genR" style="right:0;top:40%"></i>
+        <div class="ic" data-icon="dices"></div>
+        <div class="tx"><b>New random key</b><span>64 hex characters (256 bits)</span>
+          <div class="chips"><span class="chip">secrets.token_hex(32)</span></div></div>
+      </div>
+    </div>
+
+    <!-- column 2 -->
+    <div class="note" style="grid-column:2; grid-row:1; max-width:none">
+      <span data-icon="lightbulb"></span>
+      <div>Regenerating replaces your one saved key, and the old key stops working at once.</div>
+    </div>
+    <div class="step" style="--c:var(--data); grid-column:2; grid-row:2"><div class="n">5</div>
+      <div class="node data stack" id="inval">
+        <div class="ic" data-icon="eraser"></div>
+        <div class="tx"><b>Forget old key everywhere</b><span>clears cached logins, broker and feed tokens, API key checks and order mode, so the old key stops working at once</span>
+          <div class="chips"><span class="chip">invalidate_user_cache()</span></div></div>
+      </div>
+    </div>
+    <div class="step" style="--c:var(--service); grid-column:2; grid-row:3"><div class="n">4</div>
+      <div class="node service hero stack" id="upsert"><i class="anc" id="upA" style="right:0;top:25%"></i><i class="anc" id="upB" style="right:0;top:50%"></i>
+        <div class="ic" data-icon="key-round"></div>
+        <div class="tx"><b>Save the key two ways</b><span>one row per user, replaced on regenerate</span>
+          <div class="chips"><span class="chip">upsert_api_key()</span><span class="chip">database/auth_db.py</span></div></div>
+      </div>
+    </div>
+
+    <!-- column 3: dual storage -->
+    <div class="node security stack" id="hash" style="grid-column:3; grid-row:1">
+      <div class="ic" data-icon="fingerprint"></div>
+      <div class="tx"><b>One-way hash</b><span>Argon2 with a secret pepper; can be checked, never reversed</span>
+        <div class="chips"><span class="chip">ph.hash(api_key + API_KEY_PEPPER)</span></div></div>
+    </div>
+    <div class="node security stack" id="enc" style="grid-column:3; grid-row:3">
+      <div class="ic" data-icon="lock-keyhole"></div>
+      <div class="tx"><b>Encrypted copy</b><span>Fernet; only the server can decrypt it</span>
+        <div class="chips"><span class="chip">key = PBKDF2(API_KEY_PEPPER, FERNET_SALT)</span></div></div>
+    </div>
+
+    <!-- column 4 -->
+    <div class="node data big stack" id="table" style="grid-column:4; grid-row:2"><i class="anc" id="tT1" style="left:30%;top:0"></i><i class="anc" id="tT2" style="left:75%;top:0"></i><i class="anc" id="tB1" style="left:30%;bottom:0"></i><i class="anc" id="tB2" style="left:75%;bottom:0"></i>
+      <div class="ic" data-icon="database"></div>
+      <div class="tx"><b>api_keys table</b><span>db/openalgo.db</span>
+        <div class="chips"><span class="chip">user_id</span><span class="chip">api_key_hash</span><span class="chip">api_key_encrypted</span><span class="chip">order_mode</span></div></div>
+    </div>
+
+    <!-- column 5: readers -->
+    <div class="node security" id="verify" style="grid-column:5; grid-row:1">
+      <div class="ic" data-icon="shield-check"></div>
+      <div class="tx"><b>Checks every API call</b><span>/api/v1 requests are matched against the hash only</span>
+        <div class="chips"><span class="chip">verify_api_key()</span></div></div>
+    </div>
+    <div class="node app" id="reveal" style="grid-column:5; grid-row:3">
+      <div class="ic" data-icon="eye"></div>
+      <div class="tx"><b>Shows the key back</b><span>API Key page, Playground, TradingView and GoCharting setup, Python strategies</span>
+        <div class="chips"><span class="chip">OPENALGO_API_KEY</span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>You</span>
+    <span style="--c:var(--app)"><i></i>OpenAlgo app</span>
+    <span style="--c:var(--service)"><i></i>Processing</span>
+    <span style="--c:var(--security)"><i></i>Protection and checks</span>
+    <span style="--c:var(--data)"><i></i>Database and caches</span>
+  </div>
+</div>
+<script>
+  connect('user', 'route', { color: 'client', from: 'bottom', to: 'top' })
+  connect('route', 'gen', { color: 'app', from: 'bottom', to: 'top' })
+  connect('gen', 'upsert', { color: 'service', from: 'right', to: 'left' })
+  connect('upsert', 'inval', { color: 'data', dashed: true, label: 'after commit', from: 'top', to: 'bottom' })
+  connect('upA', 'hash', { color: 'security', from: 'right', to: 'bottom', bend: 70 })
+  connect('upB', 'enc', { color: 'security', from: 'right', to: 'left' })
+  connect('hash', 'tT1', { color: 'data', from: 'right', to: 'top' })
+  connect('enc', 'tB1', { color: 'data', from: 'right', to: 'bottom' })
+  connect('tT2', 'verify', { color: 'security', label: 'api_key_hash', from: 'top', to: 'left' })
+  connect('tB2', 'reveal', { color: 'app', label: 'api_key_encrypted', from: 'bottom', to: 'left' })
+</script>

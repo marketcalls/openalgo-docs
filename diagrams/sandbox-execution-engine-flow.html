@@ -1,0 +1,67 @@
+<style>#canvas > .wlabel{position:absolute;z-index:3}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Sandbox execution engine</div>
+    <h1>How a waiting sandbox order gets filled</h1>
+    <p style="max-width:1150px">On every live tick (or every 5 s when polling) the engine re-checks each pending order: skip it if it was already filled, ignore suspicious prices, apply the fill rule for its order type, then book the trade and update your position and margin.</p>
+  </div>
+
+  <div class="row" style="gap:62px; align-items:center">
+    <div class="node data stack" id="pend" style="width:220px">
+      <div class="ic" data-icon="hourglass"></div>
+      <div class="tx"><b>1. Pending orders</b><span>waiting to be filled</span>
+        <div class="chips"><span class="chip">open</span><span class="chip">trigger pending</span></div></div>
+    </div>
+    <div class="col" style="gap:16px">
+      <div class="node data" id="ws" style="width:270px"><div class="ic" data-icon="radio"></div><div class="tx"><b>2a. Live tick</b><span>WebSocket; LTP stands in for bid and ask</span></div></div>
+      <div class="node broker" id="mq" style="width:270px"><div class="ic" data-icon="refresh-cw"></div><div class="tx"><b>2b. Quote batch</b><span>polling engine; one multiquotes call, no per-symbol fallback</span><div class="chips"><span class="chip">every 5 s</span></div></div></div>
+    </div>
+    <div class="col" style="gap:40px; align-items:flex-start">
+      <div class="node service" id="dup" style="width:250px"><div class="ic" data-icon="copy-check"></div><div class="tx"><b>3. Already filled?</b><span>another fill path already booked a trade for this order</span><div class="chips"><span class="chip">race check</span></div></div></div>
+      <div class="node external" id="fix" style="width:250px"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>Just mark complete</b><span>order set complete, fill event published</span></div></div>
+    </div>
+    <div class="node security" id="guard" style="width:250px"><div class="ic" data-icon="shield-check"></div><div class="tx"><b>4. Price looks sane?</b><span>LTP valid and inside the day's high-low range</span></div></div>
+    <div class="node external" id="wait" style="width:250px"><div class="ic" data-icon="clock"></div><div class="tx"><b>Keep pending</b><span>retry on next tick or cycle</span></div></div>
+  </div>
+
+  <div class="zone" id="rules" style="--c:var(--service); margin-top:74px">
+    <div class="zl"><span data-icon="list-checks"></span>5. Fill rule by order type</div>
+    <div id="rin" style="position:absolute;top:0;left:67.6%;width:1px;height:1px"></div>
+    <div id="rwait" style="position:absolute;top:0;left:87.4%;width:1px;height:1px"></div>
+    <div id="rout" style="position:absolute;bottom:0;left:50%;width:1px;height:1px"></div>
+    <div class="grid" style="grid-template-columns:repeat(5, 1fr); gap:16px">
+      <div class="node service stack" style="min-width:0"><div class="ic" data-icon="zap"></div><div class="tx"><b>MARKET</b><span>BUY at ask, SELL at bid, else LTP</span></div></div>
+      <div class="node service stack" style="min-width:0"><div class="ic" data-icon="target"></div><div class="tx"><b>LIMIT</b><span>BUY when LTP &lt;= price, SELL when LTP &gt;= price; fills at the limit price</span></div></div>
+      <div class="node service stack" style="min-width:0"><div class="ic" data-icon="shield-alert"></div><div class="tx"><b>SL</b><span>trigger crossed and limit satisfiable; fills at LTP</span></div></div>
+      <div class="node service stack" style="min-width:0"><div class="ic" data-icon="shield"></div><div class="tx"><b>SL-M</b><span>trigger crossed; fills at LTP</span></div></div>
+      <div class="node service stack" style="min-width:0"><div class="ic" data-icon="bell-ring"></div><div class="tx"><b>Trigger pending</b><span>on trigger: SL-M fills; SL fills, or moves to open if its limit is not met</span></div></div>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 270px 1fr; gap:44px; margin-top:74px; align-items:start">
+    <div class="note" style="margin-top:66px"><span data-icon="lightbulb"></span><div>Whatever the order type, once its fill rule is met it takes the same booking path: trade, position, margin.</div></div>
+    <div class="col" style="gap:44px">
+      <div class="node service stack hero" id="exe" style="width:270px; height:212px"><div class="ic" data-icon="receipt"></div><div class="tx"><b>6. Book the trade</b><span>trade row written, order complete</span><div class="chips"><span class="chip">_execute_order</span></div></div></div>
+      <div class="node data" id="ev" style="width:270px; min-width:0"><div class="ic" data-icon="megaphone"></div><div class="tx"><b>Event bus</b><span>fill and order-update events</span></div></div>
+    </div>
+    <div class="row" style="gap:44px; align-items:stretch">
+      <div class="node service stack" id="pos" style="flex:1; min-width:0; height:212px"><div class="ic" data-icon="trending-up"></div><div class="tx"><b>7. Update position</b><span>new, add, reduce, close or reverse; release margin, book P&amp;L</span><div class="chips"><span class="chip">_update_position</span></div></div></div>
+      <div class="node security stack" id="val" style="flex:1; min-width:0; height:212px"><div class="ic" data-icon="scale"></div><div class="tx"><b>8. Margin check</b><span>blocked margin must match positions; auto-reconciles a mismatch</span><div class="chips"><span class="chip">validate_margin_consistency</span></div></div></div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('pend', 'ws', { color: 'data' })
+  connect('pend', 'mq', { color: 'data' })
+  connect('ws', 'dup', { color: 'data' })
+  connect('mq', 'dup', { color: 'broker' })
+  connect('dup', 'fix', { color: 'external', label: 'yes', from: 'bottom', to: 'top' })
+  connect('dup', 'guard', { color: 'service', label: 'no' })
+  connect('guard', 'wait', { color: 'external', dashed: true, label: 'no' })
+  connect('guard', 'rin', { color: 'security', label: 'yes', from: 'bottom', to: 'top' })
+  connect('rwait', 'wait', { color: 'external', dashed: true, label: 'not met', from: 'top', to: 'bottom' })
+  connect('rout', 'exe', { color: 'service', label: 'any type that fills', from: 'bottom', to: 'top' })
+  connect('exe', 'pos', { color: 'service', from: 'right', to: 'left' })
+  connect('pos', 'val', { color: 'service' })
+  connect('exe', 'ev', { color: 'data', from: 'bottom', to: 'top' })
+</script>

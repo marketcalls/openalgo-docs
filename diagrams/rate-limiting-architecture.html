@@ -1,0 +1,105 @@
+<style>
+  #canvas > .wlabel { position:absolute; }
+  .rg { display:grid; grid-template-columns: 230px 280px 290px 300px 290px; column-gap:40px; row-gap:70px; align-items:center; }
+  .rg > * { position:relative; z-index:1; }
+  .rg > .zone { z-index:0; align-self:stretch; margin:-46px -20px -22px -20px; }
+  .rg .node { min-width:0; position:relative; }
+  .anc { position:absolute; width:2px; height:2px; }
+  .lim { display:grid; grid-template-columns: 1fr 1fr; gap:8px 10px; margin-top:10px; }
+  .lim div { display:flex; flex-direction:column; gap:2px; padding:8px 10px; border-radius:10px; background:rgba(15,23,42,.7); border:1px solid var(--line); }
+  .lim div b { font-size:14.5px; }
+  .lim div span { font-size:13px; }
+</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Rate limiting</div>
+    <h1>Each protected route counts your requests and stops the flood</h1>
+    <p style="max-width:1100px">Only routes that carry a limit are counted. OpenAlgo counts requests per caller over a moving time window; under the limit the request runs, over it you get a 429 until older requests age out.</p>
+  </div>
+
+  <div class="rg">
+    <div class="zone" style="--c:var(--security); grid-column:2 / 5; grid-row:2 / 4">
+      <div class="zl" style="left:auto; right:22px; top:auto; bottom:-14px"><span data-icon="shield-check"></span>Flask-Limiter · limiter.py</div>
+    </div>
+
+    <!-- row 1 -->
+    <div class="node external" id="none" style="grid-column:5; grid-row:1">
+      <div class="ic" data-icon="circle-dashed"></div>
+      <div class="tx"><b>No limit applied</b><span>routes without a limit decorator are unlimited</span>
+        <div class="chips"><span class="chip">no default_limits</span></div></div>
+    </div>
+
+    <!-- row 2 -->
+    <div class="node client stack" id="req" style="grid-column:1; grid-row:2">
+      <div class="ic" data-icon="send"></div>
+      <div class="tx"><b>A request arrives</b><span>web page, API call, webhook or MCP tool</span></div>
+    </div>
+    <div class="node security hero stack" id="has" style="grid-column:2; grid-row:2; margin-right:34px">
+      <i class="anc" id="hasT" style="left:70%;top:0"></i>
+      <div class="ic" data-icon="filter"></div>
+      <div class="tx"><b>Does this route have a limit?</b><span>set per route with a decorator</span>
+        <div class="chips"><span class="chip">@limiter.limit</span><span class="chip">shared_limit</span></div></div>
+    </div>
+    <div class="node security stack" id="key" style="grid-column:3; grid-row:2">
+      <div class="ic" data-icon="fingerprint"></div>
+      <div class="tx"><b>Who is calling?</b><span>counted per caller IP; Flow and strategy webhooks and MCP add extra limits per token</span>
+        <div class="chips"><span class="chip">get_remote_address</span></div></div>
+    </div>
+    <div class="node security stack" id="within" style="grid-column:4; grid-row:2">
+      <i class="anc" id="wR" style="right:0;top:82%"></i>
+      <i class="anc" id="wL" style="left:0;top:84%"></i>
+      <div class="ic" data-icon="gauge"></div>
+      <div class="tx"><b>Under the limit?</b><span>hits in the moving window compared with this route's limit</span>
+        <div class="chips"><span class="chip">strategy = moving-window</span></div></div>
+    </div>
+    <div class="node app big stack" id="view" style="grid-column:5; grid-row:2">
+      <div class="ic" data-icon="circle-check"></div>
+      <div class="tx"><b>Request runs normally</b><span>the page or API handler executes</span></div>
+    </div>
+
+    <!-- row 3 -->
+    <div class="node service" id="limits" style="grid-column:2 / 4; grid-row:3; align-items:flex-start">
+      <i class="anc" id="limR" style="right:0;top:22%"></i>
+      <div class="ic" data-icon="sliders-horizontal"></div>
+      <div class="tx" style="flex:1"><b>Per-route limits, set in .env</b><span>each route reads its own value</span>
+        <div class="lim">
+          <div><b>Login</b><span>5 per minute + 25 per hour</span></div>
+          <div><b>Password reset</b><span>15 per hour</span></div>
+          <div><b>API (API_RATE_LIMIT)</b><span>100 per second in sample .env; code fallback 10/sec (50/sec in orders, sandbox, admin, margin)</span></div>
+          <div><b>Orders and smart orders</b><span>10 per second</span></div>
+          <div><b>Webhooks</b><span>100 per minute</span></div>
+          <div><b>Strategy</b><span>200 per minute</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="node data stack" id="store" style="grid-column:4; grid-row:3">
+      <div class="ic" data-icon="memory-stick"></div>
+      <div class="tx"><b>Hit counter</b><span>timestamps per key, kept in memory of each worker process</span>
+        <div class="chips"><span class="chip">memory://</span></div></div>
+    </div>
+    <div class="node security stack" id="err" style="grid-column:5; grid-row:3">
+      <div class="ic" data-icon="octagon-x"></div>
+      <div class="tx"><b>429 Too many requests</b><span>Your script gets an error telling it to wait and retry (about 60 s); in the browser you see a Rate limited page.</span>
+        <div class="chips"><span class="chip">blueprint handler JSON</span><span class="chip">retry_after 60</span><span class="chip">/rate-limited</span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>Caller</span>
+    <span style="--c:var(--security)"><i></i>Limiter checks</span>
+    <span style="--c:var(--service)"><i></i>Configuration</span>
+    <span style="--c:var(--data)"><i></i>Storage</span>
+    <span style="--c:var(--app)"><i></i>Your OpenAlgo app</span>
+  </div>
+</div>
+<script>
+  connect('req', 'has', { color: 'client', from: 'right', to: 'left' })
+  connect('hasT', 'none', { color: 'muted', label: 'no', from: 'top', to: 'left', bend: 50 })
+  connect('none', 'view', { color: 'muted', from: 'bottom', to: 'top' })
+  connect('has', 'key', { color: 'security', label: 'yes', from: 'right', to: 'left' })
+  connect('key', 'within', { color: 'security', from: 'right', to: 'left' })
+  connect('within', 'store', { color: 'data', label: 'count and record', both: true, from: 'bottom', to: 'top' })
+  connect('limR', 'wL', { color: 'service', dashed: true, label: 'limit', from: 'right', to: 'left', bend: 40 })
+  connect('within', 'view', { color: 'app', label: 'under', from: 'right', to: 'left' })
+  connect('wR', 'err', { color: 'security', label: 'over', from: 'right', to: 'top', bend: 50 })
+</script>

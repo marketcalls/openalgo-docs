@@ -14,13 +14,7 @@ Plugin presence does not imply that every optional operation, exchange, or WebSo
 
 ## Layer Ownership
 
-```text
-REST resource or session blueprint
-        -> schema/session validation
-        -> service orchestration
-        -> broker, sandbox, database, or calculation module
-        -> normalized response
-```
+<figure><img src="../../.gitbook/assets/diagram-design-principles-layer-ownership.png" alt="Layer ownership: REST resource or session blueprint, validation, service orchestration, then broker, sandbox, database or calculation module, normalized response; Action Center queue and EventBus subscribers as side paths"><figcaption></figcaption></figure>
 
 - Routes own transport concerns: request parsing, authentication, schema errors, and HTTP status.
 - Services own mode selection, policy, business sequencing, and normalized results.

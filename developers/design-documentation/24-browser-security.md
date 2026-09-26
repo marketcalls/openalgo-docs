@@ -6,58 +6,13 @@ OpenAlgo implements browser-side security measures including session management,
 
 ## Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                       Browser Security Architecture                          │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                               Security Layers                                │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  Layer 1: Session Security                                           │    │
-│  │  - Session-based authentication                                      │    │
-│  │  - Auto-expiry at 3 AM IST (configurable)                           │     │
-│  │  - Token revocation on logout                                        │    │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  Layer 2: Cookie Security                                            │    │
-│  │  - Secure flag (HTTPS only)                                          │    │
-│  │  - HttpOnly flag (no JS access)                                      │    │
-│  │  - SameSite=Lax (CSRF protection)                                    │    │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  Layer 3: Authentication Flow                                        │    │
-│  │  - Argon2 password hashing                                           │    │
-│  │  - TOTP support for 2FA                                              │    │
-│  │  - Rate limiting on login                                            │    │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-browser-security-layers.png" alt="Browser request path: WSGI IP-ban middleware, CSRFProtect, session expiry check, session route, security headers, secure cookies"><figcaption></figcaption></figure>
 
 ## Session Management
 
 ### Session Lifecycle
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Session Lifecycle                        │
-│                                                                 │
-│  Login → Create Session → Set Expiry → Validate on Request      │
-│                                            │                    │
-│              ┌─────────────────────────────┴───────┐            │
-│              │                                     │            │
-│           Valid                               Expired           │
-│              │                                     │            │
-│              ▼                                     ▼            │
-│         Continue                            Redirect to         │
-│         Request                             Login Page          │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-browser-security-session-lifecycle.png" alt="Session lifecycle: password login, optional TOTP, broker auth or resume, active validation per request, expiry at daily boundary or logout clears session"><figcaption></figcaption></figure>
 
 ### Session Expiry Configuration
 
@@ -204,18 +159,7 @@ The limiter keys on `get_remote_address`, which is Werkzeug's `request.remote_ad
 
 ### Setup Flow
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                          2FA Setup Flow                          │
-│                                                                  │
-│  1. User enables 2FA in settings                                 │
-│  2. Generate TOTP secret                                         │
-│  3. Display QR code for authenticator app                        │
-│  4. User enters code to verify                                   │
-│  5. Store encrypted secret in database                           │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-browser-security-totp-setup.png" alt="TOTP setup: secret generated and encrypted at account setup, QR first shown on the Profile page after login, 2FA enabled via POST /auth/2fa/configure with a valid current code"><figcaption></figcaption></figure>
 
 ### TOTP Validation
 

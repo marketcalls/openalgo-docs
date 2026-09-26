@@ -1,0 +1,92 @@
+<div id="canvas" style="width:1680px">
+  <style>#canvas > .wlabel { position: absolute; } .s{flex-direction:column; align-items:flex-start; gap:12px}</style>
+  <div class="title">
+    <div class="eyebrow">Latency monitor</div>
+    <h1>How long did your order take, and whose time was it?</h1>
+    <p style="max-width:1150px">Every order/API call is timed from the moment its endpoint starts. The broker's share is measured on the actual HTTP call, the rest is OpenAlgo overhead, and the record is saved after your response has already gone back.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:44px; margin-top:130px">
+    <div class="node client stack" id="client" style="width:190px; min-width:190px">
+      <div class="ic" data-icon="send"></div>
+      <div class="tx"><b>Your API call</b><span>REST API or a UI order button</span>
+        <div class="chips"><span class="chip">/api/v1</span><span class="chip">scalping</span><span class="chip">Positions</span></div></div>
+    </div>
+    <div class="node app stack" id="route" style="width:190px; min-width:190px">
+      <div class="ic" data-icon="route"></div>
+      <div class="tx"><b>Flask routing</b><span>and middleware, before the timer starts</span></div>
+    </div>
+    <div class="zone" id="timer" style="--c:var(--service)">
+      <div class="zl"><span data-icon="timer"></span>track_latency(api_type) timer</div>
+      <div class="row" style="gap:36px; align-items:stretch">
+        <div class="step s" style="--c:var(--service)"><div class="n">1</div>
+          <div class="node service stack" id="s1" style="width:200px; min-width:200px; flex:1"><div class="ic" data-icon="file-input"></div>
+            <div class="tx"><b>Read your request</b><span>only reads the request JSON</span><div class="chips"><span class="chip">validation</span></div></div></div></div>
+        <div class="step s" style="--c:var(--service)"><div class="n">2</div>
+          <div class="node service stack" id="s2" style="width:200px; min-width:200px; flex:1"><div class="ic" data-icon="cpu"></div>
+            <div class="tx"><b>Call the broker</b><span>runs the whole endpoint: API key, service, broker call</span><div class="chips"><span class="chip">broker_request</span></div></div></div></div>
+        <div class="step s" style="--c:var(--service)"><div class="n">3</div>
+          <div class="node service stack" id="s3" style="width:200px; min-width:200px; flex:1"><div class="ic" data-icon="file-output"></div>
+            <div class="tx"><b>Read broker reply</b><span>reads the response payload</span><div class="chips"><span class="chip">broker_response</span></div></div></div></div>
+        <div class="step s" style="--c:var(--service)"><div class="n">4</div>
+          <div class="node service stack" id="calc" style="width:290px; min-width:290px; flex:1"><div class="ic" data-icon="calculator"></div>
+            <div class="tx"><b>Compute metrics</b>
+              <div class="chips"><span class="chip">rtt (broker round trip) = broker time</span><span class="chip">total = now - start</span><span class="chip">overhead = total - rtt</span></div></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:40px; gap:150px; align-items:center; padding-left:250px">
+    <div class="node broker big" id="broker" style="width:220px">
+      <div class="ic" data-icon="landmark"></div>
+      <div class="tx"><b>Your broker</b><span>broker REST API</span></div>
+    </div>
+    <div class="node service" id="hook" style="width:330px">
+      <div class="ic" data-icon="clock"></div>
+      <div class="tx"><b>Shared HTTP client</b><span>times the real broker call</span>
+        <div class="chips"><span class="chip">httpx hook</span><span class="chip">g.broker_api_time</span></div></div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:40px; justify-content:space-between; align-items:center">
+    <div class="node client stack" id="ui" style="width:220px; min-width:220px">
+      <div class="ic" data-icon="gauge"></div>
+      <div class="tx"><b>Latency dashboard</b><span>React page</span><div class="chips"><span class="chip">/logs/latency</span></div></div>
+    </div>
+    <div class="node app stack" id="bp" style="width:290px; min-width:290px">
+      <div class="ic" data-icon="chart-column"></div>
+      <div class="tx"><b>Latency API</b><span>logs, stats, histograms, CSV export</span>
+        <div class="chips"><span class="chip">latency_bp</span><span class="chip">/latency/api/*</span><span class="chip">/latency/export</span></div></div>
+    </div>
+    <div class="col" style="gap:70px; align-items:center">
+      <div class="node data big" id="db" style="width:300px">
+        <div class="ic" data-icon="database"></div>
+        <div class="tx"><b>latency.db</b><span>order_latency table</span><div class="chips"><span class="chip">LATENCY_DATABASE_URL</span></div></div>
+      </div>
+      <div class="node external" id="purge" style="width:300px">
+        <div class="ic" data-icon="trash-2"></div>
+        <div class="tx"><b>Startup cleanup</b><span>drops data-call logs older than 7 days; order logs kept forever</span><div class="chips"><span class="chip">purge_old_data_logs(7)</span></div></div>
+      </div>
+    </div>
+    <div class="node service stack" id="exec" style="width:250px; min-width:250px; margin-right:50px">
+      <div class="ic" data-icon="layers"></div>
+      <div class="tx"><b>Background writer</b><span>one worker thread commits off the request thread</span>
+        <div class="chips"><span class="chip">latency-log executor</span></div></div>
+    </div>
+  </div>
+
+  <div class="note" style="max-width:1000px; margin-top:44px"><span data-icon="lightbulb"></span><div>The timer wraps every RESTX API resource automatically and is added by hand to the scalping and order buttons (scalping.py, orders.py).</div></div>
+</div>
+<script>
+  connect('client','route',{color:'client'})
+  connect('route','s1',{color:'app'})
+  connect('s1','s2',{color:'service'}); connect('s2','s3',{color:'service'}); connect('s3','calc',{color:'service'})
+  connect('s2','hook',{color:'service', from:'bottom', to:'top'})
+  connect('hook','broker',{color:'broker', both:true, label:'HTTP', from:'left', to:'right'})
+  connect('calc','client',{color:'client', dashed:true, from:'top', to:'top', bend:190, label:'response returned (does not wait for the save)'})
+  connect('calc','exec',{color:'service', from:'bottom', to:'top', label:'submit record'})
+  connect('exec','db',{color:'data', label:'commit'})
+  connect('purge','db',{color:'muted', dashed:true, from:'top', to:'bottom', label:'deletes old rows'})
+  connect('db','bp',{color:'data'})
+  connect('bp','ui',{color:'app'})
+</script>

@@ -6,61 +6,7 @@ Master contracts contain symbol mappings between OpenAlgo's standardized format 
 
 ## Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                    Master Contract Download Architecture                     │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                               Download Trigger                               │
-│                                                                              │
-│      ┌────────────────────────┐              ┌────────────────────────┐      │
-│      │ On broker login        │              │ Force Download button  │      │
-│      │ handle_auth_success()  │              │ POST /api/master-      │      │
-│      │                        │              │ contract/download      │      │
-│      └────────────┬───────────┘              └────────────┬───────────┘      │
-│                   │                                       │                  │
-│                   └───────────────────┬───────────────────┘                  │
-│                                       │                                      │
-│                                       ▼                                      │
-│   ┌──────────────────────────────────────────────────────────────────────┐   │
-│   │ should_download_master_contract() decides fresh download vs cache    │   │
-│   │ then a daemon Thread runs async_master_contract_download() or        │   │
-│   │ load_existing_master_contract()                                      │   │
-│   └──────────────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                           Broker-Specific Download                           │
-│                                                                              │
-│  broker/{name}/database/master_contract_db.py                                │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  1. Fetch from broker API or static URL                              │    │
-│  │  2. Parse CSV/JSON format                                            │    │
-│  │  3. Transform to OpenAlgo format                                     │    │
-│  │  4. Store in symtoken table                                          │    │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-└──────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                               Symbol Database                                │
-│                                                                              │
-│   ┌──────────────────────────────────────────────────────────────────────┐   │
-│   │                            symtoken table                            │   │
-│   │                                                                      │   │
-│   │ symbol   │ brsymbol │ exchange  │ brexchange │ token  │ lotsize      │   │
-│   │ ──────────────────────────────────────────────────────────────────── │   │
-│   │ SBIN     │ SBIN-EQ  │ NSE       │ NSE        │ 779    │ 1            │   │
-│   │ NIFTY    │ NIFTY    │ NSE_INDEX │ NSE        │ 26000  │ 1            │   │
-│   │                                                                      │   │
-│   │ Plus name, expiry, strike, instrumenttype, tick_size, contract_value │   │
-│   └──────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-master-contract-download-flow.png" alt="Master contract download: login or Force Download triggers, a check for a missing or stale symbol list (first run, broker change, new day or a download before the 08:00 IST cutoff, 00:00 UTC for crypto), background thread running the broker master_contract_db, symtoken, status table and memory cache"><figcaption></figcaption></figure>
 
 ## Download Process
 

@@ -6,49 +6,7 @@ This guide covers deploying OpenAlgo on an Ubuntu server (22.04 or 24.04 LTS) wi
 
 ## Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                        Ubuntu Server Architecture                            │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-                         Internet
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                            Nginx (Reverse Proxy)                             │
-│                                 Port 80/443                                  │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  - SSL termination (Let's Encrypt)                                   │    │
-│  │  - HTTP → HTTPS redirect                                             │    │
-│  │  - WebSocket upgrade support                                         │    │
-│  │  - Static file serving                                               │    │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-└──────────────────────────────────────────────────────────────────────────────┘
-                    │                       │
-                    ▼                       ▼
-┌─────────────────────────────────────────────────────┐
-│           OpenAlgo (Gunicorn + WebSocket)           │
-│                                                     │
-│  Flask App ─────────── localhost:5000               │
-│  WebSocket Thread ──── localhost:8765               │
-│                                                     │
-│  systemd: openalgo                                  │
-└─────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                                 File System                                  │
-│                                                                              │
-│  /opt/openalgo/                                                              │
-│  ├── .venv/              # Virtual environment                               │
-│  ├── db/                 # SQLite databases                                  │
-│  ├── log/                # Application logs                                  │
-│  ├── strategies/         # User strategies                                   │
-│  ├── .env                # Configuration                                     │
-│  └── app.py              # Main application                                  │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-ubuntu-server-deployment.png" alt="Ubuntu deployment: Nginx routes / to Gunicorn eventlet single worker and /ws to the WebSocket proxy child process on 8765, with ZeroMQ bus on 5555, broker APIs, and the app directory"><figcaption></figcaption></figure>
 
 ## Prerequisites
 
@@ -226,13 +184,6 @@ server {
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_read_timeout 86400;
-    }
-
-    # Static files
-    location /static {
-        alias /opt/openalgo/static;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
     }
 }
 ```

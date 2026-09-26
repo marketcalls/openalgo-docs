@@ -998,40 +998,7 @@ Unlike the other AmiBroker modules, this one has no Host parameter: the base URL
 
 ### API Call Sequence
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  STEP 1: Fetch Quote                                            │
-│  POST /api/v1/quotes -> Get bid, ask, ltp                       │
-│  Calculate limit price based on selected mode                   │
-│  Round to nearest tick size                                     │
-└─────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  STEP 2: Place Limit Order                                      │
-│  POST /api/v1/placeorder                                        │
-│  pricetype: "LIMIT", price: calculated price                    │
-│  Store: orderID                                                 │
-└─────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  STEP 3: Check Order Status (after retry delay)                 │
-│  POST /api/v1/orderstatus                                       │
-│  Read: order_status (complete/open/rejected/cancelled)          │
-└─────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  STEP 4: Modify Order (if open and retry < max)                 │
-│  POST /api/v1/quotes -> Fetch fresh bid/ask                     │
-│  POST /api/v1/modifyorder -> Update price                       │
-│  Increment retry counter, loop back to Step 3                   │
-└─────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  STEP 5: Cancel Order (after max retries exhausted)             │
-│  POST /api/v1/cancelorder                                       │
-│  Final status check after retry delay                           │
-└─────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-amibroker-limit-order-api-sequence.png" alt="AmiBroker limit order flow in four steps: place the order (quotes, placeorder), watch it (orderstatus), chase the price while it is still open with retries left (quotes, modifyorder), and when no retries are left, a price change fails or you press Cancel, cancel and check once more; outcomes are Complete, Rejected or Canceled"><figcaption></figcaption></figure>
 
 ***
 

@@ -27,19 +27,7 @@ This system is designed with security best practices and provides fallback optio
 
 The password reset system follows a secure token-based approach with multiple verification methods:
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   User Request  │    │  Method Selection │    │  Verification   │
-│                 │───▶│                  │───▶│                 │
-│ Enter Email     │    │ TOTP or Email    │    │ Code/Link Check │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                                          │
-                       ┌─────────────────┐               │
-                       │  Password Reset │◀──────────────┘
-                       │                 │
-                       │ New Password    │
-                       └─────────────────┘
-```
+<figure><img src="../.gitbook/assets/diagram-forgot-password-reset-overview.png" alt="Password reset flow: enter email, choose TOTP or email link, receive one-time reset token, set new password, sessions revoked"><figcaption></figcaption></figure>
 
 ### Authentication Methods
 

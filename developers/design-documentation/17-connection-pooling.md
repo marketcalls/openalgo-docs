@@ -8,24 +8,7 @@ The default pool limits are 1,000 symbols per broker connection and three connec
 
 ## Topology
 
-```text
-broker/user ConnectionPool
-  |-- adapter 1 (up to configured symbol limit)
-  |-- adapter 2
-  `-- adapter 3
-          |
-          v
-SharedZmqPublisher (PUB connects)
-          |
-          v
-tcp://ZMQ_HOST:ZMQ_PORT
-          ^
-          |
-WebSocketProxy (SUB binds)
-          |
-          v
-authenticated WebSocket clients
-```
+<figure><img src="../../.gitbook/assets/diagram-connection-pooling-topology.png" alt="Inside the WebSocket proxy process, per broker and user ConnectionPool adapters (up to 1000 symbols each, up to 3 connections) publish through a SharedZmqPublisher that connects to the ZeroMQ bus on port 5555; the cache-invalidation and order-update publishers in the Flask process also connect, and the WebSocket proxy SUB socket is the sole binder that fans ticks out to clients on port 8765"><figcaption></figcaption></figure>
 
 The proxy's SUB socket is the sole binder on the configured endpoint. Broker market-data publishers and cache-invalidation publishers connect to that fixed endpoint. There is no publisher bind or fallback-port scan; this avoids cross-process bind races that can acknowledge subscriptions without delivering ticks.
 

@@ -4,14 +4,7 @@
 
 Services sit between Flask resources/blueprints and broker, database, sandbox, messaging, or calculation modules. A service should accept plain validated values, return plain result data plus status, and remain reusable outside a specific HTTP route where practical.
 
-```text
-RESTX or blueprint
-  -> input/session validation
-  -> services/<domain>_service.py
-     -> auth/mode policy
-     -> broker module, sandbox manager, database, or pure calculation
-  -> HTTP response
-```
+<figure><img src="../../.gitbook/assets/diagram-service-layer-call-path.png" alt="Service layer call path from RESTX resource or blueprint through a domain service and its policy checks to broker, sandbox, database or calculation, with EventBus publish"><figcaption></figcaption></figure>
 
 ## Service Families
 

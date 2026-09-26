@@ -6,95 +6,21 @@ OpenAlgo provides Docker support for containerized deployment with **3-stage bui
 
 ## Architecture Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                      Docker Architecture (3-Stage Build)                      │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            Stage 1: Python Builder                            │
-│                            (python:3.12-bullseye)                             │
-│                                                                               │
-│  ┌───────────────────────────────────────────────────────────────────────┐    │
-│  │  1. Install build dependencies (curl, build-essential)                │    │
-│  │  2. Copy pyproject.toml                                               │    │
-│  │  3. Create virtual environment with uv                                │    │
-│  │  4. Install dependencies: uv sync                                     │    │
-│  │  5. Add gunicorn>=25.0,<26 and eventlet                               │    │
-│  └───────────────────────────────────────────────────────────────────────┘    │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                           Stage 2: Frontend Builder                           │
-│                            (node:22-bullseye-slim)                            │
-│                                                                               │
-│  ┌───────────────────────────────────────────────────────────────────────┐    │
-│  │  1. Copy frontend/package*.json                                       │    │
-│  │  2. npm ci                                                            │    │
-│  │  3. Copy frontend source                                              │    │
-│  │  4. npm run build (React production build)                            │    │
-│  └───────────────────────────────────────────────────────────────────────┘    │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                              Stage 3: Production                              │
-│                          (python:3.12-slim-bullseye)                          │
-│                                                                               │
-│  ┌───────────────────────────────────────────────────────────────────────┐    │
-│  │  1. Set timezone to IST (Asia/Kolkata)                                │    │
-│  │  2. Install runtime deps (curl, libopenblas0, libgomp1,               │    │
-│  │     libgfortran5, chromium, fonts-liberation)                         │    │
-│  │  3. Create non-root user appuser pinned to UID/GID 1000               │    │
-│  │  4. Copy venv from python-builder                                     │    │
-│  │  5. Copy application source                                           │    │
-│  │  6. Copy frontend/dist from frontend-builder                          │    │
-│  │  7. Create directories (log, db, strategies, keys, tmp, numba_cache)  │    │
-│  │  8. Set permissions (keys: 700, others: 755)                          │    │
-│  │  9. Run as appuser                                                    │    │
-│  └───────────────────────────────────────────────────────────────────────┘    │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                         Container Runtime (start.sh)                          │
-│                                                                               │
-│  ┌────────────────────────────────────────────────────────────────────┐       │
-│  │  1. Railway/Cloud Detection & .env Generation                       │      │
-│  │     - Detects HOST_SERVER environment variable                      │      │
-│  │     - Auto-generates .env with all required variables               │      │
-│  │     - Supports 40+ configuration options                            │      │
-│  │  2. Directory Setup                                                 │      │
-│  │  3. Database Migrations (if /app/upgrade/migrate_all.py exists)     │      │
-│  │  4. WebSocket Proxy (background, PID tracked)                       │      │
-│  │  5. Signal Handling (SIGTERM, SIGINT cleanup)                       │      │
-│  │  6. Gunicorn with Eventlet                                          │      │
-│  │     - Single worker (-w 1) for WebSocket compatibility              │      │
-│  │     - Timeout: 300s, Graceful timeout: 30s                          │      │
-│  │     - Worker temp dir: /tmp/gunicorn_workers                        │      │
-│  └────────────────────────────────────────────────────────────────────┘       │
-│                                                                               │
-│  Exposed Ports:                                                               │
-│  - 5000: Flask application (or PORT env var for Railway)                      │
-│  - 8765: WebSocket proxy                                                      │
-│  - 5555: ZeroMQ message bus (internal)                                        │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-docker-build-and-runtime.png" alt="Docker three-stage build (python-builder, frontend-builder, production) and start.sh runtime with WebSocket proxy, Gunicorn and ZeroMQ bus"><figcaption></figcaption></figure>
 
 ## Dockerfile
 
 ```dockerfile
 # ------------------------------ Python Builder Stage ----------------------- #
-FROM python:3.12-bullseye AS python-builder
+FROM python:3.12-trixie AS python-builder
 RUN apt-get update && apt-get install -y --no-install-recommends     curl build-essential &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY pyproject.toml .
 # Isolated virtual-env with uv, then gunicorn and eventlet on top
-RUN pip install --no-cache-dir uv &&     uv venv .venv &&     uv pip install --upgrade pip &&     uv sync &&     uv pip install "gunicorn>=25.0,<26" eventlet &&     rm -rf /root/.cache
+RUN pip install --no-cache-dir uv &&     uv venv .venv &&     uv pip install --upgrade pip &&     uv sync &&     uv pip install "gunicorn>=25.0,<26" "eventlet==0.41.2" &&     rm -rf /root/.cache
 
 # ------------------------------ Frontend Builder Stage --------------------- #
-FROM node:22-bullseye-slim AS frontend-builder
+FROM node:22-trixie-slim AS frontend-builder
 WORKDIR /app
 COPY frontend/package*.json ./frontend/
 RUN cd frontend && npm ci
@@ -102,7 +28,7 @@ COPY frontend/ ./frontend/
 RUN cd frontend && npm run build
 
 # ------------------------------ Production Stage --------------------------- #
-FROM python:3.12-slim-bullseye AS production
+FROM python:3.12-slim-trixie AS production
 # Timezone plus runtime deps. chromium and fonts-liberation are required by
 # Kaleido 1.x (plotly static image export), which drives a real headless
 # Chromium. Without them the Telegram bot's /chart silently fails in Docker.
@@ -119,7 +45,7 @@ COPY --from=frontend-builder --chown=appuser:appuser /app/frontend/dist /app/fro
 # creating temp files in /app (for example the atomic .env rewrite).
 RUN mkdir -p /app/log /app/log/strategies /app/db /app/tmp /app/tmp/numba_cache /app/tmp/matplotlib /app/strategies /app/strategies/scripts /app/strategies/examples /app/keys &&     chown appuser:appuser /app &&     chown -R appuser:appuser /app/log /app/db /app/tmp /app/strategies /app/keys &&     chmod -R 755 /app/strategies /app/log /app/tmp &&     chmod 700 /app/keys &&     touch /app/.env && chown appuser:appuser /app/.env && chmod 666 /app/.env
 COPY --chown=appuser:appuser start.sh /app/start.sh
-RUN sed -i 's/$//' /app/start.sh && chmod +x /app/start.sh
+RUN sed -i 's/\r$//' /app/start.sh && chmod +x /app/start.sh
 # ---- RUNTIME ENVS --------------------------------------------------------- #
 # Thread caps prevent RLIMIT_NPROC exhaustion in containers (issue #822)
 ENV PATH="/app/.venv/bin:$PATH"     PYTHONDONTWRITEBYTECODE=1     PYTHONUNBUFFERED=1     TZ=Asia/Kolkata     APP_MODE=standalone     TMPDIR=/app/tmp     NUMBA_CACHE_DIR=/app/tmp/numba_cache     LLVMLITE_TMPDIR=/app/tmp     MPLCONFIGDIR=/app/tmp/matplotlib     OPENBLAS_NUM_THREADS=2     OMP_NUM_THREADS=2     MKL_NUM_THREADS=2     NUMEXPR_NUM_THREADS=2     NUMBA_NUM_THREADS=2     BROWSER_PATH=/usr/bin/chromium     CHROME_BIN=/usr/bin/chromium

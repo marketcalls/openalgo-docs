@@ -1,0 +1,91 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">P&amp;L Tracker · architecture</div>
+    <h1>Your intraday P&amp;L curve is rebuilt from trades and 1-minute prices</h1>
+    <p style="max-width:1150px">Each time you open the page or press Refresh, OpenAlgo fetches your trades, positions and minute bars, replays every position minute by minute, and draws the P&amp;L and drawdown charts.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:0">
+    <div class="zone" id="fe" style="--c:var(--client)">
+      <div class="zl"><span data-icon="monitor"></span>/pnl-tracker page</div>
+      <div class="col" style="gap:16px">
+        <div class="node client" id="cards" style="width:262px"><div class="ic" data-icon="gauge"></div>
+          <div class="tx"><b>Metric cards</b><span>current, max and min MTM, max drawdown</span></div></div>
+        <div class="node client" id="chart" style="width:262px"><div class="ic" data-icon="chart-line"></div>
+          <div class="tx"><b>Charts</b><span>P&amp;L pane and drawdown pane</span>
+            <div class="chips"><span class="chip">lightweight-charts</span></div></div></div>
+      </div>
+    </div>
+
+    <div class="node security" id="ep" style="width:280px; margin-left:170px"><div class="ic" data-icon="shield-check"></div>
+      <div class="tx"><b>P&amp;L endpoint</b><span>checks your login, loads auth token and API key</span>
+        <div class="chips"><span class="chip">POST /pnltracker/api/pnl</span><span class="chip">auth_db</span></div></div></div>
+
+    <div class="zone" id="ds" style="--c:var(--service); margin-left:90px">
+      <div class="zl"><span data-icon="layers"></span>Data services · your API key</div>
+      <div class="col" style="gap:16px">
+        <div class="node service" id="tb" style="width:270px"><div class="ic" data-icon="scroll-text"></div>
+          <div class="tx"><b>Today's trades</b><div class="chips"><span class="chip">tradebook_service</span></div></div></div>
+        <div class="node service" id="pb" style="width:270px"><div class="ic" data-icon="briefcase"></div>
+          <div class="tx"><b>Current positions</b><div class="chips"><span class="chip">positionbook_service</span></div></div></div>
+        <div class="node service" id="hs" style="width:270px"><div class="ic" data-icon="chart-candlestick"></div>
+          <div class="tx"><b>1-minute price bars</b><div class="chips"><span class="chip">history_service</span><span class="chip">source=api</span></div></div></div>
+      </div>
+    </div>
+
+    <div class="col" style="gap:40px; margin-left:100px">
+      <div class="node data" id="sdb" style="width:250px"><div class="ic" data-icon="database"></div>
+        <div class="tx"><b>Sandbox</b><span>trades and positions only, when Analyzer is on</span>
+          <div class="chips"><span class="chip">sandbox.db</span></div></div></div>
+      <div class="node broker big" id="brk" style="width:250px"><div class="ic" data-icon="landmark"></div>
+        <div class="tx"><b>Your broker</b><span>trades, positions and minute bars</span></div></div>
+    </div>
+  </div>
+
+  <div class="row" style="align-items:center; gap:90px; margin-top:80px">
+    <div class="node app" id="resp" style="width:290px"><div class="ic" data-icon="file-json"></div>
+      <div class="tx"><b>JSON back to the page</b><span>current / max / min MTM with times, max_drawdown</span>
+        <div class="chips"><span class="chip">pnl_series</span><span class="chip">drawdown_series</span></div></div></div>
+    <div class="zone" id="calc" style="--c:var(--service)">
+      <div class="zl"><span data-icon="calculator"></span>P&amp;L calculation · blueprints/pnltracker.py</div>
+      <div class="row" style="gap:34px; align-items:stretch">
+        <div class="step" style="--c:var(--service)"><div class="n">1</div>
+          <div class="node service stack" id="win" style="width:190px"><div class="ic" data-icon="layers"></div>
+            <div class="tx"><b>Position windows</b><span>trades grouped per symbol, plus positions carried from earlier days</span></div></div></div>
+        <div class="step" style="--c:var(--security)"><div class="n">2</div>
+          <div class="node security stack" id="rl" style="width:190px"><div class="ic" data-icon="timer"></div>
+            <div class="tx"><b>Rate limit</b><span>paces history calls to the broker</span>
+              <div class="chips"><span class="chip">2 calls/sec</span></div></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">3</div>
+          <div class="node service stack" id="mtm" style="width:230px"><div class="ic" data-icon="trending-up"></div>
+            <div class="tx"><b>MTM per window</b><span>long: (close - entry) x qty<br>short: (entry - close) x qty<br>realized P&amp;L after exit</span></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">4</div>
+          <div class="node service stack" id="agg" style="width:210px"><div class="ic" data-icon="sigma"></div>
+            <div class="tx"><b>Portfolio total</b><span>Total_PnL, running peak and drawdown; zero fill from 09:15</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>Your screen</span>
+    <span style="--c:var(--security)"><i></i>Checks and limits</span>
+    <span style="--c:var(--service)"><i></i>Processing</span>
+    <span style="--c:var(--app)"><i></i>OpenAlgo response</span>
+    <span style="--c:var(--data)"><i></i>Sandbox database</span>
+    <span style="--c:var(--broker)"><i></i>Broker</span>
+  </div>
+</div>
+<script>
+  connect('fe', 'ep', { color: 'client', label: 'on load / Refresh', from: 'right', to: 'left' })
+  connect('ep', 'ds', { color: 'security', from: 'right', to: 'left' })
+  connect('ds', 'brk', { color: 'broker', from: 'right', to: 'left' })
+  connect('tb', 'sdb', { color: 'data', from: 'right', to: 'left', dashed: true, label: 'Analyzer on' })
+  connect('pb', 'sdb', { color: 'data', from: 'right', to: 'left', dashed: true })
+  connect('ds', 'calc', { color: 'service', from: 'bottom', to: 'top' })
+  connect('win', 'rl', { color: 'service' })
+  connect('rl', 'mtm', { color: 'security' })
+  connect('mtm', 'agg', { color: 'service' })
+  connect('calc', 'resp', { color: 'service', from: 'left', to: 'right' })
+  connect('resp', 'fe', { color: 'app', from: 'top', to: 'bottom' })
+</script>

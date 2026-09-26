@@ -1,0 +1,59 @@
+<style>#canvas > .wlabel { position: absolute; }
+.pgrid .step { flex-direction: column; gap: 12px; align-items: stretch; }
+.pgrid .step .n { align-self: flex-start; }
+.pgrid .step .node { flex: 1; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">PnL Tracker</div>
+    <h1>How your intraday P&amp;L curve is drawn, minute by minute</h1>
+    <p style="max-width:1080px">OpenAlgo replays your trades against 1-minute candles, adds every symbol into one portfolio line, and measures how far it fell from its best point.</p>
+  </div>
+
+  <div class="grid pgrid" style="grid-template-columns:repeat(4, 280px) 300px; column-gap:36px; row-gap:80px; align-items:stretch">
+    <!-- row 1 -->
+    <div class="step" style="--c:var(--app)"><div class="n">1</div>
+      <div class="node app stack" id="s1" ><div class="ic" data-icon="layout-dashboard"></div>
+        <div class="tx"><b>You open the tracker</b><span>the page asks for today's curve</span>
+          <div class="chips"><span class="chip">POST /pnltracker/api/pnl</span></div></div></div></div>
+    <div class="step" style="--c:var(--service)"><div class="n">2</div>
+      <div class="node service stack" id="s2" ><div class="ic" data-icon="receipt"></div>
+        <div class="tx"><b>Reads your trades and positions</b><span>sandbox trades when Analyzer mode is on</span>
+          <div class="chips"><span class="chip">tradebook</span><span class="chip">positionbook</span></div></div></div></div>
+    <div class="step" style="--c:var(--service)"><div class="n">3</div>
+      <div class="node service stack" id="s3" ><div class="ic" data-icon="boxes"></div>
+        <div class="tx"><b>Groups trades by symbol</b><span>works out when each position was open and when it closed</span></div></div></div>
+    <div class="step" style="--c:var(--service)"><div class="n">4</div>
+      <div class="node service stack" id="s4" ><div class="ic" data-icon="chart-candlestick"></div>
+        <div class="tx"><b>Fetches 1-minute candles</b><span>for each symbol, gently paced</span>
+          <div class="chips"><span class="chip">history_service</span><span class="chip">2 calls/sec</span></div></div></div></div>
+    <div class="node broker stack" id="brk" style="align-self:stretch; margin-top:50px; margin-left:40px; min-width:0"><div class="ic" data-icon="radio-tower"></div>
+      <div class="tx"><b>Your broker</b><span>live candle history, even in Analyzer mode</span></div></div>
+
+    <!-- row 2 (reads right to left) -->
+    <div class="step" style="--c:var(--app)"><div class="n">8</div>
+      <div class="node app stack hero" id="s8" ><div class="ic" data-icon="chart-area"></div>
+        <div class="tx"><b>Chart shows the result</b><span>P&amp;L curve and drawdown</span>
+          <div class="chips"><span class="chip">pnl_series</span><span class="chip">drawdown_series</span></div></div></div></div>
+    <div class="step" style="--c:var(--service)"><div class="n">7</div>
+      <div class="node service stack" id="s7" ><div class="ic" data-icon="trending-down"></div>
+        <div class="tx"><b>Measures drawdown</b><span>curve minus its running peak; also current, highest and lowest P&amp;L</span>
+          <div class="chips"><span class="chip">MTM: current / max / min</span><span class="chip">max drawdown</span></div></div></div></div>
+    <div class="step" style="--c:var(--service)"><div class="n">6</div>
+      <div class="node service stack" id="s6" ><div class="ic" data-icon="sigma"></div>
+        <div class="tx"><b>Adds all symbols together</b><span>one portfolio curve, flat at zero from 09:15 until your first trade</span></div></div></div>
+    <div class="step" style="--c:var(--service)"><div class="n">5</div>
+      <div class="node service stack" id="s5" ><div class="ic" data-icon="calculator"></div>
+        <div class="tx"><b>Prices every minute</b><span>marks each position to the candle close; positions carried from yesterday count from 09:15</span></div></div></div>
+    <div class="note" style="align-self:center; margin-left:40px"><span data-icon="lightbulb"></span><div>In Analyzer mode your trades come from the sandbox, but prices still come from your broker.</div></div>
+  </div>
+</div>
+<script>
+  connect('s1', 's2', { color: 'app' })
+  connect('s2', 's3', { color: 'service' })
+  connect('s3', 's4', { color: 'service' })
+  connect('brk', 's4', { color: 'broker', dashed: true, from: 'left', to: 'right' })
+  connect('s4', 's5', { color: 'service', from: 'bottom', to: 'top' })
+  connect('s5', 's6', { color: 'service', from: 'left', to: 'right' })
+  connect('s6', 's7', { color: 'service', from: 'left', to: 'right' })
+  connect('s7', 's8', { color: 'service', from: 'left', to: 'right' })
+</script>

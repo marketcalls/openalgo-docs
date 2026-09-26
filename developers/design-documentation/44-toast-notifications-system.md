@@ -8,30 +8,7 @@ OpenAlgo uses [Sonner](https://sonner.emilkowal.ski/) (v2.0.7) as the underlying
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                           Toast Notification Flow                            │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────┐    ┌──────────────────┐    ┌──────────────┐    ┌────────────┐
-│  Component   │───▶│  showToast       │───▶│  alertStore  │───▶│   sonner   │
-│  (Feature)   │    │  (utils/toast)   │    │  (check)     │    │   (UI)     │
-└──────────────┘    └──────────────────┘    └──────────────┘    └────────────┘
-                           │                       │
-                           │                       ▼
-                           │              ┌──────────────────┐
-                           │              │ User Preferences │
-                           │              │ (localStorage)   │
-                           │              └──────────────────┘
-                           │
-                           ▼
-                    Category Check:
-                    - Is master toggle ON?
-                    - Is category enabled?
-                    ────────────────────
-                    If YES → Show toast
-                    If NO  → Suppress
-```
+<figure><img src="../../.gitbook/assets/diagram-toast-notification-flow.png" alt="Toast flow: feature code or useSocket calls shouldShowToast against the persisted alertStore, then sonner renders via the Toaster or the toast is suppressed"><figcaption></figcaption></figure>
 
 ## Key Files
 

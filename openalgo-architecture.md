@@ -10,36 +10,7 @@ This page explains how the pieces fit together. For component-level detail, see 
 
 Every client speaks the same OpenAlgo API. The service layer holds the business logic, and a broker plugin translates it to whatever the broker actually expects.
 
-```
-┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
-│  TradingView  │ │   Amibroker   │ │     Excel     │ │     Python    │
-└───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
-        │                 │                 │                 │
-        └─────────────────┴─────────────────┴─────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│        Flask App: blueprints, REST API v1, auth, rate limits        │
-│                  CORS, CSP, CSRF, TOTP, audit trail                 │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                            Service Layer                            │
-│         orders, data, options, sandbox, calendar, messaging         │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                       Broker Plugin Interface                       │
-│            normalised symbols, orders, quotes and streams           │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-│ Zerodha │ │  Angel  │ │   Dhan  │ │  Fyers  │ │  Upstox │ │   More  │
-└─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
-```
+<figure><img src=".gitbook/assets/diagram-architecture-layered-view.png" alt="Layered architecture: clients to request guards, blueprints and REST API v1, service layer, then sandbox engine or broker plugins to broker APIs, with event bus and six databases"><figcaption></figcaption></figure>
 
 The point of the plugin boundary is that your strategy never changes when your broker does. Symbols, order types, quotes and streams are normalised on the way down, and broker responses are normalised on the way back up.
 
@@ -62,36 +33,7 @@ Hosted Python strategies run in **separate processes**, so a strategy that crash
 
 Whether the signal comes from a TradingView webhook, the Python SDK, an Excel cell, or the built-in terminal, it follows the same path.
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│           Signal arrives (webhook, SDK, sheet or terminal)          │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│             API key check, schema validation, rate limit            │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│         Analyzer mode? Yes: sandbox store. No: broker plugin        │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│         Broker plugin maps symbol and order to broker format        │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│          Order sent, response normalised, order id returned         │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│        Event published: Telegram, WhatsApp, logs, PnL update        │
-└─────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src=".gitbook/assets/diagram-architecture-placeorder-lifecycle.png" alt="Place order sequence: rate limit and schema check, optional Action Center queue, validation, Analyzer mode to sandbox or live broker plugin, which return the order id, then order event published to subscribers and the reply sent"><figcaption></figcaption></figure>
 
 Two things in that chain are worth calling out.
 
@@ -105,22 +47,7 @@ Two things in that chain are worth calling out.
 
 The WebSocket proxy holds **one connection to the broker feed** and fans it out to every consumer. Ten strategies watching NIFTY do not open ten broker connections.
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│          Broker market data feed (one upstream connection)          │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                     WebSocket Proxy on port 8765                    │
-│             adapter, connection manager, broadcast layer            │
-└───────┬─────────────────┬─────────────────┬─────────────────┬───────┘
-        │                 │                 │                 │
-        ▼                 ▼                 ▼                 ▼
-┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
-│     Excel     │ │     Python    │ │    Browser    │ │      Flow     │
-└───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
-```
+<figure><img src=".gitbook/assets/diagram-architecture-market-data-fanout.png" alt="Market data path: broker feed to streaming adapter, ZeroMQ bus on 5555, WebSocket proxy on 8765, then Excel, Python SDK, browser UI and in-app Flow, sandbox and strategy services"><figcaption></figcaption></figure>
 
 Each consumer subscribes to the symbols and mode it wants (LTP, quote, or depth). The proxy handles broker-specific adapter logic, reconnection, and subscription bookkeeping, so consumers see one protocol regardless of broker. See [WebSockets](developers/design-documentation/authentication-platforms.md).
 

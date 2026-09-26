@@ -6,32 +6,7 @@ OpenAlgo integrates with TradingView and GoCharting platforms to receive trading
 
 ## Architecture Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                     TradingView / GoCharting Integration                      │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                           TradingView / GoCharting                            │
-│                                                                               │
-│  ┌─────────────────────────────────────────────────────────────────────┐      │
-│  │  Pine Script Strategy / Alert                                        │     │
-│  │                                                                      │     │
-│  │  strategy.entry() → Webhook trigger                                 │      │
-│  │  strategy.exit()  → Webhook trigger                                 │      │
-│  │  alert()          → Webhook trigger                                 │      │
-│  └─────────────────────────────────────────────────────────────────────┘      │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        │ HTTP POST (Webhook)
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                               OpenAlgo REST API                               │
-│                                                                               │
-│  POST /api/v1/placeorder      (Simple orders)                                 │
-│  POST /api/v1/placesmartorder (Position-based orders)                         │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-tradingview-gocharting-webhook-architecture.png" alt="TradingView and GoCharting alerts post JSON from the OpenAlgo generators to placeorder or placesmartorder, then order services route to Action Center in semi-auto mode (sent to the broker after approval), to the sandbox in analyzer mode, or live to the broker"><figcaption></figcaption></figure>
 
 ## TradingView Webhook Setup
 

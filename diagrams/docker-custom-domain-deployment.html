@@ -1,0 +1,88 @@
+<style>#canvas > .wlabel { position: absolute; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Docker + custom domain</div>
+    <h1>Your domain, one secure front door, OpenAlgo in a container</h1>
+    <p style="max-width:1100px">Traffic enters over HTTPS through the firewall and Nginx. Nginx forwards it to the OpenAlgo container, which only listens on the server itself. Your databases live on a Docker volume, so they survive container updates.</p>
+  </div>
+
+  <div class="row" style="align-items:center; gap:36px">
+    <div class="node client stack" id="user" style="width:200px">
+      <div class="ic" data-icon="users"></div>
+      <div class="tx"><b>You and your tools</b><span>browser, SDKs, TradingView</span>
+        <div class="chips"><span class="chip">HTTPS 443</span><span class="chip">WSS</span></div></div>
+    </div>
+
+    <div class="zone" style="--c:var(--ink3); padding:44px 30px 30px">
+      <div class="zl"><span data-icon="server"></span>Your Ubuntu / Debian server</div>
+      <div class="row" style="align-items:center; gap:110px">
+        <div class="col" style="gap:60px; align-self:stretch; justify-content:center">
+        <div class="row" style="gap:36px; align-items:stretch">
+        <div class="node security stack" id="fw" style="width:185px; min-width:0">
+          <div class="ic" data-icon="shield-check"></div>
+          <div class="tx"><b>Firewall</b><span>only SSH, web and secure web are open</span>
+            <div class="chips"><span class="chip">ufw</span><span class="chip">22 80 443</span></div></div>
+        </div>
+        <div class="node security stack" id="nginx" style="width:215px">
+          <div class="ic" data-icon="lock"></div>
+          <div class="tx"><b>Nginx front door</b><span>free SSL certificate and request rate limits</span>
+            <div class="chips"><span class="chip">Let's Encrypt</span></div></div>
+        </div>
+        </div>
+        <div class="note" style="max-width:440px"><span data-icon="lightbulb"></span><div>Ports 5000 and 8765 are opened only on 127.0.0.1, so the internet can reach OpenAlgo only through Nginx.</div></div>
+        </div>
+
+        <div class="col" style="gap:30px">
+          <div class="zone" style="--c:var(--app)">
+            <div class="zl"><span data-icon="container"></span>Container openalgo-web</div>
+            <div class="col" style="gap:64px">
+              <div class="node service" id="wsp" style="width:400px">
+                <div class="ic" data-icon="radio"></div>
+                <div class="tx"><b>Live data server</b><span>streams prices, own process</span>
+                  <div class="chips"><span class="chip">WebSocket :8765</span></div></div>
+              </div>
+              <div class="node data" id="zmq" style="width:400px">
+                <div class="ic" data-icon="cable"></div>
+                <div class="tx"><b>Internal message bus</b><span>stays inside the container</span>
+                  <div class="chips"><span class="chip">ZeroMQ :5555</span></div></div>
+              </div>
+              <div class="node app hero" id="flask" style="width:400px">
+                <div class="ic" data-icon="layers"></div>
+                <div class="tx"><b>OpenAlgo app</b><span>web app, REST API and live updates</span>
+                  <div class="chips"><span class="chip">Flask :5000</span><span class="chip">Gunicorn, 1 worker</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="row" style="gap:18px; align-items:stretch; justify-content:center; margin-top:14px">
+            <div class="node data" id="vol" style="width:250px">
+              <div class="ic" data-icon="database"></div>
+              <div class="tx"><b>Your data volume</b><span>all your databases: 5 SQLite + historify.duckdb</span>
+                <div class="chips"><span class="chip">openalgo_db</span></div></div>
+            </div>
+            <div class="node external" id="other" style="width:200px; min-width:0">
+              <div class="ic" data-icon="hard-drive"></div>
+              <div class="tx"><b>Other volumes</b><span>logs, strategies, keys, tmp, .env</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="node broker stack" id="broker" style="width:190px; min-width:0">
+      <div class="ic" data-icon="trending-up"></div>
+      <div class="tx"><b>Your broker</b><span>orders and live market data</span></div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('user', 'fw', { color: 'client', from: 'right', to: 'left' })
+  connect('fw', 'nginx', { color: 'security', from: 'right', to: 'left' })
+  connect('nginx', 'flask', { color: 'app', label: 'web, /api, live updates', from: 'right', to: 'left' })
+  connect('nginx', 'wsp', { color: 'service', label: '/ws', from: 'right', to: 'left' })
+  connect('flask', 'zmq', { color: 'app', from: 'top', to: 'bottom', label: 'cache refresh signals' })
+  connect('zmq', 'wsp', { color: 'data', from: 'top', to: 'bottom' })
+  connect('flask', 'vol', { color: 'data', from: 'bottom', to: 'top' })
+  connect('flask', 'other', { color: 'external', from: 'bottom', to: 'top' })
+  connect('flask', 'broker', { color: 'broker', label: 'orders', from: 'right', to: 'left' })
+  connect('broker', 'wsp', { color: 'broker', label: 'live prices from broker', from: 'left', to: 'right' })
+</script>

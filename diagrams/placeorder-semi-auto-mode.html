@@ -1,0 +1,60 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Semi-auto mode</div>
+    <h1>In semi-auto mode nothing is sent until you approve it</h1>
+    <p style="max-width:1150px">The order is parked in the Action Center and your app gets an instant reply. You then approve it, and only then is it validated and placed, or reject it, and it is kept on record but never sent.</p>
+  </div>
+
+  <div class="row" style="align-items:stretch; gap:48px">
+    <div class="zone" style="--c:var(--client); padding:44px 22px 22px">
+      <div class="zl"><span data-icon="zap"></span>When your order arrives</div>
+      <div class="col" style="gap:28px">
+        <div class="step" style="--c:var(--client)"><div class="n">1</div>
+          <div class="node client" id="req" style="width:296px"><div class="ic" data-icon="code-xml"></div><div class="tx"><b>Your order arrives</b><span>from your strategy or platform</span><div class="chips"><span class="chip">POST /api/v1/placeorder</span></div></div></div></div>
+        <div class="step" style="--c:var(--security)"><div class="n">2</div>
+          <div class="node security" id="schema" style="width:296px"><div class="ic" data-icon="file-check"></div><div class="tx"><b>Format check only</b><span>full validation waits until you approve</span><div class="chips"><span class="chip">OrderSchema load</span><span class="chip">restx_api</span></div></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">3</div>
+          <div class="node service" id="route" style="width:296px"><div class="ic" data-icon="split"></div><div class="tx"><b>Semi-auto detected</b><span>your order mode is <span style="white-space:nowrap">semi-auto</span></span><div class="chips"><span class="chip">should_route_to_pending</span></div></div></div></div>
+        <div class="step" style="--c:var(--service)"><div class="n">4</div>
+          <div class="node service" id="queue" style="width:296px"><div class="ic" data-icon="inbox"></div><div class="tx"><b>Parked for approval</b><span>saved, and the Action Center is notified</span><div class="chips"><span class="chip">queue_order</span></div></div></div></div>
+      </div>
+    </div>
+
+    <div class="col" style="justify-content:flex-end; gap:26px; padding:50px 0 22px; margin-left:14px">
+      <div class="node data" id="db" style="width:270px"><div class="ic" data-icon="database"></div><div class="tx"><b>Pending orders list</b><span>status: pending</span><div class="chips"><span class="chip">pending_orders</span><span class="chip">openalgo.db</span></div></div></div>
+      <div class="node client" id="ack" style="width:270px"><div class="ic" data-icon="reply"></div><div class="tx"><b>Instant reply</b><span>your app hears back at once; no order at the broker yet</span><div class="chips"><span class="chip">mode: semi_auto</span><span class="chip">pending_order_id</span></div></div></div>
+    </div>
+
+    <div class="zone" style="--c:var(--app); padding:44px 26px 26px; flex:1">
+      <div class="zl"><span data-icon="user"></span>Later, when you decide</div>
+      <div class="col" style="gap:40px; align-items:center">
+        <div class="node app big hero" id="ui" style="width:420px"><div class="ic" data-icon="bell"></div><div class="tx"><b>Action Center</b><span>the order appears live on your screen for review</span><div class="chips"><span class="chip">Socket.IO pending_order_created</span></div></div></div>
+        <div class="row" style="gap:28px; align-items:flex-start">
+          <div class="col" style="gap:28px">
+            <div class="node broker" id="approve" style="width:340px"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>You approve</b><span>POST request from the Action Center</span><div class="chips"><span class="chip">/action-center/approve/&lt;id&gt;</span></div></div></div>
+            <div class="node service" id="exec" style="width:340px"><div class="ic" data-icon="play"></div><div class="tx"><b>Order is released</b><span>uses the saved broker session; not re-queued</span><div class="chips"><span class="chip">execute_approved_order</span><span class="chip">place_order(auth_token,<wbr> broker)</span></div></div></div>
+            <div class="node broker" id="run" style="width:340px"><div class="ic" data-icon="send"></div><div class="tx"><b>Validated and placed</b><span>with your broker, or the sandbox in analyzer mode</span><div class="chips"><span class="chip">place_order_with_auth</span></div></div></div>
+          </div>
+          <div class="col" style="gap:28px">
+            <div class="node security" id="reject" style="width:340px"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>You reject</b><span>POST request from the Action Center</span><div class="chips"><span class="chip">/action-center/reject/&lt;id&gt;</span></div></div></div>
+            <div class="node external" id="kept" style="width:340px"><div class="ic" data-icon="archive"></div><div class="tx"><b>Kept on record</b><span>marked rejected with your reason; never sent to the broker</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('req', 'schema', { color: 'client' })
+  connect('schema', 'route', { color: 'security' })
+  connect('route', 'queue', { color: 'service' })
+  connect('queue', 'ack', { color: 'client', from: 'right', to: 'left' })
+  connect('queue', 'db', { color: 'data', from: 'right', to: 'left' })
+  connect('db', 'ui', { color: 'data', from: 'top', to: 'left' })
+  connect('ui', 'approve', { color: 'broker', from: 'bottom', to: 'top' })
+  connect('ui', 'reject', { color: 'security', from: 'bottom', to: 'top' })
+  connect('approve', 'exec', { color: 'broker' })
+  connect('exec', 'run', { color: 'service' })
+  connect('reject', 'kept', { color: 'security' })
+</script>

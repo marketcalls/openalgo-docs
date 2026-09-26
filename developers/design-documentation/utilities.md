@@ -4,14 +4,7 @@
 
 Historify is the local historical-data subsystem. The React `/historify` page calls a session-authenticated Flask blueprint under `/historify/api`; download services use the logged-in user's OpenAlgo API key to fetch normalized broker history and persist it in DuckDB.
 
-```text
-React /historify
-  -> /historify/api routes
-  -> historify service / scheduler service
-  -> normalized history service
-  -> broker API
-  -> DuckDB + catalog/job state
-```
+<figure><img src="../../.gitbook/assets/diagram-historify-request-path.png" alt="Historify path: React page to /historify/api routes, historify and scheduler services, history service and broker API, persisted in historify.duckdb, with Socket.IO progress back to the page and /api/v1/history source=db reading the stored candles"><figcaption></figcaption></figure>
 
 Historify is not part of the Flask-RESTX `/api/v1` namespace. `/api/v1/history` can read its DuckDB data with `source=db`, but Historify administration remains session-authenticated.
 

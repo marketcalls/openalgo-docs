@@ -10,18 +10,7 @@ Dispatch is bounded. `EventBus.DEFAULT_MAX_PENDING` is 1000 callbacks queued-or-
 
 ## Flow
 
-```text
-order/sandbox service
-  -> typed event with topic
-  -> EventBus.publish()
-  -> shared per-process thread pool
-     -> log subscriber
-     -> Socket.IO subscriber
-     -> Telegram subscriber
-     -> WhatsApp subscriber
-     -> ZeroMQ proxy-relay subscriber
-     -> strategy book subscriber
-```
+<figure><img src="../../.gitbook/assets/diagram-event-bus-dispatch.png" alt="EventBus in one Flask worker: order services, REST endpoints, sandbox engine and postback adapters publish to a bounded 10-worker thread pool that runs log, Socket.IO, Telegram, WhatsApp, ZMQ relay and strategy book subscribers"><figcaption></figcaption></figure>
 
 Callbacks are copied under a lock and submitted without blocking the publisher. `_safe_call` catches/logs subscriber exceptions so notification or logging failure cannot change the order response.
 

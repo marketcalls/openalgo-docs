@@ -1,0 +1,66 @@
+<div id="canvas" style="width:1680px">
+  <style>#canvas > .wlabel { position: absolute; }</style>
+  <div class="title">
+    <div class="eyebrow">Action Center</div>
+    <h1>In semi-auto mode, API orders wait for your approval</h1>
+    <p style="max-width:1120px">Orders from TradingView, Amibroker, SDKs and strategies normally go straight to your broker. Switch to semi-auto and they are parked in the Action Center instead; nothing reaches the broker until you press Approve.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns:0.82fr 0.93fr 1.05fr 1.15fr 1.05fr; gap:100px 100px; align-items:center">
+    <!-- row 1 -->
+    <div class="node client stack" id="src"><div class="ic" data-icon="webhook"></div><div class="tx"><b>API callers</b><span>TradingView, Amibroker, SDKs, strategies</span></div></div>
+    <div class="node app stack" id="rest"><div class="ic" data-icon="code-xml"></div><div class="tx"><b>REST API</b><span>order placement endpoints, with your API key</span>
+      <div class="chips"><span class="chip">/api/v1/*</span></div></div></div>
+    <div class="node service stack" id="svc"><div class="ic" data-icon="layers"></div><div class="tx"><b>Order service</b><span>each one asks the router before sending</span>
+      <div class="chips"><span class="chip">place</span><span class="chip">smart</span><span class="chip">basket</span><span class="chip">split</span><span class="chip">options</span><span class="chip">options multi</span><span class="chip">GTT place</span></div></div></div>
+    <div class="node security stack hero" id="chk" style="position:relative"><div class="wlabel" style="left:calc(100% + 50px); top:calc(50% - 22px); border-color:#4ade8066">no</div><div class="ic" data-icon="split"></div><div class="tx"><b>Hold this order?</b><span>skip always-immediate operations, then: is order mode semi-auto?</span>
+      <div class="chips"><span class="chip">should_route_to_pending()</span></div></div></div>
+    <div class="node broker stack big" id="exec"><div class="ic" data-icon="send"></div><div class="tx"><b>Execute now</b><span>your broker, or the sandbox when analyzer mode is on</span></div></div>
+
+    <!-- row 2 -->
+    <div></div><div></div>
+    <div class="node service stack" id="sio" style="position:relative"><i id="sioB" style="position:absolute;bottom:0;left:82%;width:1px;height:1px"></i><div class="ic" data-icon="radio"></div><div class="tx"><b>Live update</b><span>Socket.IO events</span>
+      <div class="chips"><span class="chip">pending_order_created</span><span class="chip">pending_order_updated</span></div></div></div>
+    <div class="node service" id="q" style="position:relative"><div class="wlabel" style="left:-50px; top:calc(50% - 22px); border-color:#a78bfa66">notify</div><div class="wlabel" style="left:calc(100% + 50px); top:calc(50% - 22px); border-color:#a78bfa66">save</div><div class="ic" data-icon="inbox"></div><div class="tx"><b>Park the order</b><span>API key removed, order saved</span>
+      <div class="chips"><span class="chip">queue_order()</span></div></div></div>
+    <div class="node data" id="pdb" style="position:relative"><i id="pdbB" style="position:absolute;bottom:0;left:22%;width:1px;height:1px"></i><i id="pdbB2" style="position:absolute;bottom:0;left:65%;width:1px;height:1px"></i><div class="ic" data-icon="database"></div><div class="tx"><b>Pending orders</b><span>status, approver, broker order ID</span>
+      <div class="chips"><span class="chip">pending_orders</span><span class="chip">db/openalgo.db</span></div></div></div>
+
+    <!-- row 3 -->
+    <div class="note" style="grid-column:1 / span 2; max-width:none; align-self:center"><span data-icon="lightbulb"></span><div>Only calls made with an API key are checked. Internal calls that already carry your broker session, such as executing an approved order, skip the check.</div></div>
+    <div class="zone" style="--c:var(--client); grid-column:3 / span 3; display:grid; grid-template-columns:subgrid; column-gap:100px; margin:0 -26px; padding-top:26px">
+      <div class="zl" style="top:auto; bottom:-14px"><span data-icon="user"></span>Action Center · you decide</div>
+      <div class="node client stack" id="ui"><div class="ic" data-icon="monitor"></div><div class="tx"><b>Action Center page</b><span>see pending orders, approve or reject</span>
+        <div class="chips"><span class="chip">React /action-center</span></div></div></div>
+      <div class="node app stack" id="routes" style="position:relative"><i id="rT1" style="position:absolute;top:0;left:20%;width:1px;height:1px"></i><i id="rT2" style="position:absolute;top:0;left:75%;width:1px;height:1px"></i><div class="ic" data-icon="list-checks"></div><div class="tx"><b>Action Center routes</b><span>data, approve, reject, approve all, delete, count</span>
+        <div class="chips"><span class="chip">orders_bp</span></div></div></div>
+      <div class="node service stack" id="pexec"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>Execute approved order</b><span>re-runs the same order service with your broker session, check skipped</span>
+        <div class="chips"><span class="chip">execute_approved_order()</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>You and your tools</span>
+    <span style="--c:var(--app)"><i></i>OpenAlgo API and routes</span>
+    <span style="--c:var(--service)"><i></i>Order processing</span>
+    <span style="--c:var(--security)"><i></i>The decision</span>
+    <span style="--c:var(--data)"><i></i>Stored data</span>
+    <span style="--c:var(--broker)"><i></i>Order goes out</span>
+  </div>
+</div>
+<script>
+  connect('src', 'rest', { color: 'client' })
+  connect('rest', 'svc', { color: 'app' })
+  connect('svc', 'chk', { color: 'service' })
+  connect('chk', 'exec', { color: 'broker' })
+  connect('chk', 'q', { color: 'security', label: 'yes, semi-auto', from: 'bottom', to: 'top' })
+  connect('q', 'pdb', { color: 'service' })
+  connect('q', 'sio', { color: 'service', dashed: true })
+  connect('sio', 'ui', { color: 'service', dashed: true, label: 'refreshes the page', from: 'bottom', to: 'top' })
+  connect('ui', 'routes', { color: 'client' })
+  connect('rT2', 'pdbB', { color: 'app', label: 'approve / reject / delete', from: 'top', to: 'bottom' })
+  connect('routes', 'pexec', { color: 'app' })
+  connect('pexec', 'pdbB2', { color: 'service', label: 'broker order ID, status', from: 'top', to: 'bottom' })
+  connect('rT1', 'sioB', { color: 'app', dashed: true, label: 'emit updated', from: 'top', to: 'bottom' })
+  connect('pexec', 'exec', { color: 'broker', from: 'right', to: 'right', bend: 60 })
+</script>

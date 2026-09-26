@@ -13,18 +13,7 @@ They are not interchangeable. Socket.IO events originate from the in-process Eve
 
 ## Market-Data Topology
 
-```text
-broker adapter PUB sockets
-        | connect
-        v
-tcp://127.0.0.1:5555
-        ^ bind
-        |
-WebSocket proxy SUB socket
-        |
-        v
-subscription index -> authenticated WebSocket clients
-```
+<figure><img src="../../.gitbook/assets/diagram-websocket-zmq-topology.png" alt="ZMQ fan-in: broker adapters and the Flask SharedZmqPublisher connect to tcp 5555 where the WebSocket proxy SUB binds, then route through the subscription index to clients on port 8765"><figcaption></figcaption></figure>
 
 The SUB side binds and publisher sockets connect. This permits multiple broker/worker publishers to fan into one proxy under gunicorn/eventlet. Reversing the topology can drop ticks in multi-process deployments.
 

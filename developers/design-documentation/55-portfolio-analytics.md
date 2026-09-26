@@ -4,21 +4,7 @@ Portfolio analytics is an authenticated, synchronous, read-only subsystem. It lo
 
 ## Request Path
 
-```text
-React Backtester / Analyzer
-        |
-        v
-Flask-RESTX /api/v1/portfolio/*
-        | schema + API-key/session checks
-        v
-services/portfolio_service.py
-        |
-        +-- portfolio/data.py -- Historify DuckDB or broker history service
-        +-- portfolio/engine.py -- allocation, rebalance, turnover, costs
-        +-- portfolio/analytics.py / attribution.py / grouping.py
-        +-- portfolio/walkforward.py / compare.py / crisis.py / health.py
-        +-- openstatz -- statistics and downloadable HTML tearsheet
-```
+<figure><img src="../../.gitbook/assets/diagram-portfolio-analytics-request-path.png" alt="Portfolio analytics request path: React to /api/v1/portfolio checks, portfolio_service, portfolio package modules and openstatz, with Historify DuckDB or history service and holdings service to broker APIs"><figcaption></figcaption></figure>
 
 The API returns the complete analysis in one response so every results tab reads the same simulation generation.
 

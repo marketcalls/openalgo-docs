@@ -1,0 +1,85 @@
+<style>#canvas > .wlabel{position:absolute}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Backend request path</div>
+    <h1>Every order passes the same checks before it reaches a broker</h1>
+    <p style="max-width:1100px">An order is checked, may wait for your approval, and is then sent to your broker or to the sandbox. Whichever way it goes, the result is announced once and every listener picks it up.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 440px 320px 250px 1fr; grid-template-rows: repeat(7, auto); column-gap:80px; row-gap:26px; align-items:center">
+
+    <!-- column 1: the numbered path -->
+    <div class="step" style="--c:var(--app); grid-column:1; grid-row:1">
+      <div class="n">1</div>
+      <div class="node app" id="req" style="flex:1"><div class="ic" data-icon="globe"></div><div class="tx"><b>Request arrives</b><span>REST /api/v1 with API key, or a web-app session call</span>
+        <div class="chips"><span class="chip">Flask-Limiter</span></div></div></div>
+    </div>
+    <div class="step" style="--c:var(--security); grid-column:1; grid-row:2">
+      <div class="n">2</div>
+      <div class="node security" id="schema" style="flex:1"><div class="ic" data-icon="clipboard-check"></div><div class="tx"><b>Order fields checked</b><span>REST: marshmallow schema · web: session check</span></div></div>
+    </div>
+    <div class="step" style="--c:var(--service); grid-column:1; grid-row:3">
+      <div class="n">3</div>
+      <div class="node service" id="svc" style="flex:1"><div class="ic" data-icon="layers"></div><div class="tx"><b>Service takes over</b><span>one service per action</span>
+        <div class="chips"><span class="chip">services/*_service.py</span></div></div></div>
+    </div>
+    <div class="step" style="--c:var(--security); grid-column:1; grid-row:4">
+      <div class="n">4</div>
+      <div class="node security" id="semi" style="flex:1"><div class="ic" data-icon="hand"></div><div class="tx"><b>Semi-auto mode?</b><span>API-key calls only</span>
+        <div class="chips"><span class="chip">should_route_to_pending</span></div></div></div>
+    </div>
+    <div class="step" style="--c:var(--security); grid-column:1; grid-row:5; margin-top:34px">
+      <div class="n">5</div>
+      <div class="node security" id="auth" style="flex:1; position:relative"><i id="a-fail" style="position:absolute; left:100%; top:82%; width:0; height:0; display:block"></i><div class="ic" data-icon="key-round"></div><div class="tx"><b>Validate and find broker login</b><span>finds your broker login (API key or web session)</span>
+        <div class="chips"><span class="chip">get_auth_token_broker</span><span class="chip">on failure: order.failed / analyzer error</span></div></div></div>
+    </div>
+    <div class="step" style="--c:var(--security); grid-column:1; grid-row:6 / span 2">
+      <div class="n">6</div>
+      <div class="node security" id="analyze" style="flex:1"><div class="ic" data-icon="split"></div><div class="tx"><b>Analyzer mode on?</b><span>decides real or simulated</span>
+        <div class="chips"><span class="chip">get_analyze_mode</span></div></div></div>
+    </div>
+
+    <div class="note" style="grid-column:2 / span 2; grid-row:1 / span 3; max-width:none; align-self:center">
+      <span data-icon="lightbulb"></span><div>Orders you approve in the Action Center come back in at step 5 with the broker login already set, so they are never queued a second time. The Action Center notifies the web app itself; everything else is announced through the EventBus.</div></div>
+
+    <!-- column 2: branches -->
+    <div class="node data" id="ac" style="grid-column:2; grid-row:3 / span 2; align-self:end"><div class="ic" data-icon="inbox"></div><div class="tx"><b>Action Center</b><span>order waits for your approval; UI notified directly</span>
+      <div class="chips"><span class="chip">pending_orders</span><span class="chip">Socket.IO</span></div></div></div>
+    <div class="node service" id="sandbox" style="grid-column:2; grid-row:6"><div class="ic" data-icon="test-tube"></div><div class="tx"><b>Sandbox</b><span>simulated fills, no real money</span>
+      <div class="chips"><span class="chip">sandbox_service</span><span class="chip">sandbox.db</span></div></div></div>
+    <div class="node broker" id="broker" style="grid-column:2; grid-row:7"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Your broker</b><span>live order via broker module</span>
+      <div class="chips"><span class="chip">broker/&lt;name&gt;/api/order_api</span></div></div></div>
+
+    <!-- column 3: event bus -->
+    <div class="node data big stack hero" id="bus" style="grid-column:3; grid-row:5 / span 3"><div class="ic" data-icon="megaphone"></div><div class="tx"><b>EventBus</b><span>announces the result once, in-process, on a thread pool</span>
+      <div class="chips"><span class="chip">typed events</span></div></div></div>
+
+    <!-- column 4: subscribers -->
+    <div class="zone" id="subs" style="--c:var(--data); grid-column:4; grid-row:1 / span 7; align-self:center">
+      <div class="zl"><span data-icon="radio"></span>Everyone listening</div>
+      <div class="col" style="gap:16px">
+        <div class="node service"><div class="ic" data-icon="scroll-text"></div><div class="tx"><b>Order log</b><span>order_logs / analyzer_logs</span></div></div>
+        <div class="node app"><div class="ic" data-icon="monitor"></div><div class="tx"><b>Web app updates</b><span>Socket.IO</span></div></div>
+        <div class="node external"><div class="ic" data-icon="send"></div><div class="tx"><b>Telegram</b><span>alerts</span></div></div>
+        <div class="node external"><div class="ic" data-icon="message-circle"></div><div class="tx"><b>WhatsApp</b><span>alerts</span></div></div>
+        <div class="node data"><div class="ic" data-icon="cable"></div><div class="tx"><b>WebSocket relay</b><span>order.update to ZeroMQ</span></div></div>
+        <div class="node service"><div class="ic" data-icon="book-open"></div><div class="tx"><b>Strategy book</b><span>order.placed, order.update</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  connect('req', 'schema', { color: 'app' })
+  connect('schema', 'svc', { color: 'security' })
+  connect('svc', 'semi', { color: 'service' })
+  connect('semi', 'auth', { color: 'security', label: 'no, or web call' })
+  connect('auth', 'analyze', { color: 'security', label: 'valid' })
+  connect('semi', 'ac', { color: 'data', label: 'yes', from: 'right', to: 'left' })
+  connect('ac', 'auth', { color: 'data', dashed: true, label: 'approved later', from: 'bottom', to: 'right', bend: 60 })
+  connect('analyze', 'sandbox', { color: 'service', label: 'yes', from: 'right', to: 'left' })
+  connect('analyze', 'broker', { color: 'broker', label: 'no', from: 'right', to: 'left' })
+  connect('sandbox', 'bus', { color: 'service', from: 'right', to: 'left' })
+  connect('broker', 'bus', { color: 'broker', from: 'right', to: 'left' })
+  connect('a-fail', 'bus', { color: 'security', dashed: true, label: 'failed', from: 'right', to: 'top' })
+  connect('bus', 'subs', { color: 'data', from: 'right', to: 'left', label: 'publish' })
+</script>

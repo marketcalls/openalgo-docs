@@ -120,23 +120,7 @@ See [Historify](new-features/historify.md) and [Portfolio Backtester and Analyze
 
 OpenAlgo ships **36 broker plugins**: 34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for paper trading. The securities plugins share normalized API and WebSocket interfaces, reducing broker-specific strategy code.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Your Strategy Code                   │
-│                       (Write Once)                      │
-└────────────────────────────┬────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────┐
-│                   OpenAlgo Unified API                  │
-│         (Common Interface Across Broker Plugins)        │
-└───┬─────────┬─────────┬─────────┬─────────┬─────────┬───┘
-    │         │         │         │         │         │
-    ▼         ▼         ▼         ▼         ▼         ▼
-┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐
-│Zerodha│ │ Angel │ │ Dhan  │ │ Fyers │ │Upstox │ │ More  │
-└───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘
-```
+<figure><img src=".gitbook/assets/diagram-why-openalgo-broker-abstraction.png" alt="Strategy code calls the OpenAlgo REST API and WebSocket proxy; REST orders and built-in Flow go through the services layer, the WebSocket proxy loads streaming adapters directly and streams live prices from the broker back to your code, and the 36 broker plugins call the broker APIs"><figcaption></figcaption></figure>
 
 See the full list under [Brokers](connect-brokers/brokers/README.md) and [Delta Exchange](crypto/exchanges/delta-exchange.md).
 

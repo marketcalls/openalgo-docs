@@ -6,44 +6,7 @@ OpenAlgo implements centralized Python logging with configurable levels, colored
 
 ## Architecture Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                       Centralized Logging Architecture                        │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            Application Components                             │
-│                                                                               │
-│  ┌────────────┐    ┌────────────┐    ┌────────────┐    ┌────────────┐         │
-│  │ Flask      │    │ REST API   │    │ WebSocket  │    │ Services   │         │
-│  │ Routes     │    │ Endpoints  │    │ Proxy      │    │            │         │
-│  └──────┬─────┘    └──────┬─────┘    └──────┬─────┘    └──────┬─────┘         │
-│         │                 │                 │                 │               │
-│         └─────────────────┴────────┬────────┴─────────────────┘               │
-│                                    │                                          │
-│                                    ▼                                          │
-│                    ┌──────────────────────────────┐                           │
-│                    │ setup_logging(): root logger │                           │
-│                    └──────────────────────────────┘                           │
-└────────────────────────────────────┼──────────────────────────────────────────┘
-                                     │
-                    ┌────────────────┴──────────────────────┐
-                    │                                       │
-                    ▼                                       ▼
-   ┌────────────────────────────────┐      ┌────────────────────────────────┐
-   │ Console handler                │      │ TimedRotatingFileHandler       │
-   │ ColoredFormatter, LOG_COLORS   │      │ when="midnight", interval=1    │
-   │ SensitiveDataFilter            │      │ backupCount=LOG_RETENTION      │
-   │ stdout, always on              │      │ only if LOG_TO_FILE=True       │
-   └────────────────────────────────┘      └────────────────────────────────┘
-                    │                                       │
-                    ▼                                       ▼
-   ┌────────────────────────────────┐      ┌────────────────────────────────┐
-   │ log/errors.jsonl               │      │ log/openalgo_YYYY-MM-DD.log    │
-   │ ERROR and above, JSON lines    │      │ one file per day, kept for     │
-   │ always on, trimmed at boot     │      │ LOG_RETENTION days             │
-   └────────────────────────────────┘      └────────────────────────────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-centralized-logging-architecture.png" alt="Centralized logging: modules and third-party loggers feed the root logger, SensitiveDataFilter, then console, optional daily file, and always-on errors.jsonl handlers"><figcaption></figcaption></figure>
 
 ## Configuration
 

@@ -1,0 +1,94 @@
+<div id="canvas" style="width:1680px">
+  <style>
+    #canvas > .wlabel { position: absolute; }
+    .stage { position: relative; width: 1560px; height: 980px; }
+    .stage > .node { position: absolute; }
+    .stage .a { position: absolute; width: 1px; height: 1px; }
+    .dot { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: var(--ink2); box-shadow: 0 0 20px rgba(203,213,225,.5); }
+    .dot.end { background: transparent; border: 3px solid var(--ink3); box-shadow: none; }
+    .dot.end::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--ink3); }
+  </style>
+  <div class="title">
+    <div class="eyebrow">Python strategy lifecycle</div>
+    <h1>Where your strategy can be, and what moves it</h1>
+    <p style="max-width:1120px">A hosted strategy starts and stops on its schedule, pauses itself when the exchange is closed, stays off after you stop it by hand, and flags an error if it could not be restarted after OpenAlgo itself restarted.</p>
+  </div>
+
+  <div class="stage">
+    <div class="dot" id="new" style="left:0; top:517px"></div>
+
+    <div class="node service big" id="sch" style="left:90px; top:450px; width:340px">
+      <i class="a" id="schR1" style="right:0; top:30%"></i><i class="a" id="schR2" style="right:0; top:75%"></i>
+      <i class="a" id="schT0" style="top:0; left:12%"></i><i class="a" id="schT1" style="top:0; left:40%"></i><i class="a" id="schT2" style="top:0; left:80%"></i>
+      <i class="a" id="schB1" style="bottom:0; left:25%"></i><i class="a" id="schB2" style="bottom:0; left:80%"></i>
+      <div class="ic" data-icon="calendar-clock"></div><div class="tx"><b>Scheduled</b><span>idle, waiting for its start time</span>
+        <div class="chips"><span class="chip">POST /python/new</span><span class="chip">start_ / stop_ cron</span></div></div></div>
+
+    <div class="node broker big hero" id="run" style="left:820px; top:450px; width:340px">
+      <i class="a" id="runL1" style="left:0; top:30%"></i><i class="a" id="runL2" style="left:0; top:75%"></i>
+      <i class="a" id="runT1" style="top:0; left:20%"></i><i class="a" id="runT2" style="top:0; left:60%"></i>
+      <i class="a" id="runB1" style="bottom:0; left:20%"></i><i class="a" id="runB2" style="bottom:0; left:60%"></i>
+      <i class="a" id="runR1" style="right:0; top:30%"></i><i class="a" id="runR2" style="right:0; top:75%"></i>
+      <div class="ic" data-icon="activity"></div><div class="tx"><b>Running</b><span>its own process, trading</span>
+        <div class="chips"><span class="chip">per-run log</span><span class="chip">Unix resource limits</span></div></div></div>
+
+    <div class="node data" id="pau" style="left:455px; top:120px; width:340px">
+      <i class="a" id="pauL1" style="left:0; top:35%"></i><i class="a" id="pauL2" style="left:0; top:75%"></i>
+      <i class="a" id="pauR1" style="right:0; top:35%"></i><i class="a" id="pauR2" style="right:0; top:75%"></i>
+      <div class="ic" data-icon="pause"></div><div class="tx"><b>Paused</b><span>exchange closed today (weekend or holiday)</span></div></div>
+
+    <div class="node client" id="man" style="left:455px; top:800px; width:340px">
+      <i class="a" id="manL" style="left:0; top:50%"></i>
+      <i class="a" id="manR1" style="right:0; top:30%"></i><i class="a" id="manR2" style="right:0; top:75%"></i>
+      <div class="ic" data-icon="hand"></div><div class="tx"><b>Manually stopped</b><span>you pressed Stop, scheduled auto-start is skipped</span>
+        <div class="chips"><span class="chip">manually_stopped</span></div></div></div>
+
+    <div class="node security" id="err" style="left:1280px; top:30px; width:280px">
+      <i class="a" id="errB1" style="bottom:0; left:25%"></i><i class="a" id="errB2" style="bottom:0; left:65%"></i>
+      <div class="ic" data-icon="triangle-alert"></div><div class="tx"><b>Error</b><span>could not relaunch after OpenAlgo restarted</span>
+        <div class="chips"><span class="chip">is_error</span></div></div></div>
+
+    <div class="node external" id="del" style="left:0px; top:820px; width:300px">
+      <div class="ic" data-icon="trash-2"></div><div class="tx"><b>Deleted</b><span>script and settings removed, log files kept</span></div></div>
+    <div class="dot end" id="end" style="left:137px; top:950px"></div>
+
+    <svg style="position:absolute; left:0; top:0; overflow:visible; z-index:0" width="1560" height="980">
+      <defs><marker id="clrM" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fb7185"/></marker></defs>
+      <path d="M1274,70 H161 Q131,70 131,100 V438" fill="none" stroke="#fb7185" stroke-width="8.2" stroke-opacity=".12" stroke-linecap="round"/>
+      <path d="M1274,70 H161 Q131,70 131,100 V438" fill="none" stroke="#fb7185" stroke-width="2.2" stroke-dasharray="7 7" stroke-linecap="round" marker-end="url(#clrM)"/>
+    </svg>
+    <div class="wlabel" style="left:640px; top:70px; border-color:#fb718566">Clear error (/python/clear-error)</div>
+    <div class="wlabel" style="left:236px; top:345px; border-color:#fbbf2466">start time on a closed day</div>
+    <div class="wlabel" style="left:400px; top:240px; border-color:#a78bfa66">reopens, outside window</div>
+    <div class="note" style="position:absolute; left:1250px; top:560px; max-width:310px"><span data-icon="lightbulb"></span><div>From Error, a strategy only auto-starts again when the error was "master contracts not ready". Otherwise start it yourself or clear the error.</div></div>
+  </div>
+
+  <div class="legend" style="margin-top:20px">
+    <span style="--c:var(--service)"><i></i>Waiting</span>
+    <span style="--c:var(--broker)"><i></i>Running</span>
+    <span style="--c:var(--data)"><i></i>Paused by the market calendar</span>
+    <span style="--c:var(--client)"><i></i>Stopped by you</span>
+    <span style="--c:var(--security)"><i></i>Needs attention</span>
+    <span style="--c:var(--external)"><i></i>Removed</span>
+  </div>
+</div>
+<script>
+  connect('new', 'sch', { color: 'service', from: 'right', to: 'left', bend: 20 })
+  connect('schR1', 'runL1', { color: 'broker', label: 'start time, or Start inside window', from: 'right', to: 'left' })
+  connect('runL2', 'schR2', { color: 'service', label: 'stop time, or script exits', from: 'left', to: 'right' })
+
+  connect('schT1', 'pauL1', { color: 'data', from: 'top', to: 'left' })
+  connect('pauL2', 'schT2', { color: 'service', from: 'left', to: 'top', dashed: true })
+  connect('runT1', 'pauR2', { color: 'data', label: '00:01 check or enforcer', from: 'top', to: 'right' })
+  connect('pauR1', 'runT2', { color: 'broker', label: 'reopens, inside window', from: 'right', to: 'top' })
+
+  connect('runB1', 'manR1', { color: 'client', label: 'Stop (/python/stop)', from: 'bottom', to: 'right' })
+  connect('manR2', 'runB2', { color: 'broker', label: 'Start, inside window', from: 'right', to: 'bottom' })
+  connect('manL', 'schB2', { color: 'service', label: 'Start, outside window (re-armed)', from: 'left', to: 'bottom', dashed: true })
+
+  connect('runR1', 'errB1', { color: 'security', label: 'relaunch after restart fails', from: 'right', to: 'bottom' })
+  connect('errB2', 'runR2', { color: 'broker', label: 'Start, or contracts ready', from: 'bottom', to: 'right' })
+
+  connect('schB1', 'del', { color: 'external', label: 'Delete (from any state)', from: 'bottom', to: 'top' })
+  connect('del', 'end', { color: 'external', from: 'bottom', to: 'top', bend: 10 })
+</script>

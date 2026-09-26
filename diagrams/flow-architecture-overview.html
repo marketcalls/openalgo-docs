@@ -1,0 +1,84 @@
+<style>#canvas > .wlabel{position:absolute} i.anc{position:absolute;left:0;width:0;height:0;display:block}</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Flow architecture</div>
+    <h1>Five ways to start a flow, one engine that runs it</h1>
+    <p style="max-width:1100px">Whether you press Run Now, send a webhook from TradingView, or wait for a schedule, price alert or order update, every run goes through the same execute step and the same engine.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 210px 240px 24px 280px 250px 1fr; column-gap:56px; row-gap:22px; align-items:center">
+
+    <!-- sources -->
+    <div class="node client stack" id="ext" style="grid-column:1; grid-row:1"><div class="ic" data-icon="chart-candlestick"></div><div class="tx"><b>TradingView, Chartink</b><span>or any HTTP caller</span></div></div>
+    <div class="node app stack" id="editor" style="grid-column:1; grid-row:2"><div class="ic" data-icon="workflow"></div><div class="tx"><b>Flow editor</b><span>drag-and-drop builder</span>
+      <div class="chips"><span class="chip">React · XYFlow</span></div></div></div>
+
+    <div class="node security stack" id="rl" style="grid-column:2; grid-row:1"><div class="ic" data-icon="gauge"></div><div class="tx"><b>Rate limit</b><span>per caller and per workflow</span>
+      <div class="chips"><span class="chip">WEBHOOK_RATE_LIMIT</span></div></div></div>
+    <div class="node app stack" id="crud" style="grid-column:2; grid-row:2; position:relative"><i class="anc" id="a-act" style="left:100%; top:78%"></i><div class="ic" data-icon="file-cog"></div><div class="tx"><b>Workflow API</b><span>save, activate, run; needs your web login; saves workflows in openalgo.db</span>
+      <div class="chips"><span class="chip">/flow/api/workflows</span></div></div></div>
+
+    <!-- the five triggers -->
+    <div class="node app" id="hook" style="grid-column:4; grid-row:1"><div class="ic" data-icon="webhook"></div><div class="tx"><b>Webhook</b><span>checks token, enabled, active and secret</span>
+      <div class="chips"><span class="chip">POST /flow/webhook/&lt;token&gt;</span></div></div></div>
+    <div class="node app" id="now" style="grid-column:4; grid-row:2"><div class="ic" data-icon="mouse-pointer-click"></div><div class="tx"><b>Run Now</b><span>manual run from the editor</span></div></div>
+    <div class="zone" id="triggers" style="--c:var(--service); grid-column:4; grid-row:3 / span 3">
+      <div class="zl"><span data-icon="power"></span>Started on activate</div>
+      <div class="col" style="gap:14px">
+        <div class="node service" id="sched"><div class="ic" data-icon="calendar-clock"></div><div class="tx"><b>Scheduler</b><span>APScheduler; jobs kept in openalgo.db</span></div></div>
+        <div class="node service" id="price"><div class="ic" data-icon="trending-up"></div><div class="tx"><b>Price monitor</b><span>checks quotes every 5 s</span></div></div>
+        <div class="node service" id="ou"><div class="ic" data-icon="bell-ring"></div><div class="tx"><b>Order-update monitor</b><span>listens to EventBus order.update</span></div></div>
+      </div>
+    </div>
+
+    <!-- convergence -->
+    <div class="node service big stack hero" id="run" style="grid-column:5; grid-row:1 / span 5; position:relative; align-self:stretch; justify-content:center"><i class="anc" id="a-hook"></i><i class="anc" id="a-now"></i><i class="anc" id="a-sched"></i><i class="anc" id="a-price"></i><i class="anc" id="a-ou"></i><div class="ic" data-icon="play"></div><div class="tx"><b>Run the workflow</b><span>every run enters here: one run per workflow at a time, graph strictly validated first</span>
+      <div class="chips"><span class="chip">execute_workflow()</span><span class="chip">per-workflow lock</span></div></div></div>
+    <div class="node data" id="db" style="grid-column:4 / span 2; grid-row:6; justify-self:end; margin-top:56px; position:relative"><i class="anc" id="a-db" style="top:0"></i><div class="ic" data-icon="database"></div><div class="tx"><b>openalgo.db</b><span>workflows, run history with logs, scheduler jobs</span>
+      <div class="chips"><span class="chip">flow_workflows</span><span class="chip">flow_workflow_executions</span><span class="chip">flow_apscheduler_jobs</span></div></div></div>
+
+    <div class="note" style="grid-column:1 / span 2; grid-row:3 / span 2; max-width:none; align-self:start">
+      <span data-icon="lightbulb"></span><div>Activating a workflow arms the scheduler job, price alert or order watch its trigger node asks for. Whatever starts a run, it takes the lock first, so a workflow never runs twice at the same time.</div></div>
+
+    <!-- engine -->
+    <div class="zone" id="engine" style="--c:var(--service); grid-column:6; grid-row:1 / span 4">
+      <div class="zl"><span data-icon="cpu"></span>Execution engine</div>
+      <div class="chips" style="margin:0 0 12px"><span class="chip">flow_executor_service</span></div>
+      <div class="col" style="gap:14px">
+        <div class="node service"><div class="ic" data-icon="variable"></div><div class="tx"><b>Remembers values</b><span>variables and {{interpolation}}</span>
+          <div class="chips"><span class="chip">WorkflowContext</span></div></div></div>
+        <div class="node service"><div class="ic" data-icon="boxes"></div><div class="tx"><b>Runs each node</b><span>one step of your flow at a time</span>
+          <div class="chips"><span class="chip">NodeExecutor · 61 node types</span></div></div></div>
+        <div class="node service" id="client"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Talks to OpenAlgo</b><span>calls OpenAlgo in-process, no HTTP</span>
+          <div class="chips"><span class="chip">FlowOpenAlgoClient</span></div></div></div>
+      </div>
+    </div>
+    <div class="node service" id="svcs" style="grid-column:6; grid-row:5 / span 2"><div class="ic" data-icon="layers"></div><div class="tx"><b>OpenAlgo services</b><span>orders, market data, alerts</span></div></div>
+  </div>
+</div>
+<script>
+  // line each entry arrow up with its source so the five curves stay parallel
+  window.addEventListener('load', () => document.fonts.ready.then(() => {
+    const run = document.getElementById('run').getBoundingClientRect()
+    for (const k of ['hook','now','sched','price','ou']) {
+      const r = document.getElementById(k).getBoundingClientRect()
+      const y = Math.min(run.height - 20, Math.max(20, r.top + r.height / 2 - run.top))
+      document.getElementById('a-' + k).style.top = y + 'px'
+    }
+    const db = document.getElementById('db').getBoundingClientRect()
+    document.getElementById('a-db').style.left = (run.left + run.width / 2 - db.left) + 'px'
+  }))
+  connect('ext', 'rl', { color: 'client' })
+  connect('rl', 'hook', { color: 'security' })
+  connect('editor', 'crud', { color: 'app', from: 'right', to: 'left' })
+  connect('crud', 'now', { color: 'app', label: 'Run Now', from: 'right', to: 'left' })
+  connect('a-act', 'triggers', { color: 'service', label: 'activate', from: 'right', to: 'left' })
+  connect('hook', 'a-hook', { color: 'app', from: 'right', to: 'left' })
+  connect('now', 'a-now', { color: 'app', from: 'right', to: 'left' })
+  connect('sched', 'a-sched', { color: 'service', from: 'right', to: 'left' })
+  connect('price', 'a-price', { color: 'service', from: 'right', to: 'left' })
+  connect('ou', 'a-ou', { color: 'service', from: 'right', to: 'left' })
+  connect('run', 'engine', { color: 'service', from: 'right', to: 'left' })
+  connect('client', 'svcs', { color: 'service', label: 'calls', from: 'bottom', to: 'top' })
+  connect('run', 'a-db', { color: 'data', label: 'run + logs', from: 'bottom', to: 'top' })
+</script>

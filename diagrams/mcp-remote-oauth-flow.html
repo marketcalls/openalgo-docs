@@ -1,0 +1,97 @@
+<div id="canvas" style="width:1680px">
+  <style>
+    #canvas > .wlabel { position: absolute; }
+    .ph .node { min-width: 0; width: 100%; }
+    .ph .step { width: 100%; }
+    .ph .step > .node { flex: 1; }
+  </style>
+  <div class="title">
+    <div class="eyebrow">Remote MCP sign-in</div>
+    <h1>An AI app gets only the permissions you sign in and approve</h1>
+    <p style="max-width:1120px">A hosted AI client (for example a web chat app) connects to your OpenAlgo MCP server with standard OAuth. You log in to OpenAlgo, see which permissions (scopes) it asks for, and approve. From then on every tool call is checked against what you granted and logged.</p>
+  </div>
+
+  <div class="row" style="align-items:stretch; gap:34px">
+    <div class="zone ph" style="--c:var(--ai); flex:1.15">
+      <div class="zl"><span data-icon="bot"></span>A · The AI app finds OpenAlgo</div>
+      <div class="col" style="gap:18px">
+        <div class="step" style="--c:var(--ai)"><div class="n">1</div>
+          <div class="node ai" id="s1"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>Calls /mcp with no token</b><span>gets 401 and a pointer to the sign-in metadata</span>
+            <div class="chips"><span class="chip">WWW-Authenticate</span></div></div></div></div>
+        <div class="step" style="--c:var(--ai)"><div class="n">2</div>
+          <div class="node ai" id="s2"><div class="ic" data-icon="globe"></div><div class="tx"><b>Reads the discovery files</b><span>where to register, authorize and get tokens</span>
+            <div class="chips"><span class="chip" style="white-space:nowrap">/.well-known/oauth-protected-resource</span><span class="chip" style="white-space:nowrap">/.well-known/oauth-authorization-server</span></div></div></div></div>
+        <div class="step" style="--c:var(--ai)"><div class="n">3</div>
+          <div class="node ai" id="s3"><div class="ic" data-icon="file-text"></div><div class="tx"><b>Registers itself</b><span>saved as a client; left unapproved until the admin approves it if approval is required</span>
+            <div class="chips"><span class="chip">POST /oauth/register</span><span class="chip">MCP_OAUTH_REQUIRE_APPROVAL</span></div></div></div></div>
+      </div>
+    </div>
+
+    <div class="zone ph" style="--c:var(--client); flex:1.05">
+      <div class="zl"><span data-icon="user"></span>B · You approve in your browser</div>
+      <div class="col" style="gap:18px">
+        <div class="step" style="--c:var(--client)"><div class="n">4</div>
+          <div class="node client" id="s4"><div class="ic" data-icon="external-link"></div><div class="tx"><b>The app opens OpenAlgo's approval page</b><span>asking for the permissions (scopes) it wants</span>
+            <div class="chips"><span class="chip">/oauth/authorize</span><span class="chip">PKCE S256</span></div></div></div></div>
+        <div class="step" style="--c:var(--security)"><div class="n">5</div>
+          <div class="node security" id="s5"><div class="ic" data-icon="shield-check"></div><div class="tx"><b>OpenAlgo checks the request</b><span>you are logged in, the client is approved, the redirect address matches exactly, only permissions OpenAlgo offers</span></div></div></div>
+        <div class="step" style="--c:var(--client)"><div class="n">6</div>
+          <div class="node client" id="s6"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>You see the consent screen and approve</b><span>If the app asks to place orders and you require TOTP for MCP, you also enter a fresh TOTP code.</span>
+            <div class="chips"><span class="chip">write:orders</span><span class="chip">fresh TOTP</span></div></div></div></div>
+        <div class="step" style="--c:var(--client)"><div class="n">7</div>
+          <div class="node client" id="s7"><div class="ic" data-icon="repeat"></div><div class="tx"><b>Browser returns to the app with a one-time code</b>
+            <div class="chips"><span class="chip">302 to redirect_uri</span></div></div></div></div>
+      </div>
+    </div>
+
+    <div class="zone ph" style="--c:var(--security); flex:0.8">
+      <div class="zl"><span data-icon="key-round"></span>C · The app gets its tokens</div>
+      <div class="col" style="gap:18px">
+        <div class="step" style="--c:var(--security)"><div class="n">8</div>
+          <div class="node security" id="s8"><div class="ic" data-icon="key-round"></div><div class="tx"><b>Swaps the code for tokens</b><span>proves it is the same app that started the sign-in; the code is used up</span>
+            <div class="chips"><span class="chip">POST /oauth/token</span><span class="chip">PKCE code_verifier</span></div></div></div></div>
+        <div class="node security hero" id="tok" style="margin-left:54px; width:calc(100% - 54px)"><div class="ic" data-icon="lock"></div><div class="tx"><b>Access token + refresh token</b><span>signed access token, new refresh-token family</span>
+          <div class="chips"><span class="chip">RS256 JWT</span><span class="chip">iss / aud = MCP_PUBLIC_URL</span></div></div></div>
+        <div class="node data" id="db" style="margin-left:54px; width:calc(100% - 54px)"><div class="ic" data-icon="database"></div><div class="tx"><b>OAuth tables</b><span>clients, codes and refresh tokens</span>
+          <div class="chips"><span class="chip">main DB (openalgo.db)</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="zone" style="--c:var(--app); margin-top:56px">
+    <div class="zl"><span data-icon="workflow"></span>D · Every request after that</div>
+    <div class="row" style="gap:44px; align-items:stretch">
+      <div class="step" style="--c:var(--app); align-items:center"><div class="n">9</div>
+        <div class="node ai" id="rq" style="width:280px"><div class="ic" data-icon="bot"></div><div class="tx"><b>AI app calls a tool</b><span>initialize, ping, tools/*, with the access token</span>
+          <div class="chips"><span class="chip">JSON-RPC</span><span class="chip">POST /mcp</span><span class="chip">Bearer</span></div></div></div></div>
+      <div class="node security" id="gate" style="width:220px; position:relative"><i id="gA" style="position:absolute;right:0;top:19%;width:1px;height:1px"></i><i id="gB" style="position:absolute;right:0;top:73%;width:1px;height:1px"></i><div class="ic" data-icon="gauge"></div><div class="tx"><b>Rate limit, then token check</b><span>signature, issuer, audience</span></div></div>
+      <div class="col" style="gap:16px; flex:1">
+        <div class="node app" id="list"><div class="ic" data-icon="list-checks"></div><div class="tx"><b>tools/list</b><span>only the tools your granted permissions allow</span></div></div>
+        <div class="node security" id="call"><div class="ic" data-icon="shield-check"></div><div class="tx"><b>tools/call</b><span>needs the tool's permission, within that permission's quota; order tools write a warning log first</span></div></div>
+      </div>
+      <div class="node service" id="tool" style="width:240px"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Tool runs</b><span>through the openalgo SDK with the admin's API key, on the loopback address</span>
+        <div class="chips"><span class="chip">/api/v1/*</span><span class="chip">MCP_LOOPBACK_URL</span></div></div></div>
+      <div class="node data" id="audit" style="width:220px"><div class="ic" data-icon="scroll-text"></div><div class="tx"><b>Audit entry</b><span>tool, duration, outcome; then the result goes back</span>
+        <div class="chips"><span class="chip">log/mcp.jsonl</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:36px; gap:40px; align-items:flex-start">
+    <div class="legend" style="margin-top:12px">
+      <span style="--c:var(--ai)"><i></i>AI app</span>
+      <span style="--c:var(--client)"><i></i>You, in the browser</span>
+      <span style="--c:var(--security)"><i></i>OAuth and checks</span>
+      <span style="--c:var(--app)"><i></i>/mcp endpoint</span>
+      <span style="--c:var(--service)"><i></i>Tools</span>
+      <span style="--c:var(--data)"><i></i>Stored data</span>
+    </div>
+    <div class="note" style="max-width:600px; margin-left:auto"><span data-icon="lightbulb"></span><div>An optional GET /mcp with the token opens an event stream that only sends keepalives. All real work happens through POST /mcp.</div></div>
+  </div>
+</div>
+<script>
+  connect('rq', 'gate', { color: 'ai' })
+  connect('gA', 'list', { color: 'security', from: 'right', to: 'left' })
+  connect('gB', 'call', { color: 'security', from: 'right', to: 'left' })
+  connect('call', 'tool', { color: 'security', from: 'right', to: 'left' })
+  connect('tool', 'audit', { color: 'service' })
+</script>

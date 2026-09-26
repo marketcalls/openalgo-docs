@@ -1,0 +1,64 @@
+<style>#canvas > .wlabel{position:absolute} .g { align-items:center; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Toast notifications</div>
+    <h1>Every pop-up passes one check against your alert settings</h1>
+    <p style="max-width:1150px">Whether a message comes from a page you clicked or a live Socket.IO event, it is shown only if toasts are switched on and its category is enabled in Profile &gt; Alerts. Otherwise it is silently dropped.</p>
+  </div>
+
+  <div class="grid g" style="grid-template-columns:repeat(5, 240px); column-gap:90px; row-gap:70px; margin-top:70px">
+    <!-- row 1: settings -->
+    <div class="node client" id="prof" style="grid-column:1; grid-row:1"><div class="ic" data-icon="user-cog"></div>
+      <div class="tx"><b>Profile &gt; Alerts</b><span>you switch toasts and categories on or off</span>
+        <div class="chips"><span class="chip">Profile.tsx</span></div></div></div>
+    <div class="node data" id="ls" style="grid-column:2; grid-row:1"><div class="ic" data-icon="hard-drive"></div>
+      <div class="tx"><b>Saved in the browser</b><span>survives reloads</span>
+        <div class="chips"><span class="chip">localStorage</span><span class="chip">openalgo-alerts</span></div></div></div>
+    <div class="node service" id="store" style="grid-column:3; grid-row:1"><div class="ic" data-icon="sliders-horizontal"></div>
+      <div class="tx"><b>Alert settings</b><span>master toggle, categories, position, count, duration</span>
+        <div class="chips"><span class="chip">alertStore</span><span class="chip">Zustand</span></div></div></div>
+
+    <!-- row 2: main path -->
+    <div class="node app" id="feat" style="grid-column:1; grid-row:2"><div class="ic" data-icon="app-window"></div>
+      <div class="tx"><b>Feature code</b><span>pages, dialogs and hooks</span></div></div>
+    <div class="node app" id="util" style="grid-column:2; grid-row:2"><div class="ic" data-icon="message-square"></div>
+      <div class="tx"><b>Toast helper</b><span>showToast.success / error / warning / info</span>
+        <div class="chips"><span class="chip">utils/toast.ts</span></div></div></div>
+    <div class="node security hero" id="check" style="grid-column:3; grid-row:2"><div class="ic" data-icon="filter"></div>
+      <div class="tx"><b>Allowed?</b><span>toasts on, and this category enabled</span>
+        <div class="chips"><span class="chip">shouldShowToast()</span></div></div></div>
+    <div class="node service" id="sonner" style="grid-column:4; grid-row:2"><div class="ic" data-icon="bell"></div>
+      <div class="tx"><b>Create the toast</b><span>by type: success, error, warning, info</span>
+        <div class="chips"><span class="chip">sonner toast[type]()</span></div></div></div>
+    <div class="node app" id="toaster" style="grid-column:5; grid-row:2"><div class="ic" data-icon="monitor"></div>
+      <div class="tx"><b>Shown on screen</b><span>uses your position, visible count and duration</span>
+        <div class="chips"><span class="chip">Toaster</span><span class="chip">providers.tsx</span></div></div></div>
+
+    <!-- row 3 -->
+    <div class="node app" id="sock" style="grid-column:1 / span 2; grid-row:3; width:300px; justify-self:end"><div class="ic" data-icon="radio"></div>
+      <div class="tx"><b>Live Socket.IO events</b><span>order, cancel and other updates from the server</span>
+        <div class="chips"><span class="chip">useSocket.ts</span><span class="chip">showCategoryToast()</span></div></div></div>
+    <div class="node external" id="drop" style="grid-column:3; grid-row:3; --c:#64748b"><div class="ic" data-icon="bell-off"></div>
+      <div class="tx"><b>Suppressed</b><span>no toast shown</span></div></div>
+  </div>
+
+  <div class="legend">
+    <span style="--c:var(--client)"><i></i>You</span>
+    <span style="--c:var(--app)"><i></i>Web app code</span>
+    <span style="--c:var(--security)"><i></i>The check</span>
+    <span style="--c:var(--service)"><i></i>Settings and toast library</span>
+    <span style="--c:var(--data)"><i></i>Browser storage</span>
+  </div>
+</div>
+<script>
+  connect('prof', 'store', { color: 'client', label: 'updates', from: 'top', to: 'top', bend: 60 })
+  connect('store', 'ls', { color: 'data', dashed: true, both: true, label: 'persist' })
+  connect('feat', 'util', { color: 'app' })
+  connect('util', 'check', { color: 'app' })
+  connect('sock', 'check', { color: 'app', from: 'right', to: 'left' })
+  connect('check', 'store', { color: 'service', dashed: true, label: 'reads', from: 'top', to: 'bottom' })
+  connect('check', 'sonner', { color: 'security', label: 'yes' })
+  connect('sonner', 'toaster', { color: 'service' })
+  connect('check', 'drop', { color: 'muted', label: 'no', from: 'bottom', to: 'top' })
+  connect('store', 'toaster', { color: 'service', dashed: true, label: 'display settings', from: 'right', to: 'top' })
+</script>

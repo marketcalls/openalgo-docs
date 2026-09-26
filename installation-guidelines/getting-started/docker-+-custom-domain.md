@@ -477,31 +477,7 @@ All 36 broker plugins in `VALID_BROKERS` are selectable during installation:
 
 #### Architecture
 
-```
-┌─────────────────┐
-│   Internet      │
-└────────┬────────┘
-         │ HTTPS (443)
-         │
-┌────────▼────────┐
-│   Nginx         │ ← SSL/TLS, Rate Limiting
-│   Reverse Proxy │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    │         │
-    ▼         ▼
-┌───────┐ ┌──────────┐
-│ Flask │ │WebSocket │ ← Docker Container
-│ :5000 │ │  :8765   │   (openalgo-web)
-└───────┘ └──────────┘
-    │
-    ▼
-┌──────────┐
-│ SQLite   │ ← Docker Volume
-│ Database │   (openalgo_db)
-└──────────┘
-```
+<figure><img src="../../.gitbook/assets/diagram-docker-custom-domain-deployment.png" alt="Docker custom-domain deployment: ufw and Nginx on the host proxy to the openalgo-web container (Flask 5000, WebSocket proxy 8765, internal ZeroMQ 5555) with the openalgo_db volume"><figcaption></figcaption></figure>
 
 #### FAQ
 
