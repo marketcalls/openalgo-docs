@@ -60,33 +60,31 @@ SDKs are officially supported client packages intended for application developme
 
 These libraries and tools extend OpenAlgo support to popular trading platforms, analysis tools, and user interfaces.
 
-| Platform / Tool                 | Repository                                                                                           |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Excel Add-in**                | [https://github.com/marketcalls/OpenAlgo-Excel](https://github.com/marketcalls/OpenAlgo-Excel)       |
-| **Amibroker Plugin**            | [https://github.com/marketcalls/OpenAlgoPlugin](https://github.com/marketcalls/OpenAlgoPlugin)       |
-| **Backtrader Integration**      | [https://github.com/p2c2e/openalgo-backtrader](https://github.com/p2c2e/openalgo-backtrader)         |
-| **AI Agents (TradingAgent)**    | [https://github.com/marketcalls/TradingAgent](https://github.com/marketcalls/TradingAgent)           |
-| **AlgoMirror**                  | [https://github.com/marketcalls/algomirror](https://github.com/marketcalls/algomirror)               |
-| **MCP / AI Agents**             | [https://github.com/marketcalls/openalgo-mcp](https://github.com/marketcalls/openalgo-mcp)           |
-| **OpenAlgo CLI**                | [https://github.com/marketcalls/openalgo-cli](https://github.com/marketcalls/openalgo-cli)           |
-| **OpenAlgo Mobile (Flutter)**   | [https://github.com/marketcalls/openalgo-mobile](https://github.com/marketcalls/openalgo-mobile)     |
-| **Web Portal**                  | [https://github.com/marketcalls/openalgo-webpage](https://github.com/marketcalls/openalgo-webpage)   |
-| **Chrome Extension**            | [https://github.com/marketcalls/openalgo-chrome](https://github.com/marketcalls/openalgo-chrome)     |
-| **Fast Scalper (Rust + Tauri)** | [https://github.com/marketcalls/fastscalper-tauri](https://github.com/marketcalls/fastscalper-tauri) |
-| **OpenAlgo Charts**             | [https://github.com/marketcalls/openalgo-charts](https://github.com/marketcalls/openalgo-charts)     |
-| **OpenStatz**                   | [https://github.com/marketcalls/openstatz](https://github.com/marketcalls/openstatz)                 |
-| **OpenAlgo Heatmap**            | [https://github.com/marketcalls/openalgo-heatmap](https://github.com/marketcalls/openalgo-heatmap)   |
-| **OpenQuest**                   | [https://github.com/marketcalls/openquest](https://github.com/marketcalls/openquest)                 |
-| **Marginism**                   | [https://github.com/marketcalls/marginism](https://github.com/marketcalls/marginism)                 |
-| **OpenScript**                  | [https://github.com/marketcalls/openscript](https://github.com/marketcalls/openscript)               |
-| **OpenGreeks**                  | [https://github.com/marketcalls/opengreeks](https://github.com/marketcalls/opengreeks)               |
-| **OpenBull**                    | [https://github.com/marketcalls/openbull](https://github.com/marketcalls/openbull)                   |
-| **PineTS**                      | [https://github.com/marketcalls/openalgo-pinets](https://github.com/marketcalls/openalgo-pinets)     |
-| **OpenAlgo chart**              | [https://github.com/crypt0inf0/openalgo-chart](https://github.com/crypt0inf0/openalgo-chart)         |
-| **Historify (standalone)**      | [https://github.com/marketcalls/historify](https://github.com/marketcalls/historify)                 |
-| **OpenAlgo Helm Chart**         | [https://github.com/p2c2e/openalgo\_helm](https://github.com/p2c2e/openalgo_helm)                    |
+| Platform / Tool        | Link                                                                                                 |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Excel Add-in**       | [https://github.com/marketcalls/OpenAlgo-Excel](https://github.com/marketcalls/OpenAlgo-Excel)       |
+| **Amibroker Plugin**   | [https://github.com/marketcalls/OpenAlgoPlugin](https://github.com/marketcalls/OpenAlgoPlugin)       |
+| **Backtrader**         | [https://github.com/p2c2e/openalgo-backtrader](https://github.com/p2c2e/openalgo-backtrader)         |
+| **AI Agents**          | [https://github.com/marketcalls/TradingAgent](https://github.com/marketcalls/TradingAgent)           |
+| **AlgoMirror**         | [https://github.com/marketcalls/algomirror](https://github.com/marketcalls/algomirror)               |
+| **MCP**                | [https://openalgo.in/mcp](https://openalgo.in/mcp)                                                   |
+| **OpenAlgo CLI**       | [https://github.com/marketcalls/openalgo-cli](https://github.com/marketcalls/openalgo-cli)           |
+| **Indicator Skills**   | [https://openalgo.in/skills](https://openalgo.in/skills)                                             |
+| **Backtesting Skills** | [https://openalgo.in/skills](https://openalgo.in/skills)                                             |
+| **OpenAlgo Mobile**    | [https://github.com/marketcalls/openalgo-mobile](https://github.com/marketcalls/openalgo-mobile)     |
+| **Web Portal**         | [https://github.com/marketcalls/openalgo-webpage](https://github.com/marketcalls/openalgo-webpage)   |
+| **Chrome Plugin**      | [https://github.com/marketcalls/openalgo-chrome](https://github.com/marketcalls/openalgo-chrome)     |
+| **Fast Scalper**       | [https://github.com/marketcalls/fastscalper-tauri](https://github.com/marketcalls/fastscalper-tauri) |
+| **OpenAlgo Charts**    | [https://github.com/marketcalls/openalgo-charts](https://github.com/marketcalls/openalgo-charts)     |
+| **OpenStatz**          | [https://github.com/marketcalls/openstatz](https://github.com/marketcalls/openstatz)                 |
+| **OpenAlgo Heatmap**   | [https://github.com/marketcalls/openalgo-heatmap](https://github.com/marketcalls/openalgo-heatmap)   |
+| **OpenQuest**          | [https://github.com/marketcalls/openquest](https://github.com/marketcalls/openquest)                 |
+| **Marginism**          | [https://github.com/marketcalls/marginism](https://github.com/marketcalls/marginism)                 |
+| **OpenScript**         | [https://github.com/marketcalls/openscript](https://github.com/marketcalls/openscript)               |
+| **OpenGreeks**         | [https://github.com/marketcalls/opengreeks](https://github.com/marketcalls/opengreeks)               |
+| **OpenBull**           | [https://github.com/marketcalls/openbull](https://github.com/marketcalls/openbull)                   |
 
-Two of these deserve a note, because the feature also exists inside OpenAlgo Core:
+Two features also ship inside OpenAlgo Core itself:
 
 * **MCP.** Core ships its own Model Context Protocol server at `mcp/mcpserver.py`, with a local stdio transport and an optional OAuth-protected remote HTTP transport. The separate `openalgo-mcp` repository is the older standalone server and its documentation. Prefer the built-in one, and see [MCP](mcp/README.md).
 * **Historify.** Core ships Historify as a built-in DuckDB history store at `/historify`. The standalone `historify` repository is the separate full-stack application. See [Historify](new-features/historify.md).
