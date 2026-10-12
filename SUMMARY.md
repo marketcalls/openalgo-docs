@@ -113,6 +113,7 @@
   * [TOTP Configuration](getting-started/totp-configuration.md)
   * [Forgot Password](getting-started/forgot-password.md)
   * [Upgrade](getting-started/upgrade.md)
+  * [Maintaining a Custom Repository](getting-started/maintaining-a-custom-repository.md)
   * [Migrating to gthread (Experimental)](getting-started/gthread-migration.md)
 * [Static IP](static-ip.md)
 * [Latency](latency.md)

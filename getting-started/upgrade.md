@@ -2,6 +2,10 @@
 
 Follow the steps for **your installation method**. The procedure differs depending on how you installed OpenAlgo.
 
+{% hint style="info" %}
+**Changed OpenAlgo's source code?** Follow [Maintaining a Custom Repository](maintaining-a-custom-repository.md) before updating. Merge official updates into your custom branch, test them, and push that branch to your fork first. The native update scripts pull `origin` on the current branch; they do not merge the official repository into your fork, and stashed local changes are not restored automatically.
+{% endhint %}
+
 {% hint style="danger" %}
 **Never run `cp .sample.env .env` on an existing installation.** It erases your broker keys and replaces your `API_KEY_PEPPER`, which permanently invalidates every stored password hash and encrypted broker token. Your `.env` is not tracked by git, so `git pull` always preserves it. When an update introduces new environment variables, copy **only those new lines** from `.sample.env` into your existing `.env` (see "Handling new environment variables" below).
 {% endhint %}

@@ -1,5 +1,7 @@
 # 30 - Upgrade Procedure
 
+For installations with source-code customizations, start with [Maintaining a Custom Repository](../../getting-started/maintaining-a-custom-repository.md). It covers fork setup, preserving existing edits, merging and testing upstream updates, frontend builds, and deployment from a tested custom branch. Complete that integration before running an updater against the deployment.
+
 ## Supported Update Path
 
 Use `install/update.sh` for an existing native/server installation or a local checkout. The script detects the current deployment layout and branch; do not replace it with ad hoc database initialization commands.
