@@ -1,6 +1,6 @@
 # What is OpenAlgo?
 
-OpenAlgo is a free, open source, self hosted algorithmic trading platform that bridges trading ideas with execution. Built with Python Flask and a modern React frontend, it provides a unified API layer across 36 broker plugins: 34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for paper trading. It supports automation from Amibroker, TradingView, GoCharting, N8N, ChartInk, MetaTrader 5, Excel, Google Sheets, and a Chrome extension, with six official SDKs: Python, Node.js, Java, .NET, Go, and Rust.
+OpenAlgo is a free, open source, self hosted algorithmic trading platform that bridges trading ideas with execution. Built with Python Flask and a modern React frontend, it provides a unified API layer across 36 broker plugins: 34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for paper trading. It supports automation from Amibroker, TradingView, GoCharting, N8N, ChartInk, MetaTrader 5, Excel, Google Sheets, and a Chrome extension, with eight official SDKs: Python, Node.js, Java, .NET, Go, Rust, R, and MATLAB.
 
 ### Overview
 
@@ -212,7 +212,7 @@ Let's be clear about what OpenAlgo doesn't do:
 | **Cost**              | Free (Open Source, AGPL License)                 |
 | **Brokers**           | 36 plugins: 34 securities brokers, Delta Exchange (crypto), Dhan Sandbox |
 | **Exchanges**         | NSE, NFO, BSE, BFO, MCX, CDS, BCD, NCDEX, NCO, plus index and crypto segments |
-| **SDKs**              | Python, Node.js, Java, .NET, Go, Rust            |
+| **SDKs**              | Python, Node.js, Java, .NET, Go, Rust, R, MATLAB |
 | **Signal Sources**    | TradingView, Amibroker, ChartInk, GoCharting, MetaTrader 5, N8N, Excel, Google Sheets, Python, AI agents |
 | **Strategy Building** | Flow (61 visual node types), Python Hosting, External Webhooks |
 | **Sandbox Trading**   | Analyzer Mode with ₹1 Crore sandbox capital      |

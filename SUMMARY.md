@@ -274,6 +274,8 @@
 * [RUST](trading-platform/rust.md)
 * [.NET](trading-platform/.net.md)
 * [Java](trading-platform/java.md)
+* [R](trading-platform/r.md)
+* [MATLAB](trading-platform/matlab.md)
 * [Metatrader 5](trading-platform/metatrader-5/README.md)
   * [Download & Install Library](trading-platform/metatrader-5/download-and-install-library.md)
   * [OpenAlgo MQL5 Functions](trading-platform/metatrader-5/openalgo-mql5-functions.md)

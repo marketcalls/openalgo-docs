@@ -53,6 +53,8 @@ SDKs are officially supported client packages intended for application developme
 | RUST                | [https://github.com/marketcalls/openalgo-rust](https://github.com/marketcalls/openalgo-rust)                     |
 | .NET / C#           | [https://github.com/marketcalls/openalgo.NET](https://github.com/marketcalls/openalgo.NET)                       |
 | Go                  | [https://github.com/marketcalls/openalgo-go](https://github.com/marketcalls/openalgo-go)                         |
+| R                   | [https://github.com/marketcalls/openalgo-R-library](https://github.com/marketcalls/openalgo-R-library)           |
+| MATLAB              | [https://github.com/marketcalls/openalgo-matlab-library](https://github.com/marketcalls/openalgo-matlab-library) |
 
 ***
 
@@ -117,6 +119,8 @@ Each SDK and integration has dedicated documentation that includes installation 
 * .NET: [https://docs.openalgo.in/trading-platform/.net](https://docs.openalgo.in/trading-platform/.net)
 * Go: [https://docs.openalgo.in/trading-platform/go](https://docs.openalgo.in/trading-platform/go)
 * RUST: https://docs.openalgo.in/trading-platform/rust
+* R: [https://docs.openalgo.in/trading-platform/r](https://docs.openalgo.in/trading-platform/r)
+* MATLAB: [https://docs.openalgo.in/trading-platform/matlab](https://docs.openalgo.in/trading-platform/matlab)
 * Excel: [https://docs.openalgo.in/trading-platform/excel](https://docs.openalgo.in/trading-platform/excel)
 * Amibroker Plugin: [https://docs.openalgo.in/trading-platform/amibroker/amibroker-plugin](https://docs.openalgo.in/trading-platform/amibroker/amibroker-plugin)
 * Chrome Extension: [https://docs.openalgo.in/trading-platform/chrome-extension](https://docs.openalgo.in/trading-platform/chrome-extension)

@@ -26,7 +26,7 @@ It's not just an API wrapper. It's a **full-stack, open-source trading platform*
 | | |
 | --- | --- |
 | **36 broker plugins** | 34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin |
-| **6 official SDKs** | Python, Node.js, Java, .NET, Go, Rust |
+| **8 official SDKs** | Python, Node.js, Java, .NET, Go, Rust, R, MATLAB |
 | **53 node types** | In the Flow visual strategy builder |
 | **90+ indicators** | In the built-in charting terminal |
 | **18 options tools** | Chain, Greeks, OI, max pain, vol surface, GEX and more |
@@ -203,6 +203,8 @@ Deploy locally, in **Docker**, or on cloud servers. Public deployments still req
 | **.NET** | [.NET](trading-platform/.net.md) |
 | **Go** | [GO](trading-platform/go.md) |
 | **Rust** | [RUST](trading-platform/rust.md) |
+| **R** | [R](trading-platform/r.md) |
+| **MATLAB** | [MATLAB](trading-platform/matlab.md) |
 
 The Python SDK also ships an indicator library and visualization helpers. See [Indicators](trading-platform/python/indicators/README.md).
 
