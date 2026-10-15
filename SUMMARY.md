@@ -360,6 +360,7 @@
 ## Change Log
 
 * [release](change-log/release/README.md)
+  * [Version 2.0.2.8 Released](change-log/release/version-2.0.2.8-released.md)
   * [Version 2.0.2.7 Released](change-log/release/version-2.0.2.7-released.md)
   * [Version 2.0.2.6 Released](change-log/release/version-2.0.2.6-released.md)
   * [Version 2.0.2.5 Released](change-log/release/version-2.0.2.5-released.md)
