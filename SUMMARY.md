@@ -63,6 +63,7 @@
   * [Samco](connect-brokers/brokers/samco.md)
   * [Shoonya](connect-brokers/brokers/shoonya.md)
   * [RMoney (XTS)](connect-brokers/brokers/rmoney.md)
+  * [Rupeezy (Vortex)](connect-brokers/brokers/rupeezy-vortex.md)
   * [Tradejini](connect-brokers/brokers/tradejini.md)
   * [TradeSmart](connect-brokers/brokers/tradesmart.md)
   * [Upstox](connect-brokers/brokers/upstox.md)
