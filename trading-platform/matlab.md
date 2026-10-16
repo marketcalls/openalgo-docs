@@ -4,10 +4,10 @@ The OpenAlgo MATLAB library connects MATLAB to your OpenAlgo server. From the Co
 
 Source code: [https://github.com/marketcalls/openalgo-matlab-library](https://github.com/marketcalls/openalgo-matlab-library)
 
-To install the OpenAlgo MATLAB library, download `openalgo-matlab-1.0.0.mltbx` from the [GitHub releases](https://github.com/marketcalls/openalgo-matlab-library/releases) page and double-click it in MATLAB, or install it from the Command Window:
+To install the OpenAlgo MATLAB library, download `openalgo-matlab-1.1.0.mltbx` from the [GitHub releases](https://github.com/marketcalls/openalgo-matlab-library/releases) page and double-click it in MATLAB, or install it from the Command Window:
 
 ```matlab
-matlab.addons.install("openalgo-matlab-1.0.0.mltbx");
+matlab.addons.install("openalgo-matlab-1.1.0.mltbx");
 ```
 
 To work from the source instead, clone the repository and add the folder that contains `+openalgo` to the MATLAB path:
@@ -88,7 +88,7 @@ response = client.placeorder(strategy="Test Strategy", symbol="NHPC", action="BU
 * **A few methods also take their main value without a name**: `client.analyzertoggle(true)`, `client.holidays(2026)`, `client.timings("2025-12-19")`, `client.whatsapp("NIFTY crossed 26000!")`, `client.telegramstats(30)`, `client.telegrampreferences(123456789)`, `client.updatetelegrampreferences(123456789, daily_summary=true)`, and on the webhook sender `s.start("sandbox")`, `s.signal("long_entry", leg_id=1)` and `s.send(payload)`.
 * **`[]` means "not set".** An optional parameter left at `[]` is not sent.
 * **Extra name=value pairs are sent to the server as additional fields**, for example `price=16`, `trigger_price=0` or `disclosed_quantity=0` on `placeorder`. Methods that take no extra fields refuse them with `openalgo:unexpectedArgument`.
-* **`strategy` is optional on the order methods.** Pass your own strategy name so your orders are easy to find in the OpenAlgo order book.
+* **`strategy` is optional on the order methods.** When it is left out, orders are tagged `"MATLAB"`. Pass your own strategy name so your orders are easy to find in the OpenAlgo order book.
 * **Records and lists**: a record is a scalar struct (`struct("symbol", "RELIANCE", "exchange", "NSE")`); a list of records is a cell array of structs (`{struct(...), struct(...)}`) or a struct array (`struct("symbol", {"RELIANCE", "TCS"}, "exchange", "NSE")`); a list of texts is a cell array or a string array (`["919876543210" "919812345678"]`). Lists are always sent as JSON arrays, even with one element.
 
 Numbers can be passed as numbers. Fields the server expects as text are converted for you (`1` is sent as `"1"`, `16.5` as `"16.5"`), with the shortest digits that read back as the same number (a price of `1180.05` is sent as `1180.05`, a computed `0.1 + 0.2` as `0.30000000000000004`). Large whole numbers are never written in exponent form (`100000`, not `1e+05`). A whole number is sent without a decimal point, so `price=50.0` sends `"50"`; write `price="50.0"` when the exact text matters. Pass order ids as text: they are longer than a double can hold exactly.
@@ -145,7 +145,7 @@ To see a response as JSON text, use `jsonencode(response, PrettyPrint=true)`. `h
 
 ans =
 
-    '1.0.0'
+    '1.1.0'
 ```
 
 ### Help Pages
