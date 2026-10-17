@@ -1,0 +1,23 @@
+<div id="canvas" style="width:1680px">
+  <div class="title">
+    <div class="eyebrow">Trading terminal and Historify</div>
+    <h1>Choose your interval, keep the original market data</h1>
+    <p style="max-width:1250px">Custom candles combine compatible smaller candles. A daily indicator reads daily history separately, so its calculation does not depend on how much minute history your chart displays.</p>
+  </div>
+  <div class="grid" style="grid-template-columns:1fr 1fr 1fr;gap:64px;margin-top:60px">
+    <div class="node client stack" id="choice"><div class="ic" data-icon="clock"></div><div class="tx"><b>Pick or add an interval</b><span>Grouped menu, custom choices and shared favorites. Each chart keeps its own selection.</span><div class="chips"><span class="chip">7 minutes</span><span class="chip">2 hours</span><span class="chip">3 months</span></div></div></div>
+    <div class="node security stack" id="compatible"><div class="ic" data-icon="calendar-clock"></div><div class="tx"><b>Check the source and session</b><span>Use available smaller candles. Check openings, holidays and candle alignment. Never split a larger candle.</span></div></div>
+    <div class="node service stack" id="combine"><div class="ic" data-icon="layers"></div><div class="tx"><b>Combine complete source candles</b><span>Keep first open, highest high, lowest low and last close. Add traded volume within each target period.</span></div></div>
+    <div class="node broker stack" id="source"><div class="ic" data-icon="database"></div><div class="tx"><b>Use your available history</b><span>Trading reads your broker. Historify reads downloaded candles in its local database.</span><div class="chips"><span class="chip">seconds</span><span class="chip">minutes</span><span class="chip">hours</span><span class="chip">daily</span></div></div></div>
+    <div class="node service stack" id="study"><div class="ic" data-icon="activity"></div><div class="tx"><b>Fetch enough daily history</b><span>Daily EMA 200 requests its own warmup. Missing retained history is reported, never filled with invented prices.</span></div></div>
+    <div class="node app stack" id="chart"><div class="ic" data-icon="chart-candlestick"></div><div class="tx"><b>Display confirmed study values</b><span>A daily value reaches the five-minute chart only after that daily candle closes. Custom candles retain their actual period.</span></div></div>
+  </div>
+  <div class="note" style="margin-top:56px"><span data-icon="lightbulb"></span><div>Seconds need a seconds source. Weekly, monthly and quarterly candles can use daily history. Removing a custom menu choice keeps an already active chart unchanged.</div></div>
+</div>
+<script>
+  connect('choice', 'compatible', {color:'client', from:'right', to:'left'})
+  connect('compatible', 'combine', {color:'service', from:'right', to:'left'})
+  connect('source', 'study', {color:'data', from:'right', to:'left'})
+  connect('study', 'chart', {color:'service', from:'right', to:'left'})
+  connect('combine', 'chart', {color:'app', from:'bottom', to:'top'})
+</script>

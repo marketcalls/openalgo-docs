@@ -26,7 +26,17 @@ The terminal supports candles, bars, line and area variants, Heikin Ashi, Renko,
 
 **Bar replay** steps through the time bars on every chart type, so on a brick chart the bricks form as each bar is revealed. Trading is refused while a chart replays.
 
-**Indicators.** 112 built-in studies, and your own from `strategies/indicators/`. Several instances can be added and configured per pane. On a brick or line chart type, a study's **Compute on** row chooses between the chart's bricks and the underlying time bars. 29 built-in studies (the moving averages, Bollinger, Keltner, Donchian, Supertrend, ATR, RSI, MACD, Stochastic, CCI, ADX and others) have a **Timeframe** row: set it to a higher interval and the study is computed on the chart's bars folded into that interval, and a value appears only once that period closes. OpenScript studies and strategies are written, backtested and deployed from the Scripts panel; the language is documented at [openalgo.in/script](https://openalgo.in/script).
+**Indicators.** 112 built-in studies, and your own from `strategies/indicators/`. Several instances can be added and configured per pane. On a brick or line chart type, a study's **Compute on** row chooses between the chart's bricks and the underlying time bars. 29 built-in studies have a **Timeframe** row. The terminal requests their higher-timeframe history separately, so a daily EMA with length 200 can appear on a five-minute chart without loading years of minute candles. Values appear only after their source period closes. The broker must retain enough source history; an unavailable request reports its status rather than inventing prices. OpenScript studies and strategies are written, backtested and deployed from the Scripts panel; the language is documented at [openalgo.in/script](https://openalgo.in/script).
+
+### Custom intervals
+
+Open the interval menu and choose **Add custom interval**. Choose a unit and a positive whole number, for example 7 minutes or 2 hours. The menu groups choices by unit. Favorite choices stay in the toolbar and are shared with Historify; selecting an interval changes the active pane. Remove a custom choice from its row. Removing it from the menu does not change a chart already using it.
+
+The terminal combines smaller candles supplied by your broker. One-minute candles can form seven-minute candles; compatible hourly candles can form two-hour candles; daily candles can form weeks, months, quarters and years. Seconds require a seconds source. A larger candle cannot supply missing smaller candles. Session openings, holidays and source alignment determine which choices are available.
+
+<figure><img src="../.gitbook/assets/diagram-custom-chart-intervals.png" alt="Custom chart intervals combine compatible source candles; a separate daily history request supplies confirmed daily indicator values on an intraday chart"><figcaption></figcaption></figure>
+
+Replay never requests later confirmed values from a live-only history provider. Independent studies need a historical snapshot contract to run in replay.
 
 Volume and grid display can be adjusted independently from the primary price scale.
 

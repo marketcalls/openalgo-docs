@@ -3,7 +3,7 @@
   <div class="title">
     <div class="eyebrow">Historify</div>
     <h1>Candles are downloaded once, then served from your own database</h1>
-    <p style="max-width:1100px">Downloads start from the Historify page or a schedule, run in the background with live progress, and land in a local DuckDB file. Later API requests can read that file instead of calling the broker again.</p>
+    <p style="max-width:1100px">Downloads start from the Historify page or a schedule, run in the background with live progress, and land in a local DuckDB file. Charts read stored candles, combine compatible custom intervals and request daily indicator history separately.</p>
   </div>
 
   <div class="col" style="gap:56px; margin-top:96px">
@@ -61,6 +61,7 @@
       </div>
     </div>
   </div>
+  <div class="note" style="margin-top:40px"><span data-icon="chart-candlestick"></span><div>Historify charts use stored smaller candles for custom intervals and stored daily candles for a daily EMA on an intraday chart. An incomplete stored month is not treated as a confirmed month.</div></div>
 </div>
 <script>
   connect('ui', 'bp', { color: 'client', from: 'right', to: 'left' })

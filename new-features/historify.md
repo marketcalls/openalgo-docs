@@ -49,6 +49,12 @@ Historical availability depends on the active broker, requested interval, and re
 
 Charts display stored historical candles, not a real-time feed. Use them to inspect gaps, range coverage, and unexpected values before relying on a dataset.
 
+Use **Add custom interval** in the grouped interval menu to add a choice such as 7 minutes, 2 hours or 3 months. Favorite choices are shared with the trading terminal; each pane keeps its own selected interval. A choice can be removed without changing a chart that already uses it.
+
+A daily EMA with length 200 on a five-minute chart reads stored daily history independently. Download enough daily candles for the calculation. A value appears only when its source period has closed and the stored range covers it. For example, a month downloaded only through its middle is not a confirmed monthly candle.
+
+<figure><img src="../.gitbook/assets/diagram-custom-chart-intervals.png" alt="Compatible source candles form custom chart intervals and independent daily history supplies confirmed daily indicator values"><figcaption></figcaption></figure>
+
 ## Import And Export
 
 Historify accepts validated CSV and Parquet uploads. Sample-file endpoints show the required structure.
