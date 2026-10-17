@@ -1,10 +1,10 @@
 # What is OpenAlgo?
 
-**OpenAlgo is the open source trading ecosystem for everyone.** It is one all-in-one platform that you host yourself: chart and trade, scalp, analyse options, automate strategies with code or without it, manage risk, test in sandbox mode and research your own market data, all on one screen and across 36 broker plugins.
+**OpenAlgo is the open source trading ecosystem for everyone.** It is one all-in-one platform that you host yourself: chart and trade, scalp, analyse options, automate strategies with code or without it, manage risk, test in sandbox mode and research your own market data, all on one screen and across 37 broker plugins.
 
 You do not need a separate charting subscription, an options analytics tool, an algo bridge and a backtester stitched together. They are all part of the same self-hosted stack, they share one broker session and one real-time market feed, and the code, the data and the server stay yours.
 
-Under the hood, OpenAlgo is built with Python Flask and a modern React frontend. It provides a unified API layer across 36 broker plugins: 34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. It accepts signals from Amibroker, TradingView, GoCharting, N8N, ChartInk, MetaTrader 5, Excel, Google Sheets, and a Chrome extension, and ships eight official SDKs: Python, Node.js, Java, .NET, Go, Rust, R, and MATLAB.
+Under the hood, OpenAlgo is built with Python Flask and a modern React frontend. It provides a unified API layer across 37 broker plugins: 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. It accepts signals from Amibroker, TradingView, GoCharting, N8N, ChartInk, MetaTrader 5, Excel, Google Sheets, and a Chrome extension, and ships eight official SDKs: Python, Node.js, Java, .NET, Go, Rust, R, and MATLAB.
 
 {% embed url="https://www.youtube.com/watch?v=S5myMo9WUdQ" %}
 
@@ -246,7 +246,7 @@ Let's be clear about what OpenAlgo doesn't do:
 | Aspect                | OpenAlgo                                         |
 | --------------------- | ------------------------------------------------ |
 | **Cost**              | Free (Open Source, AGPL License)                 |
-| **Brokers**           | 36 plugins: 34 securities brokers, Delta Exchange (crypto), Dhan Sandbox |
+| **Brokers**           | 37 plugins: 35 securities brokers, Delta Exchange (crypto), Dhan Sandbox |
 | **Exchanges**         | NSE, NFO, BSE, BFO, MCX, CDS, BCD, NCDEX, NCO, plus index and crypto segments |
 | **SDKs**              | Python, Node.js, Java, .NET, Go, Rust, R, MATLAB |
 | **Signal Sources**    | TradingView, Amibroker, ChartInk, GoCharting, MetaTrader 5, N8N, Excel, Google Sheets, Python, AI agents |

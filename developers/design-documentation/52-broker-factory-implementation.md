@@ -44,11 +44,11 @@ Connection pools recognize common authentication failures such as 401, 403, expi
 
 ## Current Plugin Inventory
 
-There are 36 `broker/*/plugin.json` directories, covering 34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for paper trading:
+There are 37 `broker/*/plugin.json` directories, covering 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money:
 
-`aliceblue`, `angel`, `arrow`, `compositedge`, `definedge`, `deltaexchange`, `dhan`, `dhan_sandbox`, `firstock`, `fivepaisa`, `fivepaisaxts`, `flattrade`, `fyers`, `groww`, `hdfcsecurities`, `hdfcsky`, `ibulls`, `iifl`, `iiflcapital`, `indmoney`, `jainamxts`, `kotak`, `motilal`, `mstock`, `nubra`, `paytm`, `pocketful`, `rmoney`, `samco`, `shoonya`, `tradejini`, `tradesmart`, `upstox`, `wisdom`, `zebu`, and `zerodha`.
+`aliceblue`, `angel`, `arrow`, `compositedge`, `definedge`, `deltaexchange`, `dhan`, `dhan_sandbox`, `firstock`, `fivepaisa`, `fivepaisaxts`, `flattrade`, `fyers`, `groww`, `hdfcsecurities`, `hdfcsky`, `ibulls`, `iifl`, `iiflcapital`, `indmoney`, `jainamxts`, `kotak`, `motilal`, `mstock`, `nubra`, `paytm`, `pocketful`, `rmoney`, `rupeezy`, `samco`, `shoonya`, `tradejini`, `tradesmart`, `upstox`, `wisdom`, `zebu`, and `zerodha`.
 
-Only `deltaexchange` declares `broker_type: crypto` and `leverage_config: true`; the other 35 declare `broker_type: IN_stock` with `leverage_config: false`.
+Only `deltaexchange` declares `broker_type: crypto` and `leverage_config: true`; the other 36 declare `broker_type: IN_stock` with `leverage_config: false`.
 
 Individual broker symbol limits and depth capabilities are adapter/upstream concerns and must not be inferred from the generic 1000-by-3 pool defaults.
 

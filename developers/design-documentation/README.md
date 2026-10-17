@@ -2,7 +2,7 @@
 
 This directory describes the implemented architecture of OpenAlgo `2.0.2.2`. OpenAlgo is a self-hosted, single-user trading application with a Flask/Flask-RESTX backend, React 19 frontend, broker plugins, a separate WebSocket proxy, sandbox execution, hosted strategies, Flow automation, portfolio analytics, chart trading, and optional local or remote MCP access.
 
-The current inventory is 36 broker plugins: 34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for paper trading. Every one of the 36 has a `plugin.json`. Broker capabilities are metadata-driven; a plugin's presence does not imply every optional broker operation is supported.
+The current inventory is 37 broker plugins: 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. Every one of the 37 has a `plugin.json`. Broker capabilities are metadata-driven; a plugin's presence does not imply every optional broker operation is supported.
 
 ## Documentation Policy
 

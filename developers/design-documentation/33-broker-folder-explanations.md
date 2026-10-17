@@ -35,7 +35,7 @@ broker/
 │   └── ... (same shape)
 ├── angel/
 │   └── ... (same shape)
-└── ... (36 broker plugins total)
+└── ... (37 broker plugins total)
 ```
 
 The streaming files are named after the broker, so Angel uses `broker/angel/streaming/angel_adapter.py` and so on. Not every plugin ships every optional module: `gtt_api.py` exists only for Dhan and Zerodha, and `<broker>_order_adapter.py` only where the broker pushes order updates. `mapping/` and `database/` have no `__init__.py` in most plugins.
@@ -66,7 +66,7 @@ def get_feed_token():
 
 ### 2. api/order_api.py
 
-Order management operations. All 36 plugins expose the same set.
+Order management operations. All 37 plugins expose the same set.
 
 ```python
 # Required functions
@@ -270,9 +270,9 @@ Broker metadata plus a small amount of capability configuration.
 > **Important**: `plugin.json` carries identity plus the three capability keys
 > `supported_exchanges`, `broker_type` and `leverage_config`. It does NOT contain API
 > URLs, credentials or rate limits. Authentication methods, API endpoints and WebSocket
-> URLs are handled directly in the broker's Python code. Of the 36 plugins, only
+> URLs are handled directly in the broker's Python code. Of the 37 plugins, only
 > `deltaexchange` declares `"broker_type": "crypto"` with `"leverage_config": true`;
-> the other 35 declare `"broker_type": "IN_stock"` with `"leverage_config": false`.
+> the other 36 declare `"broker_type": "IN_stock"` with `"leverage_config": false`.
 
 ## Adding a New Broker
 
@@ -301,7 +301,7 @@ touch broker/newbroker/{api,mapping,database,streaming}/__init__.py
 VALID_BROKERS = 'zerodha,dhan,angel,newbroker'
 ```
 
-`VALID_BROKERS` in `.sample.env` currently lists all 36 plugins.
+`VALID_BROKERS` in `.sample.env` currently lists all 37 plugins.
 
 ## Field Mapping Examples
 

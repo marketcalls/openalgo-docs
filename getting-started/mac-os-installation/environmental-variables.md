@@ -110,10 +110,10 @@ Set to `'TRUE'` and point `HOST_SERVER` at your Ngrok domain if you tunnel the i
 
 ### Broker allowlist
 
-`VALID_BROKERS` is a comma-separated list of enabled broker plugin keys. The release template enables all 36:
+`VALID_BROKERS` is a comma-separated list of enabled broker plugin keys. The release template enables all 37:
 
 ```dotenv
-VALID_BROKERS = 'fivepaisa,fivepaisaxts,aliceblue,angel,arrow,compositedge,dhan,dhan_sandbox,definedge,deltaexchange,firstock,flattrade,fyers,groww,hdfcsecurities,hdfcsky,ibulls,iifl,iiflcapital,indmoney,jainamxts,kotak,motilal,mstock,nubra,paytm,pocketful,rmoney,samco,shoonya,tradejini,tradesmart,upstox,wisdom,zebu,zerodha'
+VALID_BROKERS = 'fivepaisa,fivepaisaxts,aliceblue,angel,arrow,compositedge,dhan,dhan_sandbox,definedge,deltaexchange,firstock,flattrade,fyers,groww,hdfcsecurities,hdfcsky,ibulls,iifl,iiflcapital,indmoney,jainamxts,kotak,motilal,mstock,nubra,paytm,pocketful,rmoney,rupeezy,samco,shoonya,tradejini,tradesmart,upstox,wisdom,zebu,zerodha'
 ```
 
 A broker being listed does not guarantee every optional exchange, GTT, historical-data or streaming capability. See [Brokers](../../connect-brokers/brokers/README.md).

@@ -412,7 +412,7 @@ sudo rm -rf /var/lib/docker
 
 #### Supported Brokers
 
-All 36 broker plugins in `VALID_BROKERS` are selectable during installation:
+All 37 broker plugins in `VALID_BROKERS` are selectable during installation:
 
 | Broker          | Code             | XTS API |
 | --------------- | ---------------- | ------- |
@@ -444,6 +444,7 @@ All 36 broker plugins in `VALID_BROKERS` are selectable during installation:
 | Paytm Money     | `paytm`          | No      |
 | Pocketful       | `pocketful`      | No      |
 | RMoney          | `rmoney`         | Yes     |
+| Rupeezy         | `rupeezy`        | No      |
 | Samco           | `samco`          | No      |
 | Shoonya         | `shoonya`        | No      |
 | Tradejini       | `tradejini`      | No      |

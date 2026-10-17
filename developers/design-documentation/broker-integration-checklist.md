@@ -59,7 +59,7 @@ All are environment/configuration values; compound limits joined by semicolons a
 
 ## Response Boundaries
 
-OpenAlgo normalizes wrapper status and core fields, but broker-specific payload data is not exhaustively identical for all 36 plugins. Some endpoints intentionally return CSV, plain text, or empty webhook acknowledgements. Clients must use the endpoint contract rather than assuming every response is `{status,data}`.
+OpenAlgo normalizes wrapper status and core fields, but broker-specific payload data is not exhaustively identical for all 37 plugins. Some endpoints intentionally return CSV, plain text, or empty webhook acknowledgements. Clients must use the endpoint contract rather than assuming every response is `{status,data}`.
 
 ## Adding A Resource
 

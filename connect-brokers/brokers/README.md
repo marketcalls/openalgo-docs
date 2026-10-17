@@ -1,6 +1,6 @@
 # Brokers
 
-OpenAlgo currently includes **36 broker plugin directories**: 34 securities brokers, a Dhan sandbox plugin for paper trading, and [Delta Exchange](../../crypto/exchanges/delta-exchange.md) for crypto derivatives, which is documented separately under Crypto. This section lists the 35 plugins that connect to a securities account, including the Dhan sandbox.
+OpenAlgo currently includes **37 broker plugin directories**: 35 securities brokers, a Dhan sandbox plugin for testing without real money, and [Delta Exchange](../../crypto/exchanges/delta-exchange.md) for crypto derivatives, which is documented separately under Crypto. This section lists the 36 plugins that connect to a securities account, including the Dhan sandbox.
 
 The names below are the display names. The short code in brackets is the plugin directory under `broker/`, and it is also the code that must appear in your `REDIRECT_URL` as `http://127.0.0.1:5000/<code>/callback`. OpenAlgo reads the active broker out of that URL, so the code has to match exactly.
 

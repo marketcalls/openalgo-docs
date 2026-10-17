@@ -68,10 +68,10 @@ Historify is DuckDB rather than SQLite, so its value is a plain file path and no
 
 ## Broker Allowlist
 
-`VALID_BROKERS` is a comma-separated list of enabled plugin keys. The release template contains all 36 installed plugins:
+`VALID_BROKERS` is a comma-separated list of enabled plugin keys. The release template contains all 37 installed plugins:
 
 ```dotenv
-VALID_BROKERS = 'fivepaisa,fivepaisaxts,aliceblue,angel,arrow,compositedge,dhan,dhan_sandbox,definedge,deltaexchange,firstock,flattrade,fyers,groww,hdfcsecurities,hdfcsky,ibulls,iifl,iiflcapital,indmoney,jainamxts,kotak,motilal,mstock,nubra,paytm,pocketful,rmoney,samco,shoonya,tradejini,tradesmart,upstox,wisdom,zebu,zerodha'
+VALID_BROKERS = 'fivepaisa,fivepaisaxts,aliceblue,angel,arrow,compositedge,dhan,dhan_sandbox,definedge,deltaexchange,firstock,flattrade,fyers,groww,hdfcsecurities,hdfcsky,ibulls,iifl,iiflcapital,indmoney,jainamxts,kotak,motilal,mstock,nubra,paytm,pocketful,rmoney,rupeezy,samco,shoonya,tradejini,tradesmart,upstox,wisdom,zebu,zerodha'
 ```
 
 Broker presence does not guarantee every optional exchange, GTT, historical-data, or streaming capability. See [Brokers](../../connect-brokers/brokers/README.md).

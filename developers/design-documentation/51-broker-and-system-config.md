@@ -26,7 +26,7 @@ The UI is part of `frontend/src/pages/Profile.tsx`. Broker selection/login uses 
 
 ## Capability Loading
 
-At startup `utils/plugin_loader.py` calls `load_broker_capabilities()`, which reads every `broker/*/plugin.json` that declares `supported_exchanges` into the module-level `_broker_capabilities` dict. All 36 plugins qualify today: 34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for paper trading. `/api/broker/capabilities` reads the broker from the Flask session and serves the cached record through `get_broker_capabilities()`. No session broker returns HTTP 400. A missing capability record falls back to a minimal `IN_stock` object with an empty `supported_exchanges` list and `leverage_config: false`.
+At startup `utils/plugin_loader.py` calls `load_broker_capabilities()`, which reads every `broker/*/plugin.json` that declares `supported_exchanges` into the module-level `_broker_capabilities` dict. All 37 plugins qualify today: 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. `/api/broker/capabilities` reads the broker from the Flask session and serves the cached record through `get_broker_capabilities()`. No session broker returns HTTP 400. A missing capability record falls back to a minimal `IN_stock` object with an empty `supported_exchanges` list and `leverage_config: false`.
 
 ## Security Boundaries
 

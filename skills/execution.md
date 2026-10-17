@@ -4,7 +4,7 @@
 
 A comprehensive agent-skill package covering the full OpenAlgo Python SDK surface, trading execution, custom limit-order algorithms, scanners, visualization, backtesting, charting, real-time WebSocket streaming, and Telegram / WhatsApp alerts for Indian markets (NSE, BSE, NFO, BFO, CDS, BCD, MCX, NCO). Works with **40+ AI coding agents** via [skills.sh](https://github.com/vercel-labs/skills), including Claude Code, Cursor, Codex, OpenCode, Cline, Windsurf, GitHub Copilot, Gemini CLI, Roo Code, and more.
 
-Broker-agnostic by design: one Python SDK targets the common interface exposed by 36 broker plugins (34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin). Optional capabilities still depend on the active plugin and account. The skill is **response-aware**: every reference doc and example demonstrates how to chain endpoints together (e.g. place order → poll status → read fill price → compute SL → attach SL+target → alert) so the agent can write complete strategies, not just isolated API calls.
+Broker-agnostic by design: one Python SDK targets the common interface exposed by 37 broker plugins (35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin). Optional capabilities still depend on the active plugin and account. The skill is **response-aware**: every reference doc and example demonstrates how to chain endpoints together (e.g. place order → poll status → read fill price → compute SL → attach SL+target → alert) so the agent can write complete strategies, not just isolated API calls.
 
 #### Quick Install
 

@@ -60,7 +60,7 @@ Each consumer subscribes to the symbols and mode it wants (LTP, quote, or depth)
 | `blueprints/` | Flask route modules, one per feature area, roughly 60 of them |
 | `restx_api/` | The versioned REST API surface and its request schemas |
 | `services/` | Business logic, around 80 modules, shared by the API and the UI |
-| `broker/` | 36 broker plugins, each with its own `api/` and `mapping/` |
+| `broker/` | 37 broker plugins, each with its own `api/` and `mapping/` |
 | `websocket_proxy/` | Streaming server, broker adapters, connection manager |
 | `database/` | SQLAlchemy models and per-domain data access |
 | `sandbox/` | Analyzer mode: simulated execution, margin, positions |

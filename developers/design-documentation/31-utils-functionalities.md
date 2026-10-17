@@ -278,7 +278,7 @@ def load_broker_auth_functions(broker_directory="broker"):
 
     Discovery only walks the directory. Each broker's
     broker.<name>.api.auth_api module is imported on first
-    access, so startup never pays for 36 broker imports.
+    access, so startup never pays for 37 broker imports.
     """
 
 def load_broker_capabilities(broker_directory="broker"):

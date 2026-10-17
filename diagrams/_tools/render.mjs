@@ -8,6 +8,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import http from 'node:http'
+import { fileURLToPath } from 'node:url'
 import puppeteer from 'puppeteer-core'
 
 const [, , input, output] = process.argv
@@ -15,7 +16,8 @@ if (!input || !output) {
   console.error('usage: node render-html.mjs input.html output.png')
   process.exit(2)
 }
-const HERE = path.dirname(new URL(import.meta.url).pathname)
+// fileURLToPath, not .pathname: on Windows the pathname is /D:/... and breaks path.join.
+const HERE = path.dirname(fileURLToPath(import.meta.url))
 const CHROME = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 const body = fs.readFileSync(input, 'utf8')
 const html = `<!doctype html><html><head><meta charset="utf-8">
