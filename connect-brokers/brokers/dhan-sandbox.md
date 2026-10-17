@@ -8,7 +8,7 @@ Dhan SandBox API is a simulated testing environment designed for developers and 
 
 **Who Should Integrate Dhan SandBox API with OpenAlgo?**
 
-OpenAlgo is an open-source algo trading automation framework that connects with platforms like TradingView, Amibroker, and custom dashboards. Integrating Dhan’s SandBox API with OpenAlgo is highly recommended for:
+OpenAlgo is an open-source, all-in-one trading platform that also connects with tools like TradingView, Amibroker, and custom dashboards. Integrating Dhan’s SandBox API with OpenAlgo is highly recommended for:
 
 * **Algo Developers** building broker connectors.
 * **Traders** who want to simulate real-time automated strategies before going live.

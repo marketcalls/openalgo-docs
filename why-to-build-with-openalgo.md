@@ -15,7 +15,7 @@ That's when you realize the SDK is not enough.
 
 **OpenAlgo takes care of the heavy lifting.**
 
-It's not just an API wrapper. It's a **full-stack, open-source trading platform** you run on your own machine: a complete trading desk, not only an execution layer.
+It's not just an API wrapper. OpenAlgo is **the open source trading ecosystem for everyone**: an all-in-one platform you run on your own machine, a complete trading desk rather than only an execution layer.
 
 <figure><img src=".gitbook/assets/image (123).png" alt=""><figcaption></figcaption></figure>
 
@@ -27,7 +27,7 @@ It's not just an API wrapper. It's a **full-stack, open-source trading platform*
 | --- | --- |
 | **36 broker plugins** | 34 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin |
 | **8 official SDKs** | Python, Node.js, Java, .NET, Go, Rust, R, MATLAB |
-| **53 node types** | In the Flow visual strategy builder |
+| **61 node types** | In the Flow visual strategy builder |
 | **90+ indicators** | In the built-in charting terminal |
 | **18 options tools** | Chain, Greeks, OI, max pain, vol surface, GEX and more |
 | **100% open source** | AGPL-3.0, self-hosted, zero data collection |
@@ -82,7 +82,7 @@ Host your **Python strategies directly inside OpenAlgo**, alongside strategies f
 | Capability | Description |
 | --- | --- |
 | **Python Strategy Hosting** | Upload and run Python scripts with scheduling |
-| **Flow Visual Builder** | Drag-and-drop canvas wiring 53 node types from triggers to indicators, conditions and orders |
+| **Flow Visual Builder** | Drag-and-drop canvas wiring 61 node types from triggers to indicators, conditions and orders |
 | **Multi-Platform Support** | TradingView, Amibroker, ChartInk, Excel, and more |
 | **Centralized Control** | Manage all strategies from one dashboard |
 | **Process Isolation** | Hosted strategies run in separate processes |
@@ -249,7 +249,7 @@ With direct broker APIs, you'd have to build:
 | Component | What You'd Build | OpenAlgo Provides |
 | --- | --- | --- |
 | **Strategy Hosting** | Process management, scheduling | Built-in with Python hosting |
-| **Visual Strategy Building** | Node editor, execution engine | Flow with 53 node types |
+| **Visual Strategy Building** | Node editor, execution engine | Flow with 61 node types |
 | **Testing Environment** | Sandbox, mock broker | Analyzer Mode with 1 crore capital |
 | **Charting** | Charting library, indicator maths | Built-in terminal with 90+ indicators |
 | **Options Analytics** | Chain, Greeks, payoff, OI, vol surface | 18 options tools included |

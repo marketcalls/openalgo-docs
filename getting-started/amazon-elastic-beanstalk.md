@@ -3,7 +3,7 @@
 ## Hosting OpenAlgo in the Cloud using Amazon AWS Elastic Beanstalk
 
 \
-[OpenAlgo](https://openalgo.in/) is an open-source algo trading platform, offering a wide range of features for both beginners and experienced traders. This tutorial guides you through the process of hosting OpenAlgo in the cloud using Amazon AWS Elastic Beanstalk.
+[OpenAlgo](https://openalgo.in/) is the open source trading ecosystem for everyone: an all-in-one platform for charting, options analytics, automation and risk management, for both beginners and experienced traders. This tutorial guides you through the process of hosting OpenAlgo in the cloud using Amazon AWS Elastic Beanstalk.
 
 
 

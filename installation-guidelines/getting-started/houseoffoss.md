@@ -10,7 +10,7 @@ description: One-Click OpenAlgo Installation with House Of FOSS
 
 ### Overview
 
-You can now install **OpenAlgo**, the 100% open-source algorithmic trading platform, directly in the cloud - with just **one click**, using [**House of FOSS**](https://www.houseoffoss.com/).
+You can now install **OpenAlgo**, the 100% open-source, all-in-one trading platform, directly in the cloud - with just **one click**, using [**House of FOSS**](https://www.houseoffoss.com/).
 
 No complex setups.\
 No manual server configuration.\

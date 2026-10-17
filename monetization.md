@@ -4,7 +4,7 @@
 
 
 
-OpenAlgo is an open-source, algorithmic trading framework written in Python under the AGPL v3.0 license. The AGPL enforces that any modifications or use of the software over a network must be made available to users under the same license.
+OpenAlgo is an open-source trading platform, written in Python with a React frontend, released under the AGPL v3.0 license. The AGPL enforces that any modifications or use of the software over a network must be made available to users under the same license.
 
 If you take OpenAlgo, modify its core features (e.g., add a new trading algorithm or improve the user interface), and host it as a web service where users can log in and trade using your modified version. Under the AGPL-3.0 license, you are required to:\
 \
