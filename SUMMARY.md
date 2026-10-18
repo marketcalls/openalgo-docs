@@ -116,6 +116,7 @@
   * [Upgrade](getting-started/upgrade.md)
   * [Maintaining a Custom Repository](getting-started/maintaining-a-custom-repository.md)
   * [Migrating to gthread (Experimental)](getting-started/gthread-migration.md)
+* [GrokBot](installation-guidelines/grokbot.md)
 * [Static IP](static-ip.md)
 * [Latency](latency.md)
 * [Themes](installation-guidelines/themes.md)
