@@ -13,16 +13,16 @@ The OpenAlgo repository also ships a Grok Bot skill (`.claude/skills/grokbot-set
 {% endhint %}
 
 {% hint style="warning" %}
-**Static IP.** The Grok Bot computer does not have a static IP. Under the SEBI retail algo trading rules, Indian brokers reject live API orders that do not come from a registered static IP. On the Grok Bot computer you can log in, stream data, use charts, run backtests, build Flows and run strategies in Sandbox mode. For live orders, run OpenAlgo on a server with a registered static IP. See [Static IP](../static-ip.md).
+**Static IP.** The Grok Bot computer does not have a static IP. Under the SEBI retail algo trading rules, Indian brokers reject live API orders that do not come from a registered static IP. On the Grok Bot computer you can log in, stream data, use charts, run backtests, build Flows and run strategies in Sandbox mode. For live orders, run OpenAlgo on a server with a registered static IP. See [Static IP](../../static-ip.md).
 {% endhint %}
 
 ### What you need before you start
 
 * A Grok Bot account with its computer available.
-* Your broker's API credentials (API key and secret, and for some brokers a separate market data key and secret). Create the broker app by following your broker's page under [Connect Brokers](../connect-brokers/brokers/README.md).
+* Your broker's API credentials (API key and secret, and for some brokers a separate market data key and secret). Create the broker app by following your broker's page under [Connect Brokers](../../connect-brokers/brokers/README.md).
 * The redirect URL to register in your broker's developer console: `http://127.0.0.1:5000/<broker>/callback`, where `<broker>` is the broker code used by OpenAlgo (the folder name under `broker/` in the OpenAlgo repository).
 * A username, email and strong password for your OpenAlgo account.
-* For the automated daily login: whatever your broker asks for every morning (user ID, password or PIN) and your **TOTP secret** (the base32 setup key shown when you enabled TOTP at the broker, not a 6-digit code). See [TOTP Configuration](../getting-started/totp-configuration.md).
+* For the automated daily login: whatever your broker asks for every morning (user ID, password or PIN) and your **TOTP secret** (the base32 setup key shown when you enabled TOTP at the broker, not a 6-digit code). See [TOTP Configuration](../../getting-started/totp-configuration.md).
 
 {% hint style="danger" %}
 Never paste passwords, API keys or TOTP secrets into an ordinary chat message. Grok Bot collects them through its secure forms and stores them on its computer with owner-only permissions (`chmod 600`). It never repeats them in chat, logs or reports.
@@ -247,11 +247,11 @@ OpenAlgo is updated often. A routine every **Sunday at 6:00 AM IST** keeps the i
 9. **Reconnect the broker** and confirm the dashboard, `ping` and a quote work.
 10. **Report** the old and new version and any new settings added (names only).
 
-If any step after the backup fails, the routine restores the previous commit and the backed-up `.env` and databases together, restarts and reports the error. The full manual procedure for every installation type is on the [Upgrade](../getting-started/upgrade.md) page.
+If any step after the backup fails, the routine restores the previous commit and the backed-up `.env` and databases together, restarts and reports the error. The full manual procedure for every installation type is on the [Upgrade](../../getting-started/upgrade.md) page.
 
 ### Step 12: Historify daily data scheduling
 
-[Historify](../new-features/historify.md) stores historical OHLCV data in a local database (`db/historify.duckdb`) for research and backtests.
+[Historify](../../new-features/historify.md) stores historical OHLCV data in a local database (`db/historify.duckdb`) for research and backtests.
 
 1. Open `/historify` and add symbols to the watchlist. The bulk add box accepts one `SYMBOL,EXCHANGE` per line, for example:
    ```
@@ -304,10 +304,10 @@ After a restart, log in to the broker again if the dashboard shows it disconnect
 | "Address already in use" on port 5000 or 8765 | Another copy of OpenAlgo is already running | Use the running copy, or stop it before starting again |
 | The broker login fails with a redirect or callback error | The broker code in `REDIRECT_URL` does not match the URL registered with the broker | Correct `.env` or the broker app, then restart OpenAlgo |
 | "Invalid credentials" with the correct password | `API_KEY_PEPPER` or `FERNET_SALT` changed after the account was created | Restore them from the `.env` backup; see `upgrade/README.md` in the OpenAlgo repository |
-| Forgot the OpenAlgo password | No SMTP or authenticator set up | See [Forgot Password](../getting-started/forgot-password.md) |
+| Forgot the OpenAlgo password | No SMTP or authenticator set up | See [Forgot Password](../../getting-started/forgot-password.md) |
 | The TOTP code is typed but the broker page does not continue | The page did not submit automatically, or the code expired | Click the submit button; generate a new code if more than about 25 seconds have passed |
 | API calls return 403 in the morning | The broker session expired at about 3:00 AM IST | Log in to the broker again, or check that the 8:00 AM routine ran |
 | Symbols not found right after login | The master contract is still downloading | Wait until the dashboard shows it ready |
-| Live orders are rejected | No registered static IP on the Grok Bot computer | Use Sandbox mode here and a static IP server for live orders ([Static IP](../static-ip.md)) |
+| Live orders are rejected | No registered static IP on the Grok Bot computer | Use Sandbox mode here and a static IP server for live orders ([Static IP](../../static-ip.md)) |
 | The Historify schedule did not run | OpenAlgo was stopped or the broker was disconnected at 18:00 | Keep the app running and the broker connected; run a manual download for the missed days |
 | The upgrade routine stopped without changes | The repository had local changes or was not on `main` | Review the changes yourself; the routine never discards your work |
