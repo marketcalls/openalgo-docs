@@ -35,7 +35,7 @@ For live order placement with an Indian broker, SEBI rules require a registered 
 
 ### AI assistant computer
 
-* [GrokBot](../installation-guidelines/grokbot.md): install and run OpenAlgo from scratch inside a Grok Bot computer, with daily broker login, weekly upgrade and Historify scheduling routines
+* [GrokBot](../installation-guidelines/getting-started/grokbot.md): install and run OpenAlgo from scratch inside a Grok Bot computer, with daily broker login, weekly upgrade and Historify scheduling routines
 
 ### Servers and cloud
 
