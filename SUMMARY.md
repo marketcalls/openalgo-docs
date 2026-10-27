@@ -31,6 +31,21 @@
 * [Contributors](contributors.md)
 * [Monetization](monetization.md)
 
+## OpenAlgo Desktop
+
+* [OpenAlgo Desktop](openalgo-desktop/README.md)
+  * [Download and System Requirements](openalgo-desktop/download-and-system-requirements.md)
+  * [Install on Windows](openalgo-desktop/install-on-windows.md)
+  * [Install on macOS](openalgo-desktop/install-on-macos.md)
+  * [Install on Linux](openalgo-desktop/install-on-linux.md)
+  * [First Run and Broker Login](openalgo-desktop/first-run-and-broker-login.md)
+  * [Ports and Server Settings](openalgo-desktop/ports-and-server-settings.md)
+  * [Webhooks and the Built-in ngrok Tunnel](openalgo-desktop/webhooks-and-ngrok-tunnel.md)
+  * [Data, Security and Backups](openalgo-desktop/data-security-and-backups.md)
+  * [Updating and Uninstalling](openalgo-desktop/updating-and-uninstalling.md)
+  * [Technology Stack](openalgo-desktop/technology-stack.md)
+  * [Troubleshooting and FAQ](openalgo-desktop/troubleshooting-and-faq.md)
+
 ## Connect Brokers
 
 * [Brokers](connect-brokers/brokers/README.md)

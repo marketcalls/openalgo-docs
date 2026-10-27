@@ -10,6 +10,10 @@ Pick the guide that matches where you want to run OpenAlgo. Every guide ends wit
 For live order placement with an Indian broker, SEBI rules require a registered static IP. Read [Static IP](../static-ip.md) before choosing where to install.
 {% endhint %}
 
+{% hint style="success" %}
+Want OpenAlgo as an app, with nothing else to install? [OpenAlgo Desktop](../openalgo-desktop/README.md) installs with one file on Windows, macOS and Linux: no Python, no `.env` file, no server. The guides below install OpenAlgo web.
+{% endhint %}
+
 ### Desktop and laptop
 
 * [Windows Desktop](windows-installation/)
