@@ -12,26 +12,77 @@ tunnel: they use `http://127.0.0.1:5000` directly.
 OpenAlgo Desktop has ngrok built in. Nothing else to install, and no separate
 ngrok program to keep running.
 
-### What you need
+You need two things from a free ngrok account: your **authtoken** and your
+**free domain**. The domain is required. The tunnel always opens on that one
+domain, never on a random address, so the webhook addresses you paste into
+TradingView, Chartink and GoCharting never change.
 
-A free ngrok account gives you two things, both from the
-[ngrok dashboard](https://dashboard.ngrok.com):
+### Step 1: Get your authtoken and free domain from ngrok
 
-* **Your authtoken**, under **Your Authtoken**.
-* **Your free domain**, under **Domains** (one free static domain per account, for example `something.ngrok-free.app`).
+1. Sign up for a free account at [dashboard.ngrok.com](https://dashboard.ngrok.com/signup) and verify your email address.
+2. **Authtoken:** in the ngrok dashboard, open **Your Authtoken** (under Getting Started) and copy the token.
+3. **Domain:** open **Domains**. A free account has one free domain listed there, for example `yourname.ngrok-free.app`. If none is listed, create your free domain on that page. Copy the domain name.
 
-The domain is required. The tunnel always opens on that one domain, never on a
-random address, so the webhook addresses you paste into TradingView, Chartink
-and GoCharting never change.
+Keep the authtoken private: anyone who has it can open tunnels on your ngrok
+account.
 
-### Turn it on
+### Step 2: Enter them in OpenAlgo Desktop
 
-1. In OpenAlgo, open the profile menu, **Profile**, then the **Broker** tab.
-2. In the **Server Configuration** card, paste the authtoken and the domain and choose **Save authtoken and domain**. The authtoken is kept encrypted and never shown again.
-3. Tick **Enable Ngrok Tunnel** and choose **Save Ngrok Settings**.
+1. Sign in to OpenAlgo Desktop.
+2. Open the profile menu (top right), **Profile**, then the **Broker** tab.
+3. In the **Server Configuration** card, find **Built-in ngrok tunnel**.
+4. Paste the token into **ngrok authtoken** and the domain into **ngrok domain** (just the name, such as `yourname.ngrok-free.app`; a pasted `https://` in front is removed when it is saved).
+5. Choose **Save authtoken and domain**. The field then says **An authtoken is saved.** The authtoken is stored encrypted and is never shown again; to change it, paste a new one and save.
 
-The card shows the tunnel's state: **Connecting**, then **Online** with its
-`https://` address.
+### Step 3: Switch the tunnel on
+
+In the same card, tick **Enable Ngrok Tunnel** and choose **Save Ngrok
+Settings**. The tunnel's status changes from **Connecting to ngrok.** to
+**Online at https://yourname.ngrok-free.app** within a few seconds.
+
+### Step 4: Check that it works
+
+* The status in the card says **Online at** your address.
+* Open `https://<your domain>` in a browser. On ngrok's free plan you may first see ngrok's own warning page about visiting the site; continue past it. OpenAlgo then answers: "This address takes alerts and API calls for OpenAlgo Desktop only. To use OpenAlgo, open it on the computer where it is installed." That is correct: the tunnel works, and your OpenAlgo pages and login stay closed to the internet. Alerts from TradingView and similar services are not shown ngrok's warning page.
+* The **TradingView**, **GoCharting** and **Chartink** pages in OpenAlgo now show webhook addresses that start with `https://<your domain>`.
+
+### Step 5: Use the addresses in your alert services
+
+Copy each webhook address from its page in OpenAlgo, so it is always exact:
+
+| Service | Where to copy the address | It looks like |
+| --- | --- | --- |
+| TradingView, strategy alerts | **Platforms**, **TradingView** | `https://<your domain>/api/v1/placesmartorder` |
+| TradingView, line alerts | **Platforms**, **TradingView** | `https://<your domain>/api/v1/placeorder` |
+| GoCharting | **Platforms**, **GoCharting** | `https://<your domain>/api/v1/placeorder` |
+| Chartink | **Platforms**, **Chartink**, the Chartink strategy | `https://<your domain>/chartink/webhook/<secret>` |
+| A strategy on the Strategies page | **Strategies**, the strategy's page | `https://<your domain>/strategy/webhook/<secret>` |
+
+Test new alerts with analyzer mode on first, so they go to the sandbox.
+
+### Tunnel status messages and what to do
+
+| The card says | What to do |
+| --- | --- |
+| The tunnel is off. | Tick **Enable Ngrok Tunnel** and save |
+| Add your ngrok authtoken to start the tunnel. | Step 2: paste the authtoken and save |
+| Add your ngrok domain: the free domain listed under Domains in your ngrok dashboard. | Step 2: paste the domain and save |
+| The tunnel starts when you sign in to OpenAlgo. | Sign in; the tunnel opens by itself |
+| Connecting to ngrok. | Wait a few seconds |
+| The connection to ngrok was lost. Reconnecting. | Nothing; it reconnects by itself. Check your internet if it stays |
+| ngrok did not accept the authtoken... | Copy the token again from **Your Authtoken**, paste it and save |
+| Your ngrok account cannot use the domain... | Check the domain under **Domains** in the ngrok dashboard and save exactly that name |
+| ngrok offered another address than your domain... | Same as above: save the domain listed under **Domains** |
+| ngrok will not start a tunnel for this account... | Sign in to the ngrok dashboard to see why (for example, an email still to verify) |
+| Your ngrok domain ... is in use by another ngrok agent... | Stop the other ngrok (OpenAlgo web, the ngrok program, or another computer). OpenAlgo keeps trying |
+| Cannot reach ngrok... | Check your internet connection and firewall; OpenAlgo keeps trying |
+| Your saved ngrok authtoken could not be read... | Paste the authtoken again and save |
+
+To switch the tunnel off, untick **Enable Ngrok Tunnel** and save.
+
+If you used OpenAlgo Desktop 1.0.2 or earlier with Enable Ngrok Tunnel on and
+a tunnel you ran yourself, after updating the card asks for your authtoken and
+domain; nothing changes until you add them.
 
 ### What changes when it is on
 
