@@ -13,7 +13,7 @@ The frontend is a React 19 TypeScript SPA built with Vite 8. Current package con
 | Icons | Lucide React |
 | Forms/editors | Radix primitives, CodeMirror 6 through `@uiw/react-codemirror` |
 | Flow canvas | XYFlow 12 |
-| Charts | Plotly 3 (`plotly.js-dist-min`) and Lightweight Charts 5 |
+| Charts | Plotly 3 (`plotly.js-dist-min`) and openalgo-charts (every price and time-series chart) |
 | Live app events | Socket.IO client 4 |
 | Language | TypeScript 7 |
 | Tests | Vitest 4, Testing Library, axe, Playwright |

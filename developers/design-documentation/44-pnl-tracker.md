@@ -163,9 +163,9 @@ The PnL tracker relies on these services (no dedicated database):
 **Location:** `frontend/src/pages/PnLTracker.tsx`
 
 The React frontend:
-- Polls `/pnltracker/api/pnl` periodically
+- Loads `/pnltracker/api/pnl` when the page opens and again on Refresh
 - Renders metrics cards (current MTM, max, min, drawdown)
-- Uses LightWeight Charts for interactive P&L visualization
+- Draws the P&L curve with openalgo-charts, the engine the /trading terminal uses
 - Shows separate drawdown chart below main chart
 
 ### Legacy Compatibility Route

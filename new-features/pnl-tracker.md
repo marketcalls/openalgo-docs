@@ -29,7 +29,7 @@ Two Baseline series are drawn in **separate panes**, split three to one in favou
 | MTM PnL, below break-even | Upper (3 parts) | Red |
 | Drawdown from peak | Lower (1 part) | Amber |
 
-The chart is built on TradingView Lightweight Charts v5 and follows the application theme, so it redraws when you switch between light and dark.
+The chart is drawn by OpenAlgo Charts, the same engine as the trading terminal, and follows the application theme in light, dark and analyzer mode. Switching the theme restyles the chart in place without reloading your P&L.
 
 A camera control captures the metrics and the chart together as a single image for sharing or journalling.
 
