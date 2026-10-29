@@ -39,7 +39,7 @@ On success:
 
 #### **Step 3: Whitelist your Static IP**
 
-<figure><img src="../../.gitbook/assets/samco_2 (4).PNG" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/samco_2 (3).PNG" alt=""><figcaption></figcaption></figure>
 
 Open **Security > Static IPs**. This is a SEBI requirement: order requests are accepted **only** from IPs you have whitelisted here.
 
@@ -47,7 +47,7 @@ Open **Security > Static IPs**. This is a SEBI requirement: order requests are a
 2. Choose **PRIMARY** (required) or **SECONDARY** (optional backup).
 3. Click **Save** and confirm with the OTP.
 
-#### Step 4 : Environment Configuration&#x20;
+#### Step 4 : Environment Configuration
 
 After creating the app and whitelisting your IP, configure the credentials in your .env file.
 

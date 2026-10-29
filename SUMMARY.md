@@ -75,6 +75,7 @@
   * [Nubra](connect-brokers/brokers/nubra.md)
   * [Paytm](connect-brokers/brokers/paytm.md)
   * [Pocketful](connect-brokers/brokers/pocketful.md)
+  * [Sahi](connect-brokers/brokers/sahi.md)
   * [Samco](connect-brokers/brokers/samco.md)
   * [Shoonya](connect-brokers/brokers/shoonya.md)
   * [RMoney (XTS)](connect-brokers/brokers/rmoney.md)
