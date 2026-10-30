@@ -12,7 +12,7 @@ one trader on one computer.
 * Source code: [github.com/marketcalls/openalgo-desktop](https://github.com/marketcalls/openalgo-desktop)
 * Runs on Windows 10 and 11, macOS (Apple Silicon and Intel) and Linux (x64 and ARM64)
 
-{% embed url="https://www.youtube.com/watch?v=DgFwpvuxQr8" %}
+{% embed url="https://www.youtube.com/watch?v=omI1fUCH2Ng" %}
 
 ## What you get
 

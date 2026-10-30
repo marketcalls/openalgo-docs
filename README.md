@@ -6,7 +6,7 @@ You do not need a separate charting subscription, an options analytics tool, an 
 
 Under the hood, OpenAlgo is built with Python Flask and a modern React frontend. It provides a unified API layer across 37 broker plugins: 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. It accepts signals from Amibroker, TradingView, GoCharting, N8N, ChartInk, MetaTrader 5, Excel, Google Sheets, and a Chrome extension, and ships eight official SDKs: Python, Node.js, Java, .NET, Go, Rust, R, and MATLAB.
 
-{% embed url="https://www.youtube.com/watch?v=DgFwpvuxQr8" %}
+{% embed url="https://www.youtube.com/watch?v=omI1fUCH2Ng" %}
 
 ***
 
