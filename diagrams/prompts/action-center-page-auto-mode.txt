@@ -1,0 +1,11 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Auto mode: from signal to submission"
+Subtitle: "Eligible requests proceed without an approval click."
+Three cards left to right, then fork to two stacked outcomes:
+1 "Trading signal" / "From your strategy, TradingView or the Python SDK"
+2 "OpenAlgo checks it" / "Your API key and the order details" / "/api/v1"
+3 "Analyzer mode on?" / "Live or sandbox mode"
+Arrows: 1 -> 2 -> 3. From card 3, a rightward arrow labeled "off: live" to upper outcome "Your broker" / "Submission attempted; fills are confirmed separately". From card 3 a rightward arrow labeled "on: sandbox" to lower outcome "Sandbox" / "Sandbox order; fills follow sandbox rules" / "sandbox.db".
+Bottom note: "Auto is the default. Semi-auto can hold eligible live API-key placements in the Action Center for approval."
+Preserve the live-versus-sandbox fork. Do not imply broker submission guarantees a fill.

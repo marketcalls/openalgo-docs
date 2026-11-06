@@ -1,0 +1,15 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "An order is checked, routed and reported"
+Subtitle: "TradingView · Python SDK · Excel · terminal"
+Use exactly these eleven cards at specified positions and ONLY the specified arrows. Card text in quotes.
+Top row: A "1. Send order" / "Details + API key" / "/api/v1/placeorder"; B "2. Gatekeeper" / "Rate limit + schema check"; C "3. Eligible live semi-auto?"; D "Action Center" / "Wait for approval".
+Second row center: E "4. Validate and find login" / "Check values; match API key to session".
+Third row center: F "5. Analyzer mode?".
+Fourth row LEFT G "Sandbox" / "Virtual order; no real money" / "sandbox_place_order"; CENTER H "Broker plugin" / "Translate symbol and order type" / "place_order_api"; RIGHT I "Your broker" / "Accept, reject, or uncertain after lost reply".
+Fifth row LEFT J "Logs and alerts" / "Order log · screen update · Telegram · WhatsApp" / "Strategy book for placed orders"; CENTER/RIGHT K "6. Report result" / "Confirmed outcome or unanswered-send warning" / "order.placed · order.failed".
+Sixth row directly BELOW K: L "7. Reply to you" / "Status and order id when confirmed".
+Arrow whitelist:
+A -> B -> C; C -> D labelled "Yes"; C -> E labelled "No"; E -> F; F -> G labelled "On"; F -> H labelled "Off"; H -> I; G -> K; I -> K; K -> J labelled "Async; no waiting"; K -> L.
+In particular F has exactly TWO outgoing arrows, to G and H only. No arrow F -> I. I receives its only incoming arrow from H. J receives its only incoming arrow from K. L has no outgoing arrow.
+Footer: "Lost reply? Check the broker order book before placing again. The transport never retries writes automatically."
+All branch labels and arrowheads must be unambiguous.

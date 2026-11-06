@@ -1,5 +1,9 @@
 # AngelOne
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 AngelOne, previously known as Angel Broking, is a prominent Indian stock brokerage firm offering a wide range of trading and investment services. For developers and fintech companies looking to integrate algorithmic trading capabilities, AngelOne provides an API gateway through its platform. This API, often referred to in the context of OpenAlgo integration, enables automated trading strategies, real-time market data access, and more.
 
 
@@ -8,7 +12,7 @@ The introductory phase of integrating with AngelOne's API typically involves:
 
 **Enable TOTP**: Developers must register for an API key through AngelOne's developer portal, which serves as the authentication mechanism for API requests.
 
-### **What is 2-factor authentication (2-FA)?** <a href="#what-is-2-factor-authentication-2-fa-3" id="what-is-2-factor-authentication-2-fa-3"></a>
+### What is 2-factor authentication (2-FA)?
 
 The 2FA or 2-factor authentication is a user authentication process where brokers offer to traders/investors any two of the following three types of authentication mechanisms to users for logging in to their online trading account-
 

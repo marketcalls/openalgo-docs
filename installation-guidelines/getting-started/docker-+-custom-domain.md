@@ -54,9 +54,6 @@ chmod +x install-docker.sh
 The script will ask you for:
 
 * Domain name (e.g., demo.openalgo.in)
-* Broker name from the supported list
-* Broker API credentials (key and secret)
-* Market data credentials (for XTS brokers only)
 * Email for SSL certificate notifications
 * Confirmation to proceed
 
@@ -67,7 +64,7 @@ The script will ask you for:
 3. Installs Nginx web server
 4. Installs Certbot for SSL
 5. Clones OpenAlgo repository to `/opt/openalgo`
-6. Configures environment variables, generating a fresh `APP_KEY` and `API_KEY_PEPPER`, setting `HOST_SERVER` and `WEBSOCKET_URL` to your domain, and switching `WEBSOCKET_HOST` and `FLASK_HOST_IP` to `0.0.0.0` so the published container ports are reachable. `ZMQ_HOST` is deliberately left on `127.0.0.1`.
+6. Leaves broker fields empty for configuration in the UI and configures application environment variables, generating a fresh `APP_KEY` and `API_KEY_PEPPER`, setting `HOST_SERVER` and `WEBSOCKET_URL` to your domain, and switching `WEBSOCKET_HOST` and `FLASK_HOST_IP` to `0.0.0.0` so the published container ports are reachable. `ZMQ_HOST` is deliberately left on `127.0.0.1`.
 7. Sets up firewall (UFW)
 8. Obtains SSL certificate from Let's Encrypt
 9. Configures Nginx with SSL and WebSocket support
@@ -81,7 +78,8 @@ The script will ask you for:
 1. Visit `https://yourdomain.com` in your browser
 2. Create your admin account
 3. Login to OpenAlgo
-4. Complete broker authentication using OAuth
+4. Open [Broker Configuration](../../connect-brokers/broker-configuration.md), save the broker keys and register the callback URL it shows
+5. Start **Login with <broker>** from Select Broker and complete that broker's login flow
 
 #### Management Commands
 
@@ -412,51 +410,9 @@ sudo rm -rf /var/lib/docker
 
 #### Supported Brokers
 
-All 37 broker plugins in `VALID_BROKERS` are selectable during installation:
+The release template enables all 38 installed plugins. See the [broker inventory](../../connect-brokers/brokers/README.md) and [Crypto](../../crypto/exchanges/delta-exchange.md). Add their keys in Broker Configuration after signing in; XTS adapters expose separate market-data fields where needed.
 
-| Broker          | Code             | XTS API |
-| --------------- | ---------------- | ------- |
-| 5paisa          | `fivepaisa`      | No      |
-| 5paisa XTS      | `fivepaisaxts`   | Yes     |
-| AliceBlue       | `aliceblue`      | No      |
-| Angel One       | `angel`          | No      |
-| Arrow           | `arrow`          | No      |
-| Compositedge    | `compositedge`   | Yes     |
-| Definedge       | `definedge`      | No      |
-| Delta Exchange  | `deltaexchange`  | No      |
-| Dhan            | `dhan`           | No      |
-| Dhan Sandbox    | `dhan_sandbox`   | No      |
-| Firstock        | `firstock`       | No      |
-| Flattrade       | `flattrade`      | No      |
-| Fyers           | `fyers`          | No      |
-| Groww           | `groww`          | No      |
-| HDFC Securities | `hdfcsecurities` | No      |
-| HDFC Sky        | `hdfcsky`        | No      |
-| IBulls          | `ibulls`         | Yes     |
-| IIFL            | `iifl`           | Yes     |
-| Iiflcapital     | `iiflcapital`    | No      |
-| IndMoney        | `indmoney`       | No      |
-| JainamXTS       | `jainamxts`      | Yes     |
-| Kotak Neo       | `kotak`          | No      |
-| Motilal Oswal   | `motilal`        | No      |
-| Mstock          | `mstock`         | No      |
-| Nubra           | `nubra`          | No      |
-| Paytm Money     | `paytm`          | No      |
-| Pocketful       | `pocketful`      | No      |
-| RMoney          | `rmoney`         | Yes     |
-| Rupeezy         | `rupeezy`        | No      |
-| Samco           | `samco`          | No      |
-| Shoonya         | `shoonya`        | No      |
-| Tradejini       | `tradejini`      | No      |
-| TradeSmart      | `tradesmart`     | No      |
-| Upstox          | `upstox`         | No      |
-| Wisdom Capital  | `wisdom`         | Yes     |
-| Zebu            | `zebu`           | No      |
-| Zerodha         | `zerodha`        | No      |
-
-**Note:** XTS API brokers require additional market data API credentials during installation.
-
-**Note:** Delta Exchange is a 24/7 crypto venue. The installer detects it and sets `DISABLE_SESSION_EXPIRY = 'true'` so the daily 03:00 IST auto-logout does not apply.
+Crypto sessions are recognized by broker type. The installation-wide `DISABLE_SESSION_EXPIRY` override is not required merely to avoid an Indian-market rollover for a crypto broker.
 
 #### System Requirements
 
@@ -490,7 +446,7 @@ All 37 broker plugins in `VALID_BROKERS` are selectable during installation:
 
 **Q: Can I run multiple OpenAlgo instances?** A: Not with this script. Each installation assumes it's the only instance.
 
-**Q: How do I change my broker after installation?** A: Edit `/opt/openalgo/.env`, update broker credentials, then run `sudo docker compose restart`.
+**Q: How do I change my broker after installation?** A: Save the new broker's keys in Broker Configuration and start its login from Select Broker. Confirm the switch after stopping relevant live automation. Existing `.env` keys for a selected broker retain precedence; see [Broker Configuration](../../connect-brokers/broker-configuration.md).
 
 **Q: Is my broker data secure?** A: Yes, all data is encrypted in transit (HTTPS/WSS) and stored locally on your server.
 

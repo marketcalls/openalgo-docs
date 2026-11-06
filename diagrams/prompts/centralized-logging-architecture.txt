@@ -1,0 +1,13 @@
+Use case: infographic-diagram. Create a polished landscape OpenAlgo documentation infographic. Deep navy #0b1020, navy panels with thin cyan, teal, violet, amber, green outlines, white headings pale gray text, large readable modern sans-serif, outline icons, generous spacing. Flat raster, no photos, 3D, watermark, invented facts. All arrows directional with heads outside text.
+Title: "Clean secrets before writing logs"
+Subtitle: "One root logging pipeline runs in every Gunicorn worker and WebSocket proxy child."
+Large boundary labeled "Logging pipeline · every process". Inside flow left to right:
+Top-left card "OpenAlgo modules" / "blueprints · restx_api · services · broker · websocket_proxy" -> "get_logger(__name__)" / "Wrapper over logging.getLogger".
+Bottom-left "Library loggers" / "werkzeug · websockets · apscheduler · httpx" -> "Quiet the noise" / "Mostly WARNING; extra filters only on werkzeug + websockets".
+Both wrappers point RIGHT into "Root logger" / "setup_logging() at import" / "LOG_LEVEL · eventlet-safe locks".
+Root -> "Secret redaction" / "SensitiveDataFilter" / "Mask API keys, tokens and passwords on every output".
+From redaction branch separately to THREE stacked output-handler cards:
+1 "Console" / "StreamHandler · always on" / "LOG_COLORS" -> right outside boundary "stderr" / "systemd journal / docker logs".
+2 "Daily log" / "TimedRotatingFileHandler · midnight" / "Only when LOG_TO_FILE is on" / "LOG_RETENTION" -> right outside boundary "openalgo_<date>.log" / "LOG_DIR · old files removed at startup".
+3 "Errors as JSON" / "FileHandler · ERROR · always on" / "JSONErrorFormatter" -> right outside boundary "errors.jsonl" / "LOG_DIR · keep last 1000 lines at startup".
+No sequential arrows between parallel outputs. Render all identifiers accurately.

@@ -1,5 +1,9 @@
 # Motilal Oswal
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Motilal Oswal Financial Services Limited (MOFSL) is one of India's leading financial services companies, offering a comprehensive suite of investment and trading services. Their API platform provides developers and algo traders with programmatic access to trading capabilities including order placement, portfolio management, and market data.
 
 OpenAlgo seamlessly integrates with Motilal Oswal's API, enabling you to execute automated trading strategies across equity, derivatives, currency, and commodity segments.

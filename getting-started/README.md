@@ -68,7 +68,11 @@ Want OpenAlgo as an app, with nothing else to install? [OpenAlgo Desktop](../ope
 * [Forgot Password](forgot-password.md)
 * [Upgrade](upgrade.md)
 * [Maintaining a Custom Repository](maintaining-a-custom-repository.md)
-* [Migrating to gthread (Experimental)](gthread-migration.md)
+* [The gthread Web Server (Optional)](gthread-migration.md)
+
+### Connect your broker after installation
+
+[Broker Configuration and Login](../connect-brokers/broker-configuration.md) explains saving keys in the UI, existing `.env` precedence, callback URLs and switching. Official new installs start with no broker configured; add the keys after creating your administrator account.
 
 ### Related
 

@@ -1,0 +1,11 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Separate capacity for alerts and trading monitors"
+Subtitle: "Order callbacks run in the background without delaying the publisher."
+One large boundary "One Flask worker · eventlet or gthread" contains a left-to-right fan-out diagram with six cards:
+"Order events" / "Order services · sandbox fills · broker order updates" / "Typed topics" -> "Dispatch by subscriber" / "Copy listeners under lock; return without waiting" / "EventBus.publish()".
+Dispatch branches into two independent horizontal lanes:
+Upper: "Ordinary lane" / "10 workers" / "1,000 queued or running" / "Full: drop callbacks; sampled warnings" -> "Logs, screens and alerts" / "Socket.IO · Telegram · WhatsApp" / "Order-stream relay · best effort".
+Lower: "Critical lane" / "4 workers" / "10,000 queued or running" / "Full: drop callbacks; log every overflow as error" -> "Execution monitors" / "Strategy book · Strategy Module · Flow order updates" / "critical=True".
+No arrows between ordinary and critical lanes.
+Below boundary two readable notes: "Both lanes are bounded and can drop callbacks. Neither persists or replays events." and "Failures are isolated. Callbacks release their database sessions. Health reports show pending and dropped counts."
+All numerical capacities must be exact and visually prominent.

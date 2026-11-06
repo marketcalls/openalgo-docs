@@ -2,6 +2,8 @@
 
 Close all open positions across all exchanges in a single request. This is a square-off operation that places counter orders for all open positions.
 
+`strategy` is a tracking label, **not a filter**. This operation can close positions created by other strategies or manually in the active account. Analyzer mode uses the user's sandbox account instead.
+
 ## Endpoint URL
 
 ```http
@@ -53,7 +55,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/closeposition \
 | Parameter | Description | Mandatory/Optional | Default Value |
 |-----------|-------------|-------------------|---------------|
 | apikey | Your OpenAlgo API key | Mandatory | - |
-| strategy | Strategy identifier | Mandatory | - |
+| strategy | Tracking label; does not restrict the affected account orders/positions | Mandatory | - |
 
 `ClosePositionSchema` declares exactly these two fields and both are required. Omitting `strategy` returns HTTP 400. There is no per-symbol variant of this request: sending `symbol`, `exchange`, or `product` returns HTTP 400 because the schema does not declare them.
 
@@ -91,8 +93,8 @@ curl -X POST http://127.0.0.1:5000/api/v1/closeposition \
 
 ## Notes
 
-- This is a **destructive operation** - all positions will be squared off
-- Closing orders are placed as **MARKET orders** for immediate execution
+- This is an account-wide square-off request; verify the remaining position book after the operation
+- Closing orders use **MARKET orders** where supported; acknowledgement does not guarantee a fill, its timing or price
 - CNC (delivery) positions are also closed if they have intraday quantity
 - Use with caution - there is no confirmation prompt
 - The operation affects **all positions** across all exchanges

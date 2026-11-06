@@ -1,0 +1,40 @@
+Use case: infographic-diagram.
+Asset type: sample OpenAlgo documentation architecture diagram.
+Create a precise, beautiful and highly readable landscape technical infographic, 3:2 aspect ratio. Match a coherent documentation style: deep navy background (#0b1020), dark navy panels with thin cyan, teal, violet, amber and green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster diagram with generous whitespace. Avoid 3D, photographs, decorative pseudo-code, watermarks and clutter.
+
+Title exactly: "One broker feed, many subscribers"
+Subtitle exactly: "Shared connections deliver live ticks to your screens and strategies."
+
+Flow goes left to right:
+A left card outside a large middle process container:
+"Your broker"
+"Live price feed"
+
+Large middle container has the heading: "WebSocket proxy · separate production process"
+Inside it three clearly separated connected cards in a row:
+1. "Broker adapter"
+"Normalize symbols and pool broker connections."
+2. "ZeroMQ bus"
+"PUB connects · SUB binds"
+"127.0.0.1:5555"
+3. "Authenticate & route"
+"API key + subscribed symbols"
+"WebSocket :8765"
+"LTP · Quote · Depth"
+
+Arrows: broker -> broker adapter -> ZeroMQ bus -> Authenticate & route.
+From the routing card, branch with four separate directed arrows pointing right into four stacked destination cards outside the process container:
+"Excel" with body "Live cells"
+"Python SDK" with body "Your strategies"
+"Browser" with body "Charts and terminals"
+"OpenAlgo app" with body "Flow · Sandbox · strategy risk"
+
+Below the middle container, a small clearly separate card:
+"OpenAlgo app"
+"Cache refresh signals"
+A dashed directional arrow from this card UP into the ZeroMQ bus card. It must not point to the adapter or the routing card. The cache refresh card represents the SAME app as the OpenAlgo app destination, not a separate application instance.
+
+Below all nodes, a single compact note, exactly:
+"Broker limits and client backpressure apply. This feed is not a durable replay log."
+
+Use arrowheads that make every direction unambiguous, all outside text areas. All labels must be clearly legible, fully visible and spelled correctly. Do not invent connections or additional features. Prioritize readable type and correct process boundaries over ornament.

@@ -1,0 +1,11 @@
+Use case: infographic-diagram. Polished landscape 3:2 OpenAlgo documentation image. Deep navy #0b1020, navy cards with thin cyan/teal/violet/amber/green borders, white headings pale gray text, large readable modern sans-serif, outline icons, generous space, clear directed arrows. No photos, 3D, watermark or extra facts.
+Title: "Auto mode: send the order straight through"
+Subtitle: "No approval queue. Validate, authenticate, then use broker or sandbox."
+Six equally sized numbered cards in a TWO-ROW snake, top row 1->2->3, then3 DOWN to4 at bottom right, then4 LEFT to5 LEFT to6 at bottom left. Use explicit arrowheads:
+1 "Order arrives" / "Strategy or platform" / "Required fields checked" / "/api/v1/placeorder · OrderSchema"
+2 "Check mode" / "Auto: no approval queue" / "should_route_to_pending"
+3 "Validate" / "Symbol · quantity · price type · product" / "validate_order_data"
+4 "Authenticate" / "API key → broker session" / "get_auth_token_broker"
+5 "Execute" / "Live: send to your broker" / "Analyzer: execute in sandbox" / "place_order_with_auth"
+6 "Return response" / "Order ID, or error with status code" / "JSON + status".
+Large type, exact code labels, do not imply order placement is guaranteed fill.

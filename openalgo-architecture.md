@@ -1,6 +1,6 @@
 # OpenAlgo Architecture
 
-OpenAlgo is a self-hosted Flask application with a React frontend. Everything runs on your machine: the web UI, the REST API, the WebSocket proxy, the strategy host, and the databases. No trading data leaves your infrastructure.
+OpenAlgo is a self-hosted Flask application with a React frontend. Everything runs on your machine: the web UI, the REST API, the WebSocket proxy, the strategy host, and the databases. Data is stored on your instance. Broker requests, enabled messaging services and configured AI providers communicate with their respective external services.
 
 This page explains how the pieces fit together. For component-level detail, see the [Design Documentation](developers/design-documentation/README.md).
 
@@ -12,20 +12,20 @@ Every client speaks the same OpenAlgo API. The service layer holds the business 
 
 <figure><img src=".gitbook/assets/diagram-architecture-layered-view.png" alt="Layered architecture: clients to request guards, blueprints and REST API v1, service layer, then sandbox engine or broker plugins to broker APIs, with event bus and six databases"><figcaption></figcaption></figure>
 
-The point of the plugin boundary is that your strategy never changes when your broker does. Symbols, order types, quotes and streams are normalised on the way down, and broker responses are normalised on the way back up.
+The point of the plugin boundary is that your strategy uses shared request and symbol formats across brokers. Exchange coverage, order types and data availability still vary by broker. Symbols, order types, quotes and streams are normalised on the way down, and broker responses are normalised on the way back up.
 
 ***
 
 ## Processes and Ports
 
-OpenAlgo runs as two listeners.
+The web application and market-data proxy expose separate listeners. Production uses one Gunicorn worker with eventlet by default, or the optional 64-thread gthread worker. The proxy runs as a supervised child process or an external process in Docker. The development server uses a real thread for the proxy.
 
 | Process | Default | Purpose |
 | --- | --- | --- |
 | **Flask application** | `127.0.0.1:5000` | Web UI, REST API v1, webhooks, broker OAuth callbacks |
 | **WebSocket proxy** | `127.0.0.1:8765` | Market data streaming and order updates |
 
-Hosted Python strategies run in **separate processes**, so a strategy that crashes or blocks cannot take the platform down with it.
+Hosted Python strategies run in **separate subprocesses**. This isolates their execution from the HTTP worker, while memory, CPU and other host resources are still shared.
 
 ***
 
@@ -45,7 +45,7 @@ Two things in that chain are worth calling out.
 
 ## Market Data: One Upstream, Many Consumers
 
-The WebSocket proxy holds **one connection to the broker feed** and fans it out to every consumer. Ten strategies watching NIFTY do not open ten broker connections.
+The WebSocket proxy shares the broker feed across consumers. A pool may use several upstream broker connections as symbol capacity requires. Ten strategies watching NIFTY do not open ten broker connections.
 
 <figure><img src=".gitbook/assets/diagram-architecture-market-data-fanout.png" alt="Market data path: broker feed to streaming adapter, ZeroMQ bus on 5555, WebSocket proxy on 8765, then Excel, Python SDK, browser UI and in-app Flow, sandbox and strategy services"><figcaption></figcaption></figure>
 
@@ -57,10 +57,10 @@ Each consumer subscribes to the symbols and mode it wants (LTP, quote, or depth)
 
 | Directory | Responsibility |
 | --- | --- |
-| `blueprints/` | Flask route modules, one per feature area, roughly 60 of them |
+| `blueprints/` | Flask route modules, one per feature area, registered by feature |
 | `restx_api/` | The versioned REST API surface and its request schemas |
-| `services/` | Business logic, around 80 modules, shared by the API and the UI |
-| `broker/` | 37 broker plugins, each with its own `api/` and `mapping/` |
+| `services/` | Business logic, shared by the API and the UI |
+| `broker/` | 38 broker plugins, each with its own `api/` and `mapping/` |
 | `websocket_proxy/` | Streaming server, broker adapters, connection manager |
 | `database/` | SQLAlchemy models and per-domain data access |
 | `sandbox/` | Analyzer mode: simulated execution, margin, positions |
@@ -80,7 +80,7 @@ OpenAlgo splits its data across several SQLite databases so that heavy write pat
 
 | Store | Holds |
 | --- | --- |
-| `db/openalgo.db` | Users, API keys, broker auth, symbols, strategies, settings |
+| `db/openalgo.db` | Users, API keys, saved broker keys, pending broker logins, broker auth, symbols, strategies, settings |
 | `db/latency.db` | Order round-trip timings |
 | `db/logs.db` | Traffic logs: request metadata, status, duration |
 | `db/sandbox.db` | Analyzer mode orders, positions, and funds |

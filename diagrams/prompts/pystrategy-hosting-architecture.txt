@@ -1,0 +1,20 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Each Python strategy runs in its own process"
+Subtitle: "Upload a script, schedule it, and use the shared OpenAlgo API."
+Landscape architecture. Left card "Strategy pages" / "React /python" / "Upload · edit · start · stop · schedule · logs".
+Arrow into center "OpenAlgo Flask process" boundary directly on "Strategy manager" / "python_strategy_bp · /python" / "New · start · stop · schedule · delete · logs" / "SSE live status: /python/api/events".
+Below manager two cards:
+"Scheduler · IST" / "APScheduler" / "Trading-day check 00:01" / "Hours enforcer: 1 min · dead-process reap: 60 s"
+and "Live process table" / "Running · starting · stopping" / "RUNNING_STRATEGIES · PROCESS_LOCK".
+Manager→scheduler; manager→process table; scheduler→process table labeled "start / stop".
+Below scheduler support card "Market calendar" / "market_calendar_db" / "Securities holidays and sessions; CRYPTO every day". Dashed scheduler→calendar "trading day?".
+Below process table "Strategy settings" / "strategies/strategy_configs.json" / "Schedules + status flags", receiving arrow "save status".
+Lower left outside Flask boundary "Script files" / "strategies/scripts/" / "<name>_<timestamp>.py", receiving arrow from manager labeled "save script".
+Right separate boundary titled "One process per strategy". It contains upper "Unix resource limits" / "Memory: 1024 MB default" / "CPU: 3600 s · 256 files · 256 procs", dashed arrow DOWN into "Strategy script" / "Own PID + session · python -u" / "STRATEGY_ID · OPENALGO_HOST · OPENALGO_API_KEY".
+Process table→script labeled "launch", continue THROUGH process boundary into actual script card.
+Below script outside strategy boundary: "One log per run" / "stdout + stderr" / "log/strategies/<id>_<date>_<time>_IST.log"; and "OpenAlgo REST API" / "/api/v1 via OPENALGO_HOST" / "Orders + market data".
+Script points to both log and API.
+Bottom highlighted caveat: "CRYPTO Run 24/7 skips daily stops. Securities follow the exchange calendar."
+All script execution stays outside Flask process. Direct arrowheads into destination cards.
+Critical process placement: The "One process per strategy" outline must enclose ONLY Unix resource limits and Strategy script. End that outline immediately beneath the Strategy script card. Both One log per run and OpenAlgo REST API cards must be BELOW and OUTSIDE that outline, with visible whitespace separating them from the boundary. The REST API belongs to OpenAlgo, never to the strategy process. Script→API and script→log arrows cross OUT of the strategy boundary. Do not extend the strategy boundary around log or API.

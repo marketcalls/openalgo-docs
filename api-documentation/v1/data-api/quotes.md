@@ -82,11 +82,15 @@ These three fields are the complete `QuotesSchema`. Any other field returns HTTP
 | volume | number | Total traded volume |
 | oi | number | Open interest. `0` for cash instruments and for brokers that do not report it |
 
-The `data` object is the broker adapter's normalized quote. The fields above are the common contract; individual brokers may add fields, and a broker that cannot supply a value returns `0` rather than omitting the key.
+The `data` object is the broker adapter's normalized quote. The fields above are the common contract; individual brokers may add fields, and some broker mappers use `0` for unavailable values while others omit unsupported fields.
+
+## Availability
+
+This is one broker snapshot. Fields and freshness depend on the broker and instrument; indices may lack tradable depth or volume. Some mappers use zero for unavailable values, so do not infer that every zero is a measured value. Streamed fields differ: REST normally uses `prev_close` and `bids`/`asks`, while WebSockets use `close` and `depth.buy`/`depth.sell`.
 
 ## Notes
 
-- Quotes are **real-time** and refresh with each trade
+- The call returns one snapshot; freshness depends on the broker and instrument
 - For **F&O symbols**, use the OpenAlgo standard format (e.g., NIFTY30JAN25FUT)
 - For **multiple symbols**, use the [MultiQuotes](./multiquotes.md) endpoint
 - The **bid/ask** spread indicates liquidity

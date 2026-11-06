@@ -88,6 +88,12 @@ The registered `check_holiday` tool is currently unavailable because it calls th
 - Review symbol, exchange, product, quantity, order type, and current application mode before confirming an order tool.
 - Broker access and risk checks remain authoritative; a successful MCP tool call does not bypass broker validation.
 
+## Order-result interpretation
+
+In Semi-Auto mode, success can mean an eligible entry was saved for Action Center approval (`mode: "semi_auto"`, `pending_order_id`), not sent to the broker. A placement acknowledgement is not proof of a fill. If a write times out or its broker reply is lost, verify broker books before retrying; a second send can duplicate an order. Check basket/split results per child.
+
+`cancel_all_orders` and `close_all_positions` operate across the active account. Their `strategy` argument records who initiated the request; it does not restrict which orders or positions are affected. See the [tool reference](tool-references.md#responses-and-order-outcomes) for response envelopes and reconciliation.
+
 ## Troubleshooting
 
 | Symptom | Check |

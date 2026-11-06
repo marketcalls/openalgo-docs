@@ -2,11 +2,11 @@
 
 ## Overview
 
-The Action Center is a centralized order approval system for semi-automated trading. When enabled, orders are queued for manual approval before execution, essential for managed accounts and regulatory compliance (RA - Relationship Advisor mode).
+The Action Center is a centralized order approval system for semi-automated trading. Eligible live API-key placements wait for manual approval. Analyzer paths use the sandbox directly, and internal calls already carrying broker authentication may bypass queue routing; this is not a global switch over every trading surface.
 
 ## Architecture Diagram
 
-<figure><img src="../../.gitbook/assets/diagram-action-center-architecture.png" alt="Action Center architecture: order services call should_route_to_pending, semi-auto orders are queued to pending_orders and surfaced via Socket.IO in the React Action Center, approved orders are executed by execute_approved_order"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-action-center-architecture.png" alt="Action Center architecture with an atomic sending claim: order services call should_route_to_pending, semi-auto orders are queued to pending_orders and surfaced via Socket.IO in the React Action Center, approved orders are executed by execute_approved_order"><figcaption></figcaption></figure>
 
 ## Order Mode Configuration
 
@@ -31,7 +31,7 @@ Both `user_id` and `mode` are required. `mode` must be exactly `auto` or `semi_a
 
 ## Semi-Auto Workflow
 
-<figure><img src="../../.gitbook/assets/diagram-action-center-semi-auto-flow.png" alt="Semi-auto flow: immediate-execution check, order mode check, queue_order stores and emits, then approve, reject or ignore in the Action Center"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-action-center-semi-auto-flow.png" alt="Eligible live semi-auto flow with sending claims and order-book reconciliation after lost replies: immediate-execution check, order mode check, queue_order stores and emits, then approve, reject or ignore in the Action Center"><figcaption></figcaption></figure>
 
 ## Database Schema
 
@@ -106,6 +106,14 @@ These operations are never queued. Read-only operations execute immediately; des
 | positions / openposition | Data retrieval |
 | holdings | Data retrieval |
 | funds | Data retrieval |
+
+## Sending Claims And Uncertain Outcomes
+
+Approval uses a compare-and-set transition, and the executor atomically claims `broker_status="submitting"` before contacting the broker. Two approvals cannot send the same row twice. A restart-left `submitting` row is never automatically resent. The page uses `approved_age_seconds` from the server to distinguish a recent send from an old unconfirmed one.
+
+A failed database claim sends nothing; when the row can be restored to pending, it may be approved again. Under gthread, a proven pre-send pacer refusal may also return an eligible single-order row to pending. This does not authorize retrying a partly executed batch.
+
+A lost broker reply is different: the current pending-order executor may store an unsuccessful 502 as `rejected`, even though the broker may hold the order, and the route reports an execution-failed warning. Check broker books before placing another order. Only a user rejection while still pending establishes that this queued request was never sent.
 
 ## API Endpoints
 

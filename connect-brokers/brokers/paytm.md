@@ -1,5 +1,9 @@
 # Paytm
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 **Paytm Money** is a technology-first investment platform backed by one of India’s leading fintech companies. With its secure and scalable API infrastructure, Paytm Money empowers developers and traders to build powerful trading systems that can manage portfolios, place real-time orders, and stream live market data with ease. Whether you're building retail trading applications or complex algorithmic strategies, Paytm Money offers a reliable and developer-friendly gateway to the markets.
 
 ***
@@ -55,7 +59,7 @@ Use these credentials in your OpenAlgo broker configuration.
 
 Once you have the credentials, add them to your OpenAlgo configuration:
 
-```json
+```dotenv
 BROKER_API_KEY = 'your_api_key_here'
 BROKER_API_SECRET = 'your_api_secret_here'
 REDIRECT_URL = 'http://127.0.0.1:5000/paytm/callback'

@@ -1,5 +1,9 @@
 # Definedge
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 OpenAlgo provides seamless integration with Definedge Securities, enabling you to connect your trading strategies with Definedge’s brokerage services. Follow this guide to set up your Definedge broker account with OpenAlgo.
 
 **Prerequisites**

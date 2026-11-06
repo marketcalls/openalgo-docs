@@ -6,8 +6,9 @@ that means for you. A separate guide for developers will follow.
 ## In one sentence
 
 OpenAlgo Desktop is the OpenAlgo web interface you already know, running in
-its own window, on top of a new engine written in Rust that does everything
-the Python server of OpenAlgo web does, inside one app on your computer.
+its own window, on top of an engine written in Rust that implements the desktop
+API, broker connections and supported trading features inside one app. The
+Python Strategy Host and pandas backtesters remain on OpenAlgo web.
 
 ## The parts
 
@@ -16,7 +17,9 @@ the Python server of OpenAlgo web does, inside one app on your computer.
 | The app window and installers | **Tauri 2** | A small, native app for Windows, macOS and Linux. It uses the web view your system already has (WebView2 on Windows, WebKit on macOS and Linux), so the installers are small: about 18 MB on Windows and 25 MB on macOS and for the Linux `.deb` (the Linux AppImage, which carries its own libraries, is about 95 MB). |
 | The engine (server, API, broker connections, sandbox, strategies) | **Rust** | One fast, memory-safe program instead of a Python server, a web server and background workers. Nothing extra to install, and no Python on your computer. |
 | The screens | **React 19**, TypeScript, Tailwind CSS, shadcn/ui | The same interface as OpenAlgo web, carried over nearly unchanged, so everything is where you expect it. |
-| Charts and the trading terminal | **openalgo-charts**, TradingView Lightweight Charts, Plotly | The `/trading` charting terminal, P&L charts and options analytics charts. |
+| Charts and the trading terminal | **openalgo-charts** and Plotly | The `/trading` charting terminal, P&L charts and options analytics charts. |
+| Flow workflows | **Native Rust engine**, with the web's workflow JSON format | Build schedules, webhook automations, conditions and trading actions while the app is open; available from 1.0.5. |
+| Agent | **Configured model providers** and OpenAlgo account/market-data tools | Ask questions, draw charts and propose orders; order tools require approval. |
 | Scripting | **OpenScript** (openalgo-script) | Write a study or strategy once; it is backtested and run live on the same engine, so results do not drift. |
 | Your data | **SQLite** (three databases: main, logs, sandbox) and **DuckDB** (Historify) | Fast local databases in one folder you can back up by copying it. Sandbox data is kept apart from live data. |
 | Security | **Argon2id** and **AES-256-GCM** | Your broker keys, tokens and API key are encrypted, and the key that unlocks them is locked by your OpenAlgo password. |
@@ -44,3 +47,7 @@ on every change.
 OpenAlgo Desktop is free and open source under the AGPL-3.0 licence, like
 OpenAlgo web. The source code is at
 [github.com/marketcalls/openalgo-desktop](https://github.com/marketcalls/openalgo-desktop).
+
+Feature and chart-library details here are checked against the
+[Desktop 1.0.5 source](https://github.com/marketcalls/openalgo-desktop/tree/v1.0.5)
+and its [release notes](https://github.com/marketcalls/openalgo-desktop/releases/tag/v1.0.5).

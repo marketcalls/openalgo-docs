@@ -316,7 +316,7 @@ The defenses, in plain order:
 5. **PKCE + JWT**: S256-only PKCE, exact redirect\_uri matching, signed access JWTs, and rotating refresh tokens
 6. **Refresh-token family protection**: reuse of an already-rotated refresh token revokes its entire token family
 7. **Kill switch**: one click revokes all refresh tokens; already-issued access JWTs remain valid until expiry
-8. **Read-only mode**: `OPENALGO_MCP_READ_ONLY` removes every order tool from the registry, so even a client already holding `write:orders` cannot place an order
+8. **Read-only mode**: `OPENALGO_MCP_READ_ONLY` removes state-changing tools from the registry, so even a client already holding `write:orders` cannot place an order
 
 `send_telegram_alert` is the one exception to "read scopes cannot cause an effect outside OpenAlgo". It is annotated as a write tool but gated on `read:account`, so a read-only hosted session can still send outbound Telegram messages.
 
@@ -326,7 +326,11 @@ For the implementation boundaries behind these controls, see [MCP Architecture](
 
 ***
 
-### Troubleshooting
+### Order outcomes
+
+OAuth consent and tool-call success do not establish a broker fill. Eligible Semi-Auto entries can return a pending Action Center approval; a timed-out write can have an unknown broker outcome. Reconcile before retrying and inspect every multi-order child result. The bulk cancel/close tools affect the active account; `strategy` does not filter them. See [response and outcome conventions](tool-references.md#responses-and-order-outcomes).
+
+## Troubleshooting
 
 | Symptom                                           | Cause                                                  | Fix                                                                               |
 | ------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------- |

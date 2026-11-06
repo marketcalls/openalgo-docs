@@ -1,0 +1,14 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Your API key: verify it and recover it"
+Subtitle: "One saved key per user. Regenerating replaces it immediately."
+Landscape with 10 concise cards and unambiguous arrows.
+Top-left sequence: "1 · Generate" / "API Key page · ApiKey.tsx" -> "2 · Signed-in check" / "POST /apikey" / "@check_session_validity" -> "3 · Random key" / "64 hex characters · 256 bits" / "secrets.token_hex(32)" -> "4 · Save two ways" / "upsert_api_key()" / "database/auth_db.py".
+From Save two ways branch to two parallel middle cards inside "Dual storage":
+"One-way hash" / "Argon2 + secret pepper" / "api_key + API_KEY_PEPPER" / "Cannot be reversed".
+"Encrypted copy" / "Fernet; server can decrypt" / "Key derived by PBKDF2" / "API_KEY_PEPPER + FERNET_SALT".
+Both point into "api_keys table" / "db/openalgo.db" / "user_id · api_key_hash" / "api_key_encrypted · order_mode".
+From table, two outward arrows: labeled "api_key_hash" to "Check API requests" / "/api/v1 · verify_api_key()"; labeled "api_key_encrypted" to "Show or pass the key" / "API Key page, Playground, TradingView, GoCharting, Python strategies" / "OPENALGO_API_KEY".
+A dashed branch from Save two ways, labeled "after commit", to separate bottom card "5 · Invalidate caches" / "invalidate_user_cache()" / "Clears cached logins, broker/feed tokens, API-key checks and order mode."
+Bottom note: "The old key stops working at once."
+Readable typography; never depict the hash being decrypted.

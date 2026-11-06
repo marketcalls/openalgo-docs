@@ -1,5 +1,9 @@
 # Zebu
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Zebu, a leading stock trading platform, offers robust API services for traders and developers looking to integrate algorithmic trading solutions into their platforms. The Zebu MYNT API enables access to real-time market data, portfolio management, and trade execution for stocks, commodities, and mutual funds.<br>
 
 To integrate Zebu’s API, follow the steps below:

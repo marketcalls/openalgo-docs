@@ -39,6 +39,8 @@ Send authentication immediately after connecting. The default authentication gra
 }
 ```
 
+The generic `supported_features` flags do not guarantee every exchange, instrument, field or depth level is supported. Inspect per-symbol subscription results and the active broker's capabilities.
+
 ## Subscribe
 
 Use `LTP`, `Quote`, or `Depth`. Mode names are case-insensitive; integers `1`, `2`, and `3` are accepted respectively. The optional `depth` field defaults to 5. `request_id` is echoed in the acknowledgement when supplied.
@@ -79,7 +81,7 @@ A single `symbol` and `exchange` pair can be sent instead of `symbols`. The ackn
 
 ## Market-Data Messages
 
-Ticks use a common wrapper. The nested `data` object is the normalized broker payload for the requested mode.
+Ticks use a common wrapper. The nested `data` object is the normalized available broker payload. The outbound numeric `mode` is the client's subscribed mode, and higher-mode publications can be delivered to lower-mode subscribers.
 
 ```json
 {
@@ -102,10 +104,16 @@ Ticks use a common wrapper. The nested `data` object is the normalized broker pa
 | Mode | Value | Payload |
 |---|---:|---|
 | LTP | 1 | Last traded price and tick fields |
-| Quote | 2 | LTP plus normalized OHLC and volume fields |
-| Depth | 3 | Quote fields plus available bid and ask levels |
+| Quote | 2 | LTP and quote fields the broker supplies |
+| Depth | 3 | Available quote fields and order-book levels |
 
 Depth availability and the number of levels depend on the active broker. Higher-mode broker ticks can satisfy subscribers to lower modes.
+
+### Field availability
+
+Quote and Depth do not guarantee complete OHLCV, previous close, OI, buy/sell totals or order counts. Sahi omits OHLC/previous close because its stream does not carry them. Groww publishes available fields from its merged cache and is commonly LTP-only. Index streams can lack tradable depth or volume. Read optional fields without inventing prices/quantities; a stream can provide fewer fields than a REST snapshot. REST normally uses `prev_close` and `bids`/`asks`; streams use `close` and `depth.buy`/`depth.sell`.
+
+The pinned Python SDK 2.0.5 changes raw frames: its Quote callback/cache fills a fixed field set with zero defaults, and its Depth callback/cache retains only `ltp`, `timestamp` and `depth`. Those SDK zeroes can mean unavailable upstream; extra quote fields in raw Depth frames are discarded. Callbacks use `message["data"]` for market values. Use a raw WebSocket client when missing-field semantics or extra Depth fields matter. See [Python SDK behavior](../../trading-platform/python/README.md#websocket-cache-and-callback-behavior).
 
 ## Unsubscribe
 
@@ -128,6 +136,10 @@ Remove every subscription owned by the connection with:
   "action": "unsubscribe_all"
 }
 ```
+
+An unsubscribe acknowledgement separates `successful` and `failed` items. An individual symbol's mode overrides the top-level mode; if neither is present, the default is Quote. Mode-valid outcomes carry the canonical label; a mode-validation failure carries `mode: null`.
+
+A last-owner adapter refusal leaves that local subscription registered for retry. Releasing one client preserves other owners. Disconnect cleanup removes the dead session and reclaims unresolved last-client feed ownership through teardown; it does not preserve a disconnected session for later replay.
 
 ## Order Updates
 
@@ -217,6 +229,12 @@ delivered twice, so deduplicate on `orderid` + `order_status` +
 
 The `ping` action echoes an optional `timestamp` and `_pingId`, which can be used for latency measurement.
 
+## Delivery limits
+
+The current proxy listener forwards publications without applying the legacy LTP time-throttle attribute. Broker cadence, mode fan-out, network delays and slow consumers still affect delivery; there is no guarantee of every exchange tick, simultaneous delivery or replay. Track freshness before using prices.
+
+`WS_MAX_QUEUE` defaults to 1024 and is passed to the WebSocket library's incoming receive queue. It is not an outgoing tick buffer and does not guarantee lossless delivery to slow clients.
+
 ## Reconnection
 
-WebSocket transport pings are configured by `WS_PING_INTERVAL` and `WS_PING_TIMEOUT`, both 20 seconds by default. After a disconnect, reconnect, authenticate again, and restore the required subscriptions.
+WebSocket transport pings are configured by `WS_PING_INTERVAL` and `WS_PING_TIMEOUT`, both 20 seconds by default. After a disconnect, clients must reconnect, authenticate again, and restore subscriptions. SDK 2.0.5 does this by default (`auto_reconnect=True`), including its remembered order subscriptions; explicit `disconnect()` stops that loop. The server does not restore the disconnected session or replay missed ticks.

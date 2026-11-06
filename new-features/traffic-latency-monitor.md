@@ -24,11 +24,13 @@ Traffic rows live in `logs.db`. `TRAFFIC_LOG_RETENTION_DAYS` defaults to 30 days
 
 ### Latency Monitor
 
-Open the Latency page to review timing records produced by instrumented OpenAlgo operations. The view is useful for comparing observed request durations and identifying changes on the actual deployment.
+Open **Logs > Latency** (`/logs/latency`) to review timing records produced by instrumented OpenAlgo operations. The view is useful for comparing observed request durations and identifying changes on the actual deployment.
 
 <figure><img src="../.gitbook/assets/openalgo-ui-latency.png" alt="Order latency monitor"><figcaption></figcaption></figure>
 
 Latency depends on host load, network distance, broker response time, market conditions, connection reuse, and the operation being measured. The monitor reports observations; it does not guarantee an execution time or isolate exchange latency from every other component.
+
+The page refreshes every 30 seconds and offers Refresh and Export to CSV. Per-order details distinguish broker API duration from application validation/response overhead. Broker API duration combines network and broker processing; it does not isolate exchange-fill latency.
 
 ### Security Boundary
 

@@ -1,5 +1,9 @@
 # Rupeezy (Vortex)
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Rupeezy is a SEBI-registered stockbroker. Its **Vortex API** gives you REST endpoints for orders, GTT, positions, holdings, funds, quotes and historical data, plus a WebSocket for live market data. Developer portal and documentation: [vortex.rupeezy.in](https://vortex.rupeezy.in/docs/latest).
 
 Before you start, make sure you have:

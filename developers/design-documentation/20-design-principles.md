@@ -8,7 +8,7 @@ Examples in design pages explain boundaries; they are not substitute implementat
 
 ## Broker-Agnostic Contract
 
-The public API remains stable across the current 37 broker plugins: 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. Each plugin maps OpenAlgo symbols, products, actions, and price types into its broker's contract, then normalizes broker responses back into OpenAlgo shapes.
+The public API remains stable across the current 38 broker plugins, including Dhan Sandbox and Delta Exchange for crypto derivatives. Each plugin maps OpenAlgo symbols, products, actions, and price types into its broker's contract, then normalizes broker responses back into OpenAlgo shapes.
 
 Plugin presence does not imply that every optional operation, exchange, or WebSocket depth level is supported. `plugin.json` capability metadata and the broker implementation determine the available subset.
 
@@ -34,7 +34,7 @@ Risk-reducing workflows must not create exposure. Close-position and scalping ex
 
 ## Process-Aware State
 
-OpenAlgo's production deployment uses Gunicorn with one eventlet worker per instance, while some components run in a child process or OS thread. Process-local caches, singletons, and the EventBus are not cross-process coordination mechanisms.
+OpenAlgo's production deployment uses exactly one Gunicorn worker per instance: eventlet by default or opt-in gthread with 64 request threads, while some components run in a child process or OS thread. Process-local caches, singletons, and the EventBus are not cross-process coordination mechanisms.
 
 Cross-process market data and selected cache invalidation use a fixed ZeroMQ fan-in topology: the proxy SUB socket binds, and publisher sockets connect. Persisted state is used when behavior must survive navigation, restart, or process boundaries.
 
@@ -42,7 +42,7 @@ Cross-process market data and selected cache invalidation use a fixed ZeroMQ fan
 
 OpenAlgo uses six primary configured stores: five SQLite workloads and Historify DuckDB. `database/engine_factory.py` gives every SQLite engine `NullPool` (non-SQLite backends get a normal pool), and scoped sessions are removed during request teardown. New persistence modules must either join the `SCOPED_SESSION_MODULES` inventory in `utils/db_sessions.py` or use a context-managed lifecycle that closes every connection.
 
-Schema changes use idempotent initialization and targeted migrations rather than a general Alembic layer. Changes must work for both fresh and existing databases.
+Every schema change requires an idempotent upgrade script registered in `upgrade/migrate_all.py`, in addition to startup initialization. Support `--status`, preserve customized values and verify a populated copy with the old schema as well as a fresh database.
 
 ## Security Defaults
 

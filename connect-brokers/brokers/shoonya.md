@@ -1,5 +1,9 @@
 # Shoonya
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Shoonya, developed by Finvasia, is a trading platform in India that allows users to trade across multiple segments including equities, commodities, currencies, and derivatives. The platform is accessible via mobile, web, and desktop applications, offering features like advanced charting tools, real-time data, and integration with third-party platforms for algorithmic trading.
 
 ## Getting API Credentials

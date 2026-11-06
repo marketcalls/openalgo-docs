@@ -7,7 +7,7 @@ OpenAlgo's Strategy RMS runs multi-leg options strategies with end-to-end risk m
 | `Strategy(...)` | The strategy's `oaws_` webhook token | The public webhook at `/strategy/webhook/<token>`, the same endpoint TradingView posts to. Batch `start` / `stop`, signal `long_entry` / `long_exit` / `short_entry` / `short_exit`. |
 | `api(api_key=...)` | Your OpenAlgo API key | Lifecycle and reads under `/api/v1/strategy/`: list, status, start, stop, close all, close one leg, runs, orders, events. |
 
-Both need **openalgo 2.0.4 or newer** (`pip install -U openalgo`). Building a strategy stays in the browser wizard at `/strategy`: neither surface can create a strategy, edit its configuration, enable live trading, rotate a webhook token, or delete anything.
+Both need **openalgo 2.0.4 or newer**; this platform checkout pins **2.0.5** (`pip install openalgo==2.0.5`). Building a strategy stays in the browser wizard at `/strategy`: neither surface can create a strategy, edit its configuration, enable live trading, rotate a webhook token, or delete anything.
 
 Two strategy kinds, and each refuses the other's vocabulary:
 
@@ -91,9 +91,9 @@ strategy.short_exit(symbol="RELIANCE", exchange="NSE")
 strategy.signal("long_entry", leg_id=1)
 ```
 
-A signal that does nothing is a **success with a note**, not a failure: `Signal accepted (already_long)`. The notes are `already_long`, `already_short`, `no_matching_position`, `outside_entry_window` and `outside_trading_window`. Reporting a no-op as a failure invites a retry, and a retry on an order path is how one alert becomes two positions. Being *refused* is different: a signal blocked by the strategy's direction, or naming a leg that does not exist, answers `rejected_invalid_action` with the engine's own message.
+A signal that does nothing is a **success with a note**, not a failure: `Signal accepted (already_long)`. The notes are `already_long`, `already_short`, `flip_pending`, `no_matching_position`, `outside_entry_window` and `outside_trading_window`. Reporting a no-op as a failure invites a retry, and a retry on an order path is how one alert becomes two positions. Being *refused* is different: a signal blocked by the strategy's direction, or naming a leg that does not exist, answers `rejected_invalid_action` with the engine's own message.
 
-An opposite entry squares the existing side first, then opens. A signal leg on a derivatives exchange must name an exact listed contract; a base symbol plus an expiry rank is refused, not guessed.
+An opposite entry requests the existing side's exit before opening the replacement; while that transition is pending, `flip_pending` is a no-op note. A signal received during a durable stop is refused with `rejected_invalid_action` (`run_stopping`), rather than starting another entry. A signal leg on a derivatives exchange must name an exact listed contract; a base symbol plus an expiry rank is refused, not guessed.
 
 ## Handling webhook results
 

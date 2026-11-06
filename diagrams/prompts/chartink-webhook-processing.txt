@@ -1,0 +1,16 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Chartink alerts: six checks, then queue orders"
+Subtitle: "The first failed check stops processing."
+Upper section begins "Alert arrives" / "Chartink POST to strategy webhook", then a clearly NUMBERED sequence of six check cards, arranged 3 across x 2 rows with visible arrows snake 1 -> 2 -> 3 -> 4 -> 5 -> 6. Each card includes its failure/skip result.
+"1. Known strategy?" / "webhook_id matches Chartink strategy" / "No: 404 Invalid webhook ID"
+"2. Strategy active?" / "No: 200, alert ignored"
+"3. JSON body present?" / "No: 400 error"
+"4. Action in scan_name?" / "Search BUY, SELL, SHORT, COVER in that order" / "None: 400 error"
+"5. Time window?" / "Intraday: start_time to squareoff_time" / "New entries before end_time" / "Outside: 400 error"
+"6. Mappings + API key?" / "No symbol mappings: 400" / "No API key: 401".
+From check 6 downward arrow labelled "All six pass" -> "For each stock" / "Unmapped stocks: log and skip".
+Then branch to two PARALLEL action cards:
+"Entry" / "BUY; SHORT sent as SELL" / "placeorder · mapped quantity · MARKET"
+"Exit" / "SELL; COVER sent as BUY" / "placesmartorder · quantity 0 · position_size 0"
+Both action cards -> "Queued for paced sending" / "Tag: strategy name" -> "200 success" / "Lists queued orders; warning if none queued".
+Do not depict 200 queued as broker execution confirmation. Keep ordering and failure responses prominent.

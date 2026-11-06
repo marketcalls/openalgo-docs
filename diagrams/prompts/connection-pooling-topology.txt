@@ -1,0 +1,17 @@
+Use case: infographic-diagram. Create a polished landscape OpenAlgo documentation infographic. Deep navy #0b1020, navy panels with thin cyan, teal, violet, amber, green outlines, white headings pale gray text, large readable modern sans-serif, outline icons, generous spacing. Flat raster, no photos, 3D, watermark, invented facts. All arrows directional with heads outside text.
+Title: "Pool broker connections, share every tick"
+Subtitle: "Small pools carry many subscriptions. Settings and broker limits constrain capacity."
+Outside left "Your broker" / "Upstream WebSockets".
+Large middle boundary heading exactly "WebSocket proxy · separate production process".
+Inside left nested boundary "Pool per broker + user", with THREE vertically stacked adapters:
+"Adapter 1" / "Default capacity: 1000 symbols" / "MAX_SYMBOLS_PER_WEBSOCKET"
+"Adapter 2" / "Opens when adapter 1 is full"
+"Adapter N" / "Default max 3 connections" / "MAX_WEBSOCKET_CONNECTIONS".
+Broker branches to each adapter. All adapters point to middle card "Shared publisher" / "SharedZmqPublisher" / "One per process" / "PUB connects".
+Publisher -> "Internal ZeroMQ bus" / "tcp://127.0.0.1:5555" / "Fixed loopback endpoint · no port fallback".
+Bus -> "WebSocket proxy" / "WebSocketProxy" / "SUB binds · only binder" / "Track subscriptions and fan out ticks".
+Proxy -> outside-right "Your tools" / "Authenticated WebSocket clients" / "Port 8765".
+Separate bottom-left boundary "Flask app process" contains TWO parallel publishers: "Cache invalidation" / "Drop stale proxy cache" / "PUB connects"; "Order updates" / "wsproxy_subscriber" / "*_orders topics". A dashed arrow from this boundary to ZeroMQ bus labeled "connect".
+Two bottom notes: "Default pool ceiling: 3000 symbols; effective capacity depends on settings and broker limits." and "Dev: uv run app.py runs the proxy as a real thread inside Flask."
+Keep bus inside proxy process container. Only SUB binds; all PUBs connect. Do not call proxy Gunicorn/eventlet. Generous space for exact endpoint and caveats.
+CRITICAL PROCESS BOUNDARY: The large "WebSocket proxy · separate production process" rectangle must enclose ONLY the adapter pool, shared publisher, ZeroMQ bus and proxy router. Its BOTTOM BORDER MUST BE ABOVE THE ENTIRE Flask app process rectangle. Place Flask app process in a separate row BELOW AND OUTSIDE the large rectangle, separated by at least 60px of unboxed dark background. Do not place Flask inside proxy process. Draw its dashed arrow crossing upward across the proxy container bottom border into the ZeroMQ bus. Do not add extra explanatory sidebar.

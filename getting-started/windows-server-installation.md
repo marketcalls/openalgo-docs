@@ -40,7 +40,7 @@ Step-by-Step Installation Process:
     notepad .env
     ```
 
-    Enter your `BROKER_API_KEY` and `BROKER_API_SECRET`, then save and close. Leave `APP_KEY`, `API_KEY_PEPPER` and `FERNET_SALT` at their `OPENALGO_PLACEHOLDER_...` values: OpenAlgo replaces them with fresh random secrets on first start.
+    Broker fields can remain empty; save keys after startup in [Broker Configuration](../connect-brokers/broker-configuration.md). Existing `.env` broker keys remain supported and take precedence for that broker. Save and close. Leave `APP_KEY`, `API_KEY_PEPPER` and `FERNET_SALT` at their `OPENALGO_PLACEHOLDER_...` values: OpenAlgo replaces them with fresh random secrets on first start.
 10. Set Server Timezone: For Indian markets, adjust your server time settings to (UTC +05:30) Chennai, Kolkata, Mumbai, New Delhi. Ensure you click "Sync now" to align with exchange timings.
 11. Update Static IP at Broker: Copy your server's Public IP address. Log in to your broker's API portal and whitelist this IP in your App settings. This is a critical security step required by most brokers.
 12. Initial Launch:
@@ -49,7 +49,7 @@ Step-by-Step Installation Process:
     uv run app.py
     ```
 
-    The first launch takes a few minutes while uv builds the virtual environment and resolves the locked dependency set (208 packages). The startup banner then reports the web app on `http://127.0.0.1:5000` and the WebSocket proxy on `ws://127.0.0.1:8765`.
+    The first launch takes a few minutes while uv builds the virtual environment and resolves the locked dependency set. The startup banner then reports the web app on `http://127.0.0.1:5000` and the WebSocket proxy on `ws://127.0.0.1:8765`.
 
 Node.js is not required. The repository ships the pre-built React frontend in `frontend/dist`.
 

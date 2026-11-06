@@ -1,0 +1,12 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Eligible live orders wait for approval"
+Subtitle: "Semi-auto holds eligible live API-key placements. Analyzer and internal authenticated paths are separate."
+Compose a clear left-to-right main path with seven cards and one response card below.
+"Trading signal" / "Strategy · TradingView · SDK" -> "OpenAlgo checks" / "Verify API key; semi_auto is on" / "/api/v1" -> "Waiting queue" / "Save status: pending" / "pending_orders" -> "Action Center" / "Review and decide".
+From OpenAlgo checks, dashed DOWN arrow to "Instant reply" / "200: waiting for approval" / "pending_order_id". This acknowledgement is not broker success.
+From Action Center, upper arrow labelled "Approve" -> "Claims sending once" / "One approval owns the send; concurrent approvals cannot send twice" -> downward arrow to "Broker outcome" / "Confirmed result, or Sending / Status unclear after interruption".
+From Action Center, lower arrow labelled "Reject" -> "Rejected while pending" / "Stop the queued request before send".
+Bottom two readable notes:
+"A lost broker reply may appear rejected in the UI even if placed. Check broker books before retrying."
+"Cancel, modify and close are blocked in semi-auto live mode. Reads run at once."
+All paths and caveats must be readable. Do not connect the response card to the broker.

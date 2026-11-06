@@ -20,7 +20,11 @@ When login TOTP is required, the password step stores a short-lived `pending_tot
 
 `utils/plugin_loader.py` reads `broker/*/plugin.json` and lazy-loads `broker.<key>.api.auth_api`. Generic callbacks are handled by `blueprints/brlogin.py`; specialized routes support brokers that need extra OTP, TOTP, or credential steps.
 
-The current plugin inventory is 37: 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. Authentication shape varies by broker, and capability metadata is the correct way for UI code to discover supported exchanges and features.
+The current plugin inventory is 38. `GET /api/broker/list` supplies enabled brokers, setup hints, required fields, sign-in method, masked saved values, and active/configured status from `VALID_BROKERS` and `utils/broker_setup_guide.py`.
+
+`/broker` and `/broker/config` work after app sign-in, before broker login. `POST /auth/broker/login` is CSRF-checked and starts the chosen broker's login on the server. Its callback must match a one-use pending login, which expires after ten minutes. `POST /auth/broker/resume` lets another device join the existing broker session after token validation. See [broker keys and configuration](51-broker-and-system-config.md).
+
+Only one broker is active for the installation. A successful new login ends the previous broker session at commit. Running Live Strategy Module/OpenScript runs, and (outside analyzer mode) running Python strategies or protected scalping positions, block a switch until stopped. The same safety applies when replacing or forgetting the active broker's keys.
 
 ## Token Storage
 
@@ -28,6 +32,7 @@ The current plugin inventory is 37: 35 securities brokers, Delta Exchange for cr
 |---|---|
 | Password | Argon2 hash in the user database |
 | OpenAlgo API key | Argon2+pepper verification hash and encrypted retrievable value |
+| Saved broker application keys | Fernet ciphertext in `broker_keys`, bound to broker and field |
 | Broker auth/feed tokens | Fernet ciphertext derived from installation secrets |
 | TOTP secret | Encrypted at rest |
 | Browser session | Signed Flask session cookie with host-dependent secure flags |
@@ -57,7 +62,7 @@ It intentionally preserves the app session. Protected dashboard APIs can then re
 
 ## Revocation Events
 
-- Explicit logout removes the device session and clears the browser session.
+- Logout after broker login ends the shared broker session and clears its active device sessions; pre-broker logout revokes the pre-broker sign-in without ending devices on the active broker session.
 - Daily session-expiry handling revokes broker access according to configuration.
 - Password change clears every active app session, emits `force_logout`, and clears the current cookie.
 - Unchanged multi-device broker resume preserves the shared feed.
@@ -70,7 +75,9 @@ See [40 Logout And Session Lifecycle](40-logout-and-session-expiry.md) for the e
 |---|---|
 | `blueprints/auth.py` | App login, TOTP, session APIs, logout |
 | `blueprints/brlogin.py` | Broker callbacks and special login helpers |
-| `blueprints/broker_credentials.py` | Credential and capability APIs |
+| `blueprints/broker_config.py` | Broker list, encrypted key save and forget APIs |
+| `blueprints/broker_credentials.py` | Server settings and active-broker capability APIs |
+| `utils/broker_keys.py`, `utils/broker_login.py`, `utils/broker_switch.py` | Credential resolution, pending-login validation and safe switching |
 | `database/auth_db.py` | Broker tokens, API keys, active sessions, login audit |
 | `utils/plugin_loader.py` | Plugin discovery and lazy auth loading |
 | `utils/session.py` | Protected-route session validity |

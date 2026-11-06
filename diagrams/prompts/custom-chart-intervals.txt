@@ -1,0 +1,18 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Choose your interval, keep the market data"
+Subtitle: "Custom candles combine compatible smaller candles. Daily studies fetch their own history."
+Six cards in two rows of three.
+Top row left to right:
+"Pick or add an interval" / "Grouped menu · custom choices · shared favorites" / "Each chart keeps its own selection" / "7 minutes · 2 hours · 3 months"
+-> "Check source and session" / "Use available smaller candles" / "Check openings, holidays and alignment" / "Never split a larger candle"
+-> "Combine complete candles" / "First open · highest high · lowest low · last close" / "Add traded volume per target period".
+Bottom row left to right:
+"Available history" / "Trading: your broker" / "Historify: downloaded local candles" / "Seconds · minutes · hours · daily"
+-> "Fetch daily warmup" / "Daily EMA 200 requests its own history" / "Report missing history; never invent prices"
+-> "Display confirmed values" / "Daily value reaches a five-minute chart after the daily candle closes" / "Custom candles retain their actual period".
+A downward arrow from Combine complete candles directly into Display confirmed values.
+No other arrows linking the two rows.
+Bottom note: "Seconds need a seconds source. Weekly, monthly and quarterly can use daily history."
+Second short note: "Removing a custom menu choice leaves an already active chart unchanged."
+Required five arrows must ALL appear: top-left→top-middle, top-middle→top-right, bottom-left→bottom-middle, bottom-middle→bottom-right, top-right→bottom-right. Space the cards apart by wide gaps. In particular the two horizontal arrows across the BOTTOM ROW must be visible with right-pointing arrowheads. Do not omit bottom-row arrows.

@@ -1,5 +1,9 @@
 # HDFC Securities
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 HDFC Securities InvestRight is the full-service broking platform from HDFC Securities, offering equity, F\&O, currency and commodity trading. Its **InvestRight Open API** exposes a REST API for orders, positions, holdings, funds and LTP snapshots, plus a Protobuf WebSocket feed for live market data. The developer portal and documentation are at [https://developer.hdfcsec.com](https://developer.hdfcsec.com).
 
 The integration process involves logging in to the InvestRight developer portal, creating an app to generate the API Key and API Secret, and configuring them in OpenAlgo's environmental variables.

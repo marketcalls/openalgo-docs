@@ -1,0 +1,30 @@
+Use case: infographic-diagram. A precise, readable OpenAlgo documentation image, landscape 3:2. Deep navy background #0b1020, navy cards outlined in cyan/teal/violet/amber/green, white headings, pale gray body text, modern sans-serif, generous spacing, simple outline icons. Flat vector-like raster, no photos, 3D, watermark or extra facts.
+
+Title: "Chart alerts use the same order services"
+Subtitle: "The current mode decides: approval queue, sandbox, or live submission."
+
+IMPORTANT COMPOSITION: Make TradingView and GoCharting TWO TEXT ROWS INSIDE ONE SINGLE CARD named "Chart alerts". They are alternative platforms, never sequential steps. Do not draw an arrow from TradingView to GoCharting.
+Upper left standalone card: "JSON generators" / "/tradingview · /gocharting" / "Build your alert message".
+One dashed arrow down labeled "paste JSON" into the single "Chart alerts" card. The Chart alerts card contains two internal text rows with no arrows between them:
+"TradingView: Pine strategy or line alert"
+"GoCharting: chart alert".
+
+From the Chart alerts card, ONE solid arrow labeled "webhook POST" points directly into a "Rate limit" card.
+That card says "Default: 10 requests/sec per endpoint", "ORDER_RATE_LIMIT", "SMART_ORDER_RATE_LIMIT".
+The arrowhead must touch the Rate limit card border, not a process boundary.
+Rate limit splits into TWO parallel API cards:
+"Place order" / "Fixed quantity" / "POST /api/v1/placeorder" / "TradingView line · GoCharting"
+"Place smart order" / "Target position size" / "POST /api/v1/placesmartorder" / "TradingView strategy · position_size"
+Both API cards point right into "Order services" / "Check the alert's API key" / "Route the request".
+From Order services, THREE distinct arrows point to:
+"Action Center" / "Wait for approval", arrow label "eligible live + semi-auto"
+"Sandbox" / "Simulated order; fills follow sandbox rules" / "sandbox.db", arrow label "Analyzer on"
+"Your broker" / "Live submission", arrow label "live + auto".
+Two DASHED arrows leave Action Center: one to Your broker labeled "approved, still live", another to Sandbox labeled "approved, Analyzer now on".
+Do not draw any enclosing process boundary. All nodes are independent cards. Their names explain the routing roles; Your broker is an external destination.
+Keep all arrows outside text and point arrowheads exactly to their destination cards. No edges except those specified.
+Bottom notes:
+"Approval rechecks the current Analyzer mode."
+"A queued acknowledgement or broker submission is not a confirmed fill."
+Preserve exact API paths, identifiers and all routing conditions. Keep labels legible, with balanced spacing.
+Edit the supplied image with exactly one visual change: REMOVE the large outer cyan rounded rectangle and the "OpenAlgo Flask app" heading. Keep every individual card, all text inside cards, every connector, all arrowheads, the title, subtitle and footer notes exactly as they are. The enclosing process border currently intersects the Your broker card, so remove that enclosing border entirely. Do not add any replacement enclosing box. Preserve the rest of the infographic.

@@ -1,13 +1,13 @@
 # Environmental Variables
 
-OpenAlgo reads its configuration from a `.env` file in the application directory. Create it from the `.sample.env` that shipped with the OpenAlgo release you checked out:
+OpenAlgo reads its configuration from a `.env` file in the application directory. On a new source installation, the first `uv run app.py` creates it from the matching `.sample.env` with unique security keys. You can also copy the sample yourself before the first start:
 
 ```bash
 cd openalgo
 cp .sample.env .env
 ```
 
-The checked-out `.sample.env` is the authoritative list of variables. Do not paste an environment block from a blog post, an older guide, or another machine. The current template declares `ENV_CONFIG_VERSION = '1.0.7'` and contains 97 active keys.
+The checked-out `.sample.env` is the authoritative list of variables. Do not paste an environment block from a blog post, an older guide, or another machine. The current template declares `ENV_CONFIG_VERSION = '1.0.7'`.
 
 {% hint style="danger" %}
 Never copy an `APP_KEY`, `API_KEY_PEPPER` or `FERNET_SALT` value out of documentation, out of `.sample.env`, or out of another installation. `.sample.env` ships deliberate placeholders:
@@ -18,12 +18,15 @@ API_KEY_PEPPER = 'OPENALGO_PLACEHOLDER_API_KEY_PEPPER_REGENERATE_BEFORE_USE'
 FERNET_SALT = 'OPENALGO_PLACEHOLDER_FERNET_SALT_REGENERATE_BEFORE_USE'
 ```
 
-On first run OpenAlgo detects these placeholders, generates fresh values with `secrets.token_hex(32)`, writes them back to your `.env`, and prints a one-time `[OpenAlgo first-run setup]` message. The install scripts do the same thing. In normal use you never edit these three lines by hand.
+On first run OpenAlgo detects these placeholders, generates fresh random values, writes them back to your `.env`, and prints a one-time `[OpenAlgo first-run setup]` message. The install scripts do the same thing. In normal use you never edit these three lines by hand.
 {% endhint %}
 
 ### What you must edit
 
-#### Broker credentials
+#### Broker credentials (UI or existing `.env`)
+
+You can start without broker keys in `.env`. Sign in and use **Select Broker > Configure** or **Broker Configuration** to save encrypted keys and connect. See [Broker Configuration and Login](../../connect-brokers/broker-configuration.md) for `.env` precedence and switching. The block below is the optional `.env` compatibility setup.
+
 
 ```dotenv
 BROKER_API_KEY = 'YOUR_BROKER_API_KEY'
@@ -40,7 +43,7 @@ BROKER_API_KEY_MARKET = 'YOUR_BROKER_MARKET_API_KEY'
 BROKER_API_SECRET_MARKET = 'YOUR_BROKER_MARKET_API_SECRET'
 ```
 
-Leave these at their placeholder values for every other broker.
+Leave these market-data fields empty when your broker does not use them.
 
 ### Defaults you normally leave alone
 
@@ -98,7 +101,7 @@ SESSION_EXPIRY_TIME = '03:00'
 DISABLE_SESSION_EXPIRY = 'false'
 ```
 
-Sessions expire daily at 03:00 IST because Indian broker tokens do. Set `DISABLE_SESSION_EXPIRY = 'true'` only for a 24/7 crypto broker such as Delta Exchange.
+Sessions expire daily at 03:00 IST because Indian broker tokens do. The broker-key session logic recognizes a crypto broker independently of the daily Indian-broker rollover. `DISABLE_SESSION_EXPIRY` is an installation-wide override; do not change it merely to work around an expired Indian broker token.
 
 #### Ngrok
 
@@ -110,10 +113,10 @@ Set to `'TRUE'` and point `HOST_SERVER` at your Ngrok domain if you tunnel the i
 
 ### Broker allowlist
 
-`VALID_BROKERS` is a comma-separated list of enabled broker plugin keys. The release template enables all 37:
+`VALID_BROKERS` is a comma-separated list of enabled broker plugin keys. The release template enables all 38:
 
 ```dotenv
-VALID_BROKERS = 'fivepaisa,fivepaisaxts,aliceblue,angel,arrow,compositedge,dhan,dhan_sandbox,definedge,deltaexchange,firstock,flattrade,fyers,groww,hdfcsecurities,hdfcsky,ibulls,iifl,iiflcapital,indmoney,jainamxts,kotak,motilal,mstock,nubra,paytm,pocketful,rmoney,rupeezy,samco,shoonya,tradejini,tradesmart,upstox,wisdom,zebu,zerodha'
+VALID_BROKERS = 'fivepaisa,fivepaisaxts,aliceblue,angel,arrow,compositedge,dhan,dhan_sandbox,definedge,deltaexchange,firstock,flattrade,fyers,groww,hdfcsecurities,hdfcsky,ibulls,iifl,iiflcapital,indmoney,jainamxts,kotak,motilal,mstock,nubra,paytm,pocketful,rmoney,rupeezy,sahi,samco,shoonya,tradejini,tradesmart,upstox,wisdom,zebu,zerodha'
 ```
 
 A broker being listed does not guarantee every optional exchange, GTT, historical-data or streaming capability. See [Brokers](../../connect-brokers/brokers/README.md).

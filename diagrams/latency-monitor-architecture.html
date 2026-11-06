@@ -3,7 +3,7 @@
   <div class="title">
     <div class="eyebrow">Latency monitor</div>
     <h1>How long did your order take, and whose time was it?</h1>
-    <p style="max-width:1150px">Every order/API call is timed from the moment its endpoint starts. The broker's share is measured on the actual HTTP call, the rest is OpenAlgo overhead, and the record is saved after your response has already gone back.</p>
+    <p style="max-width:1150px">Instrumented endpoints are timed after routing and middleware. The shared HTTP client measures broker time; latency records are queued for background storage so the request does not wait for the database commit.</p>
   </div>
 
   <div class="row" style="align-items:center; gap:44px; margin-top:130px">
@@ -24,10 +24,10 @@
             <div class="tx"><b>Read your request</b><span>only reads the request JSON</span><div class="chips"><span class="chip">validation</span></div></div></div></div>
         <div class="step s" style="--c:var(--service)"><div class="n">2</div>
           <div class="node service stack" id="s2" style="width:200px; min-width:200px; flex:1"><div class="ic" data-icon="cpu"></div>
-            <div class="tx"><b>Call the broker</b><span>runs the whole endpoint: API key, service, broker call</span><div class="chips"><span class="chip">broker_request</span></div></div></div></div>
+            <div class="tx"><b>Run the endpoint</b><span>API key, service and any broker call</span><div class="chips"><span class="chip">broker_request</span></div></div></div></div>
         <div class="step s" style="--c:var(--service)"><div class="n">3</div>
           <div class="node service stack" id="s3" style="width:200px; min-width:200px; flex:1"><div class="ic" data-icon="file-output"></div>
-            <div class="tx"><b>Read broker reply</b><span>reads the response payload</span><div class="chips"><span class="chip">broker_response</span></div></div></div></div>
+            <div class="tx"><b>Read endpoint response</b><span>reads the response payload</span><div class="chips"><span class="chip">broker_response</span></div></div></div></div>
         <div class="step s" style="--c:var(--service)"><div class="n">4</div>
           <div class="node service stack" id="calc" style="width:290px; min-width:290px; flex:1"><div class="ic" data-icon="calculator"></div>
             <div class="tx"><b>Compute metrics</b>
@@ -75,7 +75,7 @@
     </div>
   </div>
 
-  <div class="note" style="max-width:1000px; margin-top:44px"><span data-icon="lightbulb"></span><div>The timer wraps every RESTX API resource automatically and is added by hand to the scalping and order buttons (scalping.py, orders.py).</div></div>
+  <div class="note" style="max-width:1000px; margin-top:44px"><span data-icon="lightbulb"></span><div>RESTX resources are wrapped automatically; selected UI order routes add the timer explicitly. These server timings exclude client-network travel.</div></div>
 </div>
 <script>
   connect('client','route',{color:'client'})

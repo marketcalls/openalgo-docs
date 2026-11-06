@@ -1,0 +1,20 @@
+<style>#canvas > .wlabel { position:absolute; } .grid .node { min-width:0; align-self:stretch; }</style>
+<div id="canvas" style="width:1680px">
+  <div class="title"><div class="eyebrow">Broker setup and login</div><h1>Save several brokers, then use one active session</h1><p style="max-width:1230px">Broker Configuration stores keys without a broker login. Starting a new broker login leaves the current session in place until the new login safely commits.</p></div>
+  <div class="grid" style="grid-template-columns:repeat(3,1fr);column-gap:82px;row-gap:100px;align-items:stretch">
+    <div class="node client stack" id="choose"><div class="ic" data-icon="user"></div><div class="tx"><b>1 · Sign in and choose</b><span>Select Broker lists enabled choices and setup fields. Configure keys before signing in to a broker.</span><div class="chips"><span class="chip">/broker</span><span class="chip">/broker/config</span></div></div></div>
+    <div class="node data stack" id="keys"><div class="ic" data-icon="key-round"></div><div class="tx"><b>2 · Resolve its keys</b><span>The broker named by a populated .env callback and key uses those values first. Other brokers use encrypted saved keys.</span><div class="chips"><span class="chip">.env precedence</span><span class="chip">broker_keys</span></div></div></div>
+    <div class="node security stack" id="start"><div class="ic" data-icon="shield-check"></div><div class="tx"><b>3 · Start login on the server</b><span>A CSRF-checked request creates one-use pending state. It expires after ten minutes.</span><div class="chips"><span class="chip">POST /auth/broker/login</span><span class="chip">nonce/state digests</span></div></div></div>
+    <div class="node broker stack hero" id="active"><div class="ic" data-icon="radio-tower"></div><div class="tx"><b>6 · One active broker</b><span>The successful login hands over the shared session. Other devices can resume it without tearing down an unchanged feed.</span><div class="chips"><span class="chip">POST /auth/broker/resume</span></div></div></div>
+    <div class="node service stack" id="commit"><div class="ic" data-icon="lock"></div><div class="tx"><b>5 · Commit and publish</b><span>Recheck revocation, key changes and switch safety at the token write. Publish process keys only with a successful commit.</span><div class="chips"><span class="chip">auth_commit_guard</span></div></div></div>
+    <div class="node app stack" id="callback"><div class="ic" data-icon="repeat"></div><div class="tx"><b>4 · Match the callback</b><span>Accept only the started login. Stage its keys for this request; other requests keep the active broker's keys.</span><div class="chips"><span class="chip">request-local staging</span></div></div></div>
+  </div>
+  <div class="note" style="margin-top:36px;max-width:1320px"><span data-icon="lightbulb"></span><div>Running Live automation or protected scalping positions can block a switch. Replacing or forgetting active keys needs sign-out confirmation. Back up the original .env with the database: its secrets decrypt saved keys.</div></div>
+  <div class="legend"><span style="--c:var(--client)"><i></i>You</span><span style="--c:var(--data)"><i></i>Saved settings</span><span style="--c:var(--security)"><i></i>Login checks</span><span style="--c:var(--app)"><i></i>Request isolation</span><span style="--c:var(--broker)"><i></i>Active broker</span></div>
+</div>
+<script>
+connect('choose','keys',{color:'client'});connect('keys','start',{color:'data'});
+connect('start','callback',{color:'security',from:'bottom',to:'top'});
+connect('callback','commit',{color:'app',from:'left',to:'right'});
+connect('commit','active',{color:'broker',from:'left',to:'right'});
+</script>

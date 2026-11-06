@@ -2,8 +2,8 @@
 <div id="canvas" style="width:1680px">
   <div class="title">
     <div class="eyebrow">Semi-auto mode</div>
-    <h1>No order reaches your broker until you approve it</h1>
-    <p style="max-width:1080px">In semi-auto mode OpenAlgo holds every new order in a queue. You review it in the Action Center, then approve it to place the order or reject it so it is never sent.</p>
+    <h1>Eligible live placements wait for your approval</h1>
+    <p style="max-width:1080px">Semi-auto holds eligible live API-key placements. Analyzer and authenticated internal execution paths are separate. Review a pending request, approve a submission attempt or reject it before it is sent.</p>
   </div>
 
   <div class="row" style="align-items:center; gap:56px">
@@ -42,22 +42,22 @@
       <div class="col" style="gap:56px">
         <div class="node service" id="exe" style="width:270px">
           <div class="ic" data-icon="circle-check"></div>
-          <div class="tx"><b>Checked again and sent</b><span>the order is validated once more, then sent out</span>
+          <div class="tx"><b>Claims sending once</b><span>one approval owns the send; concurrent approvals cannot send it twice</span>
             <div class="chips"><span class="chip">approval executor</span></div></div>
         </div>
         <div class="node broker" id="broker" style="width:270px">
           <div class="ic" data-icon="trending-up"></div>
-          <div class="tx"><b>Order placed at your broker</b><span>or in the sandbox if Analyzer mode is on</span></div>
+          <div class="tx"><b>Broker outcome</b><span>confirmed result, or Sending / Status unclear after interruption</span></div>
         </div>
       </div>
       <div class="node security" id="rej" style="width:270px">
         <div class="ic" data-icon="circle-x"></div>
-        <div class="tx"><b>Rejected</b><span>reason saved, never sent to the broker</span></div>
+        <div class="tx"><b>Rejected while pending</b><span>your review decision stops this queued request before send</span></div>
       </div>
     </div>
   </div>
 
-  <div class="note" style="max-width:1000px; margin-top:44px"><span data-icon="lightbulb"></span><div>Only new orders wait for approval. Cancel, modify and close-position requests are blocked in semi-auto mode; switch to Auto to use them. Read-only calls such as order book and positions run at once.</div></div>
+  <div class="note" style="max-width:1000px; margin-top:44px"><span data-icon="lightbulb"></span><div>A lost broker reply can be labelled rejected by the current UI even if the order was placed. Check broker books before retrying. Cancel, modify and close requests are blocked in semi-auto live mode; reads run at once.</div></div>
 </div>
 <script>
   connect('sig', 'oa', { color: 'client' })

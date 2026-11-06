@@ -1,0 +1,22 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Write once, trade through your broker"
+Subtitle: "Your strategy talks to OpenAlgo. The chosen plugin translates the broker format."
+Landscape architecture diagram with four areas: left "Written once", middle "OpenAlgo", right "38 broker plugins", far right broker card.
+Written once contains two parallel source cards:
+"Charting tools" / "TradingView · Amibroker · Excel";
+"Your code" / "Python and other SDKs".
+OpenAlgo boundary contains:
+"Order API" / "Orders · positions · quotes" / "REST /api/v1";
+"Common trading layer" / "One symbol format; one set of order rules" / "services";
+"Flow" / "Built-in visual workflows", positioned above Common trading layer;
+"Live prices" / "Streaming market data" / "WebSocket :8765", positioned below Order API.
+Directed arrows Charting tools -> Order API; Your code -> Order API; Order API -> Common trading layer; Flow -> Common trading layer labelled "In-process".
+Your code <-> Live prices, explicitly BIDIRECTIONAL.
+Right plugin boundary headed "38 broker plugins" contains THREE parallel cards without arrows among them:
+"36 stock brokers" / "API, mapping and streaming parts";
+"Delta Exchange" / "Crypto derivatives";
+"Dhan sandbox" / "Practice account".
+Common trading layer -> plugin boundary labelled "Orders".
+Live prices <-> plugin boundary labelled "Live prices", explicitly BIDIRECTIONAL.
+Plugin boundary -> far-right "Your broker" / "Broker's own API".
+No invented direct Flow-to-broker or SDK-to-broker connection. Do not depict the three plugin options as a sequence. Make 38 total and 36 stock brokers exact. Readable large labels and unambiguous directional heads.

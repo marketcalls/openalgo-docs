@@ -21,7 +21,7 @@ The frontend is a React 19 TypeScript SPA built with Vite 8. Current package con
 
 Routing uses the `react-router` package directly. `react-router-dom` is no longer a dependency, so imports come from `react-router`.
 
-Supported Node versions are `>=20.20.0 || >=22.22.0 || >=24.13.0`.
+Supported Node versions are `^22.23.4 || ^24.22.1 || >=26.12.1`.
 
 ## Composition
 
@@ -37,7 +37,7 @@ The Flask backend serves the production bundle through `blueprints/react_app.py`
 | Trading state | `/dashboard`, `/orderbook`, `/tradebook`, `/positions`, `/holdings` |
 | Automation | `/strategy`, `/chartink`, `/python`, `/flow` |
 | Tools | `/optionchain`, `/strategybuilder`, `/ivchart`, `/oitracker`, `/gex`, `/gammadensity`, `/oirange`, `/arbitrage`, `/scalping` |
-| Monitoring | `/pnltracker`, `/latency`, `/traffic`, `/health`, `/security` |
+| Monitoring | `/pnl-tracker`, `/latency`, `/traffic`, `/health`, `/security` |
 | Admin/integrations | `/admin`, `/apikey`, `/playground`, `/telegram`, `/whatsapp` |
 
 The exact route list is in `frontend/src/App.tsx`; navigation visibility is defined separately in `frontend/src/config/navigation.ts`.

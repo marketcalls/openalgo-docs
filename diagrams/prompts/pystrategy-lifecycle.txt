@@ -1,0 +1,19 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Your Python strategy's lifecycle"
+Subtitle: "Securities follow the exchange calendar. CRYPTO Run 24/7 has no daily stop."
+Use a clean STATE TRANSITION ATLAS: six large state cards in a 3-column x2-row grid. Each card includes its meaning and its outgoing transitions as small readable rows containing the condition followed by a RIGHT arrow glyph and destination state name. There are NO connector lines between cards, because each transition row explicitly names its destination. These cards are parallel states, never a sequential six-step process. This reduces arrow crossings and is factually exact.
+Card1 "Scheduled" / "Idle, waiting for start time" / "POST /python/new · start_ / stop_ cron"
+Rows: "Start time or Start inside window → Running"; "Start time on closed day → Paused".
+Card2 "Running" / "Own process; logs and orders" / "Per-run log · Unix resource limits"
+Rows: "Stop time or script exit → Scheduled"; "00:01 check / enforcer → Paused"; "Stop (/python/stop) → Manually stopped"; "Restart relaunch fails → Error".
+Card3 "Paused" / "Exchange closed: weekend or holiday"
+Rows: "Reopens inside window → Running"; "Reopens outside window → Scheduled".
+Card4 "Manually stopped" / "Scheduled auto-start skipped" / "manually_stopped"
+Rows: "Start inside window → Running"; "Start outside window → Scheduled (re-armed)".
+Card5 "Error" / "Relaunch after OpenAlgo restart failed" / "is_error"
+Rows: "Manual Start or contracts ready → Running"; "Clear error → Scheduled"; "/python/clear-error".
+Card6 "Deleted" / "Delete from any state → Deleted" / "Script + settings removed; log files kept" / "Terminal state".
+Two prominent full-width notes below cards:
+"Error auto-start resumes only for 'master contracts not ready'; otherwise start manually or clear the error."
+"CRYPTO Run 24/7 skips the daily stop. A manual stop stays stopped."
+Critical: all textual transition arrows point RIGHT from condition to destination. Do not add external connector lines, ambiguous decorative arrows, bidirectional arrows or invented transitions. Large legible text in each card.

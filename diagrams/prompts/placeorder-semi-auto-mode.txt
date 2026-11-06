@@ -1,0 +1,17 @@
+Use case: infographic-diagram. Polished landscape 3:2 OpenAlgo documentation image. Deep navy #0b1020, navy cards with thin cyan/teal/violet/amber/green borders, white headings pale gray text, large readable modern sans-serif, outline icons, generous space, clear directed arrows. No photos, 3D, watermark or extra facts.
+Title: "Semi-auto: queue now, approve later"
+Subtitle: "Eligible live API-key orders wait for review. Analyzer calls use sandbox directly."
+Two separate phase panels left-to-right.
+Left phase heading "When the order arrives". Four vertical numbered cards:
+1 "Order arrives" / "Strategy or platform" / "POST /api/v1/placeorder"
+down to2 "Format check only" / "OrderSchema load · restx_api" / "Full validation waits for approval"
+down to3 "Detect semi-auto" / "should_route_to_pending"
+down to4 "Park for approval" / "queue_order" / "Save order + notify Action Center".
+Card4 branches RIGHT into TWO separate middle cards, no arrow between them: "Pending orders" / "pending_orders · openalgo.db" / "status: pending" and "Instant reply" / "mode: semi_auto · pending_order_id" / "No broker order yet".
+Pending orders -> right phase heading "Later: you decide", with top card "Action Center" / "Socket.IO pending_order_created" / "Review on screen".
+Action Center branches DOWN to two columns:
+Left "Approve" / "POST /action-center/approve/<id>" -> "Release order" / "execute_approved_order" / "Saved broker session; never re-queued" / "place_order(auth_token, broker)" -> "Validate + place" / "place_order_with_auth" / "Broker, or sandbox in Analyzer".
+Right "Reject" / "POST /action-center/reject/<id>" -> "Keep on record" / "Rejected + reason stored" / "Never sent to broker".
+Bottom amber note: "A pending reply is not broker success. Submission is not a confirmed fill; reconcile unanswered sends with broker books."
+Ensure instant reply is not connected to broker execution; only approval leads there.
+CRITICAL TEXT CORRECTION: The Approve card endpoint is exactly "POST /action-center/approve/<id>". It contains the word "approve", spelled a-p-p-r-o-v-e. Never replace approve with openalgo. Use a wide Approve card and TWO short endpoint lines: "POST /action-center/" then "approve/<id>". Reject card uses the parallel lines "POST /action-center/" then "reject/<id>". All other text and branches unchanged.

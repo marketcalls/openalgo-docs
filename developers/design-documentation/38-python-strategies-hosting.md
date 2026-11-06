@@ -103,7 +103,7 @@ IS_LINUX = OS_TYPE == 'linux'
 
 ## Strategy Lifecycle
 
-<figure><img src="../../.gitbook/assets/diagram-pystrategy-lifecycle.png" alt="Python strategy lifecycle: scheduled, running, paused on closed exchange days, manually stopped, error after failed restart, and deleted"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-pystrategy-lifecycle.png" alt="Python strategy lifecycle: scheduled, running, securities paused on closed exchange days, CRYPTO Run 24/7, manually stopped, error after failed restart, and deleted"><figcaption></figcaption></figure>
 
 ## Scheduling with APScheduler
 

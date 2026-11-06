@@ -1,0 +1,14 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Every API call follows four steps"
+Subtitle: "/api/v1 endpoints limit, validate, call a service and return its answer."
+Five large cards in a left-to-right row:
+"Your request" / "POST JSON body or query args" / "/api/v1 · request.json"
+-> "1. Rate limit" / "Too many calls too fast?" / "Flask-Limiter decorator" / "API / ORDER limit"
+-> "2. Check fields" / "Required fields, types, allowed values" / "Marshmallow · schema.load()"
+-> "3. Service does work" / "API key; broker or sandbox" / "services/*" / "(success, body, status)"
+-> "4. Send answer" / "Service body as JSON" / "Service status code" / "jsonify(body) · make_response(..., status)".
+Below rate-limit card dashed DOWN arrow to "429 Too many" / "Limit exceeded".
+Below field-check card dashed DOWN arrow to "400 Bad request" / "ValidationError messages".
+Below service card dashed DOWN arrow to "403 Forbidden" / "Invalid API key".
+A readable bottom note: "Unexpected errors are caught and returned as 500 JSON replies."
+No arrow between the three error outcomes; each is an independent early exit. Use large text, plenty of whitespace.

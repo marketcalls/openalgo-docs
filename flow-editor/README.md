@@ -58,6 +58,12 @@ node reads:
 uv run python .claude/skills/flow-builder/validate.py my_workflow.json
 ```
 
+## Save, Run and Activate
+
+Palette buttons add nodes without dragging. **Save** persists edits; **Run Now** executes the stored graph in the current Live/Analyze mode. The editor saves dirty changes before Run Now and Activate, and refuses the action if saving cannot complete. Verify mode and quantity first.
+
+A response with `status: "accepted"` from a longer-wait run is not a final result. Open execution history to see its eventual outcome. Check order/trade/position books before treating a placement as a fill or retrying an unclear send.
+
 ## What Flow cannot do
 
 These are hard boundaries, not oversights. [Limitations](limitations.md)
@@ -66,19 +72,19 @@ covers each in detail with workarounds.
 | Limitation | Practical effect |
 | --- | --- |
 | **No state across runs** | `variable` values reset every run. "Have I already entered today?" must be answered from the broker (`positionCheck`, `orderBook`), not a counter. Period boundaries are the exception: `calendar` answers "is a new week/month/quarter" from the exchange calendar, no memory needed. |
-| **`delay` and `waitUntil` block the run** | They hold the execution slot, and for a webhook the triggering HTTP request too, for their full duration. `delay` is silently capped at 300 seconds and then continues, so a workflow written as "wait 30 minutes" exits after five. `waitUntil` is capped at 30 minutes and **errors** beyond that rather than waiting. Waiting out a session means a second workflow on its own schedule. |
+| **`delay` and `waitUntil` block the run** | They hold the workflow execution slot. Eventlet keeps the triggering request; gthread can run longer waits in bounded background pools (see [Limitations](limitations.md#delay-is-capped-at-300-seconds-waituntil-at-30-minutes)). `delay` is silently capped at 300 seconds and then continues, so a workflow written as "wait 30 minutes" exits after five. `waitUntil` is capped at 30 minutes and **errors** beyond that rather than waiting. Waiting out a session means a second workflow on its own schedule. |
 | **No loops** | You cannot iterate a symbol list. One workflow handles one symbol; clone it per symbol, or drive one workflow from `{{webhook.symbol}}`, see [Tutorial 11](tutorials.md#11-driving-an-order-from-the-webhook-payload). |
-| **No backtesting** | Flow runs forward only. Use the Python Strategy Host or the `openalgo` SDK to backtest. |
+| **No backtesting** | Flow runs forward only. Use an external Python backtesting library or an [OpenScript chart backtest](../new-features/openscript.md#backtest); the Python host and SDK do not add a built-in backtester. |
 | **No pandas objects** | Variables are JSON. You get arrays of records and single values, not a `pandas.Series`. |
 | **Max 200 bars per fetch** | Deep history (10 years of 1-minute data) is refused by design. See [Market Data](market-data.md). |
 | **Triggers cannot read upstream data** | A trigger is the entry point, so its fields cannot contain `{{variables}}`. |
 | **Indicators need one symbol** | `correlation`, `beta`, `crossover`, `crossunder` need two independent series and are not available as a single `indicator` node. Crossovers are built from two indicator nodes, see [Tutorial 3](tutorials.md#3-crossovers). |
-| **`closePositions` ignores its filter in live trading** | It honours symbol, exchange and product in Analyzer mode and squares off the **entire book** live, so a filtered node looks correct in sandbox testing. Close a specific leg with `smartOrder` and `positionSize: 0` instead. |
+| **`closePositions` ignores its filter in live trading** | It honours symbol, exchange and product in Analyzer mode and squares off the **entire book** live, so a filtered node looks correct in sandbox testing. For a scoped smart-order exit, use `positionSize: 0` with `quantity: 0` and reconcile current positions; a positive quantity can open an order when already flat. |
 | **An unknown `data` key is silently ignored** | `strikeOffset` where the field is `offset` imports cleanly, runs successfully, and leaves the node on its default. Nothing in the run says so. Check the workflow before importing it. |
 
 ## Live vs Analyzer mode
 
-Flow does not have its own paper-trading switch. It inherits the global
+Flow does not have its own sandbox-mode switch. It inherits the global
 **Analyzer** toggle:
 
 * **Analyzer on**: orders are simulated by the Sandbox engine. Order ids are

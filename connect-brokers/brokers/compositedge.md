@@ -1,5 +1,9 @@
 # Compositedge
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 ## Compositedge (XTS) Broker Integration
 
 Compositedge is a Bangalore-based discount broker that provides API access via the XTS (Symphony Fintech) platform. This guide will help you integrate Compositedge with OpenAlgo.

@@ -1,0 +1,16 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "API-key checks: caches first"
+Subtitle: "Only a cache miss needs the full Argon2 check."
+Main horizontal row of five cards:
+"1 · API request" / "Includes apikey"
+-> "2 · Fingerprint" / "sha256(apikey)" / "No plain key in cache"
+-> "3 · Known bad?" / "Invalid-key cache · TTL 5 min"
+-> "4 · Known good?" / "Verified cache · TTL 10 h"
+-> "5 · Full check" / "Load every api_keys row" / "Argon2 verifies key + pepper" / "ApiKeys.query.all() · ph.verify".
+Label arrows 3→4 and 4→5 "miss".
+Below, clear reject lane: 3 has downward arrow "found" to "Rejected" / "None → service returns 403" / "Invalid openalgo apikey".
+Above, accept lane: 4 has upward arrow "found" to "Accepted" / "Return user_id; continue request".
+From 5 branch UP labeled "match" to "Remember as good" / "Cache user_id only if invalidation has not overtaken the check", then arrow LEFT to Accepted.
+From 5 branch DOWN labeled "no match" to "Remember as bad" / "Synchronized cache access", then LEFT to "Log failed attempt" / "InvalidAPIKeyTracker · db/logs.db" / "IP-ban threshold", then LEFT to Rejected.
+Use one accepted node and one rejected node. Correct branch labels and arrow directions are critical. Bottom note: "Locked cache access and generation checks protect concurrent changes."

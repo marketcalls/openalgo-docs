@@ -1,5 +1,9 @@
 # IndMoney (INDstocks)
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 IndMoney (INDstocks) is a modern trading infrastructure platform offering APIs that allow traders and developers to build, automate, and execute trading strategies.\
 Using IndMoney APIs, users can connect their IndMoney trading account with tools like **OpenAlgo** and create their own fully self-hosted, secure algo-trading setup.
 

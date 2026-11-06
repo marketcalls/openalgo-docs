@@ -1,0 +1,22 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "One secure front door, one app, one live-data process"
+Subtitle: "Ubuntu deployment: Nginx fronts a single systemd service."
+Outside server boundary on left "You and your tools" / "Browser · SDK · webhook" / "TradingView · Chartink · Flow · MCP" -> arrow "HTTPS / WSS" into server "Nginx reverse proxy" / "Let's Encrypt TLS" / "HTTP :80 → HTTPS :443".
+Inside Ubuntu server boundary, nested "systemd · openalgo.service" contains:
+upper "OpenAlgo app · Gunicorn" / "Flask · Socket.IO · React UI" / "1 worker (-w 1)" / "eventlet default; optional gthread: 64 threads" / "127.0.0.1:5000 or Unix socket".
+lower boundary "Separate child process" contains 3 horizontally arranged cards left-to-right "WebSocket proxy" / "127.0.0.1:8765"; "ZeroMQ bus" / "SUB binds 127.0.0.1:5555" / "ZMQ_PORT 5555"; "Broker streaming adapters" / "Receive live feed".
+Nginx -> Gunicorn labelled "/ and /socket.io/".
+Nginx -> WebSocket proxy labelled "/ws upgrade".
+Gunicorn -> WebSocket proxy DASHED labelled "Spawns: python -m websocket_proxy.server".
+Gunicorn -> ZeroMQ bus labelled "PUB connects".
+Broker streaming adapters -> ZeroMQ bus LEFT-POINTING arrow labelled "PUB connects".
+ZeroMQ bus -> WebSocket proxy LEFT-POINTING arrow.
+Outside server on right "Broker APIs" / "Orders · quotes · live feed".
+Gunicorn -> Broker APIs labelled "REST orders, quotes".
+Broker APIs -> Broker streaming adapters labelled "Market data".
+Below service inside server, separate "App directory · e.g. /opt/openalgo" panel with three storage cards:
+".env" / "Installation secrets; broker keys may be saved in DB";
+"db/" / "5 SQLite DBs + historify.duckdb" / "openalgo.db · logs.db · latency.db" / "health.db · sandbox.db";
+"log/" / "errors.jsonl + dated logs".
+Arrow FROM systemd service boundary TO app-directory boundary labelled "Read config; write data and logs".
+Boundaries and arrow directions must be accurate; one worker and separate proxy process are mandatory. Do not draw broker feed directly to Gunicorn.

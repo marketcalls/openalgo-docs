@@ -7,6 +7,18 @@ To install the OpenAlgo Python library, use pip:
 pip install openalgo
 ```
 
+### Version and order-result contracts
+
+The platform currently pins `openalgo==2.0.5` in `pyproject.toml`; the SDK and platform versions are independent. Use `pip install openalgo==2.0.5` with Python 3.12 or newer for a client matching this checkout. `pip install -U openalgo` may install a later version.
+
+Prices, quantities, expiries and lot sizes below are illustrative. Resolve the actual contract's `lotsize`, `tick_size` and applicable `freeze_qty` with `client.symbol(...)` or `client.search(...)` before trading. On regular order methods the SDK parameter is `price_type`; the REST field it sends is `pricetype`.
+
+Check the returned `status` and `mode`. Eligible Semi-Auto requests can return success with `mode="semi_auto"` and `pending_order_id` while waiting for Action Center approval; no broker order exists yet. A placement acknowledgement is not proof of a fill. A client timeout or server `502` possible-placement message requires broker-book reconciliation before retrying. Inspect each basket/split child separately. See [REST order outcomes](../../api-documentation/v1/README.md#order-outcomes-and-retries).
+
+`strategy` on `cancelallorder()` and `closeposition()` is a tracking label, not a filter; those calls affect the active account. For a Strategy RMS strategy use the module-specific methods described in [Strategy RMS From Python](strategy-management.md).
+
+Portfolio, SIP and Sector Rotation have no named wrappers in SDK 2.0.5; use their documented [REST APIs](../../api-documentation/v1/README.md).
+
 ### Get the OpenAlgo apikey
 
 Make Sure that your OpenAlgo Application is running. Login to OpenAlgo Application with valid credentials and get the OpenAlgo apikey
@@ -631,17 +643,16 @@ OpenPosition Response
 ### PlaceGTTOrder Example
 
 A GTT (Good Till Triggered) order is a price trigger that sits with the broker until
-LTP crosses your level, then places the underlying order automatically.
+LTP crosses your level, then places the underlying order automatically. This checkout has live GTT integrations for Angel, Dhan, Fyers, Rupeezy, Upstox and Zerodha. Angel OCO is two independent rules without native mutual cancellation; Upstox OCO opens an entry at market before its exit rules. Review [broker-specific GTT behavior](../../api-documentation/v1/orders-api/placegttorder.md#broker-specific-behaviour) before using OCO.
 
 There are two shapes, and picking the wrong one is the usual mistake:
 
 | Type | Use when | Triggers | Orders fired |
 |------|----------|----------|--------------|
 | `SINGLE` | One entry or exit at a level | 1 | 1 |
-| `OCO` | You hold a position and want both a stoploss and a target, whichever hits first | 2 | 1 of 2, the other is auto-cancelled |
+| `OCO` | Stoploss and target intent; broker-specific behavior applies | 2 | Native OCO cancels the other leg; not universal |
 
-For a **SINGLE**, exactly one of `triggerprice_sl` / `triggerprice_tg` carries your
-level and the other stays `0`. Pick by where the trigger sits relative to LTP:
+For a **SINGLE**, send your intended level in one of `triggerprice_sl` / `triggerprice_tg` and leave the other `0`. If both are positive, the current server schema prefers `triggerprice_sl` and clears the other. Pick by where the trigger sits relative to LTP:
 `triggerprice_sl` for a level **below** LTP (sell stop-loss, buy the dip),
 `triggerprice_tg` for one **above** (breakout buy, sell at target). A SINGLE has no
 stoploss leg, so the suffix is only a directional hint.
@@ -687,7 +698,7 @@ response = client.placegttorder(
 ```
 
 ```python
-# OCO - "I am short 5 INFY. Stop me out at 1480, take profit at 1620"
+# OCO - "I hold 5 INFY. Stop me out at 1480, take profit at 1620"
 # price is 0: OCO prices each leg separately through stoploss and target
 response = client.placegttorder(
     strategy="Bracket OCO",
@@ -762,7 +773,7 @@ CancelGTTOrder Response:
 {"status": "success", "trigger_id": "23132604291205"}
 ```
 
-Cancelling an OCO removes both legs atomically; there is no per-leg cancel.
+OCO cancellation is broker-dependent. Angel cancels independent rules sequentially, so failure can leave one active. Reconcile the book before retrying; cancellation is not universally atomic.
 
 ### GTTOrderBook Example
 
@@ -1853,6 +1864,8 @@ print(response)
 
 ### TradeBook Example
 
+Each row is a fill; one order can have multiple rows. `tradeid` is provided where supported. Timestamp representation and ordering depend on the broker; Zerodha uses fill time with an order-time fallback.
+
 ```python
 response = client.tradebook()
 print(response)
@@ -1870,7 +1883,7 @@ TradeBook Response
       "exchange": "NSE",
       "orderid": "250408000989443",
       "product": "MIS",
-      "quantity": 0.0,
+      "quantity": 1.0,
       "average_price": 1180.1,
       "timestamp": "13:58:03",
       "trade_value": 1180.1
@@ -1881,7 +1894,7 @@ TradeBook Response
       "exchange": "NSE",
       "orderid": "250408001086129",
       "product": "MIS",
-      "quantity": 0.0,
+      "quantity": 1.0,
       "average_price": 83.74,
       "timestamp": "14:28:49",
       "trade_value": 83.74
@@ -1892,6 +1905,8 @@ TradeBook Response
 ```
 
 ### PositionBook Example
+
+Check optional `average_price_basis`: Kotak can mark a carried position as `carry_forward_valuation` when entry cost cannot be recovered, after preferring uploaded/cash Holdings cost where available. See [PositionBook](../../api-documentation/v1/accounts-api/positionbook.md).
 
 ```python
 response = client.positionbook()
@@ -2465,6 +2480,43 @@ Every documented outcome is returned rather than raised, with its `result` label
 See [Strategy RMS From Python](strategy-management.md) for the full webhook guide,
 and the [Strategy RMS API](../../api-documentation/v1/strategy-rms-api/README.md)
 for every field of the nine methods above.
+
+### WebSocket cache and callback behavior
+
+In SDK 2.0.5, `api(..., auto_reconnect=True)` is the default. After a drop the SDK reconnects with backoff, authenticates and replays desired market-data and order subscriptions. Explicit `disconnect()` stops that reconnect loop. The server itself does not restore sessions or replay missed ticks. Set `ws_url="wss://<domain>/ws"` explicitly for standard HTTPS installations; the SDK's default URL construction uses `ws://<host>:<ws_port>`.
+
+`connect()` returns a boolean for connection/authentication, and `subscribe_ltp()`, `subscribe_quote()`, `subscribe_depth()` and `subscribe_orders()` return whether the request was sent. A sent request is not confirmation that every symbol was accepted or that fresh data arrived.
+
+Callbacks receive an envelope with `symbol`, `exchange`, numeric `mode` and a nested `data` object. The pinned SDK normalizes this data rather than forwarding all raw fields:
+
+- Quote callbacks/cache include a fixed field set, defaulting absent OHLC/volume/change fields to zero. A zero here may mean unavailable upstream, not a measured market value. Raw WebSocket frames can omit those fields.
+- Depth callbacks/cache retain `ltp`, `timestamp` and `depth`; extra OHLC, OI or total buy/sell quantity fields on the raw server frame are not retained. Use a raw WebSocket client when those extra fields are needed.
+- `get_ltp(exchange=None, symbol=None)`, `get_quotes(...)`, and `get_depth(...)` read SDK memory; they do not issue REST requests or create subscriptions. Results nest under `ltp`, `quote` and `depth`, then exchange and symbol. `client.quotes(...)` and `client.depth(...)` are separate REST snapshot methods.
+
+For example, after subscribing and receiving a tick:
+
+```python
+quotes = client.get_quotes(exchange="NSE", symbol="RELIANCE")
+latest = quotes.get("quote", {}).get("NSE", {}).get("RELIANCE")
+```
+
+Keep callbacks brief, check timestamp/freshness, and handle empty caches. See the [wire protocol](../../api-documentation/v1/websockets.md) for the raw format and broker-dependent field availability.
+
+### Account-level order updates
+
+```python
+def on_order_update(message):
+    print(message.get("orderid"), message.get("order_status"))
+
+client.connect()
+client.subscribe_orders(on_order_update=on_order_update)
+# Process events while your application runs, then release the subscription.
+updates = client.get_orders()  # {"orders": [...]}, most recent first, capped
+client.unsubscribe_orders()
+client.disconnect()
+```
+
+No symbol list is required. These are account-level events, with `mode="live"` or `"analyze"`; deduplicate repeated broker/postback events and reconcile executions with the broker books. See [order-update streaming](../../api-documentation/v1/websockets.md#order-updates).
 
 ### LTP Data (Streaming Websocket)
 

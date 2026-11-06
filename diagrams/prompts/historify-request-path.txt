@@ -1,0 +1,19 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Download candles once, serve them locally"
+Subtitle: "Historify runs background jobs with live progress."
+Architecture landscape, 9 cards, process boundaries clear.
+Left external "Historify page" / "React /historify" / "Pick symbols; start or schedule downloads".
+Large "OpenAlgo Flask app" boundary contains top row:
+"Historify routes" / "Session checked" / "/historify/api/*" / "blueprints/historify.py"
+→ "Historify service" / "Thread-pool jobs · import · export" / "historify_service.py"
+→ "History service" / "Normalized OHLCV" / "get_history()".
+External right "Your broker" / "Historical data API" receives arrow from History service. Label path "OpenAlgo API key".
+Inside boundary below routes: "Scheduler" / "APScheduler" / "Interval + daily jobs" / "Timer state: openalgo.db".
+Routes→Scheduler labeled "manage schedules"; Scheduler→Historify service labeled "run job".
+Below service "historify.duckdb" / "Local candle store" / "market_data · catalog · jobs · schedules".
+Historify service→DuckDB labeled "save candles". Scheduler→DuckDB labeled "schedule list + run history".
+Bottom-right within app card "History API" / "/api/v1/history" / "API-key auth · source=db". Dashed arrow from History API points LEFT into DuckDB labeled "read stored candles".
+Dashed progress arrow from Historify service points back LEFT into page, labeled "Socket.IO progress".
+Bottom note: "Custom intervals use stored smaller candles. Daily EMA on intraday charts uses stored daily history. An incomplete stored month is not a confirmed month."
+All arrowheads terminate on intended cards, not the process boundary.

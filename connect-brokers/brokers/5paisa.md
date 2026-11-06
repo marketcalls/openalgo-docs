@@ -1,5 +1,9 @@
 # 5Paisa
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 OpenAlgo makes algorithmic trading accessible and straightforward by providing seamless integration with various brokers, including 5Paisa. This documentation will guide you through the process of configuring your 5Paisa account to work with OpenAlgo, ensuring you can automate your trading strategies efficiently. Follow the steps below to generate APIs, and set up your environment for a smooth trading experience.
 
 ### **Generate APIs**

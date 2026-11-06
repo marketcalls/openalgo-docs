@@ -29,6 +29,8 @@
 
 ## Required Configuration
 
+A fresh checkout can create a missing `.env` from `.sample.env` with unique `APP_KEY`, `API_KEY_PEPPER`, and `FERNET_SALT`, private permissions, and no broker. It refuses to invent new keys when `db/openalgo.db` already exists. Preserve the original `.env` with the database; public sample placeholders are rotated on first run, while real existing values are retained.
+
 `APP_KEY` must exist and contain at least 32 characters, checked in `create_app()`. `API_KEY_PEPPER` carries the same 32-character requirement, enforced at import time in `database/auth_db.py`. `utils/env_check.py` detects the placeholder `APP_KEY`, `API_KEY_PEPPER`, and `FERNET_SALT` values shipped in `.sample.env` and rotates them to fresh random secrets on first run. Official install paths generate unique values; placeholders are not accepted as production configuration.
 
 Cookie security is derived from `HOST_SERVER`: HTTPS deployments use secure cookies while local HTTP development remains usable. External debug binding is refused unless explicitly allowed.
@@ -63,11 +65,11 @@ After each request, `app.py`'s `teardown_appcontext` handler calls `remove_all_s
 
 ## WebSocket Startup
 
-The market-data proxy is skipped when Docker/standalone configuration owns it. Under eventlet/gunicorn it runs in a child process; direct development startup uses an OS thread. See [06 WebSockets](authentication-platforms.md).
+The market-data proxy is skipped when Docker/standalone configuration owns it. Under either Gunicorn worker it runs in a child process; direct development startup uses an OS thread. See [06 WebSockets](authentication-platforms.md).
 
 ## Direct Run
 
-The `__main__` block reads `FLASK_HOST_IP`, `FLASK_PORT`, and `FLASK_DEBUG`, performs bind/debug safety checks, and starts the Socket.IO server. Debug mode on a non-loopback host exits with an explanation unless `FLASK_DEBUG_ALLOW_EXTERNAL` is set to a truthy value. Production deployment is orchestrated by `start.sh`, which runs Gunicorn with `--worker-class eventlet --workers 1`.
+The `__main__` block reads `FLASK_HOST_IP`, `FLASK_PORT`, and `FLASK_DEBUG`, performs bind/debug safety checks, and starts the Socket.IO server. Debug mode on a non-loopback host exits with an explanation unless `FLASK_DEBUG_ALLOW_EXTERNAL` is set to a truthy value. Production uses one Gunicorn worker: eventlet by default, or opt-in gthread with 64 request threads through the launcher. Docker `start.sh` owns the external proxy. The direct dev server ignores `OPENALGO_WORKER_CLASS`. See [worker selection](../../getting-started/gthread-migration.md).
 
 ## Adding Startup Work
 

@@ -1,5 +1,9 @@
 # Mstock
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 MStock is a modern Indian stock broker by Mirae Asset, offering commission-free trading and robust REST-based APIs. These APIs enable traders and developers to automate trading, retrieve account information, and integrate market data seamlessly. By connecting mStock OpenAPI with OpenAlgo, algo traders can efficiently execute strategies, manage positions, and automate workflows.
 
 For developers and algo traders looking to use the mStock API, the integration process involves the following steps:

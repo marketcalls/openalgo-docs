@@ -145,6 +145,12 @@ Order 6: 5 units (remainder)
 Total: 105 units
 ```
 
+## Approval and execution outcomes
+
+In Semi-Auto mode this request can return HTTP `200`, `status: "success"`, `mode: "semi_auto"` and `pending_order_id` after queuing for Action Center approval. It has not yet placed a broker order. In Auto/analyzer execution, inspect the placement result and confirm fills separately. See [order outcomes and retries](../README.md#order-outcomes-and-retries).
+
+Inspect every child result even on HTTP `200`. A child that reports a lost broker reply may already exist at the broker; reconcile before retrying. Resending the complete batch can duplicate successful or ambiguous children.
+
 ## Notes
 
 - **Maximum 100 child orders** per split request. A `quantity` and `splitsize` combination that would produce more than 100 orders is rejected before any order is sent.

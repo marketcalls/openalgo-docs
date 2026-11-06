@@ -1,0 +1,18 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "What the sandbox does each day"
+Subtitle: "Default times are IST. Change square-off times in sandbox settings."
+Create a horizontal timeline across two rows: market day above and overnight below, in chronological order; do not confuse midnight rollover.
+Market day timeline 5 cards:
+"Market hours" / "Fill orders on live prices; refresh MTM when positions are read";
+"15:15 · Square-off" / "Equity + equity F&O MIS" / "NSE · BSE · NFO · BFO";
+"16:45 · Square-off" / "Currency MIS" / "CDS · BCD";
+"17:00 · Square-off" / "Agri commodity MIS" / "NCDEX";
+"23:30 · Square-off" / "Commodity MIS" / "MCX".
+Overnight timeline 3 cards:
+"23:59 · P&L snapshot" / "Save day's result; skip market holidays" / "sandbox_daily_pnl";
+"00:00 · T+1 settlement" / "CNC buys → holdings" / "CNC sells → reduce holdings + credit proceeds";
+"03:00 · New session" / "Reset today's realized P&L on funds and positions" / ".env: SESSION_EXPIRY_TIME".
+Below timeline two panels:
+"What every square-off does" contains 2 cards with a single RIGHT arrow: "1. Cancel pending" / "Open MIS + expired-contract orders" / "Settle expired F&O positions" / "check_and_square_off" -> "2. Close open MIS" / "Reverse MARKET; immediate live-price fill" / "PositionManager.close_position".
+"Safety nets and options" has THREE parallel mini cards with NO sequence arrows: "Every 1 minute" / "Backup: square off anything past time"; "Login catch-up" / "Missed square-off, T+1, P&L jobs and GTTs"; "Weekly auto-reset" / "Own schedule; default day: Never".
+Exact times and exchange codes are essential. Keep market/overnight and safety-net boundaries visually clear.

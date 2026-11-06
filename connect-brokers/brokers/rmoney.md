@@ -1,5 +1,9 @@
 # RMoney (XTS)
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 ### RMoney - (Raghunandan Capital Pvt Ltd) Broker Integration
 
 RMoney is a Gandhinagar(Gujarat)-based deep discount broker that provides API access via the XTS (Symphony Fintech) platform. This guide will help you integrate RMoney with OpenAlgo.

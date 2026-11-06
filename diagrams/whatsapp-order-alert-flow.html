@@ -21,8 +21,8 @@
         <div class="n">2</div>
         <div class="node data stack" id="bus" style="width:305px">
           <div class="ic" data-icon="megaphone"></div>
-          <div class="tx"><b>OpenAlgo announces it</b><span>an "order placed" event goes to every listener, handled by background workers</span>
-            <div class="chips"><span class="chip">EventBus</span><span class="chip">10 workers</span></div></div>
+          <div class="tx"><b>OpenAlgo announces it</b><span>an "order placed" event dispatches subscribed callbacks in the background; the ordinary lane serves alerts</span>
+            <div class="chips"><span class="chip">EventBus</span><span class="chip">10 ordinary workers</span><span class="chip">1000 queued or running callbacks</span></div></div>
         </div>
       </div>
       <div class="step" style="--c:var(--security); flex-direction:column; gap:12px">
@@ -59,7 +59,7 @@
     </div>
   </div>
   <div class="row" style="justify-content:flex-end; margin-top:70px; padding-right:74px; gap:40px">
-    <div class="note" style="max-width:560px"><span data-icon="lightbulb"></span><div>Alerts go only to the WhatsApp account you paired, as a message to yourself. Your order is already placed before the alert is sent.</div></div>
+    <div class="note" style="max-width:560px"><span data-icon="lightbulb"></span><div>Alerts go to your paired account as messages to yourself. Delivery is best-effort: full callback capacity or a disconnected bot can lose an alert. An order-placed alert is not fill confirmation.</div></div>
     <div class="node broker hero" id="phone" style="width:340px">
       <div class="ic" data-icon="smartphone"></div>
       <div class="tx"><b>Your phone</b><span>alert arrives in your own chat</span></div>

@@ -1,0 +1,16 @@
+Use case: infographic-diagram. Create a precise, highly readable OpenAlgo documentation infographic in landscape 3:2 format. Deep navy #0b1020 background, navy cards with thin cyan/teal/violet/amber/green/rose outlines, white headings and pale gray body text. Crisp modern sans-serif, large type, generous whitespace, simple outline icons, flat vector-like raster. Match approved broker-login and market-data samples. Clear directional arrowheads entirely outside labels. No 3D, photos, watermark, fake code or extra features.
+Title: "From a placed order to a WhatsApp alert"
+Subtitle: "Order submission does not wait for notification delivery."
+A large boundary "Inside your OpenAlgo server" contains five numbered cards in a readable snake or two-row flow. Exact card text:
+1 "Order placed" / "From your strategy, charting tool or web app" / "POST /api/v1/placeorder"
+2 "EventBus" / "Dispatch subscribed callbacks in the background" / "Ordinary lane: 10 workers" / "1,000 queued or running callbacks"
+3 "Check ownership" / "WhatsApp is paired and the API-key user matches the pairing owner" / "is_paired · owner_username"
+4 "Queue the alert" / "Sender pool: 5 workers" / "Skip if the bot is disconnected" / "alert_executor"
+5 "WhatsApp bot" / "Send to the paired account's own chat" / "bot thread · own_jid"
+Directional arrows: 1 -> 2 -> 3 -> 4 -> 5. Label 3->4 "owner matches".
+A small parallel card "Other listeners" / "Order log · web app · Telegram · strategy book" receives a dashed arrow from EventBus only.
+Outside the server boundary, a "Your phone" card / "Alert in your own chat" receives an arrow from WhatsApp bot labeled "WhatsApp".
+Add a dashed return arrow from WhatsApp bot to Queue the alert labeled "send result". Keep it separate from the forward arrow.
+Footer note: "Delivery is best-effort: full callback capacity or a disconnected bot can lose an alert."
+Second footer note: "An order-placed alert is not fill confirmation."
+Do not imply guaranteed message delivery or confirmed execution. Do not add logos or additional recipients. Keep all wording legible.

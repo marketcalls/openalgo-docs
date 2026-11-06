@@ -1,0 +1,15 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Each layer has one job"
+Subtitle: "The service decides where work happens; logs and alerts run alongside."
+Top left-to-right path:
+"1. Entry point" / "Read request, authenticate, set HTTP status" / "restx_api/ · blueprints/" -> "2. Validation" / "Reject bad fields or expired sessions" / "marshmallow schema" / "check_session_validity" -> "3. Service" / "Choose live or analyze mode, apply policy, orchestrate" / "services/*_service.py".
+To the RIGHT of Service a boundary "4. Where work happens" contains FOUR vertically stacked PARALLEL destination cards. Four distinct arrows FROM Service TO each:
+"Broker module" / "Map broker symbols and fields" / "broker/<name>/";
+"Sandbox" / "Analyze mode, simulated fills" / "sandbox.db";
+"Database modules" / "Read and store records" / "database/*_db.py";
+"Calculation module" / "Greeks · margin · indicators" / "option_greeks_service.py" / "margin_service.py · indicator_service.py".
+Below Service, three independent destinations, each with an arrow FROM Service:
+solid arrow "Result" -> "5. Normalized response" / "Same OpenAlgo JSON shape across brokers and modes" / "result tuple";
+dashed arrow "Semi-auto: queue" -> "Action Center queue" / "Eligible orders wait for approval";
+dashed arrow "Publish event" -> "Side effects" / "Best effort; never block the order" / "EventBus · logging · Socket.IO · Telegram".
+No sequence arrows among the four work options, nor among the three lower outputs. All arrowheads must visibly originate from Service and point to correct destinations.

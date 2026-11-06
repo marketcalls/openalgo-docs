@@ -278,9 +278,9 @@ executor never sends it, so it is always 0.
 ### `smartOrder`: Smart Order
 
 Takes everything `placeOrder` takes, plus `positionSize`: the **target** net
-position. The node computes the delta and places only the difference.
-`positionSize: 0` flattens. This is the safe way to reach a position without
-tracking what you already hold.
+position. The order service/plugin reads the current symbol, exchange and product position and requests the difference for a nonzero target.
+
+`positionSize: 0` can close an existing position. When already flat, broker smart-order implementations can place the supplied action/quantity. Use `quantity: 0` for a close-only intention and reconcile the actual outcome; do not repeatedly send a positive quantity assuming a zero target is idempotent.
 
 `quantity` may be `0` on this node, which is the only order node where zero is
 valid: it means "let `positionSize` decide the size".
@@ -481,7 +481,7 @@ its result under `outputVariable`.
 behaves in two distinct ways:
 
 * With `symbol` blank, it closes **everything**, in every exchange and product,
-  including overnight NRML and CNC holdings. `exchange` and `product` filter
+  including overnight NRML or CNC position rows returned by the broker. `exchange` and `product` filter
   nothing on their own.
 * With `symbol` set, the node sends the scoped close: that symbol, that
   exchange, that product, carrying the strategy tag.
@@ -1135,8 +1135,7 @@ Returns immediately with `{status, waited: false}` if the time has already
 passed today.
 
 **Capped at 30 minutes.** A target further away errors and points at a schedule
-trigger instead of waiting. The wait sleeps inside the workflow lock and inside
-the HTTP request that triggered the run, so an uncapped six-hour wait pinned a
+trigger instead of waiting. The wait retains the workflow lock and execution slot. Under eventlet it also holds the triggering HTTP request; gthread longer-wait runs use bounded background pools (see [Limitations](limitations.md#delay-is-capped-at-300-seconds-waituntil-at-30-minutes)). An uncapped six-hour wait previously pinned a
 worker and answered "already running" to every trigger in between. Use a
 `start` schedule for a square-off hours later, or split it into its own
 workflow.

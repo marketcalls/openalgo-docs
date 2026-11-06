@@ -1,0 +1,17 @@
+Use case: infographic-diagram. OpenAlgo documentation image, landscape 3:2. Deep navy #0b1020, navy cards thin cyan/teal/violet/amber/green outlines, white headings pale gray text, large crisp sans-serif, simple outline icons, generous space. Flat raster, no3D/photo/watermark/extra facts.
+Title: "Build your intraday P&L curve, minute by minute"
+Subtitle: "Replay trades against 1-minute candles; combine symbols and measure drawdown."
+Eight numbered cards in a snake with EXACT direction:
+Top row 1 -> 2 -> 3 -> 4.
+Bottom row left to right visually is 8,7,6,5. Arrow 4 DOWN to5; then5 LEFT to6 LEFT to7 LEFT to8.
+1 "Open tracker" / "Request today's curve" / "POST /pnltracker/api/pnl"
+2 "Read trades + positions" / "tradebook · positionbook" / "Sandbox trades in Analyzer mode"
+3 "Group by symbol" / "Find when each position opened and closed"
+4 "Fetch 1-minute candles" / "history_service · 2 calls/sec"
+5 "Price each minute" / "Mark positions to candle close" / "Carryover positions count from 09:15"
+6 "Sum all symbols" / "One portfolio curve" / "Zero from 09:15 until first trade"
+7 "Measure drawdown" / "Curve minus running peak" / "MTM current / max / min · max drawdown"
+8 "Show chart" / "P&L curve + drawdown" / "pnl_series · drawdown_series".
+Separate small broker card to the RIGHT of card4: "Your broker" / "Live candle history"; dashed arrow pointing LEFT from broker into card4.
+Bottom note: "Analyzer uses sandbox trades, but candle prices still come from your broker."
+Keep step arrows clear outside text and code identifiers exact.

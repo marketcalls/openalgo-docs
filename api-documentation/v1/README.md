@@ -31,7 +31,7 @@ GET resources (`/instruments`, `/ticker/<symbol>`, `/chart`, `/telegram/*`) read
 
 ## Registered REST Inventory
 
-The current v1 surface contains **71 method/path pairs**. A resource with both GET and POST counts as two endpoints.
+The current v1 surface contains **74 method/path pairs**. A resource with both GET and POST counts as two endpoints.
 
 ### Order Management
 
@@ -137,7 +137,7 @@ enablement, token rotation, and deletion remain browser/session operations.
 The public alert endpoint is `POST /strategy/webhook/<token>`. It is deliberately
 outside `/api/v1`, uses the URL token rather than `apikey`, and is documented
 separately in [Public Strategy Webhook](./strategy-rms-api/webhook.md). It is
-not included in the 71 RESTX route count above.
+not included in the 74 RESTX route count above.
 
 ### SIP Analytics
 
@@ -146,7 +146,16 @@ not included in the 71 RESTX route count above.
 | GET | `/sip/frequencies` | [SIP Backtest](./utilities-api/sip-backtest.md) |
 | POST | `/sip/backtest` | [SIP Backtest](./utilities-api/sip-backtest.md) |
 
-`/sip/backtest` validates against `SipBacktestSchema` and requires a valid API key; `source: "api"` additionally requires a broker session. `/sip/frequencies` returns the frequency list the engine supports and is the one v1 resource that does not verify the API key. Both use `SIP_API_RATE_LIMIT`, default `10 per minute`.
+`/sip/backtest` validates against `SipBacktestSchema` and requires a valid API key; `source: "api"` additionally requires a broker session. `/sip/frequencies` returns the frequency list the engine supports and, like `/sectorrotation/options`, does not verify the API key. Both use `SIP_API_RATE_LIMIT`, default `10 per minute`.
+
+### Sector Rotation
+
+| Method | Path | Documentation |
+|---|---|---|
+| GET | `/sectorrotation/options` | [Sector Rotation API](sectorrotation.md) |
+| POST | `/sectorrotation` | [Sector Rotation API](sectorrotation.md) |
+
+The fixed options list needs no API key. A map request verifies `apikey`, even with local Historify data; `source="api"` additionally requires a broker login. Both use `SECTOR_ROTATION_API_RATE_LIMIT`, default `30 per minute`. These routes analyze historical prices and do not place orders.
 
 ### Messaging
 
@@ -201,18 +210,31 @@ Common status codes are:
 
 | Code | Meaning |
 |---|---|
-| 200 | Request handled successfully |
+| 200 | Request handled; a semi-auto order may only be queued, and a batch may contain child failures |
 | 400 | Invalid JSON, schema validation failure, unsupported mode, or invalid request state |
 | 401 | Missing or invalid authentication on endpoints that use 401 |
 | 403 | Invalid API key or operation blocked by mode/policy |
 | 404 | Broker module, symbol, order, or linked messaging user not found |
-| 429 | Flask-Limiter rejected the request |
+| 422 | Historical data or inputs cannot support the analysis |
+| 429 | Rate limit or broker queue/guard refusal; inspect the response |
 | 500 | Unhandled internal or broker error |
+| 501 | Active broker does not implement the operation |
+| 502 | Broker response/data unavailable; on place/smart order, a detected lost write reply means the order may have been placed |
+
+### Order outcomes and retries
+
+In Semi-Auto mode, eligible entry requests return HTTP `200` with `status: "success"`, `mode: "semi_auto"`, and `pending_order_id` after they are saved for Action Center approval. No broker order has been sent yet; this is not a placement or fill acknowledgement. Placement `orderid` and GTT `trigger_id` belong to the broker/sandbox result, not this pending approval response.
+
+Even a placement acknowledgement is not proof of a fill. Check order status and broker books or the order-update stream. If the shared transport detects that a placement write may have reached the broker but its reply was lost, `/placeorder` and `/placesmartorder` return `502` explaining that the order may have been placed. Reconcile before retrying; do not automatically resend it. Basket/split calls report this warning per child, so inspect every child even on HTTP `200`.
+
+A gthread broker-queue refusal is different: the request is refused before sending and returns `429`. That status may also come from a rate limiter or the broker, so read the message and endpoint context. There is no universal idempotency key or blanket retry guarantee.
+
+`strategy` on `/cancelallorder` and `/closeposition` is a tracking label, **not a filter**. Those operations affect the active account's eligible orders/positions, including other strategies and manual activity; analyzer mode uses the user's sandbox account instead.
 
 ## Rate Limits
 
-Defaults from `.sample.env` are `API_RATE_LIMIT="50 per second"`, `ORDER_RATE_LIMIT="10 per second"`, and `SMART_ORDER_RATE_LIMIT="10 per second"`. Option Greeks, portfolio, SIP, Telegram, and WhatsApp resources each read their own variable, none of which appears in `.sample.env`, so their in-code fallbacks apply on a stock install. All values are deployment configuration and may contain compound semicolon-separated limits. See [rate limiting](./rate-limiting.md).
+Defaults from `.sample.env` are `API_RATE_LIMIT="50 per second"`, `ORDER_RATE_LIMIT="10 per second"`, and `SMART_ORDER_RATE_LIMIT="10 per second"`. Option Greeks, portfolio, SIP, Sector Rotation, Telegram, and WhatsApp resources each read their own variable, none of which appears in `.sample.env`, so their in-code fallbacks apply on a stock install. All values are deployment configuration and may contain compound semicolon-separated limits. See [rate limiting](./rate-limiting.md).
 
 ## Client Libraries
 
-The Python client is available as `openalgo` and is pinned by this application at `2.0.3`. Go and Node.js examples in `examples/` demonstrate direct REST integration; they are not declared here as separately versioned official SDK releases.
+The Python client is available as `openalgo` and is pinned by this application at `2.0.5` (see `pyproject.toml`). Go and Node.js examples in `examples/` demonstrate direct REST integration; they are not declared here as separately versioned official SDK releases.

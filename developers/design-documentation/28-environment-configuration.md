@@ -38,9 +38,11 @@ API_KEY_PEPPER = 'your_32_character_pepper_here'
 FERNET_SALT = 'your_random_hex_salt_here'
 ```
 
-`.sample.env` ships all three as named placeholders (`OPENALGO_PLACEHOLDER_...`). On first run `utils/env_check.py` detects them, generates fresh `secrets.token_hex(32)` values, writes them back to `.env`, and re-encrypts stored broker tokens, API keys, and TOTP secrets under the new salt.
+`.sample.env` ships all three as named placeholders (`OPENALGO_PLACEHOLDER_...`). On first run `utils/env_check.py` detects them, generates fresh installation secrets, writes them back to `.env`, and includes saved broker keys with broker tokens, API keys and TOTP secrets in the relevant rotation paths. A newly generated Fernet salt uses 16 random bytes; app key and pepper use 32. Existing real secrets are retained.
 
 ### Broker Configuration
+
+Broker environment keys are optional. New installs may leave broker credentials and `REDIRECT_URL` empty, then save encrypted per-broker keys in Broker Configuration after app sign-in. When `REDIRECT_URL` names a broker and `BROKER_API_KEY` is set, its `.env` values take precedence. Keep `VALID_BROKERS` set so the broker pages can list enabled choices. See [broker configuration](51-broker-and-system-config.md).
 
 ```bash
 # Broker API credentials
@@ -55,7 +57,7 @@ BROKER_API_SECRET_MARKET = 'YOUR_BROKER_MARKET_API_SECRET'
 REDIRECT_URL = 'http://127.0.0.1:5000/<broker>/callback'
 
 # Enabled brokers (comma-separated)
-VALID_BROKERS = 'fivepaisa,fivepaisaxts,aliceblue,angel,arrow,compositedge,dhan,dhan_sandbox,definedge,deltaexchange,firstock,flattrade,fyers,groww,hdfcsecurities,hdfcsky,ibulls,iifl,iiflcapital,indmoney,jainamxts,kotak,motilal,mstock,nubra,paytm,pocketful,rmoney,samco,shoonya,tradejini,tradesmart,upstox,wisdom,zebu,zerodha'
+VALID_BROKERS = 'fivepaisa,fivepaisaxts,aliceblue,angel,arrow,compositedge,dhan,dhan_sandbox,definedge,deltaexchange,firstock,flattrade,fyers,groww,hdfcsecurities,hdfcsky,ibulls,iifl,iiflcapital,indmoney,jainamxts,kotak,motilal,mstock,nubra,paytm,pocketful,rmoney,rupeezy,sahi,samco,shoonya,tradejini,tradesmart,upstox,wisdom,zebu,zerodha'
 ```
 
 ### Database Configuration
@@ -90,6 +92,10 @@ FLASK_ENV = 'development'  # or 'production'
 # Public URL
 HOST_SERVER = 'http://127.0.0.1:5000'
 ```
+
+### Production Worker
+
+`OPENALGO_WORKER_CLASS` selects `eventlet` (default) or `gthread` (opt-in, fixed 64 request threads). Both require exactly one Gunicorn worker process. `uv run app.py` uses standard threading and ignores this setting. Follow [worker selection and rollback](../../getting-started/gthread-migration.md) to change a deployed service.
 
 ### WebSocket Configuration
 
@@ -353,9 +359,6 @@ When deploying to Railway or Render, set these environment variables in the plat
 | Variable | Description |
 |----------|-------------|
 | `HOST_SERVER` | Your app URL (e.g., `https://your-app.up.railway.app`) |
-| `REDIRECT_URL` | Broker OAuth callback URL |
-| `BROKER_API_KEY` | Broker API key |
-| `BROKER_API_SECRET` | Broker API secret |
 | `APP_KEY` | Generated secret key |
 | `API_KEY_PEPPER` | Generated pepper |
 
@@ -367,7 +370,7 @@ When `HOST_SERVER` is set and no `.env` exists, `start.sh` automatically generat
 - CSP with secure WebSocket URLs
 - Railway's `PORT` environment variable support
 
-Two caveats about that generated file. It writes `ENV_CONFIG_VERSION` from the platform environment and falls back to `1.0.4`, which is older than the `1.0.7` in `.sample.env`, so set `ENV_CONFIG_VERSION` explicitly in the dashboard to avoid the startup version refusal. It also does not write `FERNET_SALT`; first-run rotation in `utils/env_check.py` adds it, which requires the `.env` file to be writable.
+The generated file takes `ENV_CONFIG_VERSION` from the platform environment, falling back to the checked-out `.sample.env` version (then `1.0.7`). `start.sh` creates or restores installation secrets through `/app/keys` for supported cloud starts, and preserves existing data rather than silently replacing missing encryption keys. Keep that persistent directory and the database together; a mounted `.env` must be writable for startup rotation and server-setting saves.
 
 ## Validation
 
@@ -397,7 +400,7 @@ load_and_check_env_variables()
 | `*_RATE_LIMIT*` | "X per second\|minute\|hour\|day", semicolon-separated for compound limits | `utils/env_check.py` |
 | `SESSION_EXPIRY_TIME` | Format: HH:MM, 24-hour | `utils/env_check.py` |
 | `WEBSOCKET_URL` | Starts with ws:// or wss:// | `utils/env_check.py` |
-| `REDIRECT_URL` | Ends in `/<broker>/callback`, broker present in `VALID_BROKERS`, not the shipped default | `utils/env_check.py` |
+| `REDIRECT_URL` | Optional; a real environment-configured broker callback must end in `/<broker>/callback` with an enabled broker | `utils/env_check.py` |
 | `BROKER_API_KEY` | `:::` field count for 5paisa, Flattrade, and Dhan | `utils/env_check.py` |
 | `LOG_LEVEL` | DEBUG/INFO/WARNING/ERROR/CRITICAL | `utils/env_check.py` |
 | `LOG_RETENTION` | Positive integer | `utils/env_check.py` |

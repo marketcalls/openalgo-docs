@@ -4,15 +4,15 @@
 
 `utils/event_bus.py` is a lightweight, **per-process** topic bus for asynchronous order side effects. It is not the cross-process market-data bus; ZeroMQ owns that job.
 
-Each Flask worker that imports the global singleton has its own subscriber registry and 10-worker `ThreadPoolExecutor`. A service publishes in the process handling the request, and that process dispatches its local subscribers.
+The single production Flask worker owns the singleton subscriber registry. Ordinary callbacks use a shared 10-worker executor capped at 1,000 queued-or-running callbacks. `critical=True` subscribers use a separate four-worker executor capped at 10,000, so slow alert delivery cannot consume the strategy/order-update lane.
 
-Dispatch is bounded. `EventBus.DEFAULT_MAX_PENDING` is 1000 callbacks queued-or-running; beyond that, further callbacks are dropped rather than queued, because the executor's own work queue is unbounded and a publisher that outruns its subscribers would otherwise grow it until the process is killed. Drops are counted and logged sparsely, and `bus.stats()` reports pending/max/dropped for health reporting.
+At capacity, ordinary callbacks are dropped with sampled warnings; each critical overflow is logged as an error. Both lanes are bounded and neither is durable. `bus.stats()` reports pending, capacity and dropped counters for each lane. Publishers do not wait for subscribers to finish.
 
 ## Flow
 
-<figure><img src="../../.gitbook/assets/diagram-event-bus-dispatch.png" alt="EventBus in one Flask worker: order services, REST endpoints, sandbox engine and postback adapters publish to a bounded 10-worker thread pool that runs log, Socket.IO, Telegram, WhatsApp, ZMQ relay and strategy book subscribers"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-event-bus-dispatch.png" alt="EventBus in one Flask worker: publishers dispatch to an ordinary 10-worker lane for logs, UI and alerts, or a separate critical four-worker lane for strategy and order monitors; both lanes are bounded"><figcaption></figcaption></figure>
 
-Callbacks are copied under a lock and submitted without blocking the publisher. `_safe_call` catches/logs subscriber exceptions so notification or logging failure cannot change the order response.
+Callback lists are copied under a lock. Subscriber failures are isolated, and every callback releases the scoped SQLAlchemy sessions it opened before its pool thread serves another event.
 
 ## Topics
 
@@ -43,9 +43,9 @@ Batch services suppress child events and publish one summary, preventing duplica
 
 ## Subscribers
 
-`subscribers/register_all()` wires log, Socket.IO, Telegram, and WhatsApp callbacks for the order and GTT topics. Sandbox engine-internal topics go only to Socket.IO because they are UI refresh signals rather than user API calls; they are not duplicated into analyzer logs or chat alerts. `order.update` is engine-driven and broker-driven for the same reason: it goes to Socket.IO and to `wsproxy_subscriber`, which republishes it on the ZeroMQ bus so the WebSocket proxy can relay it to clients that sent `subscribe_orders`.
+`subscribers/__init__.py:register_all()` wires log, Socket.IO, Telegram, and WhatsApp callbacks for the order and GTT topics. Sandbox engine-internal topics go only to Socket.IO because they are UI refresh signals rather than user API calls; they are not duplicated into analyzer logs or chat alerts. `order.update` is engine-driven and broker-driven for the same reason: it goes to Socket.IO and to `wsproxy_subscriber`, which republishes it on the ZeroMQ bus so the WebSocket proxy can relay it to clients that sent `subscribe_orders`.
 
-`subscribers/strategy_book_subscriber.register(bus)` is wired separately, from the database-initialization thread in `app.py` rather than from `register_all()`, because it must be listening before the first order is accepted. It subscribes to `order.placed`, `order.update`, and the four batch-completion topics.
+`subscribers/strategy_book_subscriber.register(bus)` is wired separately, from the database-initialization thread in `app.py` rather than from `register_all()`, because it must be listening before the first order is accepted. It subscribes to `order.placed`, `order.update`, and the four batch-completion topics on the critical lane. Strategy Module order updates and Flow order-update monitors also register critical callbacks.
 
 Telegram/WhatsApp subscribers skip failure and analyzer-error chat notifications. The log and Socket.IO consumers still record/emit the applicable state.
 

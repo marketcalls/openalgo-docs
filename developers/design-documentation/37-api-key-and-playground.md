@@ -72,7 +72,7 @@ def upsert_api_key(user_id, api_key):
 
 <figure><img src="../../.gitbook/assets/diagram-apikey-verification-flow.png" alt="verify_api_key checks the invalid cache, then the verified cache, then Argon2-verifies against every stored hash and records failed attempts in InvalidAPIKeyTracker"><figcaption></figcaption></figure>
 
-Only the SHA-256 cache key and the resolved `user_id` are cached, never the key itself. `upsert_api_key()` and `update_order_mode()` both call `invalidate_user_cache()`. Order mode is cached separately in `order_mode_cache` (TTLCache, maxsize 128, TTL 60 seconds).
+Only the SHA-256 cache key and the resolved `user_id` are cached, never the key itself. `upsert_api_key()` and `update_order_mode()` both call `invalidate_user_cache()`. Order mode is cached separately in `order_mode_cache` (LockedTTLCache, maxsize 128, TTL 60 seconds).
 
 ## Order Mode
 

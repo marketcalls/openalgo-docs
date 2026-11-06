@@ -1,0 +1,18 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Price alerts: watch, queue, keep polling"
+Subtitle: "One monitor cycle every 5 seconds; workers run independently."
+Create an accurate simplified architecture using SIX cards. Do not draw any loop arrows. Represent retry and failure conditions as explicit readable rows inside the monitor card.
+Left top card "1 · Register alert" / "priceAlert workflow activation or startup restore" / "Symbol · condition · price · once/every time · expiry".
+Down arrow into a larger left card "2 · Monitor thread · every 5 seconds". Inside this card exactly four separated readable rows:
+"Expired? Remove alert. Expiry: 1h · 4h · 1d · 1w."
+"Otherwise fetch price: FlowOpenAlgoClient.get_quotes."
+"Error, missing or zero price? Skip this tick."
+"No fresh cross? Save last_price; check next tick."
+One rightward arrow from monitor card labeled "valid price + fresh cross" enters center card "3 · Mark fired and queue" / "Once: set triggered latch" / "Every time: store last_price" / "At most one pending run per workflow" / "Bounded pool · FLOW_PRICE_ALERT_WORKERS".
+Center queue has a single rightward dashed arrow labeled "submit" to card "4 · Pool worker" / "execute_workflow" / "Run only while alert is registered and workflow active".
+Below worker, fork with two downward arrows to two parallel small cards:
+"Once" / "Remove alert; deactivate workflow" / "Re-arm if run did not execute"
+"Every time" / "Keep registered" / "Fire again only on a fresh cross".
+Bottom wide note: "The monitor never waits for a workflow. It keeps polling after queueing a run."
+No other arrows. Six cards only; avoid outer process containers that can obscure endpoints. Retry branches are text within monitor; don't turn them into arrows toward the worker.

@@ -124,13 +124,9 @@ These three fields are the complete `SymbolSchema`. Any other field returns HTTP
 
 ## Notes
 
-- Use this endpoint to get the **broker-specific symbol** for order placement
-- The **lotsize** field shows:
-  - NIFTY: 65
-  - BANKNIFTY: 30
-  - SENSEX: 20
-  - Equity: 1
-- The **freeze_qty** field indicates the maximum quantity allowed per order
+- Use the standard OpenAlgo `symbol` and `exchange` on unified order APIs; `brsymbol` is broker metadata, not a replacement symbol
+- Read **lotsize** for the exact refreshed contract/expiry. Derivative sizes vary; do not size current orders from a static underlying table
+- **freeze_qty** is a separate maximum-order constraint from lot size. Keep installed exchange freeze-limit data up to date
 - The **token** is used by brokers for faster symbol lookup
 
 ---

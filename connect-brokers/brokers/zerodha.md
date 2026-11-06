@@ -1,5 +1,9 @@
 # Zerodha
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Zerodha is a leading name in the Indian financial services industry, acclaimed for its discount brokerage model and tech-centric approach to trading. Kite by Zerodha is their flagship trading platform, known for its intuitive user interface and powerful performance. Kite API is a set of REST-like APIs that exposes Zerodha's trading functionalities programmatically, allowing developers to harness the capabilities of the Kite platform within their own custom applications.
 
 {% embed url="https://www.youtube.com/watch?v=uZ6PD6UDxrg" %}

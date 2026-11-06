@@ -81,37 +81,9 @@ chmod 600 .env
 Run `cp .sample.env .env` **only on a new installation**. On an existing installation it erases your broker keys and your `API_KEY_PEPPER`, which locks you out of your account.
 {% endhint %}
 
-**Generate the security keys before the first start.** `APP_KEY`, `API_KEY_PEPPER` and `FERNET_SALT` ship as placeholders. Replace them with fresh random values using a script, so the values never appear on screen:
+On a new database, OpenAlgo replaces sample security placeholders on first start; a first run without `.env` can also create it with unique keys. Keep the resulting file private and backed up. Do not replace `API_KEY_PEPPER` or `FERNET_SALT` after creating the account.
 
-```bash
-uv run python - <<'PY'
-import re, secrets, pathlib
-p = pathlib.Path(".env")
-t = p.read_text()
-for key, n in (("APP_KEY", 32), ("API_KEY_PEPPER", 32), ("FERNET_SALT", 16)):
-    t = re.sub(rf"^{key}\s*=.*$", f"{key} = '{secrets.token_hex(n)}'", t, count=1, flags=re.M)
-p.write_text(t)
-PY
-grep -c PLACEHOLDER .env   # expect 0
-```
-
-* `APP_KEY` signs login sessions. Changing it later only logs everyone out.
-* `API_KEY_PEPPER` and `FERNET_SALT` protect your password, API key and broker tokens. **Never change them after the account is created**, and keep a backup of `.env`.
-
-**Fill in the broker section** of `.env`:
-
-```
-BROKER_API_KEY = 'your_broker_api_key'
-BROKER_API_SECRET = 'your_broker_api_secret'
-
-# Only for brokers that use separate market data credentials
-BROKER_API_KEY_MARKET = 'your_market_data_api_key'
-BROKER_API_SECRET_MARKET = 'your_market_data_api_secret'
-
-REDIRECT_URL = 'http://127.0.0.1:5000/<broker>/callback'
-```
-
-OpenAlgo picks the active broker from `REDIRECT_URL`, so the broker code must match exactly what you registered with the broker. Leave `VALID_BROKERS` as shipped.
+**Broker keys can be saved after startup.** Sign in and open [Broker Configuration](../../connect-brokers/broker-configuration.md), choose the broker and enter its required fields. Existing `.env` broker keys remain supported and come first for that broker; leave `VALID_BROKERS` as shipped unless you intend to restrict the list.
 
 **Host and ports.** Keep the defaults. Everything stays on the local machine:
 
@@ -163,7 +135,7 @@ Open `http://127.0.0.1:5000/setup` in the Grok Bot browser and create your accou
 ### Step 7: Broker login
 
 1. Log in at `http://127.0.0.1:5000/login`.
-2. Open `/broker`, select your broker and click **Connect Account**.
+2. Open `/broker`, select your broker and choose **Login with <broker>** on its card.
 3. Complete the broker's own login page. You can type your credentials and TOTP yourself on the Grok Bot screen, or give the 6-digit code to Grok Bot through a secure form. Codes are valid for about 30 seconds, so submit right away.
 4. After the redirect, `/dashboard` shows your broker as connected.
 
@@ -217,7 +189,7 @@ uv run --env-file /workspace/pyenv/.env python quote.py
 Indian broker sessions expire every day at about **3:00 AM IST**. After that the API, charts, Flow and strategies all need a fresh broker login. Grok Bot can do this for you with a **routine** (a scheduled task) every day at **8:00 AM IST**:
 
 1. Make sure OpenAlgo is running (start it with the Step 5 command if not).
-2. Log in to OpenAlgo, open `/broker` and click **Connect Account**.
+2. Log in to OpenAlgo, open `/broker` and choose **Login with <broker>** on its card.
 3. Fill the broker's login fields and a fresh TOTP code generated from your stored TOTP secret with `pyotp`.
 4. Confirm the dashboard shows the broker connected and the master contract loaded.
 5. Report one line to you: connected or not, and the reason if not.
@@ -225,7 +197,7 @@ Indian broker sessions expire every day at about **3:00 AM IST**. After that the
 Notes:
 
 * Your login details and TOTP secret are stored on the Grok Bot computer in a folder only the owner can read (directory `chmod 700`, files `chmod 600`).
-* Brokers that connect with an API key and secret alone need no TOTP; the routine only clicks Connect.
+* Brokers that connect with an API key and secret alone need no TOTP; the routine starts **Login with <broker>**.
 * Brokers that send an SMS or email OTP cannot be automated. Log in manually each day.
 * **Crypto brokers need no daily routine.** With `DISABLE_SESSION_EXPIRY = 'true'`, connect once and reconnect only after a restart or if the dashboard shows the broker disconnected.
 * Make the 8:00 AM routine the only place where the broker login happens, so other routines do not log you in and out repeatedly.

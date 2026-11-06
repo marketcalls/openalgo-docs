@@ -1,0 +1,21 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Refresh trades into a P&L curve"
+Subtitle: "Replay 1-minute prices, total the portfolio, then calculate drawdown."
+Landscape flow with short numbered cards and explicitly labelled decisions.
+"1. Check login" / "/pnltracker/api/pnl" / "Session broker; auth_db token + key" / "Missing: 400 / 401"
+-> "2. Fetch trades + positions" / "tradebook + positionbook" / "Trade fetch failure: show error" / "Position failure: continue without"
+-> decision "No trades or positions?".
+Decision "Yes" -> "Zero P&L" / "Empty series; nothing to plot".
+Decision "No" -> "3. Build position windows" / "First trade date/time" / "Group by symbol + exchange"
+-> "4. Replay each symbol" / "history_rate_limiter · 1m bars" / "Open: MTM; closed: realized P&L"
+-> "5. Carry-forward positions" / "Open with no trades, or exit-only today" / "Rate-limited 1m bars from market open"
+-> decision "Series built?".
+Separate lower data card "1-minute prices" / "history_service · Broker API" sends dashed arrows into steps 4 AND 5.
+Series built branches THREE ways:
+"Yes" -> "6. Zero-fill from 09:15" / "Flat until first trade" / "Skip if carry-forward exists";
+"No, positions exist" -> "Positions fallback" / "History per open position" / "Else flat from 09:00 at positionbook P&L";
+"No, nothing" -> the existing Zero P&L card.
+Zero-fill and Positions fallback converge -> "7. Portfolio total + drawdown" / "Forward-fill Total_PnL" / "Running peak · drawdown" / "Current, max, min MTM"
+-> "8. JSON to page" / "Metrics + pnl_series + drawdown_series".
+No arrows from Zero P&L into calculations. Keep 09:15 vs 09:00 distinct.
+Layout correction for price data: DO NOT draw a separate 1-minute price card or dashed price-data arrows. Instead, enclose steps 4 and 5 together in a clearly bounded group labelled "Broker 1m prices · history_service · history_rate_limiter". This precisely communicates both steps get broker prices without crossed connectors. No arrow from Series built back into either replay card. There are only forward process arrows, and Series built's three labelled outputs go ONLY to Zero-fill, Positions fallback, and Zero P&L.

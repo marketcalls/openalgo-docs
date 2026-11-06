@@ -1,0 +1,15 @@
+Use case: infographic-diagram. Polished landscape 3:2 OpenAlgo documentation image. Deep navy #0b1020 background, navy panels thin cyan/teal/violet/amber/green outlines, white headings pale gray body, crisp large sans-serif, simple outline icons, generous whitespace, clear arrowheads outside text. No photos, 3D, watermark or invented facts.
+Title: "From order request to broker or sandbox"
+Make a left-to-right architecture with four columns. Left column numbered vertical flow:
+1 "Request arrives" / "REST /api/v1 + API key, or web-app session" / "Flask-Limiter"
+down to 2 "Check fields" / "REST: marshmallow schema" / "Web: session check"
+down to 3 "Action service" / "services/*_service.py"
+down to 4 "Semi-auto?" / "Eligible API-key calls" / "should_route_to_pending"
+down via arrow "no, or web call" to 5 "Validate + find broker login" / "get_auth_token_broker"
+down via arrow "valid" to 6 "Analyzer mode?" / "get_analyze_mode".
+Second column branches: Semi-auto -> "Action Center" / "pending_orders · Socket.IO" / "Wait for approval; notify UI directly", labeled "yes". Action Center dashed arrow BACK to step5 labeled "approved later: broker login set". Analyzer -> "Sandbox" / "sandbox_service · sandbox.db" / "Simulated fills", labeled "yes"; Analyzer -> "Your broker" / "broker/<name>/api/order_api" / "Live order", labeled "no".
+Third column "EventBus" / "Typed results" / "In-process thread pool". Sandbox and Your broker each point RIGHT into EventBus. Step5 has distinct dashed failure arrow to EventBus labeled "order.failed / analyzer error".
+Fourth column group "Listeners", EventBus -> group labeled "publish"; inside list six parallel subscribers, no sequential arrows: "Order log: order_logs / analyzer_logs"; "Web app: Socket.IO"; "Telegram alerts"; "WhatsApp alerts"; "WebSocket relay: order.update to ZeroMQ"; "Strategy book: order.placed, order.update".
+Note: "Approved Action Center orders resume at step 5 and are not queued twice. Action Center updates the web app directly; other results use EventBus."
+Preserve numbered sequence, real/simulated branches and direct UI exception.
+CRITICAL ARROW CONSTRAINT: The dashed "approved later" connector MUST START at Action Center's bottom border with NO arrowhead there, and MUST END at step5 "Validate + find broker login" with its single arrowhead pointing LEFT into step5. It is ONE-WAY from Action Center to authentication. Do not draw any upward arrowhead toward Action Center. Keep all other arrows as specified.

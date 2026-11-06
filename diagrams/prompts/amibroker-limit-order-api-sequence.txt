@@ -1,0 +1,15 @@
+Use case: infographic-diagram. Landscape OpenAlgo documentation diagram, deep navy #0b1020 with navy panels and thin cyan, teal, violet, amber, green borders. White headings, pale gray body, large readable modern sans-serif, simple outline icons, generous whitespace. Flat raster infographic, no photos, 3D, watermark, invented features.
+Title: "AmiBroker limit orders: place, watch, chase"
+Subtitle: "Every API call goes to OpenAlgo at 127.0.0.1:5000, which talks to your broker."
+Main row left to right, four numbered cards:
+1 "Place the order" / "Buy or Sell reads bid / ask, chooses price mode, rounds to tick size, sends LIMIT." / "quotes · placeorder"
+2 "Watch the order" / "After each retry delay, read status and average fill price." / "orderstatus"
+3 "Chase the price" / "If open or pending with retries left: fetch bid / ask, modify limit, increment retry count." / "quotes · modifyorder"
+4 "Cancel + final check" / "Cancel, wait one retry delay, check status once more." / "cancelorder · orderstatus" / "Cancel button can start this step anytime."
+Exact directed arrows: Place -> Watch. Watch -> Chase labeled "open / pending + retries left". Chase loops BACK LEFT to Watch using a dashed arrow above cards labeled "new price, check again". Watch -> Cancel via separate high arc labeled "still open, no retries left". Chase -> Cancel labeled "price change failed".
+Outcome cards in bottom row:
+Under Place: "Rejected" / "Order not accepted", arrow Place down to this labeled "order failed".
+Under Watch: "Complete" / "Filled", arrow Watch down labeled "filled".
+Between Watch and Chase below: "Rejected" / "Broker rejected or cancelled it", arrow Watch down-right labeled "rejected".
+Under Cancel: two outcome cards side by side: "Complete" / "Filled while cancelling" and "Canceled" / "Not filled". Cancel has two separate downward branches labeled "filled" and "not filled" to the respective cards.
+All arrows must start and end on specified cards, with unambiguous arrowheads and readable labels outside text. Do not imply Chase always proceeds to Cancel.

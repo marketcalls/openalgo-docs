@@ -1,0 +1,15 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "How long did your order take?"
+Subtitle: "Server endpoint timing and broker timing are measured separately."
+Top flow starts "Your API call" / "REST API or UI order button" -> "Flask routing" / "Middleware runs before timer".
+Then a clear boundary "track_latency(api_type) timer" contains FOUR cards in left-to-right order:
+"1. Read request" / "Read request JSON" / "validation" ->
+"2. Run the endpoint" / "API key, service and any broker call" / "broker_request" ->
+"3. Read endpoint response" / "Read response payload" / "broker_response" ->
+"4. Compute metrics" / "rtt = broker time" / "total = now - start" / "overhead = total - rtt".
+Below stage 2 a directed arrow to "Shared HTTP client" / "httpx hook · g.broker_api_time"; this card has a BIDIRECTIONAL HTTP arrow to "Your broker" / "Broker REST API". Label endpoint-to-HTTP connection "If broker call"; endpoint may use sandbox/cache.
+From Compute metrics two separate arrows: dashed return arrow to Your API call labelled "Response; does not wait for save"; downward arrow labelled "Submit record" to "Background writer" / "One worker thread; off request thread" / "latency-log executor" -> arrow "Commit" -> "latency.db" / "order_latency · LATENCY_DATABASE_URL".
+Database -> "Latency API" / "Logs · stats · histograms · CSV" / "latency_bp · /latency/api/* · /latency/export" -> "Latency dashboard" / "React · /logs/latency".
+A separate small card "Startup cleanup" / "Delete data-call logs older than 7 days" / "Keep order logs forever" / "purge_old_data_logs(7)" has dashed arrow to latency.db labelled "Delete old rows".
+Footer: "RESTX resources are wrapped automatically; selected UI order routes opt in. Timings exclude client-network travel."
+No claim that background commit begins only after the HTTP response has left. Exact stage labels and metrics matter.

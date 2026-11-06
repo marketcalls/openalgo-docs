@@ -4,7 +4,7 @@
 
 OpenAlgo's Sandbox/Analyzer mode provides a local walk-forward execution environment with ₹1 Crore default sandbox capital, margin/leverage simulation, auto square-off, and T+1 settlement behavior. It stores trading state separately from live broker state in `db/sandbox.db`.
 
-Analyzer mode implements GTT place, modify, cancel and orderbook through `sandbox/gtt_manager.py`, backed by the `sandbox_gtt` and `sandbox_gtt_legs` tables. The 501 responses on those four endpoints belong to live mode instead: `import_broker_gtt_module(broker)` returns `None` for any broker without an `api/gtt_api.py`, which today means every broker except Dhan and Zerodha.
+Analyzer mode implements GTT place, modify, cancel and orderbook through `sandbox/gtt_manager.py`, backed by the `sandbox_gtt` and `sandbox_gtt_legs` tables. The 501 responses on those four endpoints belong to live mode instead: `import_broker_gtt_module(broker)` returns `None` for any broker without an `api/gtt_api.py`, which today means brokers other than Angel One, Dhan, Fyers, Rupeezy, Upstox and Zerodha.
 
 ## Architecture Diagram
 

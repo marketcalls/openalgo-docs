@@ -1,5 +1,9 @@
 # Arrow
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 ## Arrow
 
 Arrow ([arrow.trade](https://app.arrow.trade/)) is an ultra-low latency, speed-first retail brokerage and API platform built by **iRage Broking** (one of India's leading algorithmic and High-Frequency Trading firms). It provides ultra-fast APIs, zero intraday/F\&O brokerage, and institutional-grade tools to retail investors, regulated by NSE, BSE, and MCX. This API, used in the context of OpenAlgo integration, enables automated trading strategies, real-time market data access, order management, and more.

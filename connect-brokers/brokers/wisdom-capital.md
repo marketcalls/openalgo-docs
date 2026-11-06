@@ -1,5 +1,9 @@
 # Wisdom Capital
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Wisdom Capital provides API access through the Symphony Fintech XTS platform. This guide helps you integrate Wisdom Capital with OpenAlgo for both order execution and market data streaming.
 
 ***

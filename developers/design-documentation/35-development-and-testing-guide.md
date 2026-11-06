@@ -54,13 +54,24 @@ Playwright starts Vite on port 5173. Its local configuration defines Chromium, F
 `.github/workflows/ci.yml` currently runs:
 
 - Backend Ruff checks (marked continue-on-error for existing broker warnings).
-- A small CI-safe backend pytest subset.
+- An explicit credential-free backend pytest subset.
+- Real eventlet/gthread launcher boot and shutdown, eventlet fallback tests, gthread source gates, the complete Linux migration suite, and portable concurrency checks on Windows/macOS/Linux ARM64.
 - Frontend Biome lint, TypeScript/Vite build, Vitest, coverage, and Chromium E2E.
 - Bandit and pip-audit (also continue-on-error in main CI).
 - Production frontend bundle upload and main-branch auto-commit.
 - Native amd64 and arm64 Docker builds, Kaleido/Chromium smoke test on PRs, manifest assembly and Trivy scan on main.
 
 A green workflow does not prove the full backend suite, all broker adapters, or all security findings are clean because several checks are intentionally non-blocking.
+
+The Linux production-worker migration job runs:
+
+```bash
+uv sync
+uv pip install "gunicorn>=25.0,<26" "eventlet==0.41.2"
+.venv/bin/python -m pytest test/test_gthread_*.py -o addopts="" --timeout=120 -rs
+```
+
+Windows skips many Gunicorn/systemd cases; a portable green run does not verify Linux production behavior. For WSL, use a checkout on its Linux filesystem. Changes must remain correct under eventlet, gthread and standard development threads.
 
 ## Scheduled Security Workflow
 

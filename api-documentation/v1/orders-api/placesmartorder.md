@@ -102,7 +102,13 @@ PlaceSmartOrder API function allows traders to build intelligent trading systems
 | status | string | "success" or "error" |
 | orderid | string | Unique order ID from broker (on success) |
 | message | string | Error message or "No action needed" if position already at target |
-| mode | string | `"analyze"` in analyzer mode. The key is **absent** in live mode; there is no `"mode": "live"` |
+| mode | string | `"analyze"` for sandbox execution, `"semi_auto"` when queued for approval; absent on the ordinary live placement result |
+
+## Approval and execution outcomes
+
+In Semi-Auto mode this request can return HTTP `200`, `status: "success"`, `mode: "semi_auto"` and `pending_order_id` after queuing for Action Center approval. It has not yet placed a broker order. In Auto/analyzer execution, inspect the placement result and confirm fills separately. See [order outcomes and retries](../README.md#order-outcomes-and-retries).
+
+A detected lost broker reply can return `502` after the order may have been sent. Check broker order/position books before retrying. A gthread broker-queue refusal returns `429` before sending; it is a different outcome.
 
 ## Notes
 
@@ -110,9 +116,10 @@ PlaceSmartOrder API function allows traders to build intelligent trading systems
 - The **position_size** represents the absolute target position:
   - Positive values = Long position
   - Negative values = Short position
-  - Zero = Flat (no position)
-- If current position already matches target, no order is placed
-- Works across all exchanges and product types
+  - Zero = Exit an existing position; when already flat, a nonzero BUY/SELL signal quantity can open a new position as shown above
+- A matched nonzero target needs no order. `position_size=0` with nonzero `quantity` can have signal-style behavior when already flat; use `quantity=0` for reconciliation-only intent
+- Support depends on the active broker's exchanges/products
+- A failed position-book read is unknown, not a zero position; a smart order must not proceed by assuming the account is flat
 - Fractional quantities are accepted only for `CRYPTO`; non-crypto quantities must be whole numbers.
 - **Rate limit**: `SMART_ORDER_RATE_LIMIT`, default 10 requests per second
 

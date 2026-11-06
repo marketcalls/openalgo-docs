@@ -2,7 +2,7 @@
 <div id="canvas" style="width:1680px">
   <div class="title">
     <div class="eyebrow">Action Center · Auto mode</div>
-    <h1>In Auto mode, your signal becomes an order with no click from you</h1>
+    <h1>In Auto mode, eligible requests can be submitted without an approval click</h1>
     <p style="max-width:1000px">OpenAlgo checks the order, then sends it straight to your broker. If Analyzer mode is on, it goes to the sandbox instead so no real money moves.</p>
   </div>
 
@@ -33,19 +33,19 @@
       <div class="step" id="st4a" style="--c:var(--broker); align-items:center"><div class="n">4a</div>
       <div class="node broker big hero" id="broker" style="width:260px">
         <div class="ic" data-icon="radio-tower"></div>
-        <div class="tx"><b>Your broker</b><span>order placed immediately</span></div>
+        <div class="tx"><b>Your broker</b><span>submission attempted; fills are confirmed separately</span></div>
       </div></div>
       <div class="step" id="st4b" style="--c:var(--data); align-items:center"><div class="n">4b</div>
       <div class="node data big" id="sb" style="width:260px">
         <div class="ic" data-icon="test-tube-diagonal"></div>
-        <div class="tx"><b>Sandbox</b><span>virtual fill, no real money</span>
+        <div class="tx"><b>Sandbox</b><span>sandbox order; fills follow sandbox rules</span>
           <div class="chips"><span class="chip">sandbox.db</span></div></div>
       </div></div>
     </div>
   </div>
 
   <div class="row" style="margin-top:48px; gap:40px">
-    <div class="note" style="max-width:900px"><span data-icon="lightbulb"></span><div>Auto is the default. Switch to Semi-auto if you want each order to wait in the Action Center for your approval.</div></div>
+    <div class="note" style="max-width:900px"><span data-icon="lightbulb"></span><div>Auto is the default. Semi-auto can hold eligible live API-key placements in the Action Center for approval.</div></div>
   </div>
 </div>
 <script>

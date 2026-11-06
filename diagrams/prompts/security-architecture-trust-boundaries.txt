@@ -1,0 +1,20 @@
+Use case: infographic-diagram. Create a precise, highly readable OpenAlgo documentation infographic in landscape 3:2 format. Deep navy #0b1020 background, navy cards with thin cyan/teal/violet/amber/green/rose outlines, white headings and pale gray body text. Crisp modern sans-serif, large type, generous whitespace, simple outline icons, flat vector-like raster. Match approved broker-login and market-data samples. Clear directional arrowheads entirely outside labels. No 3D, photos, watermark, fake code or extra features.
+Title: "Separate doors for web requests and live data"
+Subtitle: "Authenticate public connections. Keep the internal message bus on loopback."
+Layout: left "Clients" card with body "Browser · SDKs · chart alerts · MCP". Arrow right into card "TLS proxy + firewall" / "Operator-owned HTTPS/WSS front door" / "Trust proxy headers only behind it".
+From TLS card split into two independent paths:
+Upper/right path into a large boundary titled "Flask app · one production worker". Inside that boundary show four sequential cards with directed arrows from 1 to 2 to 3 to 4:
+1 "Block banned IPs" / "WSGI middleware · traffic logging" / "403 for banned addresses"
+2 "Route-specific identity" / "Session · API key · webhook ID · OAuth"
+3 "Request policy" / "Schema · rate limits · CSRF" / "/api/v1 is CSRF-exempt"
+4 "Service routing" / "Action Center + Analyzer mode"
+From Service routing branch with separate arrows to three destination cards OUTSIDE Flask boundary:
+"Broker APIs" / "Live orders"
+"Sandbox engine" / "Analyzer mode · no real orders"
+"Local stores" / "openalgo.db · logs.db · latency.db" / "health.db · sandbox.db · historify.duckdb"
+Also a short arrow Sandbox engine -> Local stores.
+Lower/left path from TLS card into a SEPARATE boundary "WebSocket proxy · :8765", containing card "API-key handshake" / "Authenticate each live-data connection".
+Below this WebSocket boundary is a separate card "ZeroMQ bus" / "Unauthenticated internal transport" / "127.0.0.1:5555 · loopback only". A dashed arrow points UP from ZeroMQ into API-key handshake, labeled "internal live ticks".
+Do NOT connect the ZeroMQ bus to the public TLS proxy or the Flask request sequence. It is not a public service. Do NOT put WebSocket or ZeroMQ nodes inside Flask boundary.
+Footer note: "Production web worker: eventlet by default, or optional gthread. Configure the reverse proxy and firewall for your deployment."
+Keep text readable, labels exact, process boundaries unambiguous.

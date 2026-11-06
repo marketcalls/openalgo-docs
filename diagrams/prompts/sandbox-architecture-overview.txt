@@ -1,0 +1,23 @@
+Use case: infographic-diagram. Polished OpenAlgo technical documentation image, landscape 3:2. Deep navy #0b1020 background, navy cards thin cyan/teal/violet/amber/green outlines, white headings pale gray text, large readable sans-serif, simple outline icons, generous whitespace, clear arrowheads outside text. No3D/photo/watermark/invented facts.
+Title: "One switch: real broker or sandbox"
+Subtitle: "The API stays the same; Analyzer uses separate simulated orders, funds and positions."
+Top row "API call" / "/api/v1" / "Orders · account · GTT" -> "Service layer" / "place_order_service + peers" -> decision "Analyzer mode?" / "get_analyze_mode()" / "Settings in db/openalgo.db".
+Decision OFF arrow RIGHT -> "Live broker adapter" / "broker/<name>/api" / "Real orders" -> "Your broker" / "Broker APIs".
+Service dashed arrow DOWN to small card "Action Center" / "Eligible semi-auto live orders wait for approval".
+Decision ON arrow DOWN labeled "sandbox_service.py" into large lower boundary "Sandbox · Analyzer mode on". Inside, three columns:
+LEFT boundary "Sandbox managers · sandbox/" containing five compact PARALLEL items (NO arrows between managers):
+"OrderManager: validate, block margin, store"
+"FundManager: 1 Cr capital, margin, P&L"
+"PositionManager: netting, MTM on read"
+"HoldingsManager: CNC moves in at T+1"
+"GTTManager: single + OCO legs".
+Managers arrow RIGHT to central database "db/sandbox.db" / "Separate from live data" / "orders · trades · positions · holdings · funds · daily_pnl · config · gtt · gtt_legs".
+RIGHT boundary "Background workers", containing four compact cards:
+"Live-tick engine" / "Default: WebSocket fills · proxy8765"
+"Polling fallback" / "multiquotes every5s"
+"GTT maintenance" / "Reclaim legs60s · expiry hourly"
+"Scheduler · APScheduler" / "MIS square-off · T+1 · P&L snapshot + reset".
+Background workers arrow LEFT into central database.
+Live-tick engine dashed arrow DOWN to Polling fallback labeled "proxy down or stale data".
+Bottom note: "Workers start when Analyzer is switched on. The live-tick engine falls back to polling if the proxy is down or data is stale."
+Only Analyzer ON enters sandbox. Do not nest the real broker inside Sandbox.

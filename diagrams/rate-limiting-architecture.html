@@ -25,7 +25,7 @@
     <!-- row 1 -->
     <div class="node external" id="none" style="grid-column:5; grid-row:1">
       <div class="ic" data-icon="circle-dashed"></div>
-      <div class="tx"><b>No limit applied</b><span>routes without a limit decorator are unlimited</span>
+      <div class="tx"><b>No Flask-Limiter rate cap</b><span>undecorated routes skip this limiter; other capacity limits can still apply</span>
         <div class="chips"><span class="chip">no default_limits</span></div></div>
     </div>
 
@@ -79,11 +79,12 @@
     </div>
     <div class="node security stack" id="err" style="grid-column:5; grid-row:3">
       <div class="ic" data-icon="octagon-x"></div>
-      <div class="tx"><b>429 Too many requests</b><span>Your script gets an error telling it to wait and retry (about 60 s); in the browser you see a Rate limited page.</span>
-        <div class="chips"><span class="chip">blueprint handler JSON</span><span class="chip">retry_after 60</span><span class="chip">/rate-limited</span></div></div>
+      <div class="tx"><b>429 Too many requests</b><span>This limiter rejects the request before its handler runs. JSON, retry timing and browser redirects depend on the route.</span>
+        <div class="chips"><span class="chip">route-specific handler</span><span class="chip">Retry-After / retry_after when supplied</span></div></div>
     </div>
   </div>
 
+  <div class="note" style="margin-top:32px"><span data-icon="lightbulb"></span><div>Other 429 responses have different retry rules. Reconcile order-batch outcomes before replaying a batch.</div></div>
   <div class="legend">
     <span style="--c:var(--client)"><i></i>Caller</span>
     <span style="--c:var(--security)"><i></i>Limiter checks</span>

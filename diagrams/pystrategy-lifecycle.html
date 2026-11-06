@@ -11,7 +11,7 @@
   <div class="title">
     <div class="eyebrow">Python strategy lifecycle</div>
     <h1>Where your strategy can be, and what moves it</h1>
-    <p style="max-width:1120px">A hosted strategy starts and stops on its schedule, pauses itself when the exchange is closed, stays off after you stop it by hand, and flags an error if it could not be restarted after OpenAlgo itself restarted.</p>
+    <p style="max-width:1120px">A securities strategy follows its exchange calendar; a CRYPTO strategy set to Run 24/7 has no daily stop. A manual stop stays stopped, and failed process recovery is reported.</p>
   </div>
 
   <div class="stage">
@@ -29,7 +29,7 @@
       <i class="a" id="runT1" style="top:0; left:20%"></i><i class="a" id="runT2" style="top:0; left:60%"></i>
       <i class="a" id="runB1" style="bottom:0; left:20%"></i><i class="a" id="runB2" style="bottom:0; left:60%"></i>
       <i class="a" id="runR1" style="right:0; top:30%"></i><i class="a" id="runR2" style="right:0; top:75%"></i>
-      <div class="ic" data-icon="activity"></div><div class="tx"><b>Running</b><span>its own process, trading</span>
+      <div class="ic" data-icon="activity"></div><div class="tx"><b>Running</b><span>its own process; inspect logs and orders</span>
         <div class="chips"><span class="chip">per-run log</span><span class="chip">Unix resource limits</span></div></div></div>
 
     <div class="node data" id="pau" style="left:455px; top:120px; width:340px">

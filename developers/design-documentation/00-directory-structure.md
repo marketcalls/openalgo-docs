@@ -12,7 +12,7 @@ openalgo/
 |-- restx_api/                 External `/api/v1` resources and schemas
 |-- blueprints/                Session UI APIs, webhooks, React route serving
 |-- services/                  Business logic and mode routing
-|-- broker/                    36 metadata-driven broker plugins
+|-- broker/                    38 metadata-driven broker plugins
 |-- websocket_proxy/           Standalone asyncio WebSocket server and adapters
 |-- database/                  SQLAlchemy/DuckDB models and persistence helpers
 |-- sandbox/                   Analyzer execution, positions, funds, settlement
@@ -54,7 +54,7 @@ openalgo/
 
 ## Backend Inventory
 
-`restx_api/__init__.py` mounts one Flask-RESTX `Api` on the `api_v1` blueprint at `/api/v1` and registers 47 namespaces, which expose 63 method/path pairs in total. `blueprints/` contains 52 route modules covering the larger session and feature surface for auth, admin, Flow, Historify, strategies, tools, messaging, monitoring, and the React application. `services/` currently holds 79 modules. Public REST documentation is maintained in the [API reference](../../api-documentation/v1/README.md).
+`restx_api/__init__.py` exposes 74 registered method/path pairs under `/api/v1`. Blueprint and service inventories change as features are added; read the source tree rather than using old fixed module counts. Public REST documentation is maintained in the [API reference](../../api-documentation/v1/README.md).
 
 The service directory currently includes order, account, market-data, option, calendar, Flow, Historify, messaging, charting, analytics, arbitrage, custom straddle, and scalping risk services. Use `rg --files services` for the live inventory instead of copying a long file list into architecture documents.
 
@@ -71,7 +71,7 @@ broker/<key>/
 |   |-- data.py                Quotes, depth, history, intervals
 |   |-- funds.py               Margin and funds
 |   |-- margin_api.py          Order margin preview
-|   `-- gtt_api.py             GTT lifecycle (Dhan and Zerodha only)
+|   `-- gtt_api.py             GTT lifecycle (six broker implementations)
 |-- mapping/
 |   |-- transform_data.py      OpenAlgo request to broker request
 |   |-- order_data.py          Broker response to OpenAlgo shape
@@ -85,7 +85,7 @@ broker/<key>/
     `-- <key>_mapping.py
 ```
 
-Modules are imported lazily by name, not by a registry: `services/place_order_service.py` calls `importlib.import_module(f"broker.{broker_name}.api.order_api")` on each request, and `utils/plugin_loader.py` returns a `_LazyBrokerAuthDict` that imports `broker.<key>.api.auth_api` only on first access. Not every broker implements every optional file. Live GTT modules currently exist for Dhan and Zerodha only.
+Modules are imported lazily by name, not by a registry: `services/place_order_service.py` calls `importlib.import_module(f"broker.{broker_name}.api.order_api")` on each request, and `utils/plugin_loader.py` returns a `_LazyBrokerAuthDict` that imports `broker.<key>.api.auth_api` only on first access. Not every broker implements every optional file. Live GTT modules currently exist for Angel One, Dhan, Fyers, Rupeezy, Upstox and Zerodha. Their supported trigger and product semantics differ.
 
 ## Frontend Shape
 

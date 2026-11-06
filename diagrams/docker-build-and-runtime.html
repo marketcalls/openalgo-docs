@@ -44,7 +44,7 @@
         <div class="node service" id="wsp" style="flex:1; position:relative"><i id="a-sub" style="position:absolute; left:82%; top:0; width:0; height:0; display:block"></i><div class="ic" data-icon="radio"></div><div class="tx"><b>WebSocket proxy</b><span>runs in the background; stopped by a SIGTERM/SIGINT trap</span>
           <div class="chips"><span class="chip">websocket_proxy.server</span><span class="chip">:8765</span></div></div></div></div>
       <div class="step" style="--c:var(--app); grid-column:3; grid-row:3"><div class="n">5</div>
-        <div class="node app hero" id="gun" style="flex:1"><div class="ic" data-icon="server"></div><div class="tx"><b>Gunicorn web server</b><span>eventlet, 1 worker; timeout 300 s, graceful stop 30 s</span>
+        <div class="node app hero" id="gun" style="flex:1"><div class="ic" data-icon="server"></div><div class="tx"><b>Gunicorn web server</b><span>1 worker; eventlet default or optional gthread; timeout 300 s, graceful stop 30 s</span>
           <div class="chips"><span class="chip">:5000 or PORT</span><span class="chip">/tmp/gunicorn_workers</span></div></div></div></div>
     </div>
   </div>

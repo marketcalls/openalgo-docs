@@ -29,7 +29,7 @@
               <div class="node app hero big" id="gunicorn" style="width:480px">
                 <div class="ic" id="gicon" data-icon="server"></div>
                 <div class="tx"><b>OpenAlgo app (Gunicorn)</b><span>Flask app, Socket.IO and the React web UI</span>
-                  <div class="chips"><span class="chip">eventlet</span><span class="chip">1 worker (-w 1)</span><span class="chip">127.0.0.1:5000 or unix socket</span></div></div>
+                  <div class="chips"><span class="chip">eventlet default</span><span class="chip">gthread: 64 threads</span><span class="chip">1 worker (-w 1)</span><span class="chip">127.0.0.1:5000 or unix socket</span></div></div>
               </div>
               <div class="zone" style="--c:var(--service)">
                 <div class="zl" style="left:auto; right:22px"><span data-icon="git-branch"></span>Separate child process</div>
@@ -56,7 +56,7 @@
           <div class="zone" id="fs" style="--c:var(--data)">
             <div class="zl"><span data-icon="folder"></span>App directory, e.g. /opt/openalgo</div>
             <div class="row" style="gap:20px; align-items:stretch">
-              <div class="node data stack" style="width:190px; min-width:0"><div class="ic" data-icon="key-round"></div><div class="tx"><b>.env</b><span>configuration and secrets</span></div></div>
+              <div class="node data stack" style="width:190px; min-width:0"><div class="ic" data-icon="key-round"></div><div class="tx"><b>.env</b><span>installation secrets; broker keys may be saved in the database</span></div></div>
               <div class="node data stack" style="width:270px; min-width:0"><div class="ic" data-icon="database"></div><div class="tx"><b>db/</b><span>5 SQLite databases plus historify.duckdb</span>
                 <div class="chips"><span class="chip">openalgo.db</span><span class="chip">logs.db</span><span class="chip">latency.db</span><span class="chip">health.db</span><span class="chip">sandbox.db</span></div></div></div>
               <div class="node data stack" style="width:190px; min-width:0"><div class="ic" data-icon="scroll-text"></div><div class="tx"><b>log/</b><span>errors.jsonl and dated log files</span></div></div>
@@ -85,10 +85,10 @@
   connect('nginx', 'gunicorn', { color: 'security', label: '/ and /socket.io/', from: 'right', to: 'left' })
   connect('nginx', 'wsp', { color: 'security', label: '/ws upgrade', from: 'right', to: 'left' })
   connect('gicon', 'wsp', { color: 'app', dashed: true, label: 'spawns: python -m websocket_proxy.server', from: 'bottom', to: 'top' })
-  connect('gunicorn', 'zmq', { color: 'app', label: 'cache invalidation', from: 'bottom', to: 'top' })
+  connect('gunicorn', 'zmq', { color: 'app', label: 'PUB connects', from: 'bottom', to: 'top' })
   connect('gunicorn', 'brokers', { color: 'broker', label: 'REST orders, quotes', from: 'right', to: 'top' })
   connect('brokers', 'adapters', { color: 'broker', label: 'market data', from: 'left', to: 'right' })
-  connect('adapters', 'zmq', { color: 'broker', label: 'prices (PUB)', from: 'left', to: 'right' })
+  connect('adapters', 'zmq', { color: 'broker', label: 'PUB connects', from: 'left', to: 'right' })
   connect('zmq', 'wsp', { color: 'data', from: 'left', to: 'right' })
   connect('unit', 'fs', { color: 'data', label: 'reads config, writes data and logs', from: 'bottom', to: 'top' })
 </script>

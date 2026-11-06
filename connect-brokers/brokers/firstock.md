@@ -1,5 +1,9 @@
 # Firstock
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Firstock is an Indian discount brokerage firm. Known for its user-friendly interface, Firstock provides mobile, web, and desktop platforms equipped with essential features like real-time market data, advanced charting tools, and order execution capabilities. Its competitive pricing structure and support for algorithmic trading make it an attractive option for both retail and professional traders.
 
 Through OpenAlgo, the Firstock plugin covers equity and equity derivatives on NSE and BSE. Currency (CDS) and commodity (MCX) segments are not part of this integration, so use a plugin that reports those exchanges if you trade them.

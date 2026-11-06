@@ -2,8 +2,8 @@
 <div id="canvas" style="width:1680px">
   <div class="title">
     <div class="eyebrow">Action Center · semi-auto mode</div>
-    <h1>New orders wait for your approval before they reach the broker</h1>
-    <p style="max-width:1100px">In semi-auto mode, orders from your strategies are parked in the Action Center. Nothing is sent until you approve it; exits, cancels and read-only calls never wait in the queue.</p>
+    <h1>Eligible live orders wait for your approval before submission</h1>
+    <p style="max-width:1100px">Eligible live API-key placements wait for approval. Analyzer calls go directly to the sandbox. Close, cancel and modify calls are blocked in semi-auto live mode; reads do not queue.</p>
   </div>
 
   <!-- Row A: request and the two checks -->
@@ -57,13 +57,13 @@
       <div class="row" style="gap:48px">
         <div class="step" style="--c:var(--broker)"><div class="n">4a</div>
           <div class="node service" id="appr" style="width:290px"><div class="ic" data-icon="circle-check"></div>
-            <div class="tx"><b>Approve</b><span>status = approved</span>
+            <div class="tx"><b>Approve</b><span>compare-and-set approval; claim sending once</span>
               <div class="chips"><span class="chip">approve_pending_order()</span></div></div></div></div>
         <div class="node broker" id="exe" style="width:300px"><div class="ic" data-icon="send"></div>
-          <div class="tx"><b>Order placed</b><span>through the normal order service with your auth token (sandbox if Analyzer is on)</span>
+          <div class="tx"><b>Submission attempted</b><span>through the normal order service with your auth token (sandbox if Analyzer is on)</span>
             <div class="chips"><span class="chip">execute_approved_order()</span></div></div></div>
         <div class="node data" id="upd" style="width:300px"><div class="ic" data-icon="refresh-cw"></div>
-          <div class="tx"><b>Broker result saved</b><span>broker_order_id, and broker_status via orderstatus when available</span></div></div>
+          <div class="tx"><b>Broker result saved</b><span>ID and status when confirmed; reconcile unanswered sends in broker books</span></div></div>
       </div>
       <div class="row" style="gap:48px">
         <div class="step" style="--c:var(--security)"><div class="n">4b</div>
@@ -82,6 +82,7 @@
     </div>
   </div>
 
+  <div class="note" style="margin-top:30px; max-width:1200px"><span data-icon="lightbulb"></span><div>Sending is not a confirmed fill. An interrupted or unanswered send is never automatically resent. The current UI may label a lost reply rejected, so always reconcile with the broker.</div></div>
   <div class="legend">
     <span style="--c:var(--client)"><i></i>Your strategy</span>
     <span style="--c:var(--security)"><i></i>Checks</span>

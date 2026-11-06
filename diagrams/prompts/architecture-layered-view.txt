@@ -1,0 +1,17 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "From your tools to your broker"
+Subtitle: "Shared guards and services, with a broker-specific final layer."
+A readable layered architecture, landscape. At top four small parallel client boxes: "Charting platforms" / "TradingView · GoCharting · ChartInk"; "Code and sheets" / "Amibroker · Excel · Python SDK"; "AI agents" / "MCP clients"; "Browser" / "React UI".
+Each arrow points DOWN to "Front-door guards" / "Traffic log · IP ban · CSP · CORS".
+Inside large boundary titled "OpenAlgo server · one worker": guards then two parallel cards "Web app pages" / "Password + TOTP login · CSRF · session APIs" and "REST API v1" / "API key · field checks · rate limits" / "74 method/path pairs". Both feed DOWN into "Service layer" / "Orders · market data · options · strategies · Flow".
+From service branch DOWN to four parallel cards:
+"Action Center" / "Eligible live placements held for approval" with dashed incoming arrow labeled "semi-auto";
+"Sandbox engine" / "Sandbox orders" with incoming arrow "Analyzer on";
+"Event bus" / "Logs · live screen · Telegram · WhatsApp · strategy book" incoming "order events";
+"Broker plugins" / "Symbol and order translation" / "38 plugins" incoming "live".
+Only Broker plugins points DOWN beyond server boundary to "Your broker" / "Broker API".
+Separate database card below left, outside boundary: "Six server databases" / "openalgo · logs · latency · health · sandbox · historify". Service layer connects to databases by a dashed side arrow; Sandbox engine also points to databases.
+Bottom note: "Production: one worker; eventlet default or opt-in gthread with 64 request threads. Development uses standard threading."
+Keep all branches parallel, no arrows between the four branch cards.
+Critical arrow correction: the arrow from "Charting platforms" MUST extend all the way down to the TOP BORDER of the "Front-door guards" card. It must not stop at the outer OpenAlgo server boundary. All four client arrowheads must terminate directly on the Front-door guards card. Place guards full width under the four client cards so this is easy.

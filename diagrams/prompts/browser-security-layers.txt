@@ -1,0 +1,16 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Five guards for browser requests"
+Use a six-card numbered snake with browser start and cookies return lane. Keep WSGI and Flask boundaries distinct.
+"Your browser" / "React web app" sends a request to:
+"1 · Block banned IPs" / "403 before Flask runs" / "SecurityMiddleware · logs.db ip_bans" inside "WSGI layer".
+Then "Flask app · app.py" boundary contains in order:
+"2 · Check forged forms" / "CSRF token when CSRF_ENABLED" / "Exempt: /api/v1, webhooks, broker callbacks"
+-> "3 · End stale sessions" / "03:00 IST daily cutoff by default" / "Revoke tokens; clear session" / "SESSION_EXPIRY_TIME"
+-> "4 · Validate session" / "@check_session_validity" / "At login: Argon2 + pepper, optional TOTP" / "Login limits: 5/min · 25/hour"
+-> "5 · Harden the reply" / "CSP if enabled · X-Frame-Options DENY · nosniff" / "Referrer-Policy · Permissions-Policy" / "CORS on /api/* if enabled".
+From 5 an arrow labeled "Set-Cookie" to lower card "Session and CSRF cookies" / "HttpOnly · SameSite=Lax" / "HTTPS: Secure + __Secure- prefix".
+A return arrow from cookie card points toward Your browser labeled "Cookies sent with requests".
+Bottom note: "/api/v1 uses API-key authentication and skips CSRF."
+All numbered arrows 1→2→3→4→5, response 5→cookies→browser. Keep text large.
+Critical routing: Place card 1 directly ABOVE card 2 at the left edge. The arrow from card 1 must point down directly into card 2 "Check forged forms"; its arrowhead must touch card 2, crossing the Flask boundary and continuing inside it. No arrow may stop at the Flask outer boundary. Then 2→3→4→5 runs left to right.

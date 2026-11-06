@@ -1,6 +1,6 @@
 # Rate Limiting
 
-To protect OpenAlgo from abuse and ensure fair usage, rate limits are enforced at both login and API levels. These limits are configurable via the `.env` file and apply globally per IP address.
+To protect OpenAlgo from abuse and ensure fair usage, rate limits are enforced at both login and API levels. These limits are configurable via the `.env` file and use the caller IP by default, with ordinary decorators maintaining route-specific budgets; explicit shared limiters can use other keys/scopes.
 
 ## UI Login Rate Limits
 
@@ -66,6 +66,7 @@ Several resources do not use `API_RATE_LIMIT`. Each reads its own environment va
 | `PORTFOLIO_API_RATE_LIMIT` | 10 per minute | `/api/v1/portfolio/backtest`, `/api/v1/portfolio/holdings` |
 | `PORTFOLIO_TEARSHEET_RATE_LIMIT` | 5 per minute | `/api/v1/portfolio/tearsheet` |
 | `SIP_API_RATE_LIMIT` | 10 per minute | `/api/v1/sip/frequencies`, `/api/v1/sip/backtest` |
+| `SECTOR_ROTATION_API_RATE_LIMIT` | 30 per minute | `/api/v1/sectorrotation`, `/api/v1/sectorrotation/options` |
 | `TELEGRAM_RATE_LIMIT` | 30 per minute | Telegram resources except broadcast |
 | (hard-coded) | 5 per minute | `/api/v1/telegram/broadcast` |
 | `WHATSAPP_RATE_LIMIT` | 30 per minute | `/api/v1/whatsapp/notify` |
@@ -83,6 +84,9 @@ Note that the in-code fallback for `API_RATE_LIMIT` itself is `10 per second`, l
 **Applies to:**
 - `/strategy/webhook/<token>` - Strategy RMS webhook from external platforms
 - `/chartink/webhook/<webhook_id>` - ChartInk webhook from external platforms
+- `/flow/webhook/<token>` and `/flow/webhook/<token>/<symbol>` - Flow workflow webhooks
+
+Flow applies shared budgets by caller IP and workflow token across both URL variants, so alternating routes does not double the allowance. A throttled Flow webhook returns JSON `429` rather than a redirect.
 
 These limits protect against external DoS attacks and webhook flooding.
 
@@ -136,12 +140,15 @@ If a client exceeds any configured rate limit:
 
 Clients should not require a `Retry-After` header because header emission is not explicitly enabled in `limiter.py`.
 
+A `429` can also originate at the broker or from a gthread broker queue/guard refusal before sending. The application limiter response below includes a fixed `retry_after: 60` hint; it is not a calculation of every route's remaining window. Bodies and retry conditions differ. See [order outcomes](README.md#order-outcomes-and-retries).
+
 ## Error Response
 
 ```json
 {
   "status": "error",
-  "message": "Rate limit exceeded. Please try again later."
+  "message": "Rate limit exceeded. Please slow down your requests.",
+  "retry_after": 60
 }
 ```
 

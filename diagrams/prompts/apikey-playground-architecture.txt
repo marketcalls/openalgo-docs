@@ -1,0 +1,15 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Try APIs with your own key"
+Subtitle: "Playground uses Bruno requests and the same REST API and live feed as your strategies."
+Landscape diagram with left browser boundary and large right server boundary. Three horizontal lanes; endpoints/key lane occupies top half.
+Browser cards, vertically: "Endpoint list" / "account · orders · data · utilities · websocket"; "HTTP request panel" / "Edit and send"; "WebSocket tester" / "Authenticate · subscribe · unsubscribe".
+Inside server top lane draw login-protected "/playground · login required" enclosure with "Endpoint catalogue" / "GET /playground/endpoints" and "Your API key" / "GET /playground/api-key" / "Decrypted for your page".
+Endpoint list has two right-pointing request arrows to catalogue ("Load list") and key ("Fill key").
+Catalogue -> "Read and sort requests" / "parse_bru_file() · categorize_endpoint()" / "Name, order, method, URL, body" -> "Bruno .bru files" / "Stock or crypto, by broker type" / "collections/openalgo/IN_stock · .../crypto".
+Your API key -> "API keys table" / "Stored encrypted" / "api_keys.api_key_encrypted".
+Middle: HTTP request panel -> "REST API" / "Same origin; key in body or query" / "/api/v1/* · also /playground/*" / "CSRF token on non-GET".
+Bottom: WebSocket tester branches to two server cards: arrow "1. Get URL + key" -> "Feed address and key" / "/api/websocket/config" / "/api/websocket/apikey"; arrow "2. Connect" -> "WebSocket proxy" / "Authenticate, then subscribe" / "Port 8765 · ws:// or wss://".
+Two footer notes:
+"GET /playground/collections serves raw collections; the page does not use it."
+"Test calls use your real key. With analyzer off, an order goes to your broker."
+Request arrows point from browser into server; catalogue points to parser then files. No arrow between feed-config and proxy.

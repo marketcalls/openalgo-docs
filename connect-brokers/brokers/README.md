@@ -1,8 +1,10 @@
 # Brokers
 
-OpenAlgo currently includes **37 broker plugin directories**: 35 securities brokers, a Dhan sandbox plugin for testing without real money, and [Delta Exchange](../../crypto/exchanges/delta-exchange.md) for crypto derivatives, which is documented separately under Crypto. This section lists the 36 plugins that connect to a securities account, including the Dhan sandbox.
+OpenAlgo currently includes **38 broker plugin directories**: 36 securities-broker integrations, the Dhan sandbox plugin, and [Delta Exchange](../../crypto/exchanges/delta-exchange.md) for crypto derivatives. The 37 securities/sandbox plugins are listed below; Delta Exchange is documented under Crypto.
 
-The names below are the display names. The short code in brackets is the plugin directory under `broker/`, and it is also the code that must appear in your `REDIRECT_URL` as `http://127.0.0.1:5000/<code>/callback`. OpenAlgo reads the active broker out of that URL, so the code has to match exactly.
+Start with [Broker Configuration and Login](../broker-configuration.md) for saving keys, `.env` precedence, connecting and switching. Broker presence does not guarantee every exchange, history, streaming or order feature; the active adapter's capabilities and account entitlement determine availability.
+
+The short codes below identify plugin directories under `broker/`. Broker Configuration shows each callback URL. An existing `.env` uses `REDIRECT_URL` to identify its broker; newly saved database configurations do not require one broker to be selected in `.env`.
 
 1. [5paisa](5paisa.md) (`fivepaisa`)
 2. [5paisa (XTS)](5paisa-xts.md) (`fivepaisaxts`)
@@ -31,8 +33,8 @@ The names below are the display names. The short code in brackets is the plugin 
 25. [Paytm](paytm.md) (`paytm`)
 26. [Pocketful](pocketful.md) (`pocketful`)
 27. [Rmoney (XTS)](rmoney.md) (`rmoney`)
-28. Rupeezy (Vortex)
-29. Sahi
+28. [Rupeezy (Vortex)](rupeezy-vortex.md) (`rupeezy`)
+29. [Sahi](sahi.md) (`sahi`)
 30. [Samco](samco.md) (`samco`)
 31. [Shoonya](shoonya.md) (`shoonya`)
 32. [Tradejini](tradejini.md) (`tradejini`)

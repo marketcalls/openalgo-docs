@@ -199,7 +199,7 @@ A leg carries no `symbol` and no `strike`: the contract is resolved from `offset
 | symbol | string | Resolved option symbol |
 | orderid | string | Order ID from broker |
 | status | string | "success" or "error" |
-| mode | string | `"analyze"` in analyzer mode. The key is **absent** in live mode; there is no `"mode": "live"` |
+| mode | string | `"analyze"` for sandbox execution, `"semi_auto"` when queued for approval; absent on the ordinary live placement result |
 
 ## Supported Strategies
 
@@ -212,6 +212,10 @@ A leg carries no `symbol` and no `strike`: the contract is resolved from `offset
 | Bear Put Spread | 2 | Buy higher strike PE, sell lower strike PE |
 | Calendar Spread | 2 | Same strike, different expiry |
 | Diagonal Spread | 2 | Different strike, different expiry |
+
+## Approval and execution outcomes
+
+In Semi-Auto mode this request can return HTTP `200`, `status: "success"`, `mode: "semi_auto"` and `pending_order_id` after queuing for Action Center approval. It has not yet placed a broker order. In Auto/analyzer execution, inspect the placement result and confirm fills separately. See [order outcomes and retries](../README.md#order-outcomes-and-retries).
 
 ## Notes
 

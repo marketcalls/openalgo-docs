@@ -516,7 +516,7 @@ realized=0.0  unrealized=5250.0  total=5250.0  openQty=75.0  unpriced_legs=0
   **ignored live**, so a filtered node looks correct in sandbox testing and
   then flattens every other strategy's positions with it. If several
   strategies hold positions at once, close the specific leg with a
-  `placeOrder` or `smartOrder` (`positionSize: 0`) instead. See
+  `placeOrder` using a verified current quantity, or a `smartOrder` exit with `positionSize: 0` and `quantity: 0` instead. A positive quantity with a zero target can open an order when already flat. See
   [Limitations](limitations.md).
 
 **Before relying on this.** The strategy book is built from orders placed
@@ -679,7 +679,7 @@ dropdown cannot express `{{webhook.exchange}}`. The panel now puts a small
   `{{webhook.symbol}}`, which is the shape ChartInk-style senders find easiest.
 * The HTTP reply carries the run's own outcome. A broker rejection comes back
   with the real reason (insufficient funds, RMS block, market closed), not the
-  literal string `node failed`, so the sender can alert or retry on it.
+  literal string `node failed`, so the sender can alert on it. Reconcile any placement outcome before retrying; a failed response does not prove no order was sent.
 
 ---
 

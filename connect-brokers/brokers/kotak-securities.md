@@ -1,5 +1,9 @@
 # Kotak Securities
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Kotak Securities is a prominent Indian stock broker offering services on major Indian stock exchanges, including NSE, BSE, and MCX. Known for its comprehensive financial services and advanced trading solutions, Kotak Securities provides a robust platform for traders and investors. By leveraging Kotak's Trading APIs, developers and algo traders can seamlessly integrate their trading strategies with the OpenAlgo platform.
 
 {% embed url="https://www.youtube.com/watch?v=AtCCU4I1xSk" %}

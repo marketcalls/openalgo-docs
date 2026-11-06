@@ -2,11 +2,13 @@
 
 ## Overview
 
+The default production worker is eventlet. Optional gthread uses one worker with 64 request threads; use the [worker switching and rollback guide](../../getting-started/gthread-migration.md). New installations add broker keys in OpenAlgo after app sign-in; existing environment-configured broker keys keep precedence. The manual TCP examples below are alternatives to the official installer layout.
+
 This guide covers deploying OpenAlgo on an Ubuntu server (22.04 or 24.04 LTS) with an Nginx reverse proxy, a systemd service, and SSL for production use. `pyproject.toml` sets `requires-python = ">=3.12"`, so Python 3.12 or newer is mandatory. The steps below are the manual equivalent of `install/install.sh`, which automates the same work and additionally offers Remote MCP setup.
 
 ## Architecture Diagram
 
-<figure><img src="../../.gitbook/assets/diagram-ubuntu-server-deployment.png" alt="Ubuntu deployment: Nginx routes / to Gunicorn eventlet single worker and /ws to the WebSocket proxy child process on 8765, with ZeroMQ bus on 5555, broker APIs, and the app directory"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-ubuntu-server-deployment.png" alt="Ubuntu deployment: Nginx routes / to one Gunicorn worker: eventlet by default or opt-in gthread with 64 threads and /ws to the WebSocket proxy child process on 8765, with ZeroMQ bus on 5555, broker APIs, and the app directory"><figcaption></figcaption></figure>
 
 ## Prerequisites
 
@@ -43,15 +45,14 @@ git clone https://github.com/marketcalls/openalgo.git .
 
 ```bash
 # Install uv package manager
-pip install uv
+uv --version  # Install uv through its supported installer if unavailable
 
 # Create virtual environment and install dependencies
 uv venv .venv
-source .venv/bin/activate
 uv sync
 
 # Install production dependencies (same pin the install script uses)
-uv pip install "gunicorn>=25.0,<26" eventlet
+uv pip install "gunicorn>=25.0,<26" "eventlet==0.41.2"
 ```
 
 ### 3. Configure Environment
@@ -60,9 +61,8 @@ uv pip install "gunicorn>=25.0,<26" eventlet
 # Copy sample environment file
 cp .sample.env .env
 
-# Generate secure keys
-python -c "import secrets; print(secrets.token_hex(32))"
-# Copy output to APP_KEY and API_KEY_PEPPER in .env
+# A fresh install replaces public sample placeholders on first run.
+# Preserve the original secrets with any existing database.
 
 # Edit configuration
 nano .env
@@ -79,7 +79,7 @@ cd ..
 
 ### 5. Create Systemd Service
 
-**Note:** One systemd service is sufficient. Under Gunicorn/eventlet, `websocket_proxy.app_integration` spawns the WebSocket proxy as an isolated child process on port 8765; it is not an in-process daemon thread.
+**Note:** One systemd service is sufficient. Under either Gunicorn worker, `websocket_proxy.app_integration` spawns the WebSocket proxy as an isolated child process on port 8765; it is not an in-process daemon thread.
 
 ```bash
 sudo nano /etc/systemd/system/openalgo.service
@@ -250,7 +250,6 @@ cd /opt/openalgo
 git pull origin main
 
 # Update dependencies
-source .venv/bin/activate
 uv sync
 
 # Rebuild frontend

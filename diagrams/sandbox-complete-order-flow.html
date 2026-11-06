@@ -14,7 +14,7 @@
     </div>
     <div class="node service stack" id="semi" style="width:230px">
       <div class="ic" data-icon="user-check"></div>
-      <div class="tx"><b>2. Semi-auto mode?</b><span>checked first</span></div>
+      <div class="tx"><b>2. Eligible live semi-auto?</b><span>checked first; Analyzer requests bypass this queue</span></div>
     </div>
     <div class="node security stack" id="vod" style="width:260px">
       <div class="ic" data-icon="shield-check"></div>
@@ -28,7 +28,7 @@
     </div>
     <div class="node broker stack" id="live" style="width:220px">
       <div class="ic" data-icon="landmark"></div>
-      <div class="tx"><b>Live broker</b><span>real order placed</span>
+      <div class="tx"><b>Live broker</b><span>live submission attempted; fills confirmed separately</span>
         <div class="chips"><span class="chip">place_order_api</span></div></div>
     </div>
   </div>
@@ -102,7 +102,7 @@
 </div>
 <script>
   connect('req', 'semi', { color: 'client' })
-  connect('semi', 'acq', { color: 'external', dashed: true, label: 'yes', from: 'bottom', to: 'top' })
+  connect('semi', 'acq', { color: 'external', dashed: true, label: 'eligible live only', from: 'bottom', to: 'top' })
   connect('semi', 'vod', { color: 'service', label: 'no' })
   connect('vod', 'mode', { color: 'security' })
   connect('mode', 'live', { color: 'broker', label: 'off' })

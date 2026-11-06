@@ -27,8 +27,10 @@ Condition nodes have **two output handles**. An edge leaving one carries a
 `sourceHandle`:
 
 ```json
-{ "id": "e2", "source": "cond", "sourceHandle": "true",  "target": "buy" }
-{ "id": "e3", "source": "cond", "sourceHandle": "false", "target": "skip" }
+[
+  { "id": "e2", "source": "cond", "sourceHandle": "true",  "target": "buy" },
+  { "id": "e3", "source": "cond", "sourceHandle": "false", "target": "skip" }
+]
 ```
 
 An edge from a condition **without** a `sourceHandle` is a *pass-through*:
@@ -100,8 +102,7 @@ or places a trade:
 ## Execution order
 
 A run starts at the single trigger node and walks the graph **depth-first**,
-following each outgoing edge in order. There is no parallelism and no
-scheduler, one node finishes completely before the next begins.
+following each outgoing edge in order. Nodes within one run do not execute in parallel: one finishes before the next begins. A schedule can trigger a run, and gthread can move longer-wait executions off the triggering HTTP request without changing their sequential traversal.
 
 Three consequences matter:
 
@@ -139,8 +140,10 @@ one does and the gate's own `false` branch works. Pass-through wiring is the
 clearest way to say that:
 
 ```json
-{ "id": "e3", "source": "c1", "target": "gate", "targetHandle": "input-0" }
-{ "id": "e4", "source": "c2", "target": "gate", "targetHandle": "input-1" }
+[
+  { "id": "e3", "source": "c1", "target": "gate", "targetHandle": "input-0" },
+  { "id": "e4", "source": "c2", "target": "gate", "targetHandle": "input-1" }
+]
 ```
 
 An edge that also carries `sourceHandle: "true"` behaves the same way when its
@@ -310,8 +313,7 @@ are upgraded on the way in.
 
 One thing to watch: node edits apply from the next run, because the graph is
 re-read every time. The **trigger** is different - its schedule and any price or
-order watch are registered when you activate. If you change the trigger, the
-editor tells you to deactivate and reactivate.
+order watch are registered when you activate. A normal Save attempts to register the changed trigger again; a failure deactivates the workflow rather than preserving a stale registration. After Replace from JSON, follow any `needs_reactivate` message and deactivate/reactivate as instructed.
 
 For scripted use there is also
 `scripts/update_flow_workflow.py --id <id> --file strategy.json`, with
@@ -322,3 +324,10 @@ nothing reads, so `strikeOffset` where the field is `offset` imports cleanly,
 runs successfully, and silently uses the default. The repository ships a
 checker that catches that and a few related near-certain mistakes, see
 [Workflow JSON Format](json-format.md).
+
+
+## Results, Approval and Unclear Sends
+
+Run Now executes in the current Live/Analyze mode. The editor saves dirty changes before Run Now or Activate; it does not knowingly execute an older saved graph behind unsaved quantity changes. A save failure prevents the action.
+
+A placement's success can mean broker acceptance or Action Center queueing, not a fill. A timeout or lost broker response can occur after acceptance. Reconcile orders, trades and positions before sending any replacement. See [Action Center](../new-features/action-center.md) for Sending, Status unclear and recorded-rejected caveats, and [Limitations](limitations.md#delay-is-capped-at-300-seconds-waituntil-at-30-minutes) for gthread's accepted background runs.

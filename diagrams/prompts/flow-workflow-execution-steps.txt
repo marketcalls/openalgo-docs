@@ -1,0 +1,18 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "How a Flow runs, node by node"
+Subtitle: "Validate first; walk the graph depth-first; save the final outcome."
+Use two main sections, preparation on left and graph walk on right, plus bottom outcome strip. Large readable type.
+Preparation numbered vertical flow:
+"1. Trigger fires" / "Schedule · webhook · price alert · order update · Run Now" ->
+"2. Take workflow lock" / "Try once; never wait" / "Held: return already_running; no run record" ->
+"3. Load and validate" / "flow_workflows · flow_workflow_validator" / "Missing or invalid: reject; no run record" ->
+"4. Open run record" / "Status running; API key required" / "WorkflowContext · NodeExecutor" / "Trigger data: {{webhook.*}}" ->
+"5. Find trigger node" / "start · webhookTrigger" / "priceAlert · orderUpdateTrigger".
+Steps 2->3 labelled "Got lock"; 3->4 labelled "Valid".
+Arrow from step 5 to graph-walk section:
+"6. Within limits?" / "Depth 100 · visits 500" / "Exceeded: stop run with error" -> arrow "Yes" -> "Run node" / "Order with unfilled {{...}}: fail; do not send" -> "Node error?".
+Node error branches: "No" -> "Pick next nodes" / "Conditions: yes/true or no/false" / "Gates wait for all inputs". Loop arrow from Pick next nodes back to Within limits labelled "Each child".
+"Yes" -> "Record error; stop branch" / "Other branches continue" / "Errored condition: pass-through edges only".
+From graph-walk section a distinct arrow labelled "Walk ends or limit hit" to final decision "Any node error or exception?" branches "No" -> "Completed" / "Logs saved" and "Yes" -> "Failed" / "Error and logs saved".
+Footer: "Once a run record opens, it always ends completed or failed with logs saved."
+Do not imply one node error stops the whole graph. Runtime limits do stop the run.

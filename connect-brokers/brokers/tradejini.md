@@ -1,5 +1,9 @@
 # Tradejini
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 TradeJini is a progressive brokerage firm known for its reliable execution, low-cost trading, and developer-friendly CubePlus API platform. Designed to support modern algo trading systems, TradeJini provides a robust infrastructure for both retail and institutional traders. Whether you're an individual trader or building advanced trading automation, TradeJini offers the right tools to seamlessly integrate market data and trading functionalities.
 
 ### Steps for Integration:

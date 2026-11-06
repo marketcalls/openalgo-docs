@@ -120,7 +120,7 @@ OpenAlgo has no idempotency key, so the CLI retries conservatively. Up to three 
 | State-changing (orders, cancels, toggles, strategy start and stop) | 429 only |
 | Raw `openalgo api` calls | 429 only; never retried on server errors |
 
-A 429 is rejected by the rate limiter before the request reaches the handler, so it is always safe to repeat. An order-changing request is never replayed after a server error, because the broker may already have accepted it.
+A Flask rate-limit 429 is refused before the handler runs. The optional gthread worker can also return a broker-busy 429: for a single order its refusal message means it was not sent. For multi-step or account-wide operations, inspect per-item results and broker books before repeating the whole operation. The retry table describes the CLI's behavior; a status code alone is not proof that every part of a batch was untouched. An order-changing request is not replayed after a server error, because the broker may already have accepted it.
 
 When a state-changing request times out or loses its connection after it was sent, or a gateway answers 502, 503, or 504, the error message starts with `outcome unknown`. The order may exist. Check `openalgo order list` or `openalgo order trades` before retrying, or you may place a duplicate.
 

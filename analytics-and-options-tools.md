@@ -1,10 +1,10 @@
 # Analytics and Options Tools
 
-OpenAlgo ships **18 analytics surfaces** under `/tools`, covering the options desk, portfolio analysis and backtesting. They run inside your own installation against your broker's live data, so nothing here depends on an external service.
+OpenAlgo ships **20 analytics surfaces** under `/tools`, covering the options desk, portfolio analysis and backtesting. They run inside your own installation using broker data or stored Historify history, depending on the tool. Market-data access still depends on your broker and its entitlements.
 
 <figure><img src=".gitbook/assets/openalgo-ui-tools-hub.png" alt="Tools page grid of options and analytics tools"><figcaption></figcaption></figure>
 
-These are interactive UI tools rather than API endpoints. Several are backed by the [Options API](api-documentation/v1/data-api/option-chain.md), so anything you can see on screen you can also automate.
+These are interactive UI tools rather than API endpoints. Several are backed by the [Options API](api-documentation/v1/data-api/option-chain.md), and some have dedicated analysis APIs. A screen does not imply a matching public API for every control.
 
 ***
 
@@ -28,6 +28,7 @@ These are interactive UI tools rather than API endpoints. Several are backed by 
 | **OI Range** | `/oirange` | OI by strike over a custom range, with ATM-relative selectors and optional one-minute auto-refresh |
 | **OI Profile** | `/oiprofile` | Futures candlesticks with an OI butterfly and daily OI change across strikes |
 | **GEX Dashboard** | `/gex` | Gamma exposure with OI walls, net GEX per strike and the top gamma strikes |
+| **Strike Profile** | `/strikeprofile` | GEX and DEX by strike and expiry, with per-expiry peaks, gamma flip and call/put walls |
 | **Gamma Density** | `/gammadensity` | Gamma times OI density and convexity zones, intraday and to-expiry, with ATM IV and expected-move bands |
 
 <figure><img src=".gitbook/assets/openalgo-ui-gex.png" alt="GEX dashboard with OI walls and net GEX charts"><figcaption></figcaption></figure>
@@ -55,6 +56,7 @@ These are interactive UI tools rather than API endpoints. Several are backed by 
 | --- | --- | --- |
 | **Portfolio Backtester** | `/portfolio-backtester` | Weighted portfolio against an index with real delivery costs, rebalancing rules, crisis periods and a full tearsheet |
 | **SIP Backtester** | `/sip-backtester` | What a monthly, weekly or quarterly SIP would have returned: XIRR, rupee-cost averaging, start-date sensitivity and a lumpsum comparison |
+| **Sector Rotation** | `/sector-rotation` | Daily or weekly relative rotation map of sectors, stocks and indices against a benchmark, with trails and unavailable-series reporting |
 | **Portfolio Analyzer** | `/portfolio-analyzer` | Grades the holdings you actually own: concentration, co-movement, drawdown resilience and behaviour in past crises |
 
 <figure><img src=".gitbook/assets/openalgo-ui-portfolio-backtester-results.png" alt="Portfolio backtest report overview"><figcaption></figcaption></figure>
@@ -63,9 +65,9 @@ These are interactive UI tools rather than API endpoints. Several are backed by 
 
 ## What These Tools Need
 
-**A connected broker.** The options tools read the live option chain, so they need a broker session with market-data entitlement for the relevant exchange. A plugin that does not cover NFO or MCX cannot feed the tools that depend on it. See [Brokers](connect-brokers/brokers/README.md) for per-plugin exchange coverage.
+**A connected broker for live data.** The options tools read the live option chain, so they need a broker session with market-data entitlement for the relevant exchange. A plugin that does not cover NFO or MCX cannot feed the tools that depend on it. See [Brokers](connect-brokers/brokers/README.md) for per-plugin exchange coverage.
 
-**Local history, for the backtesters.** The portfolio and SIP backtesters read stored data by default rather than calling the broker on every run. Download the range you need with [Historify](new-features/historify.md) first.
+**Local history, for historical analysis.** The portfolio and SIP backtesters read stored data by default rather than calling the broker on every run. Download the range you need with [Historify](new-features/historify.md) first. Portfolio, SIP and sector-rotation requests can also use broker history; local history runs still require a valid OpenAlgo API key, while broker history additionally requires a broker login.
 
 **Nothing else.** There is no external data vendor, no subscription and no account beyond your own broker.
 
@@ -80,6 +82,8 @@ Several tools have a REST equivalent, so a strategy can consume the same numbers
 | Option Chain | [Option Chain](api-documentation/v1/data-api/option-chain.md) |
 | Option Greeks | [OptionGreeks](api-documentation/v1/data-api/optiongreeks.md) and [MultiOptionGreeks](api-documentation/v1/data-api/multioptiongreeks.md) |
 | Straddle and synthetic futures | [SyntheticFuture](api-documentation/v1/data-api/syntheticfuture.md) |
+| Portfolio Backtester and Analyzer | [Portfolio API](api-documentation/v1/portfolio.md) |
+| Sector Rotation | [Sector Rotation API](api-documentation/v1/sectorrotation.md) |
 | SIP Backtester | [SIP Backtest](api-documentation/v1/utilities-api/sip-backtest.md) |
 
 The Greeks endpoints are rate limited separately and more tightly than general data endpoints. See [Rate Limiting](api-documentation/v1/rate-limiting.md) before polling them in a loop.

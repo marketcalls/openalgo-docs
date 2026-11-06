@@ -1,0 +1,12 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Six admin screens, one protected API"
+Wide landscape architecture, left-to-right. Four columns, ample text space.
+Left group "React admin pages" contains six short rows: "Admin home · /admin · /api/stats"; "Freeze quantities · /admin/freeze"; "Holidays · /admin/holidays"; "Market timings · /admin/timings"; "Diagnostics · /admin/diagnostics"; "Remote MCP · /admin/remote-mcp".
+Arrow from this group to card "Login and rate limit" / "Signed-in session required" / "check_session_validity" / "API_RATE_LIMIT".
+Then arrow to "Admin API" / "JSON data for React pages" / "admin_bp · blueprints/admin.py" / "/admin/api/*".
+From Admin API branch arrows to two right-hand groups (do not connect destination rows as sequential steps):
+"openalgo.db" with three rows: "Freeze quantities: qty_freeze + memory cache"; "Market calendar: market_holidays, market_holiday_exchanges, market_timings"; "MCP OAuth clients: oauth_clients".
+"Files on disk" with three rows: "log/errors.jsonl — server and client errors"; "log/mcp.jsonl — MCP audit trail"; ".env — MCP settings; restart required".
+Bottom note, clearly readable: "10/min: CSV upload, diagnostics, report, MCP kill switch. 30/min: MCP settings, client errors."
+Preserve protected API boundary and database-versus-files grouping. No other arrows.

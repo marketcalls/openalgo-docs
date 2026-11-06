@@ -1,0 +1,17 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Remote MCP: approve the permissions an AI app gets"
+Subtitle: "OAuth sign-in grants scopes. Every later tool call is checked and audited."
+Use top section "Sign-in and tokens" with 6 numbered cards in a 2x3 snake and clear arrows.
+"1. Discover" / "Unauthenticated /mcp: 401 + WWW-Authenticate" / "/.well-known/oauth-protected-resource" / "/.well-known/oauth-authorization-server"
+-> "2. Register client" / "POST /oauth/register" / "If MCP_OAUTH_REQUIRE_APPROVAL: admin must approve"
+-> "3. Open approval page" / "/oauth/authorize · PKCE S256" / "Check login, approved client, exact redirect and supported scopes"
+-> "4. Consent" / "You approve requested scopes" / "write:orders + MCP TOTP required: fresh TOTP"
+-> "5. Return one-time code" / "302 to redirect_uri"
+-> "6. Exchange code" / "POST /oauth/token · PKCE code_verifier" / "Consume code; issue access + refresh tokens".
+Below exchange concise token panel "RS256 JWT · iss / aud = MCP_PUBLIC_URL" / "New refresh-token family" / "Clients, codes and refresh tokens: openalgo.db".
+Lower section "Every request after sign-in":
+"AI app calls /mcp" / "POST · JSON-RPC · Bearer" / "initialize · ping · tools/*" -> "Rate limit + token check" / "Signature · issuer · audience".
+From token gate fan out into two alternatives: "tools/list" / "Only tools allowed by granted scopes" (terminal; no outgoing execution arrow), and "tools/call" / "Tool scope + scope quota" / "Order tools: warning log first".
+Only tools/call -> "Tool runs" / "openalgo SDK · admin API key" / "Loopback /api/v1/* · MCP_LOOPBACK_URL" -> "Audit entry" / "Tool, duration, outcome; return result" / "log/mcp.jsonl".
+Footer: "Optional authenticated GET /mcp sends keepalives only. Real work uses POST /mcp."
+Readability over ornament. All conditional approval/TOTP caveats and tool-list vs tool-call split must remain.

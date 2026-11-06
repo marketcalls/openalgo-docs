@@ -71,23 +71,13 @@ cp .sample.env .env
 
 This file holds your broker settings and credentials. Never copy `.sample.env` over an existing `.env` on a working installation: it discards your credentials and replaces `API_KEY_PEPPER` and `FERNET_SALT`, which makes stored passwords and encrypted broker tokens unrecoverable.
 
-### Step 5 Configure Broker Credentials
+### Step 5 Choose How to Save Broker Credentials
 
-Open the environment file and update the required values.
+You can leave broker fields empty and configure them after startup in **Select Broker > Configure**. Keys saved in Broker Configuration are encrypted in the database and apply without a restart. See [Broker Configuration and Login](../connect-brokers/broker-configuration.md).
 
-You will typically need to enter the following details.
+If you keep an existing `.env` setup, set its `BROKER_API_KEY`, `BROKER_API_SECRET` and broker-specific `REDIRECT_URL`; that broker's `.env` keys come first. The callback URL must exactly match its developer-app registration.
 
-```dotenv
-BROKER_API_KEY = 'YOUR_BROKER_API_KEY'
-BROKER_API_SECRET = 'YOUR_BROKER_API_SECRET'
-REDIRECT_URL = 'http://127.0.0.1:5000/<broker>/callback'
-```
-
-Replace `<broker>` with your broker's key, for example `http://127.0.0.1:5000/zerodha/callback`.
-
-Leave `APP_KEY`, `API_KEY_PEPPER` and `FERNET_SALT` at their `OPENALGO_PLACEHOLDER_...` values. OpenAlgo replaces them with fresh random secrets on first start and prints a one-time `[OpenAlgo first-run setup]` message when it does.
-
-The exact values and process depend on the broker you use.
+Leave the installation's `APP_KEY`, `API_KEY_PEPPER` and `FERNET_SALT` intact. New-install placeholders are replaced on first startup; do not replace keys on a populated installation.
 
 ### Step 6 Generate API Credentials from Your Broker
 
@@ -95,7 +85,7 @@ Log in to your broker’s developer portal and create an app for API access.
 
 Depending on the broker, you may need to provide an app name, redirect URL, and other broker specific information.
 
-After the app is created, copy the API key and API secret and paste them into the environment file.
+After the app is created, enter its keys in Broker Configuration, or in `.env` if you intentionally use that compatibility setup.
 
 ### Step 7 Configure Static IP for Indian Brokers
 

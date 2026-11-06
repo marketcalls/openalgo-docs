@@ -1,0 +1,20 @@
+Use case: infographic-diagram. Polished landscape 3:2 OpenAlgo documentation image. Deep navy #0b1020 background, navy panels thin cyan/teal/violet/amber/green outlines, white headings pale gray body, crisp large sans-serif, simple outline icons, generous whitespace, clear arrowheads outside text. No photos, 3D, watermark or invented facts.
+Title: "2FA switches on only after you prove a code"
+Subtitle: "The TOTP secret is created at account setup. Profile reveals the QR; a valid code enables 2FA."
+Three separate phase panels arranged left to right, each with vertical numbered cards. Arrows descend inside each phase, then connect final card to next phase first card with a clearly routed arrow.
+Phase A "Account setup":
+1 "Create admin account" / "POST /setup"
+2 "Generate secret" / "pyotp.random_base32()"
+3 "Store encrypted" / "Fernet-encrypted totp_secret" / "openalgo.db · users"
+4 "Redirect to login" / "302 · QR not shown yet".
+Phase B "See QR on Profile":
+5 "Fresh login + Profile" / "After logout and fresh login" / "GET /auth/profile-data"
+6 "Decrypt stored secret" / "get_totp_secret()"
+7 "Show QR + secret" / "First place they are visible"
+8 "Scan with your phone" / "Any authenticator app".
+Phase C "Turn on 2FA":
+9 "Choose 2FA purposes" / "Master switch + purpose flags + current code" / "POST /auth/2fa/configure"
+10 "Check current code" / "verify_totp(code)" / "Match stored secret now".
+From card10 branch into TWO side-by-side outcome cards, with labeled arrows: "code matches" -> "2FA enabled" / "Flags saved · session just verified" / "totp_enabled · totp_verified_at · 200"; "wrong code" -> "Nothing changes" / "Retry after error" / "401 Invalid TOTP code".
+Bottom note: "Enabling 2FA creates no new secret. It enables checks for the secret made at setup."
+Large readable exact identifiers, no extra facts.

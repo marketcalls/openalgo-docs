@@ -24,27 +24,26 @@ sudo bash install/update.sh
 The script automatically:
 
 1. Stops the `openalgo` service
-2. **Backs up all databases** (openalgo, logs, latency, sandbox, historify) to a timestamped `db/backup_<timestamp>/` folder
+2. **Backs up its configured database set** (openalgo, logs, latency, sandbox, historify) to a timestamped `db/backup_<timestamp>/` folder
 3. Pulls the latest code (`git pull`)
 4. Compares your `.env` against `.sample.env` and **lists any new variables** you should add (it never overwrites your `.env`)
 5. Updates Python dependencies
 6. Runs all database migrations
 7. Restarts the service
 
+Back up `db/health.db` separately: the current automatic backup list does not include it. Keep the matching `.env` and user strategies with your backups too.
+
 Legacy multi-deployment installs (`/var/python/openalgo-flask/<name>/openalgo/`) are detected automatically and the correct `openalgo-<name>` service is updated.
 
-{% hint style="warning" %}
-`update.sh` does **not** detect instances created by the current `install/install-multi.sh`, which lays them out as `/var/python/openalgo-flask/openalgo1`, `openalgo2` and so on with services named `openalgo1`, `openalgo2`. Update those by hand:
+The updater also recognizes numbered instances created by `install/install-multi.sh`. Run it from inside the instance you intend to update, one at a time:
 
 ```bash
 cd /var/python/openalgo-flask/openalgo1
-sudo cp -r db db-backup-$(date +%Y%m%d)
-sudo git pull
-sudo uv pip install --python venv/bin/python -r requirements-nginx.txt
-sudo bash -c "source venv/bin/activate && python upgrade/migrate_all.py"
-sudo systemctl restart openalgo1
+sudo bash install/update.sh
 ```
-{% endhint %}
+
+It selects that instance's configuration and service. Review the backup, migration and restart result before updating the next one.
+
 
 ***
 
@@ -455,10 +454,10 @@ If anything fails after an upgrade, check `log/errors.jsonl` first, it contains 
 
 ### Optional: testing the gthread worker
 
-OpenAlgo currently runs on Gunicorn's **eventlet** worker, which Gunicorn has announced it will drop in its next major version. An experimental switch to Gunicorn's threaded **gthread** worker is part of OpenAlgo since 30 September 2026, for those who want to test it.
+OpenAlgo currently runs on Gunicorn's **eventlet** worker, which Gunicorn has announced it will drop in its next major version. The threaded **gthread** worker is available as an opt-in setting on current main. It has a fixed pool of 64 request threads per instance.
 
 It is **opt-in and not the default**: a normal upgrade leaves you on eventlet with no change in behaviour.
 
-If you would like to help test it, see [Migrating to gthread (Experimental)](gthread-migration.md).
+If you would like to help test it, see [The gthread Web Server (Optional)](gthread-migration.md).
 
 ####

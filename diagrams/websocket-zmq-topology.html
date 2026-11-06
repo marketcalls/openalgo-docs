@@ -3,21 +3,21 @@
   <div class="title">
     <div class="eyebrow">WebSocket and ZeroMQ</div>
     <h1>Every live update meets on one private bus</h1>
-    <p style="max-width:1100px">Market ticks from your broker and internal messages from the web app are all published to a single local ZeroMQ address. The WebSocket proxy is the only listener: it picks up everything and forwards each message to the signed-in clients that subscribed to it.</p>
+    <p style="max-width:1100px">Market ticks from your broker and internal messages from the web app are all published to a single local ZeroMQ address. The WebSocket proxy subscribes to bus topics and routes available updates to authenticated clients according to their subscriptions.</p>
   </div>
 
   <div class="row" style="align-items:flex-start; gap:34px">
     <div class="node broker big stack" id="feed" style="width:210px; min-width:0; margin-top:60px"><div class="ic" data-icon="radio-tower"></div><div class="tx"><b>Your broker</b><span>market-data feeds</span></div></div>
 
     <div class="zone" style="--c:var(--app)">
-      <div class="zl"><span data-icon="radio"></span>WebSocket proxy · separate process (eventlet)</div>
+      <div class="zl"><span data-icon="radio"></span>WebSocket proxy · separate production process</div>
       <div class="row" style="gap:40px; align-items:stretch">
         <div class="node service stack" id="ad" style="width:200px; min-width:0"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Broker streaming adapters</b><span>turn broker ticks into OpenAlgo messages</span>
           <div class="chips"><span class="chip">PUB · connect</span></div></div></div>
         <div style="width:72px; margin:0 -22px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--ink3); font-size:13px; font-weight:600; text-align:center; line-height:1.25"><div data-icon="arrow-down-up" style="width:22px;height:22px"></div>via the bus</div>
-        <div class="node service stack" id="sub" style="width:200px; min-width:0"><div class="ic" data-icon="ear"></div><div class="tx"><b>Bus listener</b><span>listens on the bus address and hears every message</span>
+        <div class="node service stack" id="sub" style="width:200px; min-width:0"><div class="ic" data-icon="ear"></div><div class="tx"><b>Bus listener</b><span>the only binder; subscribes to all bus topics</span>
           <div class="chips"><span class="chip">SUB · bind</span></div></div></div>
-        <div class="node app stack" id="idx" style="width:200px; min-width:0"><div class="ic" data-icon="list-filter"></div><div class="tx"><b>Subscription index</b><span>finds who asked for each symbol and forwards every tick</span>
+        <div class="node app stack" id="idx" style="width:200px; min-width:0"><div class="ic" data-icon="list-filter"></div><div class="tx"><b>Subscription index</b><span>finds matching subscriptions and routes available ticks</span>
           <div class="chips"><span class="chip">zmq_listener</span></div></div></div>
         <div class="node app stack" id="srv" style="width:200px; min-width:0"><div class="ic" data-icon="radio"></div><div class="tx"><b>WebSocket server</b><span>sign-in with your API key, then live stream</span>
           <div class="chips"><span class="chip">port 8765</span><span class="chip">WEBSOCKET_PORT</span></div></div></div>
@@ -52,13 +52,13 @@
       <span style="--c:var(--app)"><i></i>WebSocket proxy</span>
       <span style="--c:var(--client)"><i></i>Your tools</span>
     </div>
-    <div class="note" style="max-width:640px"><span data-icon="lightbulb"></span><div>On the dev server (uv run app.py) the proxy runs as a thread inside the Flask process instead of its own process; the wiring is the same.</div></div>
+    <div class="note" style="max-width:640px"><span data-icon="lightbulb"></span><div>Both Gunicorn worker classes use one child proxy; Docker starts it separately. The dev server uses a real thread. The port stays fixed: no publisher bind or fallback scan.</div></div>
   </div>
 </div>
 <script>
   connect('feed', 'ad', { color: 'broker' })
   connect('ad', 'busL', { color: 'service', from: 'bottom', to: 'top', label: 'publish' })
-  connect('busR', 'sub', { color: 'data', from: 'top', to: 'bottom', label: 'every message' })
+  connect('busR', 'sub', { color: 'data', from: 'top', to: 'bottom', label: 'bus topics' })
   connect('sub', 'idx', { color: 'service' })
   connect('idx', 'srv', { color: 'app' })
   connect('srv', 'cl', { color: 'client' })

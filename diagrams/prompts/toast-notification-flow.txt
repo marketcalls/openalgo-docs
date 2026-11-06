@@ -1,0 +1,10 @@
+Use case: infographic-diagram. Polished OpenAlgo technical documentation landscape 3:2. Deep navy #0b1020 background, navy cards thin cyan/teal/violet/amber/green borders, white headings pale gray body, crisp large sans-serif, outline icons, generous space, clear arrowheads outside text. No3D/photos/watermark/invented features.
+Title: "Every toast checks your alert settings"
+Subtitle: "Show a popup only when toasts and its category are enabled."
+Three rows: settings at top, message flow middle, suppression and live input below.
+Top row LEFT card "Profile > Alerts" / "Toggle toasts + categories" / "Profile.tsx" arrow RIGHT labeled "updates" to center "Alert settings" / "alertStore · Zustand" / "Master toggle · categories" / "Position · count · duration". Settings has BIDIRECTIONAL dashed connection to top-left-middle card "Browser storage" / "localStorage · openalgo-alerts" / "Survives reloads" labeled "persist". Arrange to avoid crossing update arrow.
+Middle row LEFT TO RIGHT: "Feature code" / "Pages · dialogs · hooks" -> "Toast helper" / "utils/toast.ts" / "showToast.success / error / warning / info" -> decision "Allowed?" / "shouldShowToast()" / "Toasts ON + category enabled?".
+Decision YES arrow RIGHT -> "Create toast" / "sonner toast[type]()" / "Success · error · warning · info" -> "Show on screen" / "Toaster · providers.tsx" / "Your position, visible count + duration".
+Decision NO arrow DOWN -> "Suppressed" / "No toast shown".
+Below-left "Live Socket.IO events" / "useSocket.ts" / "Order, cancel + other updates" / "showCategoryToast()" has its own arrow UP RIGHT into Allowed decision, bypassing Toast helper.
+Decision dashed arrow UP into Alert settings labeled "reads". Alert settings dashed arrow RIGHT then DOWN into Show on screen labeled "display settings". Correct directions essential; no toast from suppressed branch.

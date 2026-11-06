@@ -7,7 +7,7 @@ workaround; a few are hard boundaries.
 
 `closePositions` with a symbol set does **not** close only that symbol on a
 live broker account. It squares off the whole book: every symbol, every
-exchange, every product, including overnight NRML positions and CNC holdings.
+exchange, every product, including overnight NRML or CNC position rows returned by the broker.
 
 The node reads `symbol`, `exchange` and `product` and passes them to the
 close-position service. The service uses them only in Analyzer mode. In live
@@ -26,7 +26,7 @@ Until this is fixed, treat `closePositions` as account-wide, always.
 * Use it only where the intent genuinely is "flatten everything", and only on
   an account holding nothing you did not put there.
 * To exit one position, place the opposite side yourself. `smartOrder` with
-  `positionSize: 0` targets a flat position in that symbol, or read the
+  `positionSize: 0` and `quantity: 0` can request an exit in that symbol. A positive quantity with a zero target can open an order when already flat. Reconcile the actual position, or read the
   quantity with `openPosition` and send a matching `placeOrder`.
 * Never wire `closePositions` behind a per-symbol stop-loss or target
   condition. That is exactly the case where the filter looks essential and
@@ -67,9 +67,7 @@ name. Or drive it from outside: have an external scanner POST to a
 
 Flow executes forward in real time only. There is no historical replay.
 
-**Workaround.** Prototype the logic in the Python Strategy Host (`/python`)
-or with the `openalgo` SDK, which gives you pandas DataFrames and full
-backtesting libraries. Port the validated logic into Flow for execution.
+**Workaround.** Use an external Python backtesting library with data from the SDK, or an [OpenScript chart backtest](../new-features/openscript.md#backtest). The Python host and SDK do not provide their own historical backtesting engine. Port validated logic into Flow for execution.
 
 ### No pandas objects
 
@@ -344,7 +342,7 @@ interval comfortably longer than the run takes.
 
 ### Analyzer mode is global
 
-There is no per-workflow paper-trading switch. Flow inherits the global
+There is no per-workflow sandbox-mode switch. Flow inherits the global
 Analyzer toggle. Verify which mode you are in before activating a workflow.
 The badge is in the header, and order results carry `mode: "analyze"` or
 `mode: "live"`.
@@ -354,8 +352,7 @@ divergence, and the dangerous one: see the top of this page.
 
 ### `delay` is capped at 300 seconds, `waitUntil` at 30 minutes
 
-Both sleep inside the per-workflow lock and inside the HTTP request that fired
-the run, so both are bounded. They fail differently:
+Both retain the per-workflow execution slot while waiting and both are bounded. They fail differently:
 
 * **`delay` is silently clamped.** Configured for longer than 300 seconds it
   logs a warning and waits 300 seconds instead. It does not fail. A workflow
@@ -368,6 +365,10 @@ the run, so both are bounded. They fail differently:
 The reason for the caps: an unbounded wait pinned a worker for hours and
 answered `already_running` to every trigger in between. For a long wait, use a
 second workflow on its own schedule rather than a wait inside one run.
+
+**Which request waits depends on the web worker.** Eventlet and the development server run these waits on the triggering request. On opt-in gthread, configured waits totalling more than ten seconds run in a background pool; the trigger responds `status: "accepted"`, and the final result appears in execution history. Shorter waits remain on the request. Up to 16 Delay workflows or four longer Wait Until workflows can use their respective pools; when the relevant pool is full, the trigger is refused before starting and that refusal is recorded.
+
+An accepted response is not a completed run or a fill. Do not resend it merely because its result is not yet visible; inspect execution history and the actual order books.
 
 ### Graph and traversal limits
 

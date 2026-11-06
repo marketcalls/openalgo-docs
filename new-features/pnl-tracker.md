@@ -2,7 +2,7 @@
 
 ### Overview
 
-The PnL Tracker is a real-time intraday profit and loss view. It reconstructs a mark-to-market curve for the session from your tradebook and open positions, and plots it alongside a drawdown curve.
+The PnL Tracker is an intraday profit and loss view, rebuilt when the page loads or you choose Refresh. It reconstructs a mark-to-market curve for the session from your tradebook and open positions, and plots it alongside a drawdown curve.
 
 <figure><img src="../.gitbook/assets/PNL.jpeg" alt=""><figcaption></figcaption></figure>
 
@@ -16,6 +16,8 @@ Four figures are shown above the chart:
 * **Max MTM**: the highest point reached during the session, with its timestamp.
 * **Min MTM**: the lowest point reached during the session, with its timestamp.
 * **Max Drawdown**: the largest peak-to-trough decline in the curve.
+
+The percentage under Current MTM uses a fixed INR 100,000 reference; it is not calculated from your broker balance or invested capital.
 
 Currency formatting follows the connected broker, so a crypto account is not forced into rupee formatting.
 

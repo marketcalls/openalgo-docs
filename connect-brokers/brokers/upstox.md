@@ -1,5 +1,9 @@
 # Upstox
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Upstox, a leading online stock trading platform in India, offers a comprehensive suite of services for traders and investors alike. Catering to the evolving needs of the fintech ecosystem, Upstox extends a robust API interface to developers and fintech startups keen on embedding or leveraging algorithmic trading solutions. This API facilitates the automation of trading strategies, grants access to live market data, and supports a myriad of other financial services functions.
 
 {% embed url="https://www.youtube.com/watch?v=dMXAmgJ5nUg" %}

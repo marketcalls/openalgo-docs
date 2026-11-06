@@ -25,13 +25,13 @@ Buy and Sell buttons sit at the foot of the card on the chat page, on a tradable
 
 `get_history` computes its summary over every row the service returned and then returns a bounded tail of at most 200 candles, saying how many older ones it dropped. Handing a month of minute bars to a model would spend the whole context answering a question about the last few.
 
-`plot_price_chart` draws a price chart in the conversation using `openalgo-charts` 1.9.2, the same engine `/trading` renders with. The tool fetches the candles itself, so the chart cannot show a bar the platform did not return, and the series never passes through the model's context: you get the chart and the answer gets one line of summary. Both tools can read the broker (`api`) or the local Historify store (`db`).
+`plot_price_chart` draws a price chart in the conversation using `openalgo-charts` 2.6.9, the same engine `/trading` renders with. The tool fetches the candles itself, so the chart cannot show a bar the platform did not return, and the series never passes through the model's context: you get the chart and the answer gets one line of summary. Both tools can read the broker (`api`) or the local Historify store (`db`).
 
 ## Options Analytics
 
 `get_option_chain` returns a window of five strikes each side of ATM by default, up to 100, and asking for every listed strike has to be spelled out. With Greeks requested it inverts implied volatility and prices delta, gamma, theta and vega in one Black-76 pass off a forward derived from the ATM call and put by put-call parity, not off spot, because Indian index futures carry a premium and pricing a chain off the spot last trade biases every delta. `get_option_symbol`, `get_option_greeks` and `get_synthetic_future` cover single contracts and the synthetic.
 
-Four analytics charts are drawn with Plotly, the same engine behind `/strategybuilder` and the option analytics pages:
+The agent uses Plotly for the OI, gamma-exposure and volatility-surface visualizations. Combined premium uses the platform chart engine, so studies can run on its primary series:
 
 * `plot_open_interest`, call and put open interest by strike with the put-call ratio. Default 15 strikes each side, maximum 100.
 * `plot_gamma_exposure`, net gamma exposure by strike. It prices the Greeks of every listed strike around ATM, so it is slow and is worth asking for only when it is the question.
@@ -46,11 +46,11 @@ The combined premium is two different series behind one tool. Name no legs and y
 
 This is the part most worth reading twice, because two different indicator libraries are in play and their names only partly overlap.
 
-**The chart draws.** `/trading` renders indicators from `openalgo-charts` 1.9.2, a JavaScript catalogue of **102** indicators: 36 Trend, 29 Momentum, 22 Volatility, 15 Volume.
+**The chart draws.** `/trading` renders indicators from `openalgo-charts` 2.6.9, a JavaScript catalogue of **112** built-in indicators. The generated catalogue in the platform repository is the source of truth.
 
-**The agent computes.** The indicator tools calculate values with `openalgo.ta` from the pinned `openalgo` 2.0.3 SDK, a Rust-backed Python library of **127** indicators: 20 trend, 19 oscillators, 18 TA-Lib extras, 17 volume, 15 volatility, 13 utility, 9 momentum, 9 statistical, 7 hybrid.
+**The agent computes.** The indicator tools calculate values with `openalgo.ta` from the pinned `openalgo` 2.0.5 SDK, a Rust-backed Python library of **127** indicators: 20 trend, 19 oscillators, 18 TA-Lib extras, 17 volume, 15 volatility, 13 utility, 9 momentum, 9 statistical, 7 hybrid.
 
-**Only 34 ids exist in both.** AlphaTrend and HalfTrend can be drawn on the chart and never tabulated. `adxr`, `crsi` and `beta` can be tabulated and never drawn. A name missing from one list says nothing about the other, and the agent is told to consult the right catalogue before concluding an indicator is unavailable.
+**The two catalogues overlap only partly.** AlphaTrend and HalfTrend can be drawn on the chart and never tabulated. `adxr`, `crsi` and `beta` can be tabulated and never drawn. A name missing from one list says nothing about the other, and the agent is told to consult the right catalogue before concluding an indicator is unavailable.
 
 The two catalogues also name some shared ideas differently, so the overlap of ids understates the overlap of concepts. Bollinger Bands is `bbands` in the Python library and `bollinger` on the chart, and both exist. If a name is rejected, ask for the other catalogue's spelling before assuming the indicator is missing.
 

@@ -1,0 +1,17 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Your domain, one secure front door"
+Subtitle: "Nginx routes HTTPS into an OpenAlgo Docker container."
+Landscape architecture. Left external card "You and your tools" / "Browser · SDKs · TradingView" / "HTTPS 443 · WSS".
+Inside large "Ubuntu / Debian server" boundary, "Firewall" / "ufw · 22 80 443" -> "Nginx front door" / "Let's Encrypt · request rate limits".
+Left client points into Firewall.
+Inside nested "Container · openalgo-web" boundary, arrange three vertically stacked cards:
+top "Live data server" / "Separate process · WebSocket :8765";
+middle "Internal message bus" / "ZeroMQ :5555 · container only";
+bottom "OpenAlgo app" / "Flask :5000 · Gunicorn, 1 worker" / "Web app · REST API · live updates".
+Nginx has separate rightward arrows DIRECTLY into top live data server labeled "/ws" and bottom app labeled "web · /api · live updates".
+OpenAlgo app points UP into message bus labeled "cache refresh signals". Message bus points UP into live data server.
+Below container but inside server, two parallel storage cards receiving DOWN arrows from app: "Data volume · openalgo_db" / "5 SQLite databases + historify.duckdb"; "Other volumes" / "Logs · strategies · keys · tmp · .env".
+Right external "Your broker" card; app→broker arrow labeled "orders"; broker→live data server arrow labeled "live prices".
+Bottom note: "Host ports 5000 and 8765 bind only to 127.0.0.1. Internet traffic reaches OpenAlgo through Nginx."
+Preserve nesting, direct endpoint arrowheads and two separate broker directions.

@@ -191,10 +191,14 @@ When `splitsize` is greater than zero the response replaces `orderid` with the s
 | option_type | string | CE or PE |
 | underlying | string | Underlying futures symbol used for price reference |
 | underlying_ltp | number | Last traded price of underlying |
-| mode | string | "analyze" when analyzer mode is enabled; absent in live mode |
+| mode | string | "analyze" for sandbox execution, "semi_auto" when queued for approval; absent on ordinary live execution |
 | total_quantity | number | Split responses only: total quantity processed |
 | split_size | number | Split responses only: size used for splitting |
 | results | array | Split responses only: per-child `order_num`, `quantity`, `status`, `orderid` |
+
+## Approval and execution outcomes
+
+In Semi-Auto mode this request can return HTTP `200`, `status: "success"`, `mode: "semi_auto"` and `pending_order_id` after queuing for Action Center approval. It has not yet placed a broker order. In Auto/analyzer execution, inspect the placement result and confirm fills separately. See [order outcomes and retries](../README.md#order-outcomes-and-retries).
 
 ## Notes
 

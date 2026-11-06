@@ -1,0 +1,21 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Fast memory lookups, database fallback"
+Subtitle: "Thread-safe caches: one set per OpenAlgo process."
+Top wide card "Code needing an answer" / "REST services · WebSocket and market data · broker login callback" sends a single downward arrow labelled "Lookup" to a large boundary "In-memory caches · per process".
+Within memory boundary three independent columns, not a sequence:
+Left group "Symbol cache" / "database/token_db_enhanced.py" / "BrokerSymbolCache" / "100K+ symbols; about 500 bytes each" / "Daily reset at session expiry; reload after next master contract download". Subpanel "Fast indexes" / "by_symbol_exchange · by_token_exchange" / "by_brsymbol_exchange · by_token · by_exchange".
+Middle group "Login caches · database/auth_db.py" with four parallel short entries:
+"auth_cache · broker auth token" / "Until session expiry";
+"feed_token_cache · feed token" / "Until session expiry";
+"broker_cache · broker name" / "3000 s · 50 minutes";
+"order_mode_cache · order mode" / "60 s".
+Right group "API-key caches · database/auth_db.py":
+"verified_api_key_cache" / "Good keys: 36000 s · 10 hours";
+"invalid_api_key_cache" / "Bad keys: 300 s · 5 minutes".
+Bottom database boundary "db/openalgo.db · only on a cache miss", containing aligned 3 cards:
+"Master contract" / "symtoken · all symbols and tokens";
+"Broker logins" / "auth · encrypted broker tokens";
+"API keys" / "api_keys · Argon2 hashes".
+Only three arrows down: symbol group -> Master contract labelled "Miss / reload"; login group -> Broker logins labelled "Miss"; API-key group -> API keys labelled "Miss".
+Footer notes: "Up to one day: time remaining to SESSION_EXPIRY_TIME when server starts." and "Shared TTL operations are locked. Cache fills are fenced against concurrent invalidation."
+No arrows between cache groups.

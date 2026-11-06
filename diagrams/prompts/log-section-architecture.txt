@@ -1,0 +1,14 @@
+Use case: infographic-diagram. Polished landscape 3:2 OpenAlgo documentation diagram. Deep navy #0b1020 background, navy cards thin cyan/teal/violet/amber/green borders, white headings pale gray body, large crisp sans-serif, simple outline icons, generous whitespace, clear directed arrowheads. No photos, 3D, watermark, invented features.
+Title: "Order logs in the database; server logs in files"
+Use TWO clearly separate horizontal lanes.
+Top lane heading "A · Order request logs". Left to right "Order + account services" / "Live + analyze mode" -> "EventBus" / "utils/event_bus.py" -> "Log subscriber" / "log_subscriber · event.mode".
+Subscriber splits into TWO parallel rows, no arrows between rows:
+Top "order_logs" / "Live request + response" inside database boundary "openalgo.db" -> "Log API" / "log_bp · /logs" / "List · filter · export" -> "API logs page" / "/logs/live". Subscriber to order_logs arrow label "live · async_log_order".
+Bottom "analyzer_logs" / "Analyze request + response" inside same database boundary -> "Analyzer API" / "analyzer_bp · /analyzer" / "Data · stats · clear · export" -> "Analyzer logs page" / "/logs/sandbox". Subscriber to analyzer_logs arrow label "analyze · async_log_analyzer".
+Bottom lane heading "B · Application logs · no database". "Python loggers" / "get_logger(__name__)" / "utils/logging.py · shared setup" branches independently RIGHT to THREE outputs, no sequential arrows:
+"Console" / "StreamHandler · always on";
+"Daily files" / "Only LOG_TO_FILE=True" / "Daily rotation · LOG_RETENTION days" / "LOG_DIR/openalgo_<date>.log";
+"Errors file" / "Always on · ERROR and above" / "JSON lines · LOG_DIR/errors.jsonl".
+ONLY Errors file points RIGHT to "Admin diagnostics" / "/admin/diagnostics" / "/admin/api/errors" / "Recent errors".
+No arrows connecting database lane and application log lane. Large type and exact paths.
+CRITICAL DATABASE BOUNDARY: In lane A, the dashed openalgo.db rectangle must enclose ONLY the order_logs and analyzer_logs table cards. Its RIGHT BORDER must be in the gap BEFORE the Log API and Analyzer API cards. Both API cards and both page cards must be completely OUTSIDE this database boundary on its right. No UI or API lives inside a database. Preserve all other content.

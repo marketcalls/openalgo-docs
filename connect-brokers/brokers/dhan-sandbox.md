@@ -1,5 +1,9 @@
 # Dhan(Sandbox)
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 **What is Dhan SandBox API?**
 
 Dhan SandBox API is a simulated testing environment designed for developers and traders to experiment with Dhan’s trading and market data APIs without needing a live brokerage account or actual capital. It replicates the real trading environment but ensures zero risk by not executing trades on the actual exchange. It is ideal for testing integrations, validating order logic, and experimenting with strategies.

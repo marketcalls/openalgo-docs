@@ -3,14 +3,14 @@
   <div class="title">
     <div class="eyebrow">API key check</div>
     <h1>Most API key checks are answered from memory</h1>
-    <p style="max-width:1100px">Every API call carries your API key. OpenAlgo first asks two small caches whether it has seen this key recently; only an unknown key goes through the slow, secure Argon2 check against the database. The answer is then cached, so the next call is instant.</p>
+    <p style="max-width:1100px">Every API call carries your API key. OpenAlgo first asks two small caches whether it has seen this key recently; only an unknown key goes through the slow, secure Argon2 check against the database. The answer is cached for reuse; locked operations and generation checks protect concurrent changes.</p>
   </div>
 
   <div class="grid" style="grid-template-columns:0.9fr 1.02fr 1.02fr 1.12fr 1.1fr; column-gap:54px; row-gap:70px; align-items:center">
     <!-- row 1: accept lane -->
-    <div class="note" style="grid-column:1 / span 3; max-width:none; align-self:center"><span data-icon="lightbulb"></span><div>Known keys stop at step 3 or 4 with no hashing work. The expensive Argon2 check runs only for a key this process has not cached yet, and failed keys are logged so repeat offenders can be banned by IP.</div></div>
+    <div class="note" style="grid-column:1 / span 3; max-width:none; align-self:center"><span data-icon="lightbulb"></span><div>Known keys stop at step 3 or 4 without another Argon2 check. The expensive Argon2 check runs only for a key this process has not cached yet, and failed keys are logged so repeat offenders can be banned by IP.</div></div>
     <div class="node app" id="acc" style="min-width:0"><div class="ic" data-icon="circle-check"></div><div class="tx"><b>Accepted</b><span>returns your user_id, the request continues</span></div></div>
-    <div class="node service" id="addv" style="min-width:0"><div class="ic" data-icon="save"></div><div class="tx"><b>Remember as good</b><span>stores user_id in the verified cache</span></div></div>
+    <div class="node service" id="addv" style="min-width:0"><div class="ic" data-icon="save"></div><div class="tx"><b>Remember as good</b><span>stores user_id only if invalidation has not overtaken the check</span></div></div>
 
     <!-- row 2: main pipeline -->
     <div class="node client" id="req" style="min-width:0"><div class="ic" data-icon="send"></div><div class="tx"><b>1 · API request</b><span>arrives with your apikey</span></div></div>
@@ -27,7 +27,7 @@
     <div class="node security" id="rej" style="min-width:0; grid-column:3"><div class="ic" data-icon="circle-x"></div><div class="tx"><b>Rejected</b><span>returns None; the service replies 403 Invalid openalgo apikey</span></div></div>
     <div class="node security" id="track" style="min-width:0; grid-column:4"><div class="ic" data-icon="scroll-text"></div><div class="tx"><b>Log the failed try</b><span>by IP, feeds the IP ban threshold</span>
       <div class="chips"><span class="chip">InvalidAPIKeyTracker</span><span class="chip">db/logs.db</span></div></div></div>
-    <div class="node service" id="addi" style="min-width:0; grid-column:5"><div class="ic" data-icon="save"></div><div class="tx"><b>Remember as bad</b><span>stores the key fingerprint in the invalid cache</span></div></div>
+    <div class="node service" id="addi" style="min-width:0; grid-column:5"><div class="ic" data-icon="save"></div><div class="tx"><b>Remember as bad</b><span>remembers the fingerprint with synchronized cache access</span></div></div>
   </div>
   <div class="legend" style="margin-top:44px">
     <span style="--c:var(--client)"><i></i>Your request</span>

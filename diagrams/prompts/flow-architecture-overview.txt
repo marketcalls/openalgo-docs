@@ -1,0 +1,12 @@
+Use case: infographic-diagram. Polished OpenAlgo technical documentation infographic, landscape 3:2. Deep navy #0b1020 background, navy panels thin cyan/teal/violet/amber/green outlines. White headings pale gray text, large crisp sans-serif, small outline icons, generous whitespace, explicit arrowheads outside text. No photos, 3D, watermark, extra facts.
+Title: "Five ways to start a flow, one engine"
+Composition: inputs on left, five parallel triggers middle-left, shared run gate center, engine on right, data below.
+"TradingView / Chartink" / "Any HTTP caller" -> "Rate limit" / "Per caller + workflow" / "WEBHOOK_RATE_LIMIT" -> trigger "Webhook" / "POST /flow/webhook/<token>" / "Check token, enabled, active + secret".
+"Flow editor" / "React · XYFlow" -> "Workflow API" / "/flow/api/workflows" / "Web login · save, activate, run" / "Save workflows in openalgo.db". API -> trigger "Run Now" / "Manual run".
+API separately -> boundary "Armed on activation", containing THREE parallel trigger cards: "Scheduler" / "APScheduler · jobs in openalgo.db"; "Price monitor" / "Quotes every 5s"; "Order-update monitor" / "EventBus order.update". No arrows between triggers.
+All FIVE triggers (Webhook, Run Now, Scheduler, Price monitor, Order-update monitor) each have their own rightward arrow to "Run workflow" / "execute_workflow()" / "Per-workflow lock" / "One run at a time" / "Strict graph validation".
+Run workflow -> right boundary "Execution engine · flow_executor_service". Inside three grouped capabilities, not a sequence: "WorkflowContext" / "Variables + {{interpolation}}"; "NodeExecutor" / "61 node types · run nodes"; "FlowOpenAlgoClient" / "Calls OpenAlgo in-process, no HTTP".
+FlowOpenAlgoClient arrow DOWN to "OpenAlgo services" / "Orders · market data · alerts".
+Run workflow arrow DOWN to database card "openalgo.db" / "Workflows · run history + logs · scheduler jobs" / "flow_workflows" / "flow_workflow_executions" / "flow_apscheduler_jobs".
+Bottom note: "Activation arms the configured schedule, price alert or order watch. Every trigger takes the same lock: one run per workflow at a time."
+Do not connect parallel triggers or engine capabilities sequentially.

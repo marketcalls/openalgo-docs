@@ -58,11 +58,11 @@
         <div class="col" style="gap:120px; margin-left:90px">
           <div class="node data stack nm" id="ac" style="width:180px">
             <div class="ic" data-icon="inbox"></div>
-            <div class="tx"><b>Action Center</b><span>semi-auto mode: waits for your approval</span></div>
+            <div class="tx"><b>Action Center</b><span>eligible live semi-auto placement: waits for your approval</span></div>
           </div>
           <div class="node data stack nm" id="sb" style="width:180px">
             <div class="ic" data-icon="flask-conical"></div>
-            <div class="tx"><b>Sandbox</b><span>analyzer mode: simulated fill</span>
+            <div class="tx"><b>Sandbox</b><span>analyzer mode: simulated order, fills follow sandbox rules</span>
               <div class="chips"><span class="chip">sandbox.db</span></div></div>
           </div>
         </div>
@@ -75,6 +75,7 @@
     </div>
   </div>
 
+  <div class="note" style="margin-top:30px"><span data-icon="lightbulb"></span><div>Approval rechecks the current Analyzer mode. A queued acknowledgement or broker submission is not a confirmed fill.</div></div>
   <div class="legend">
     <span style="--c:var(--client)"><i></i>Your charting platform</span>
     <span style="--c:var(--security)"><i></i>Protection</span>
@@ -96,5 +97,6 @@
   connect('svc', 'ac', { color: 'service', label: 'semi-auto', from: 'right', to: 'left' })
   connect('svc', 'sb', { color: 'service', label: 'analyzer on', from: 'right', to: 'left' })
   connect('svc', 'broker', { color: 'broker', label: 'live', from: 'right', to: 'left' })
-  connect('ac', 'broker', { color: 'data', dashed: true, label: 'after you approve', from: 'right', to: 'top' })
+  connect('ac', 'broker', { color: 'data', dashed: true, label: 'approved, still live', from: 'right', to: 'top' })
+  connect('ac', 'sb', { color: 'data', dashed: true, label: 'approved, analyzer now on', from: 'bottom', to: 'top' })
 </script>

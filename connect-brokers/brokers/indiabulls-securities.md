@@ -1,5 +1,9 @@
 # IndiaBulls Securities
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 IndiaBulls Securities provides API access through the XTS (Symphony Fintech) platform, served from `https://xts.ibullssecurities.com`. OpenAlgo registers this integration as the broker `ibulls`, and its plugin talks to two XTS endpoints: the Interactive API for orders, positions and holdings, and the Market Data API for quotes, depth and historical candles.
 
 ***

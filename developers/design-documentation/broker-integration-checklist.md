@@ -2,7 +2,7 @@
 
 ## Registration
 
-`restx_api/__init__.py` creates `api_v1_bp` with prefix `/api/v1` and registers 47 namespaces, which expose 63 current method/path pairs across order, account, market-data, option, calendar, analyzer, portfolio, SIP, preference, messaging, and utility namespaces.
+`restx_api/__init__.py` creates `api_v1_bp` with prefix `/api/v1` and registers 47 namespaces, which expose 74 current method/path pairs across order, account, market-data, option, calendar, analyzer, portfolio, SIP, preference, messaging, and utility namespaces.
 
 The Flask-RESTX `Api` is configured with `doc=False`. Swagger/OpenAPI UI is intentionally disabled and there is no supported `/api/docs` route. The maintained external contract is the [API documentation](../../api-documentation/v1/README.md).
 
@@ -43,7 +43,7 @@ All are environment/configuration values; compound limits joined by semicolons a
 
 - Live mode resolves `broker.<key>` modules through the active API-key session.
 - Analyzer mode routes supported order/account operations to the sandbox engine.
-- Analyzer GTT place, modify, cancel and orderbook route to `sandbox/gtt_manager.py`. In live mode the same four services return 501 when the selected broker ships no `api/gtt_api.py`, which today means every broker except Dhan and Zerodha.
+- Analyzer GTT place, modify, cancel and orderbook route to `sandbox/gtt_manager.py`. In live mode the same four services return 501 when the selected broker ships no `api/gtt_api.py`, which today means brokers other than Angel One, Dhan, Fyers, Rupeezy, Upstox and Zerodha.
 - Semi-auto mode queues eligible execution in Action Center and blocks defined destructive operations.
 - `/pnl/symbols` is analyzer-only.
 
@@ -59,7 +59,7 @@ All are environment/configuration values; compound limits joined by semicolons a
 
 ## Response Boundaries
 
-OpenAlgo normalizes wrapper status and core fields, but broker-specific payload data is not exhaustively identical for all 37 plugins. Some endpoints intentionally return CSV, plain text, or empty webhook acknowledgements. Clients must use the endpoint contract rather than assuming every response is `{status,data}`.
+OpenAlgo normalizes wrapper status and core fields, but broker-specific payload data is not exhaustively identical for all 38 plugins. Some endpoints intentionally return CSV, plain text, or empty webhook acknowledgements. Clients must use the endpoint contract rather than assuming every response is `{status,data}`.
 
 ## Adding A Resource
 

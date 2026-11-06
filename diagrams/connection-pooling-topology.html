@@ -15,14 +15,14 @@
     </div>
 
     <div class="zone" style="--c:var(--app); padding:46px 30px 30px">
-      <div class="zl"><span data-icon="container"></span>WebSocket proxy process &middot; gunicorn / eventlet</div>
+      <div class="zl"><span data-icon="container"></span>WebSocket proxy &middot; separate production process</div>
       <div class="row" style="align-items:center; gap:50px">
         <div class="zone" style="--c:var(--broker); padding:40px 20px 20px">
-          <div class="zl" style="white-space:nowrap"><span data-icon="layers"></span>Pool per broker + user &middot; max 3 connections</div>
+          <div class="zl" style="white-space:nowrap"><span data-icon="layers"></span>Pool per broker + user &middot; default max 3 connections</div>
           <div class="col" style="gap:16px">
-            <div class="node broker" id="a1" style="width:330px"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Adapter 1</b><span>holds up to 1000 symbols</span><div class="chips"><span class="chip">MAX_SYMBOLS_PER_WEBSOCKET</span></div></div></div>
+            <div class="node broker" id="a1" style="width:330px"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Adapter 1</b><span>default capacity: 1000 symbols; broker limits apply</span><div class="chips"><span class="chip">MAX_SYMBOLS_PER_WEBSOCKET</span></div></div></div>
             <div class="node broker" id="a2" style="width:330px"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Adapter 2</b><span>opens when adapter 1 is full</span></div></div>
-            <div class="node broker" id="a3" style="width:330px"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Adapter N</b><span>last one allowed</span><div class="chips"><span class="chip">MAX_WEBSOCKET_CONNECTIONS</span><span class="chip">3 x 1000 = 3000 symbols</span></div></div></div>
+            <div class="node broker" id="a3" style="width:330px"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Adapter N</b><span>last one allowed; capacity depends on settings and broker limits</span><div class="chips"><span class="chip">MAX_WEBSOCKET_CONNECTIONS</span><span class="chip">default pool ceiling: 3000 symbols</span></div></div></div>
           </div>
         </div>
         <div class="col" style="gap:150px">
@@ -57,7 +57,7 @@
     <div style="width:120px"></div>
     <div class="node data big" id="zmq" style="width:330px">
       <div class="ic" data-icon="cable"></div>
-      <div class="tx"><b>Internal message bus</b><span>ZeroMQ, never exposed</span><div class="chips"><span class="chip">tcp://ZMQ_HOST:5555</span></div></div>
+      <div class="tx"><b>Internal message bus</b><span>ZeroMQ, keep on loopback; fixed endpoint, no port fallback</span><div class="chips"><span class="chip">tcp://127.0.0.1:5555</span></div></div>
     </div>
     <div style="width:60px"></div>
     <div class="note" style="max-width:330px"><span data-icon="lightbulb"></span><div><b>Dev server</b> (uv run app.py): the proxy runs as a thread inside the Flask process instead of its own process.</div></div>

@@ -13,15 +13,15 @@ They are not interchangeable. Socket.IO events originate from the in-process Eve
 
 ## Market-Data Topology
 
-<figure><img src="../../.gitbook/assets/diagram-websocket-zmq-topology.png" alt="ZMQ fan-in: broker adapters and the Flask SharedZmqPublisher connect to tcp 5555 where the WebSocket proxy SUB binds, then route through the subscription index to clients on port 8765"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-websocket-zmq-topology.png" alt="ZMQ fan-in: broker adapters and the Flask SharedZmqPublisher connect to tcp 5555 where the WebSocket proxy SUB binds under either production worker, then route through the subscription index to clients on port 8765"><figcaption></figcaption></figure>
 
-The SUB side binds and publisher sockets connect. This permits multiple broker/worker publishers to fan into one proxy under gunicorn/eventlet. Reversing the topology can drop ticks in multi-process deployments.
+The SUB side binds and publisher sockets connect. This permits multiple broker/worker publishers to fan into one proxy under either Gunicorn worker. Every publisher, including cache invalidation and order updates in the web process, connects to that fixed endpoint. Publishers must not bind or scan for another port: a bind race can acknowledge subscriptions while dropping ticks in production.
 
 ## Proxy Lifecycle
 
 `websocket_proxy/app_integration.py` chooses the execution model:
 
-- Under eventlet/gunicorn, start the asyncio WebSocket proxy as a child process.
+- Under Gunicorn with eventlet or gthread, start the asyncio WebSocket proxy as a child process.
 - Under direct development startup, run it in a real OS thread.
 - Docker or standalone-proxy modes can suppress embedded startup.
 

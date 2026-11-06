@@ -1,0 +1,15 @@
+Use case: infographic-diagram. Polished OpenAlgo documentation image landscape 3:2, deep navy #0b1020, navy cards thin cyan/teal/violet/amber/green borders, white headings pale gray body, large sans-serif, simple outline icons, generous space, clear arrowheads. No3D/photo/watermark/extra facts.
+Title: "One click to a portfolio report"
+Left numbered vertical path:
+1 "Open portfolio tool" / "Backtester · SIP Backtester · Portfolio Analyzer" / "src/api/portfolio.ts"
+down to2 "Portfolio API" / "/api/v1/portfolio/*" / "benchmarks · backtest · tearsheet · holdings"
+down to3 "Request checks" / "Schema · API key · rate limit" / "Broker session only for broker prices or holdings"
+down to4 "Portfolio service" / "portfolio_service.py" / "Coordinate the job".
+Service branches RIGHT to three independent capabilities:
+A boundary "portfolio/ package" containing three grouped cards with NO sequential arrows: "Price loader" / "data.py · daily prices" / "16-entry LRU"; "Portfolio engine" / "engine.py · rebalance.py · costs.py" / "Allocation · rebalancing · turnover · costs"; "Analysis modules" / "Attribution · stress tests · health · insights · holdings breakdown" / "analytics · grouping · walkforward · compare · crisis".
+B "Statistics + tearsheet" / "openstatz" / "Performance stats + HTML tearsheet"
+C "Live holdings" / "holdings_service" / "Current broker holdings for Analyzer".
+Right group "Price sources" has TWO parallel cards: "Historify store" / "source=db · local DuckDB" / "No broker calls"; "History service" / "source=api · history_service" / "One broker call per symbol". Group has LEFT-pointing arrow into Price loader labeled "prices".
+Bottom-right outside sources group "Your broker" / "History + holdings APIs". History service points DOWN to broker. Live holdings points RIGHT to broker. Do not connect Historify directly to broker.
+All boundaries accurate; broker session conditional clearly visible.
+CRITICAL EDGE: Portfolio service MUST have THREE distinct outgoing arrows: to the portfolio/ package boundary (route upward along package LEFT side, enter its left border with RIGHT-pointing arrowhead), to Statistics + tearsheet, and to Live holdings. The package MUST visibly be called by Portfolio service. Leave 80px gap between first and second columns for this upward routed arrow. Do not omit the package connection.

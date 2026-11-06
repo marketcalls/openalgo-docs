@@ -17,13 +17,15 @@ one trader on one computer.
 ## What you get
 
 OpenAlgo Desktop has the same screens, the same API and the same market data
-feed as OpenAlgo web, and connects to the same 37 brokers, Delta Exchange for
+feed as OpenAlgo web, and connects to the same 38 broker plugins, Delta Exchange for
 crypto among them.
 
 * The dashboard, order book, trade book, positions and holdings
 * The `/trading` charting terminal with OpenScript and custom indicators
 * The scalping terminal, with stop-loss, target and trailing protection
 * The strategy module and its risk management (RMS) engine
+* Flow workflows, including schedules, price alerts, order updates and webhooks (from 1.0.5)
+* The Agent and the Assistant panel beside the chart, with approval before order tools run
 * The options tools: option chain, Greeks, OI tracker, max pain, straddle and IV charts, GEX, strategy builder and more
 * Sandbox mode (analyzer mode), with 1 crore of simulated capital and real market prices
 * TradingView, GoCharting, Amibroker and Chartink alerts, and Action Center for semi-automatic orders
@@ -65,26 +67,28 @@ print(client.funds())
 | --- | --- | --- |
 | Install | One installer, nothing else | Python, `uv`, a `.env` file, optionally a server and a domain |
 | Where it runs | Your Windows, Mac or Linux computer, with its window open | Your computer, a VPS or a Raspberry Pi, as a server |
-| Settings and credentials | Entered in the app, stored encrypted | `.env` file plus the app |
+| Settings and credentials | Entered in the app, stored encrypted | Broker keys can be saved in the app; `.env` holds installation settings and optional legacy broker keys |
 | Users | One trader per installation | One trader per installation |
-| Brokers | Many saved, one logged in at a time | One per installation |
+| Brokers | Many saved, one logged in at a time | Many saved, one logged in at a time |
 | Runs when the computer sleeps or the app is closed | No | Yes, on a server that stays on |
-| Python Strategy Hosting, Flow, the Agent, pandas backtesters | Not included | Included |
+| Flow and Agent | Included; Flow from 1.0.5 | Included |
+| Python Strategy Hosting and pandas backtesters | Not included | Included |
 | Raspberry Pi, headless servers, Docker | Not supported | Supported |
 
 Choose OpenAlgo Desktop if you trade from your own computer during market
 hours and want the simplest setup. Choose OpenAlgo web if you need automation
-to run around the clock on a server, or need the Python Strategy Host, Flow or
-the Agent.
+to run around the clock on a server, or need the Python Strategy Host or portfolio/SIP backtesters.
 
 ## What is not included
 
 * Python Strategy Hosting (`/python`). Your Python strategies still work: run them yourself with the OpenAlgo Python SDK against the desktop's API.
-* Flow, the visual strategy builder (`/flow`)
-* The Agent (`/agent`) and the Assistant panel in the trading terminal. AI clients connect through the MCP server instead.
 * The pandas-based Portfolio Backtester, SIP Backtester and Portfolio Analyzer
 
 The app has no pages or menu entries for them.
+
+See [Flow and the Agent](flow-and-agent.md) for the native desktop features and
+workflow migration. These updates are documented against the
+[Desktop 1.0.5 release](https://github.com/marketcalls/openalgo-desktop/releases/tag/v1.0.5).
 
 ## Things to know before you start
 
@@ -104,5 +108,6 @@ The app has no pages or menu entries for them.
 * [Webhooks and the Built-in ngrok Tunnel](webhooks-and-ngrok-tunnel.md)
 * [Data, Security and Backups](data-security-and-backups.md)
 * [Updating and Uninstalling](updating-and-uninstalling.md)
+* [Flow and the Agent](flow-and-agent.md)
 * [Technology Stack](technology-stack.md)
 * [Troubleshooting and FAQ](troubleshooting-and-faq.md)

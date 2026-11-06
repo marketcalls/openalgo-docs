@@ -1,5 +1,9 @@
 # IIFL (XTS)
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 IIFL Securities provides API access through the XTS (Symphony Fintech) platform, served from `https://ttblaze.iifl.com`. OpenAlgo's `iifl` plugin talks to two XTS endpoints: the Interactive API for orders, positions and holdings, and the Market Data API for quotes, depth and historical candles.
 
 {% hint style="info" %}

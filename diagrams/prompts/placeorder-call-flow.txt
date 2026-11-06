@@ -1,0 +1,20 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "The gates before an order reaches your broker"
+Subtitle: "POST /api/v1/placeorder follows one shared order path."
+Readable landscape with 10 cards. Use grouped validation details and concise labeled forks.
+Left sequence "1 · Your app" / "Strategy · script · platform" / "POST /api/v1/placeorder"
+→ "2 · API front door" / "Banned IP: 403 · SecurityMiddleware" / "10 orders/sec: 429" / "OrderSchema missing/invalid fields: 400"
+→ "3 · Auto or semi-auto?" / "should_route_to_pending".
+Semi-auto branch UP into terminal card "Pending approval" / "queue_order · pending_order_id" / "Immediate reply; nothing sent to broker".
+Auto branch DOWN/right into "4 · Order checks + session" / "validate_order_data: symbol, quantity, price type" / "Bad order: 400 + OrderFailedEvent" / "get_auth_token_broker · auth_db" / "No broker session: 403".
+Then arrow to "5 · Analyzer mode on?" / "get_analyze_mode()".
+Decision splits rightward to two cards:
+upper "Live broker plugin" / "import_broker_module; missing: 404" / "transform_data + get_br_symbol" / "place_order_api · httpx POST" / "200: OrderPlacedEvent live" / "Error: OrderFailedEvent, broker status or 500"
+lower "Sandbox order" / "sandbox_place_order · virtual funds" / "OrderPlacedEvent analyze" / "Analyze-mode 400: AnalyzerErrorEvent".
+At bottom two separate summary cards, no invented sequence arrows:
+"Reply + latency" / "JSON result and status code" / "track_latency('PLACE') · order_latency" / "latency.db, off-thread"
+"Event bus" / "Placed and failed: logs, Socket.IO UI, Telegram, WhatsApp" / "Placed only: strategy book".
+Bottom note: "Pending approval is not broker submission. Live placement is not a confirmed fill."
+Clearly show semi-auto terminal pending branch separate from auto→checks→Analyzer→live/sandbox.
+Critical branch labels: On arrow from Analyzer decision to Live broker plugin print "OFF · live". On arrow from Analyzer decision to Sandbox order print "ON · Analyzer". Leave a wide gap for these two labels; move destinations farther right. These labels are required and cannot be omitted. All existing content and other arrow directions remain.

@@ -1,11 +1,11 @@
-# Migrating to gthread (Experimental)
+# The gthread Web Server (Optional)
 
 OpenAlgo runs inside a web server called Gunicorn, and Gunicorn can run it in two ways. **eventlet** is the default and stays the default. **gthread** is opt-in: you choose it per installation, and nothing changes on your server until you do.
 
 This page explains what gthread is, who should try it, how to switch on Ubuntu and on Docker, how to check that it works, and how to switch back.
 
 {% hint style="warning" %}
-**gthread is experimental.**
+**gthread is opt-in.**
 
 It is part of `main` since 30 September 2026 ([pull request #2117](https://github.com/marketcalls/openalgo/pull/2117)), and off unless you turn it on. A normal update leaves you on eventlet with no change in behaviour. Only follow this page if you are willing to test it and report what you find.
 {% endhint %}
@@ -24,11 +24,28 @@ Both run the same OpenAlgo. Orders, strategies, Flow, the charting and scalping 
 ### Current status
 
 * **In `main`, off by default.** An update brings the code; nothing changes until you switch.
-* **Automated checks pass on every change**: tests on several Python versions, the web server starting on both eventlet and gthread, container builds for AMD64 and ARM64, and the frontend tests.
+* **CI is configured to check changes**: tests on several Python versions, startup under eventlet/gthread, container builds for AMD64/ARM64 and frontend tests. These checks do not certify every broker or promise unattended uptime.
 * **Verified on a live instance with Upstox**: a full trading day on 29 September 2026 with no errors after login, the overnight login expiry and recovery after the next login, read-only broker calls passing under parallel load, and restarts completing in about 10 seconds.
 * **Still wanted**: other brokers, more trading days, and Docker and multi-instance installations running a full day.
 
 ***
+
+### Installing and choosing a platform
+
+gthread is built into Gunicorn; keep the project's pinned dependencies, including eventlet for rollback. Use a checkout/image containing the launcher and switch script. A setting alone cannot add them to an older image.
+
+| Installation | How to select it |
+|---|---|
+| Fresh Ubuntu/single-instance installer | Finish the normal eventlet install, then run the switch commands below; there is no worker question |
+| Fresh numbered multi-instance install | Finish installation, then switch the intended service or use `--all` |
+| Docker Compose | Set `OPENALGO_WORKER_CLASS='gthread'`, set `stop_grace_period: 45s`, rebuild/recreate |
+| Multi-instance Docker with custom SSL | Choose the worker at its per-instance prompt |
+| Docker runners | Set the variable in the mounted `.env` and restart using a current image; runners allow 45 seconds to stop |
+| `uv run app.py` on any OS | Development server; ignores this setting |
+
+Windows needs Docker or Linux under WSL2 for this Gunicorn path. macOS can use Docker. On Raspberry Pi, use 64-bit Linux and ARM64 packages; automated ARM64 checks do not establish a particular Pi's memory/thermal limits or a full trading day.
+
+Keep the host awake and network-connected, use service/container restart supervision, and rehearse a trading day, broker rollover and rollback on the actual deployment before relying on it live.
 
 ### Who should try it now
 

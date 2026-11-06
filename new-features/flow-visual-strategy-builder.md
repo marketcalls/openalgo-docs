@@ -1,6 +1,6 @@
 # Flow - Visual Strategy Builder
 
-Flow is OpenAlgo's visual workflow editor and synchronous execution engine. A workflow is a directed graph with exactly one trigger and a reachable chain of data, condition, trading, streaming, and notification nodes.
+Flow is OpenAlgo's visual workflow editor and execution engine with sequential node traversal. A workflow is a directed graph with exactly one trigger and a reachable chain of data, condition, trading, streaming, and notification nodes.
 
 ## Current Capabilities
 
@@ -19,13 +19,13 @@ Flow does not provide loops, foreach/switch nodes, cross-run variables, automati
 ## Build a Workflow
 
 1. Open `/flow` and create a workflow.
-2. Drag one trigger onto the canvas.
+2. Drag one trigger onto the canvas, or use its palette button to add it.
 3. Add downstream nodes and connect them in execution order.
 4. Configure each node. Give a producer an `outputVariable` when a later node needs its result.
 5. Branch from conditions using the `true`/`false` or `yes`/`no` handles.
 6. Save while editing. Incomplete graphs may be saved, but corrupt node types, duplicate IDs, and dangling edges are rejected.
-7. Use **Run Now** to validate and test a complete graph.
-8. Activate the workflow when its trigger should remain registered.
+7. Verify **Analyze** mode, then use **Run Now** to execute the complete graph. Run Now can place live orders when Live is selected; it is not a separate simulation mode.
+8. Activate the workflow when its trigger should remain registered. Run Now and Activate save dirty edits before acting on the stored graph; a save failure prevents the action.
 
 <figure><img src="../.gitbook/assets/openalgo-ui-flow.png" alt="Flow workflow list page"><figcaption></figcaption></figure>
 
@@ -90,4 +90,7 @@ See [Flow Editor](../flow-editor/README.md) for the execution model, complete no
 * Schedule jobs use `coalesce=true`, `max_instances=1`, and a 60-second misfire grace.
 * Active price and order-update watches are removed on deactivation/deletion and restored after restart when persisted configuration permits it.
 * Order nodes use the same service layer and Analyzer/semi-auto routing rules as the REST API.
-* Delay nodes and external broker/HTTP calls keep execution synchronous; avoid long waits across many active workflows. A `delay` node is capped at 300 seconds, while `waitUntil` is uncapped and holds the workflow lock for its full duration.
+* A `delay` is capped at 300 seconds and `waitUntil` at 1800 seconds. On eventlet these hold the triggering request while the run waits. On opt-in gthread, runs with more than ten seconds of configured waits use bounded background pools; an accepted response means to read execution history for the eventual result. See [wait behavior](../flow-editor/limitations.md#delay-is-capped-at-300-seconds-waituntil-at-30-minutes).
+
+
+Do not retry an order after an unclear response without reconciling broker orders, trades and positions. A successful run can contain an accepted or queued placement that has not filled. Deactivating a workflow does not cancel broker orders or close positions already created.

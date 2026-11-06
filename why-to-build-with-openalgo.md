@@ -25,11 +25,11 @@ It's not just an API wrapper. OpenAlgo is **the open source trading ecosystem fo
 
 | | |
 | --- | --- |
-| **37 broker plugins** | 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin |
+| **38 broker plugins** | 36 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin |
 | **8 official SDKs** | Python, Node.js, Java, .NET, Go, Rust, R, MATLAB |
 | **61 node types** | In the Flow visual strategy builder |
-| **90+ indicators** | In the built-in charting terminal |
-| **18 options tools** | Chain, Greeks, OI, max pain, vol surface, GEX and more |
+| **112 built-in chart indicators** | In the built-in charting terminal |
+| **20 options and portfolio tools** | Chain, Greeks, OI, max pain, vol surface, GEX and more |
 | **100% open source** | AGPL-3.0, self-hosted, zero data collection |
 
 ***
@@ -40,7 +40,7 @@ Earlier versions of OpenAlgo were mostly a bridge between your strategy and your
 
 #### Chart Trading Terminal
 
-Fire and manage orders from the chart itself, on streaming broker WebSocket data, with **90+ indicators** available on real market data.
+Fire and manage orders from the chart itself, on streaming broker WebSocket data, with **112 built-in chart indicators** available on real market data.
 
 See [Chart Trading Terminal](new-features/trading-terminal.md).
 
@@ -77,7 +77,7 @@ See [Action Center](new-features/action-center.md).
 
 #### Strategy Management and Hosting
 
-Host your **Python strategies directly inside OpenAlgo**, alongside strategies from TradingView, Amibroker, ChartInk, MetaTrader, Excel, or custom webhooks. Start, pause, schedule, monitor, and analyze, all from a central control plane.
+Host your **Python strategies directly inside OpenAlgo**, alongside strategies from TradingView, Amibroker, ChartInk, MetaTrader, Excel, or custom webhooks. Start, stop, schedule, monitor, and analyze from a central control plane.
 
 | Capability | Description |
 | --- | --- |
@@ -118,9 +118,9 @@ See [Historify](new-features/historify.md) and [Portfolio Backtester and Analyze
 
 #### Multi-Broker, Multi-Platform
 
-OpenAlgo ships **37 broker plugins**: 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. The securities plugins share normalized API and WebSocket interfaces, reducing broker-specific strategy code.
+OpenAlgo ships **38 broker plugins**: 36 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. The securities plugins share normalized API and WebSocket interfaces, reducing broker-specific strategy code.
 
-<figure><img src=".gitbook/assets/diagram-why-openalgo-broker-abstraction.png" alt="Strategy code calls the OpenAlgo REST API and WebSocket proxy; REST orders and built-in Flow go through the services layer, the WebSocket proxy loads streaming adapters directly and streams live prices from the broker back to your code, and the 37 broker plugins call the broker APIs"><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/diagram-why-openalgo-broker-abstraction.png" alt="Strategy code calls the OpenAlgo REST API and WebSocket proxy; REST orders and built-in Flow go through the services layer, the WebSocket proxy loads streaming adapters directly and streams live prices from the broker back to your code, and the 38 broker plugins call the broker APIs"><figcaption></figcaption></figure>
 
 See the full list under [Brokers](connect-brokers/brokers/README.md) and [Delta Exchange](crypto/exchanges/delta-exchange.md).
 
@@ -251,8 +251,8 @@ With direct broker APIs, you'd have to build:
 | **Strategy Hosting** | Process management, scheduling | Built-in with Python hosting |
 | **Visual Strategy Building** | Node editor, execution engine | Flow with 61 node types |
 | **Testing Environment** | Sandbox, mock broker | Analyzer Mode with 1 crore capital |
-| **Charting** | Charting library, indicator maths | Built-in terminal with 90+ indicators |
-| **Options Analytics** | Chain, Greeks, payoff, OI, vol surface | 18 options tools included |
+| **Charting** | Charting library, indicator maths | Built-in terminal with 112 built-in chart indicators |
+| **Options Analytics** | Chain, Greeks, payoff, OI, vol surface | 20 options and portfolio tools included |
 | **Scalping Interface** | Hotkey handling, fast order path | Keyboard scalping terminal |
 | **Symbol Management** | Expiry handling, contract mapping | Unified symbol format |
 | **Historical Data** | Download, store, query | Historify with DuckDB |
@@ -260,7 +260,7 @@ With direct broker APIs, you'd have to build:
 | **Trade Dashboard** | React UI, real-time updates | Full React frontend included |
 | **Log Storage** | Database, query interface | SQLite with traffic logs |
 | **Latency Tracking** | Timing, metrics, alerts | Latency monitor built-in |
-| **Multi-Broker Support** | N broker integrations | 36 plugin directories |
+| **Multi-Broker Support** | N broker integrations | 38 plugin directories |
 | **Security Layer** | Auth, rate limiting, CSRF | Enterprise security included |
 | **Notifications** | Telegram, WhatsApp, alerts | Both integrated |
 
@@ -290,8 +290,8 @@ Licensed under **AGPL-3.0**, OpenAlgo gives you:
 | **Setup Time** | Weeks of development | Hours to deploy |
 | **Broker Switching** | Rewrite everything | Change one config |
 | **Testing** | Build your own sandbox | Analyzer Mode ready |
-| **Charting** | Buy or build | Built in with 90+ indicators |
-| **Options Desk** | Build from scratch | 18 tools included |
+| **Charting** | Buy or build | Built in with 112 built-in chart indicators |
+| **Options Desk** | Build from scratch | 20 tools included |
 | **Monitoring** | Build dashboards | Full UI included |
 | **Security** | Implement yourself | Production-ready |
 | **Maintenance** | You maintain everything | Community maintained |

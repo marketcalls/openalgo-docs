@@ -1,18 +1,24 @@
 # OpenAlgo docs infographic kit - authoring guide
 
+This kit authors the HTML factual blueprints and renders reference previews.
+Published PNGs use the AI-generated workflow in `diagrams/README.md`; their
+layout can differ from these previews while preserving the same facts and edges.
+
 Audience: about 90% traders, 10% developers. Every image must be understandable
 by a trader who has never read code, while keeping the technical facts correct
 for developers (as small secondary text or chips).
 
-Reference pilot (open both before starting):
-- source:  diagrams/_tools/pilot-market-data.html
-- output:  diagrams/_tools/pilot-market-data-v2.png
+Reference pilot (read both before starting):
+- source:  diagrams/architecture-market-data-fanout.html
+- accepted prompt: diagrams/prompts/architecture-market-data-fanout.txt
+- published image: .gitbook/assets/diagram-architecture-market-data-fanout.png
 
 Render:
     cd diagrams/_tools
-    node render-html.mjs <input.html> <output.png>
+    node render.mjs <input.html> /tmp/openalgo-reference-<slug>.png
 It prints `ok <file> WxH` (plus `WARN overflow: ...` if any text is clipped - fix it) or `RENDER error ...`.
-Always open the PNG with the Read tool and look at it before you are done.
+Always open the preview PNG and inspect it. Keep it separate from the published
+AI-generated image.
 
 ## File contents
 Only the markup: one `<div id="canvas" style="width:1680px">...</div>` followed by an

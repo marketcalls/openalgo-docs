@@ -12,7 +12,7 @@ Before creating a fork, check whether your customization needs changes to OpenAl
 
 | What you want to keep | Recommended approach |
 | --- | --- |
-| Broker credentials, domain, ports, and other instance settings | Keep them in the installation's `.env` and back them up separately. |
+| Broker credentials, domain, ports, and other instance settings | Save broker keys in [Broker Configuration](../connect-brokers/broker-configuration.md), or keep an existing `.env` setup. Back up databases with their matching `.env`; domain/port settings remain there. |
 | Your own Python strategy or an external application using the OpenAlgo API | Maintain the strategy or application in a separate repository where possible. |
 | Custom chart indicators loaded by `/trading` | Use the supported custom indicator files under `strategies/indicators/`; back up your own files separately. |
 | Changes to OpenAlgo pages, backend behavior, or broker integrations | Use a fork and a custom branch as described below. |

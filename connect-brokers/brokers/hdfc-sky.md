@@ -1,5 +1,9 @@
 # HDFC Sky
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 HDFC Sky (hdfcsky.com (https://www.hdfcsky.com/)) is the discount broking and investment platform from HDFC Securities, offering equity, F\&O, currency and commodity trading with a flat-fee brokerage model. Its Open API (developer.hdfcsky.com (https://developer.hdfcsky.com/)) exposes REST and WebSocket endpoints for order placement, portfolio and funds management, and market data. Regulated by NSE, BSE and MCX, this API, used in the context of OpenAlgo integration, enables automated trading strategies, real-time market data access, order management, and more.
 
 The integration process involves logging in to the HDFC Sky Open API developer portal, creating a Trading API app, capturing the generated API Key and API Secret, and configuring them in OpenAlgo's environmental variables.

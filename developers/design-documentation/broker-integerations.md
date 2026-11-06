@@ -10,6 +10,8 @@ OpenAlgo implements a multi-layer caching system to achieve high performance wit
 
 ## Cache Types
 
+Shared TTL caches use `utils.thread_safe_cache.LockedTTLCache`. Reads can expire entries and mutate the cache, so they need the same synchronization as writes. Use generation-fenced `get_or_load()`/`invalidate()` when a cache fill can overlap a committed change; locking individual operations is not enough for a check-then-write sequence. This applies under eventlet, gthread and development threading.
+
 ### 1. Symbol Cache (BrokerSymbolCache)
 
 High-performance in-memory cache for 100,000+ trading symbols.
@@ -107,16 +109,16 @@ def get_token(self, symbol: str, exchange: str) -> Optional[str]:
 **Location:** `database/auth_db.py`
 
 ```python
-from cachetools import TTLCache
+from utils.thread_safe_cache import LockedTTLCache
 
 # Auth token cache - TTL based on session expiry
-auth_cache = TTLCache(maxsize=1024, ttl=get_session_based_cache_ttl())
+auth_cache = LockedTTLCache(maxsize=1024, ttl=get_session_based_cache_ttl())
 
 # Feed token cache - same TTL as auth
-feed_token_cache = TTLCache(maxsize=1024, ttl=get_session_based_cache_ttl())
+feed_token_cache = LockedTTLCache(maxsize=1024, ttl=get_session_based_cache_ttl())
 
 # Broker name cache - 50 minute TTL
-broker_cache = TTLCache(maxsize=1024, ttl=3000)
+broker_cache = LockedTTLCache(maxsize=1024, ttl=3000)
 ```
 
 **Session-Based TTL Calculation:**
@@ -146,11 +148,11 @@ def get_session_based_cache_ttl():
 ```python
 # Valid API keys - long TTL (10 hours)
 # Only stores user_id, not the key itself
-verified_api_key_cache = TTLCache(maxsize=1024, ttl=36000)
+verified_api_key_cache = LockedTTLCache(maxsize=1024, ttl=36000)
 
 # Invalid API keys - short TTL (5 minutes)
 # Prevents repeated expensive Argon2 verification
-invalid_api_key_cache = TTLCache(maxsize=512, ttl=300)
+invalid_api_key_cache = LockedTTLCache(maxsize=512, ttl=300)
 
 def verify_api_key(api_key: str) -> Optional[str]:
     """Verify API key with 3-level caching"""

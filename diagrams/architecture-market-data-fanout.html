@@ -3,7 +3,7 @@
   <div class="title">
     <div class="eyebrow">Live market data</div>
     <h1>One broker feed, shared by every screen and strategy</h1>
-    <p style="max-width:1080px">Ten strategies watching NIFTY do not open ten broker connections. OpenAlgo receives each tick once and hands it to every tool and feature that subscribed to it.</p>
+    <p style="max-width:1080px">Broker connections are pooled and shared by subscribed screens and strategies. Broker limits and client backpressure still apply; the feed is not a durable replay log.</p>
   </div>
 
   <div class="row" style="align-items:flex-start; gap:50px">
@@ -19,17 +19,17 @@
           <div class="node service stack" id="adapter" style="width:200px">
             <div class="ic" data-icon="plug-zap"></div>
             <div class="tx"><b>Broker adapter</b><span>turns broker ticks into OpenAlgo symbols; adds connections when you watch many symbols</span>
-              <div class="chips"><span class="chip">broker/*/streaming</span><span class="chip">max 3 connections</span></div></div>
+              <div class="chips"><span class="chip">broker/*/streaming</span><span class="chip">default max 3</span></div></div>
           </div>
           <div class="node data stack" id="zmq" style="width:200px">
             <div class="ic" data-icon="cable"></div>
-            <div class="tx"><b>Internal message bus</b><span>never exposed outside</span>
+            <div class="tx"><b>Internal message bus</b><span>fixed loopback endpoint; publishers connect</span>
               <div class="chips"><span class="chip">ZeroMQ</span><span class="chip">port 5555</span></div></div>
           </div>
           <div class="node app stack" id="hub" style="width:220px; position:relative">
             <i id="h1" style="position:absolute; left:100%; top:20%"></i><i id="h2" style="position:absolute; left:100%; top:40%"></i><i id="h3" style="position:absolute; left:100%; top:60%"></i><i id="h4" style="position:absolute; left:100%; top:80%"></i>
             <div class="ic" data-icon="radio"></div>
-            <div class="tx"><b>Sign-in and broadcast</b><span>checks your API key, sends each client the symbols it asked for</span>
+            <div class="tx"><b>Sign-in and routing</b><span>SUB binds the bus; checks your API key and routes subscribed symbols</span>
               <div class="chips"><span class="chip">port 8765</span><span class="chip">LTP · Quote · Depth</span></div></div>
           </div>
         </div>

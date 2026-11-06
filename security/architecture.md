@@ -18,7 +18,9 @@ The application session and the installation-wide active broker session are dist
 
 OpenAlgo generates one current 64-character hexadecimal API key per user. The database stores an Argon2 hash for verification and an encrypted copy for authenticated retrieval. Regenerating the key invalidates the previous value immediately.
 
-Broker authentication and feed tokens are encrypted before database storage. Broker API credentials configured in `.env` are not an encrypted database secret; protect the file with host permissions and exclude it from source control and support bundles.
+Broker authentication/feed tokens and broker keys saved through **Broker Configuration** are encrypted before database storage. A configured `.env` broker still takes precedence for its own keys, and those file values are not database-encrypted secrets; protect `.env` with host permissions and exclude it from source control and support bundles. Back up the original installation secrets with the database.
+
+Broker login begins with a CSRF-protected server request and a single-use pending login. The return must match that started login, using the browser marker or broker-returned state as required. A failed new login leaves the existing broker session in place; a completed switch ends the old broker session. See [Broker Configuration](../connect-brokers/broker-configuration.md).
 
 Most `/api/v1` routes require `apikey` in the JSON body. The REST namespace is exempt from browser CSRF because it uses API-key authentication, while session-authenticated state-changing routes retain CSRF protection unless explicitly exempted for a documented callback or webhook.
 

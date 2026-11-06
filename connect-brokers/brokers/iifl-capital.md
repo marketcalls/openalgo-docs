@@ -1,5 +1,9 @@
 # IIFL Capital
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 OpenAlgo connects to IIFL Capital through their Markets' APIs developer portal. You'll need
 \
 an active IIFL Capital trading account and a static public IP before you start, since IIFL whitelists the IP that's allowed to call your app.

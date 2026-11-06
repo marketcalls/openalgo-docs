@@ -1,5 +1,9 @@
 # Sahi
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Sahi is an Indian online stock trading platform. Its Direct API lets you place and manage orders, read your positions, holdings and funds, and stream live market data, which makes it a good fit for algorithmic trading through OpenAlgo.
 
 Sahi signs you in with an API key and secret, not an OAuth login. There is no redirect URL to register with Sahi, no TOTP and nothing to type when you log in: OpenAlgo exchanges your saved key and secret for the day's access token.

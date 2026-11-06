@@ -1,5 +1,9 @@
 # JainamXTS
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 ### **Jainam XTS Broker Integration**
 
 OpenAlgo makes algorithmic trading accessible and straightforward by providing seamless integration with various brokers, including JainamXTS API. This documentation will guide you through the process of configuring your jainamxts account to work with OpenAlgo

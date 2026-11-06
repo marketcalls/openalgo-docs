@@ -16,6 +16,7 @@
     * [Agent by Example](new-features/agent/examples.md)
   * [Portfolio Backtester and Analyzer](new-features/portfolio-analytics.md)
   * [Chart Trading Terminal](new-features/trading-terminal.md)
+  * [OpenScript Studies and Strategies](new-features/openscript.md)
   * [Scalping Terminal](new-features/fast-scalper.md)
   * [Python Strategy Hosting](new-features/python-strategy-hosting.md)
   * [Flow - Visual Strategy Builder](new-features/flow-visual-strategy-builder.md)
@@ -43,11 +44,13 @@
   * [Webhooks and the Built-in ngrok Tunnel](openalgo-desktop/webhooks-and-ngrok-tunnel.md)
   * [Data, Security and Backups](openalgo-desktop/data-security-and-backups.md)
   * [Updating and Uninstalling](openalgo-desktop/updating-and-uninstalling.md)
+  * [Flow and the Agent](openalgo-desktop/flow-and-agent.md)
   * [Technology Stack](openalgo-desktop/technology-stack.md)
   * [Troubleshooting and FAQ](openalgo-desktop/troubleshooting-and-faq.md)
 
 ## Connect Brokers
 
+* [Broker Configuration and Switching](connect-brokers/broker-configuration.md)
 * [Brokers](connect-brokers/brokers/README.md)
   * [5Paisa](connect-brokers/brokers/5paisa.md)
   * [5paisa (XTS)](connect-brokers/brokers/5paisa-xts.md)
@@ -131,7 +134,7 @@
   * [Forgot Password](getting-started/forgot-password.md)
   * [Upgrade](getting-started/upgrade.md)
   * [Maintaining a Custom Repository](getting-started/maintaining-a-custom-repository.md)
-  * [Migrating to gthread (Experimental)](getting-started/gthread-migration.md)
+  * [The gthread Web Server (Optional)](getting-started/gthread-migration.md)
   * [GrokBot](installation-guidelines/getting-started/grokbot.md)
 * [Static IP](static-ip.md)
 * [Latency](latency.md)
@@ -192,6 +195,7 @@
     * [WhatsApp](api-documentation/v1/utilities-api/whatsapp.md)
     * [SIP Backtest](api-documentation/v1/utilities-api/sip-backtest.md)
   * [Portfolio API](api-documentation/v1/portfolio.md)
+  * [Sector Rotation API](api-documentation/v1/sectorrotation.md)
   * [Strategy RMS API](api-documentation/v1/strategy-rms-api/README.md)
     * [List Strategies](api-documentation/v1/strategy-rms-api/list.md)
     * [Strategy Status](api-documentation/v1/strategy-rms-api/status.md)

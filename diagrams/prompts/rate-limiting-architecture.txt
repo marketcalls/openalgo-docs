@@ -1,0 +1,22 @@
+Use case: infographic-diagram. OpenAlgo technical documentation landscape 3:2. Deep navy #0b1020, navy panels thin cyan/teal/violet/amber/green outlines, white headings pale gray body, large crisp sans-serif, outline icons, generous space, exact arrows. No3D/photos/watermark/invented facts.
+Title: "Protected routes count requests and stop floods"
+Subtitle: "Flask-Limiter counts only decorated routes, per caller over a moving window."
+Main row left to right:
+"Request arrives" / "Web · API · webhook · MCP" -> decision "Route has a limit?" / "@limiter.limit · shared_limit"
+YES -> "Identify caller" / "get_remote_address" / "Caller IP; Flow / strategy webhooks and MCP add per-token limits"
+-> decision "Under the limit?" / "strategy = moving-window"
+UNDER -> "Run handler" / "Normal page or API response".
+First decision NO arrow goes above main row to "Skip Flask-Limiter" / "No default_limits" / "Other capacity limits may still apply", then arrow to Run handler.
+Second decision OVER arrow down-right to "429 Too many requests" / "Rejected before handler" / "JSON, retry timing and browser redirect depend on route" / "Retry-After / retry_after when supplied".
+Below second decision "Hit counter" / "memory://" / "Timestamps per key in each worker process"; bidirectional arrow between decision and counter labeled "count + record".
+Below first decision a broad configuration panel "Per-route .env settings", a compact readable six-row table:
+"Login | 5/min + 25/hour"
+"Password reset | 15/hour"
+"API_RATE_LIMIT | sample .env: 100/sec"
+"API code fallback | 10/sec; 50/sec for orders, sandbox, admin, margin"
+"Orders + smart orders | 10/sec"
+"Webhooks | 100/min"
+"Strategy | 200/min".
+Configuration dashed arrow to Under the limit labeled "route limit".
+Bottom note exactly: "Other 429 responses have different retry rules. Reconcile order-batch outcomes before replaying a batch."
+Do not add universal 60-second retry. All branches and caveats clear.

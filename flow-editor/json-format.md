@@ -171,8 +171,10 @@ truthy branch and `{no, false}` the falsy one. Use the vocabulary the node
 itself renders so a saved graph matches the canvas.
 
 ```json
-{ "id": "e2", "source": "cond", "sourceHandle": "true",  "target": "buy" }
-{ "id": "e3", "source": "cond", "sourceHandle": "false", "target": "skip" }
+[
+  { "id": "e2", "source": "cond", "sourceHandle": "true",  "target": "buy" },
+  { "id": "e3", "source": "cond", "sourceHandle": "false", "target": "skip" }
+]
 ```
 
 Three rules the validator enforces:
@@ -196,8 +198,10 @@ you attach logging or alerting that should see every evaluation.
 Pin every gate input to a slot:
 
 ```json
-{ "id": "e3", "source": "c1", "target": "gate", "targetHandle": "input-0" }
-{ "id": "e4", "source": "c2", "target": "gate", "targetHandle": "input-1" }
+[
+  { "id": "e3", "source": "c1", "target": "gate", "targetHandle": "input-0" },
+  { "id": "e4", "source": "c2", "target": "gate", "targetHandle": "input-1" }
+]
 ```
 
 A wire into a gate carries the source condition's **value**, not control
@@ -326,7 +330,7 @@ stored object itself, not to its text. Against a payload of
 `{"quantity": 10}`:
 
 ```json
-"quantity": "{{webhook.quantity}}"
+{"quantity": "{{webhook.quantity}}"}
 ```
 
 arrives as the number `10`, not the string `"10"`. The same rule is what lets

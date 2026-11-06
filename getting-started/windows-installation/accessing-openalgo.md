@@ -1,9 +1,9 @@
 # Accessing OpenAlgo
 
-After starting the openalgo application, access the OpenAlgo platform by navigating to [http://127.0.0.1:5000](http://127.0.0.1:5000/) in your web browser.\
-\
-If ngrok is configured then access your custom ngrok domain name in the web broker.
+Open `http://127.0.0.1:5000` in your browser, or the Host Server URL configured for your installation. If you use a tunnel, use that configured address consistently for login and broker callbacks.
 
-After completing the setup, access the OpenAlgo platform by navigating to [http://127.0.0.1:5000](http://127.0.0.1:5000/) in your web browser. setup the account using [http://127.0.0.1:5000/setup](http://127.0.0.1:5000/setup)
+On first launch, create the administrator account at `/setup`, then sign in. Open **Select Broker**, choose **Configure** for your broker, and save its keys in **Broker Configuration**. Complete **Login with <broker>** from its card and verify the Dashboard loads funds and the master contract is ready.
 
-Login into openalgo with the credentials and start using OpenAlgo for Automation.
+Follow [Broker Configuration and Login](../../connect-brokers/broker-configuration.md) for saved keys, existing `.env` configurations, callback URLs and broker switching. Generate the OpenAlgo API key at `/apikey` and verify **Analyze** mode before testing an order.
+
+For an existing account, use `/login`; `/setup` is not a way to create additional users. OpenAlgo is a single-user deployment.

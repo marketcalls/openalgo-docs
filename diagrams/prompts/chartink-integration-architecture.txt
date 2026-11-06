@@ -1,0 +1,18 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Chartink alerts become paced orders"
+Landscape. Large container "OpenAlgo Flask app · one Gunicorn worker".
+Only two external endpoint cards: "Chartink scanner" at far left, "Your broker" at far right.
+Inside boundary, use clearly numbered flow in two rows: top row left→right 1,2,3; then downward 3→4 at right; bottom row right→left 4,5,6; then 6→external broker by an outside-bottom connector. Label every arrow.
+1 "Strategy webhook" / "POST /chartink/webhook/<id>" / "WEBHOOK_RATE_LIMIT: 100/min" / "CSRF exempt"
+2 "Parse and map" / "BUY · SELL · SHORT · COVER from scan_name" / "Check intraday window; map symbols"
+3 "In-memory queues" / "regular_order_queue" / "smart_order_queue"
+4 "Order processor thread" / "HTTP to HOST_SERVER" / "Smart: 1/sec · regular: up to 10/sec"
+5 "REST API /api/v1" / "placeorder · placesmartorder"
+6 "Order services" / "Action Center · sandbox · live broker"
+External scanner text: "Stocks · trigger prices · scan_name"; scanner→1. Broker text: "Live-mode broker APIs".
+Above Parse and map, INSIDE boundary, support card "openalgo.db" / "chartink_strategies · chartink_symbol_mappings · api_keys". A short downward arrow must terminate DIRECTLY on card 2, not on boundary.
+Above In-memory queues, INSIDE boundary, support card "Intraday square-off" / "APScheduler · Asia/Kolkata" / "placesmartorder · position_size 0". A short downward arrow directly into queues card 3.
+Card 2→3 labeled "entries and exits". No connection between database and scheduler.
+Bottom note: "Webhook never calls the broker directly. Action Center, Analyzer mode and order checks still apply."
+All eight cards inside container. Make process boundary fully enclose database, scheduler and all numbered cards. Clear large arrowheads at actual cards.

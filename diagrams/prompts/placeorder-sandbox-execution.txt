@@ -1,0 +1,21 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Sandbox orders use virtual money"
+Subtitle: "Analyzer on: the order never reaches your broker."
+A large boundary "Sandbox · sandbox.db: orders, trades, positions, funds" contains numbered flow.
+Top row left to right:
+"1. Identify user" / "API key → user" / "sandbox_place_order" / "Invalid: 403"
+-> "2. Order rules" / "Lot size · MIS square-off window" / "CNC sell must have holdings" / "OrderManager"
+-> "3. Find price" / "MARKET: quote or LTP" / "Otherwise: limit or trigger"
+-> "4. Block margin" / "Virtual funds; default 1 Crore" / "CNC sells skip margin" / "FundManager"
+-> "5. Holdings short?" / "CNC sell failed step 2 check".
+From Block margin downward branch "Insufficient funds" -> "400: not enough funds" / "Nothing saved".
+From Holdings short downward "Yes" -> "400: rejected order" / "Saved; no margin held" / "OrderUpdateEvent".
+Holdings short branch "No" -> "6. Record order" / "Open or trigger pending" / "SandboxOrders · OrderUpdateEvent"
+-> "7. Can fill now?" / "Fresh quote + MARKET, marketable LIMIT, or trigger met".
+Then two PARALLEL outcomes:
+"Yes" -> "Filled now" / "ExecutionEngine" / "Update trade + position";
+"No" dashed -> "Filled later" / "WebSocket engine on a future price tick".
+These converge into "8. Reply" / "Success + order id" / "mode: analyze".
+Outside sandbox boundary below: Reply -> "9. Order announced" / "Order service, after sandbox reply" / "OrderPlacedEvent mode=analyze" / "place_order_with_auth" -> "Analyzer log" / "analyzer_logs · log_subscriber".
+Bottom note: "Sandbox writes only sandbox.db. Logging, live UI and alerts come from events, as with live orders."
+Preserve two distinct refusals (unsaved funds rejection vs saved holdings rejection) and separate now/later fill branches.

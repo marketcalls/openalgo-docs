@@ -13,7 +13,7 @@ OpenAlgo uses local persistence split by workload. Defaults come from `.sample.e
 | Sandbox | `SANDBOX_DATABASE_URL` | `sqlite:///db/sandbox.db` | Simulated orders, trades, positions, holdings, funds, config, GTT tables |
 | Historify | `HISTORIFY_DATABASE_PATH` | `db/historify.duckdb` | Candles, catalog, watchlist, jobs, metadata, schedules |
 
-The Historify key is a plain filesystem path, not a SQLAlchemy URL. `database/historify_db.py` and `upgrade/migrate_historify.py` both read `HISTORIFY_DATABASE_PATH` and fall back to `db/historify.duckdb`. Note that `.sample.env` still ships the older `HISTORIFY_DATABASE_URL` spelling, which no code path reads; it is not a runtime alias, so a deployment that needs a non-default location must set `HISTORIFY_DATABASE_PATH` explicitly.
+The Historify key is a plain filesystem path, not a SQLAlchemy URL. `database/historify_db.py` and `upgrade/migrate_historify.py` both read `HISTORIFY_DATABASE_PATH` and fall back to `db/historify.duckdb`. Note that `.sample.env` still ships the older `HISTORIFY_DATABASE_URL` spelling, which `blueprints/system_permissions.py` still reads; it is not a runtime alias, so a deployment that needs a non-default location must set `HISTORIFY_DATABASE_PATH` explicitly.
 
 ## Engine Policy
 
@@ -21,7 +21,7 @@ The Historify key is a plain filesystem path, not a SQLAlchemy URL. `database/hi
 
 `NullPool` is the rule for every SQLite engine. Each scoped session gets a short-lived connection instead of retaining file descriptors across long-running worker lifetimes. `StaticPool` is explicitly forbidden because it produces "bad parameter or other API misuse" and commit failures under concurrency. `check_same_thread=False` allows scoped use across the app's thread model, but callers still must not share a SQLAlchemy session concurrently.
 
-Only `apscheduler_jobstore_db.py`, `scalping_db.py` and `strategy_book_db.py` call the factory inside `database/`; every other module repeats the same SQLite/NullPool branch inline, as do all `broker/*/database/master_contract_db.py` modules and the Flow and Historify scheduler services. `oauth_db.py` and `sandbox_db.py` narrow the non-SQLite pool to `pool_size=20, max_overflow=40`; `telegram_db.py` and `whatsapp_db.py` add `pool_pre_ping=True, pool_recycle=3600` on their non-SQLite branch.
+New SQLite engines must use `database.engine_factory.create_db_engine()` and its `NullPool` policy. Some existing modules retain equivalent inline engine branches; do not copy an old module as a reason to add another engine policy. Non-SQLite pool settings are workload-specific and should be read from the owning module.
 
 SQLite pragmas are registered once, process wide, by a `@event.listens_for(Engine, "connect")` listener in `database/__init__.py`, so they apply to every engine no matter which module created it:
 
@@ -36,6 +36,8 @@ Each pragma is wrapped in its own `try`/`except sqlite3.OperationalError` so one
 `app.py` registers `@app.teardown_appcontext shutdown_database_sessions`, which calls `remove_all_scoped_sessions()` from `utils/db_sessions.py`. Adding a new scoped session requires adding it to that inventory or using a context-managed pattern that closes it reliably.
 
 ## Main Database Domains
+
+`database/broker_keys_db.py` adds `broker_keys` for encrypted per-broker application keys and `broker_login_states` for one-use pending-login digests. Both share the main database; broker-key encrypted columns are included in salt/pepper rotation. See [broker configuration](51-broker-and-system-config.md).
 
 | Module | Main tables/concern |
 |---|---|
@@ -60,7 +62,9 @@ Other stores hold a small fixed set of tables: traffic `logs.db` holds `traffic_
 
 ## Caches In Front Of The Database
 
-`database/auth_db.py` fronts the auth tables with `cachetools.TTLCache` instances:
+Shared TTL reads and writes are synchronized under gthread and development threads. Generation-fenced fills prevent a read begun before invalidation from restoring stale cached state after a commit.
+
+`database/auth_db.py` fronts the auth tables with `utils.thread_safe_cache.LockedTTLCache` instances:
 
 | Cache | maxsize | TTL |
 |---|---|---|
@@ -103,7 +107,7 @@ The history REST service reads it only when `source="db"`; default history remai
 
 ## Schema Changes
 
-Most modules use idempotent `create_all` plus targeted startup migrations for compatible column/index additions. There is no general Alembic migration layer. A schema change must therefore be safe on an existing file, safe after partial initialization, and tested against both a fresh and pre-existing database.
+Every schema change requires an idempotent upgrade script registered in `upgrade/migrate_all.py`, in addition to safe startup initialization. A startup-only repair does not upgrade every existing install. Scripts support `--status`, preserve customized values and backfill from existing data. Test against a populated copy with the old schema as well as a fresh file.
 
 `upgrade/migrate_all.py` runs the individual migration scripts in a fixed order, each as its own `subprocess.run` with the project root as the working directory. Legacy migrations retain best-effort "completed with warnings" behavior, but a required migration returns a failure to the runner and makes its final exit non-zero. `migrate_strategy_module.py` is required: it creates the six `sm_` tables and applies compatible missing Strategy RMS columns/indexes on an existing database. `upgrade/rotate_pepper.py` and `upgrade/reset_admin_password.py` are deliberately excluded from that list because they are destructive and must be run by an operator.
 

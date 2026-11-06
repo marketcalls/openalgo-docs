@@ -69,21 +69,21 @@ Reads available index symbols from the downloaded instrument master. The list th
 | `cost_model` | No | `indian_equity` or `flat_bps` | `indian_equity` |
 | `brokerage_pct` | No | Brokerage as a fraction from `0` through `0.05` | `0` |
 | `cost_exchange` | No | `NSE` or `BSE`; which exchange's transaction charge applies | `NSE` |
-| `charges` | No | Nested object of per-charge overrides, `{"<group>": {"<charge>": <rate or null>}}`. Rates must be non-negative | `{}` |
+| `charges` | No | Per-charge overrides, for example `{"brokerage":{"flat":10,"cap":20},"stt":{"rate":0.001}}`; nested `rate`, `flat`, `cap` values are non-negative or `null` | `{}` |
 | `gst_rate` | No | GST as a fraction from `0` through `1`, or `null` to use the built-in rate | `null` |
 | `cost_bps` | No | Flat cost from 0 through 1000 basis points | `0` |
 | `slippage` | No | Fraction from `0` through `0.1` | `0` |
-| `initial_capital` | No | Positive number | `100000` |
+| `initial_capital` | No | At least 1 | `100000` |
 | `risk_free_rate` | No | Fraction from `0` through `0.5` | `0` |
 | `source` | No | `db` or `api` | `db` |
 
 `PortfolioBacktestSchema` does not allow unknown fields: any key outside this list returns HTTP 400.
 
-`charges` and `gst_rate` exist because statutory rates change with the budget and differ by market. Leave them out to use the built-in Indian delivery-equity schedule.
+`charges` keys for the Indian-equity schedule are `brokerage`, `stt`, `exchange_txn`, `sebi` and `stamp_duty`. Rates are fractions of the applicable basis; `flat` and `cap` are rupee amounts per order where applicable. Unknown charge keys are ignored. Leave overrides out to use the built-in schedule, and check the rates applicable to the market/period being modelled.
 
 `source=db` reads local Historify data and still requires a valid OpenAlgo API key. `source=api` also requires an active broker session and calls broker history sequentially.
 
-The success response contains the complete simulation generation, including equity, benchmark, metrics, holding contributions, correlations, diversification, allocation, costs, rebalancing, walk-forward, Monte Carlo, crisis, health, and insight sections.
+The success response keeps analysis fields at the top level, not under `data`. `meta.total_return_basis` is `"price"`; dividends are not included. Read `meta.data_warnings` and benchmark availability alongside the results. It contains including equity, benchmark, metrics, holding contributions, correlations, diversification, allocation, costs, rebalancing, walk-forward, Monte Carlo, crisis, health, and insight sections.
 
 ## POST `/tearsheet`
 

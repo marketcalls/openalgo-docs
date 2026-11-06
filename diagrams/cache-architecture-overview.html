@@ -3,15 +3,15 @@
   <div class="title">
     <div class="eyebrow">Caching</div>
     <h1>Hot answers stay in memory, the database is the fallback</h1>
-    <p style="max-width:1100px">Symbol lookups, broker tokens and API key checks happen on almost every request, so each OpenAlgo process keeps them in memory. Only a cache miss or a reload goes to the database, which keeps orders and quotes fast.</p>
+    <p style="max-width:1100px">Symbol lookups, broker tokens and API key checks happen on almost every request, so each OpenAlgo process keeps them in memory. Shared TTL operations are locked, and fills are fenced against invalidation so a concurrent save cannot restore stale cached state.</p>
   </div>
 
   <div class="row center" style="margin-bottom:80px">
-    <div class="node app big" id="callers" style="width:760px"><div class="ic" data-icon="server"></div><div class="tx"><b>Code in the Flask process that needs an answer</b><span>REST API services, WebSocket and market data, and the broker login callback</span></div></div>
+    <div class="node app big" id="callers" style="width:760px"><div class="ic" data-icon="server"></div><div class="tx"><b>Code in this process that needs an answer</b><span>REST API services, WebSocket and market data, and the broker login callback</span></div></div>
   </div>
 
   <div class="zone" id="mem" style="--c:var(--data)">
-    <div class="zl"><span data-icon="memory-stick"></span>In-memory caches · one set per process</div>
+    <div class="zl"><span data-icon="memory-stick"></span>Thread-safe caches · one set per process</div>
     <div class="row" style="gap:30px; align-items:stretch">
 
       <div class="zone" id="symc" style="--c:var(--ink3); width:420px; padding-top:38px; display:flex; flex-direction:column">

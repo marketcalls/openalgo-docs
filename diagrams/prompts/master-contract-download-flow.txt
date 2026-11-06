@@ -1,0 +1,19 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Fresh symbols, reused through the day"
+Landscape with TWO visual sections: upper decision routing, lower background processing. Use nine cards, no duplicated step cards.
+Upper left "Login or download request" / "handle_auth_success()" / "POST /api/master-contract/download" points right to "Freshness check" / "First run · broker change · new day · cutoff" / "08:00 IST; crypto 00:00 UTC" / "MASTER_CONTRACT_CUTOFF_TIME".
+From freshness branch to three cards:
+"Download and store" at upper right, arrow labeled "out of date";
+"Reuse saved symbols" at center below decision, arrow labeled "fresh + login";
+"Skipped" below left, arrow labeled "fresh + API, force=false".
+A bypass from request card goes directly to Download and store labeled "force=true".
+Download and store body: "Background daemon: async_master_contract_download()" / "Broker module fetches, parses and maps symbols" / "Replaces symtoken rows; notifies via Socket.IO" / "Normalize derivative underlyings; record count and stats".
+Reuse body: "load_existing_master_contract()" / "Mark ready from existing rows".
+Skipped body: "Nothing downloaded". Skipped has NO outgoing arrow.
+Both Download and store and Reuse saved symbols point into ONE card "Load into memory" / "Fill token_db_enhanced cache from symtoken" / "Restore Python strategies" / "hook_into_master_contract_download()".
+Load into memory points right into "Sandbox catch-up" / "T+1 settlement · daily PnL reset" / "run_catch_up_tasks()".
+Support card "Broker instruments" / "File or API" has bidirectional arrow ONLY to Download and store, labeled "HTTP".
+Support card "openalgo.db" / "symtoken · master_contract_status" / "pending · downloading · success · error · symbol count" receives arrow from Download and store labeled "rows + status".
+Bottom note: "Force Download always downloads. A fresh login reuses rows; a fresh unforced API call skips."
+All arrows terminate directly on named cards; place outgoing reuse connector to avoid crossing Skipped. No arrows out of Skipped. Large readable text; no outer boundaries.

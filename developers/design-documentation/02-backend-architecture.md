@@ -4,7 +4,9 @@
 
 OpenAlgo uses Flask 3.1 with Flask-RESTX, Flask-SocketIO, Flask-Limiter, Flask-WTF CSRF, SQLAlchemy, APScheduler, DuckDB, ZeroMQ, and a separate asyncio WebSocket proxy. Python `>=3.12` is required.
 
-The backend is a single-user application. Production runs Gunicorn with a single eventlet worker (`start.sh` passes `--worker-class eventlet --workers 1`), and the market-data proxy runs outside it in its own process. Process-local components such as caches and the EventBus are therefore per process, not shared. Cross-process market-data and selected cache invalidation paths use ZeroMQ.
+The backend is a single-user application. Production requires exactly one Gunicorn worker process (`-w 1`) because Socket.IO and other application state live in that process. Eventlet is the default; `OPENALGO_WORKER_CLASS='gthread'` opts into 64 request threads through the supplied launcher. `uv run app.py` uses standard threading and ignores that setting. See [worker selection and rollback](../../getting-started/gthread-migration.md).
+
+The market-data proxy runs in a child process under either Gunicorn worker, or separately through Docker `start.sh`. Process-local caches and the EventBus are not shared across processes. Market data and selected cache invalidations use ZeroMQ.
 
 ## Request Surfaces
 
@@ -41,13 +43,13 @@ SQLAlchemy modules use scoped sessions and `NullPool` for SQLite. `utils/db_sess
 - Real-time order-update adapters that ingest broker order pushes or postbacks and republish them as `order.update` events.
 - Scalping risk monitor that subscribes to live ticks and survives browser navigation.
 - Telegram/WhatsApp service startup when configured.
-- WebSocket proxy process under eventlet/gunicorn, or OS thread in direct development startup.
+- WebSocket proxy child process under either Gunicorn worker, separately started process in Docker, or real OS thread in direct development startup.
 - Health metrics and database initialization work.
 
 ## Security Boundaries
 
 - `APP_KEY` and `API_KEY_PEPPER` are startup requirements.
-- Broker tokens and retrievable API keys are Fernet-encrypted; API-key verification uses Argon2 plus a pepper.
+- Broker tokens, saved broker application keys, and retrievable API keys are Fernet-encrypted; API-key verification uses Argon2 plus a pepper.
 - Session routes retain CSRF except explicit broker-callback, webhook, postback, and health exemptions. `auth.logout` is deliberately not exempt.
 - `/api/v1` is CSRF-exempt because it uses API-key authentication.
 - CORS, CSP, proxy-header trust, IP bans, cookie security, and session expiry are environment controlled.

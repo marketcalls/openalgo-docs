@@ -35,7 +35,7 @@ curl --get 'http://127.0.0.1:5000/api/v1/sip/frequencies'
 | `quarterly` | One installment every three months |
 
 {% hint style="warning" %}
-This is the only v1 resource that does not verify the OpenAlgo API key. It returns a fixed list and reads no account data, but it is an inconsistency with every other endpoint rather than a documented exemption.
+This list needs no API key and reads no account data. `/sectorrotation/options` is another unauthenticated metadata list. The backtest itself always verifies the OpenAlgo API key.
 {% endhint %}
 
 ***
@@ -99,7 +99,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/sip/backtest \
 {% hint style="info" %}
 `day_of_month` is capped at 28 rather than 31 by design. A SIP dated the 31st does not exist in every month, and silently shifting it would produce a schedule you did not ask for.
 
-The first installment lands on `start_date`, or on the next trading session after it if that date is a holiday or weekend.
+Monthly and quarterly schedules target `day_of_month` on or after `start_date`; weekly and fortnightly schedules anchor on `start_date`. Requested dates move to the next available trading session. The response preserves both requested and executed dates.
 {% endhint %}
 
 #### Costs
@@ -132,6 +132,8 @@ A benchmark must be an **index**. A benchmark is not something you can hold, so 
 `source` defaults to `db`, so a backtest reads locally stored history. Download the range you need with [Historify](../../../new-features/historify.md) first, or set `source` to `api` to pull from the broker.
 {% endhint %}
 
+The supported date span is at most 30 years. `brokerage_percent` uses percentage points (0–5), whereas portfolio `brokerage_pct` uses a fraction. `charges` follows the [portfolio charge override format](../portfolio.md#request-fields).
+
 ### Response
 
 The response reports what the SIP would have returned, what the same money invested as a lumpsum would have returned, and, when `include_grids` is true, how sensitive the result is to the start date.
@@ -142,7 +144,7 @@ Key figures include XIRR, the effect of rupee-cost averaging, total invested, fi
 
 ## Notes
 
-* This resource backtests. It never places an order and never touches your broker account.
+* This resource backtests and never places an order. `source="api"` reads historical data through the broker session; `source="db"` reads local Historify data.
 * Results depend on the history available locally. A range with gaps produces a schedule with fewer installments than you expect rather than an error.
 * `step_up_percent` compounds annually, so a 10 percent step-up on a 10,000 monthly SIP invests 11,000 a month in year two.
 

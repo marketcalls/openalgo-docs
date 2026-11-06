@@ -103,7 +103,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/gttorderbook \
 | apikey | Your OpenAlgo API key | Mandatory | - |
 | status | `active` returns triggers that can still fire. `all` adds the history: triggered, cancelled, expired and rejected. Anything else is a 400. | Optional | `active` |
 
-`GTTOrderBookSchema` declares only `apikey`. Any other field, including `strategy`, returns HTTP 400. This resource uses `API_RATE_LIMIT`, not `ORDER_RATE_LIMIT`.
+`GTTOrderBookSchema` declares required `apikey` and optional `status` (`active` or `all`). Any other field, including `strategy`, returns HTTP 400. This resource uses `API_RATE_LIMIT`, not `ORDER_RATE_LIMIT`.
 
 ## Response Fields
 
@@ -143,13 +143,15 @@ curl -X POST http://127.0.0.1:5000/api/v1/gttorderbook \
 ## Notes
 
 - **Active-only by default.** Without `status`, or with `"status": "active"`, triggered, cancelled, expired, rejected, disabled and deleted GTTs never appear in `data`, the shape every existing consumer relies on.
-- **`"status": "all"` returns the history too.** Rows are ordered active first, then the rest, each group newest first. The sandbox and Zerodha carry the full history; the other brokers' mappers still return active triggers only until their status vocabularies are mapped.
+- **`"status": "all"` returns the history too.** Rows are ordered active first, then the rest, each group newest first. The sandbox, Zerodha and Rupeezy mappers support history; other current broker mappers return active triggers only. Broker retention can limit how much history is available.
 - **Analyzer (sandbox) mode** reads the sandbox book and answers with `"mode": "analyze"`. Sandbox entries also carry `strategy` (the identifier sent at placement) and `margin_blocked` (the reservation held while the trigger is active, `0` once it fires or is cancelled).
 - A fired GTT's child order is an ordinary order: it appears in the regular OrderBook in both modes, as it does at the broker. The GTT row with `"status": "triggered"` (and `triggered_order_id` in analyzer mode) is how the two are tied together.
 - **Field semantics by trigger type**:
   - SINGLE → `trigger_prices` has one element; `legs` has one entry.
   - OCO → `trigger_prices` has two elements (sl first, tg second); `legs` has two entries in matching order.
 - Some fields (`last_price`, `created_at`, `updated_at`, `expires_at`) depend on what the broker exposes, so they may be `0` or empty for brokers that do not return them.
+
+Angel OCO placement returns a composite ID, but its book shows two independent SINGLE rules. This view does not reconstruct a native OCO pair or establish mutual cancellation. See [broker-specific behavior](placegttorder.md#broker-specific-behaviour).
 
 ## Error Scenarios
 

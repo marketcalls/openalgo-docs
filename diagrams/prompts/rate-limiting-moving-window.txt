@@ -1,0 +1,14 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Rate limits slide with time"
+Subtitle: "Count recent requests, not the current clock minute."
+Top timeline: caption "Example: 5 requests per minute". Three muted old dots on left, then at x≈40% boundary labeled "t − 60s". From that boundary to right endpoint "t" draw ONE dashed amber rectangle titled "Last 60 seconds". Rectangle's RIGHT BORDER aligned exactly with center of cyan dot "New request at t". Four amber historical dots inside rectangle, all strictly left of cyan dot. Three old dots outside and left of rectangle. Time line points right. Below old dots text "Older hits ignored". Below amber dots text "4 recent hits: next request allowed". No other timeline text.
+Below five cards left-to-right:
+"1 · Request arrives" / "Time t · keyed by caller"
+→ "2 · Count recent hits" / "Timestamps after t − window" / "Ignore older hits"
+→ "3 · Below route limit?"
+→ arrow "yes" into "4 · Record hit at t" / "Add to caller history" / "memory://"
+→ "5 · Allow" / "Request runs".
+From 3 a downward arrow labeled "no" to "Reject: 429" / "Wait until oldest hit leaves the window".
+Bottom note ONLY: "A caller cannot use the full limit at 9:14:59 and again at 9:15:00."
+This is an infographic; the geometric right edge of the last60sec region must be at t, not before t. Do not print this construction instruction. Do not print extra text. All specified text readable.

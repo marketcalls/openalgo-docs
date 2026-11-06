@@ -4,6 +4,14 @@ The `/trading` route is OpenAlgo's multi-chart trading workspace. It combines hi
 
 <figure><img src="../.gitbook/assets/openalgo-ui-trading-terminal.png" alt="Chart trading terminal showing AXISBANK 15-minute candles with the HalfTrend indicator and its buy and sell signals"><figcaption></figcaption></figure>
 
+## Full-Screen Controls
+
+The terminal fills the viewport without the application navbar. Its toolbar keeps **Dashboard**, Live/Analyze mode control, theme toggle and profile menu accessible. Other chart controls scroll or collapse to icons on narrow screens; the broker badge appears where space permits.
+
+One toolbar serves the grid. Click a chart or choose **Layout > Selected chart**; its border marks the chart receiving symbol, interval, study, comparison and drawing changes.
+
+The right rail opens Watchlist, Option chain, Objects, Alerts, Data window, Scripts, Backtest, Strategies and Assistant. The strip above the order dock offers preset ranges, **Go to**, market/session status, clock/timezone and scale controls. Data window reads the bar and study values under the crosshair.
+
 ## Layouts and State
 
 Seven persisted layouts are available:
@@ -16,7 +24,7 @@ Seven persisted layouts are available:
 * a six-chart `3×2` grid;
 * an eight-chart `4×2` grid.
 
-Each pane retains its own symbol and chart state. Layout choice and supported chart preferences persist in the browser or application preference store so returning to the terminal restores the workspace.
+Drag gaps between panes to resize their proportions, and double-click a gap to reset the split. Each pane retains its own symbol and chart state. Layout choice and supported chart preferences persist in the browser or application preference store so returning to the terminal restores the workspace.
 
 ## Charts and History
 
@@ -26,7 +34,7 @@ The terminal supports candles, bars, line and area variants, Heikin Ashi, Renko,
 
 **Bar replay** steps through the time bars on every chart type, so on a brick chart the bricks form as each bar is revealed. Trading is refused while a chart replays.
 
-**Indicators.** 112 built-in studies, and your own from `strategies/indicators/`. Several instances can be added and configured per pane. On a brick or line chart type, a study's **Compute on** row chooses between the chart's bricks and the underlying time bars. 29 built-in studies have a **Timeframe** row. The terminal requests their higher-timeframe history separately, so a daily EMA with length 200 can appear on a five-minute chart without loading years of minute candles. Values appear only after their source period closes. The broker must retain enough source history; an unavailable request reports its status rather than inventing prices. OpenScript studies and strategies are written, backtested and deployed from the Scripts panel; the language is documented at [openalgo.in/script](https://openalgo.in/script).
+**Indicators.** 112 built-in studies, and your own from `strategies/indicators/`. Several instances can be added and configured per pane. On a brick or line chart type, a study's **Compute on** row chooses between the chart's bricks and the underlying time bars. 29 built-in studies have a **Timeframe** row. The terminal requests their higher-timeframe history separately, so a daily EMA with length 200 can appear on a five-minute chart without loading years of minute candles. Values appear only after their source period closes. The broker must retain enough source history; an unavailable request reports its status rather than inventing prices. Write source in Scripts, test it in Backtest, and explicitly deploy/start it from Strategies. See [OpenScript on the Chart](openscript.md) for the workflow, Pause versus Stop, sizing and mode restrictions.
 
 ### Custom intervals
 
@@ -51,6 +59,20 @@ The shared rail deliberately targets only the active pane. Confirm the highlight
 Symbol search is ranked and debounced and can be opened independently for every pane. The terminal receives live ticks from OpenAlgo's raw WebSocket proxy, with REST quote fallback where required. The same market-data manager is shared across the page rather than opening one Gunicorn request thread per chart.
 
 The order dialog supports inline order entry and market-depth review. Account-level order updates arrive through the order-update stream when the active broker provides a push adapter; Groww uses the server's explicit orderbook-polling fallback.
+
+## Comparisons, Workspaces and Quick Entry
+
+Compare instruments with **Price**, **Percentage**, **Indexed to 100** or **Own scale**. Hide/show retains the configured comparison; Remove deletes it and Retry reloads a failed history request. This browser retains all four choices, but named workspaces use the older two-mode representation: Price reopens as Own scale, and Indexed to 100 reopens as Percentage.
+
+Named Workspaces save the grid, studies, drawings and supported pane preferences. Templates save reusable study settings. Check storage messages and Save/Autosave state before assuming a change persisted.
+
+With focus on a chart and no text field/dialog taking input, type a letter for symbol search or a digit from 1 to 9 for interval entry. A bare number means minutes; `1h`, `D` and `M` include a unit. Lowercase `m` means minutes, uppercase `M` months. Enter applies a supported interval and Esc cancels. `0` resets the chart view.
+
+## Order Dock
+
+The bottom dock has Orders, Positions, Trades and GTT tabs across every instrument. Open a tab and drag its top edge to resize. Row actions can chart the instrument, modify/cancel working orders or close a nonzero position. Cancel all and Close all ask for confirmation.
+
+Check the instance's mode and any service refusal before acting. Acceptance is separate from a fill, and a lost response requires checking orders/trades/positions before a replacement. Chart trading writes are refused during replay.
 
 ## Operational Boundaries
 

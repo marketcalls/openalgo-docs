@@ -34,7 +34,7 @@ Yes. It is open source under the AGPL-3.0 licence, like OpenAlgo web.
 
 ### Which brokers are supported?
 
-All 37 brokers of OpenAlgo web, Delta Exchange for crypto among them. Keys for
+All 38 broker plugins of OpenAlgo web, Delta Exchange for crypto among them. Keys for
 many brokers can be saved; one is logged in at a time.
 
 ### Do I need Python, a `.env` file or a server?
@@ -145,3 +145,10 @@ desktop:
 
 * [GitHub Issues](https://github.com/marketcalls/openalgo-desktop/issues) for bugs, with your system, the OpenAlgo Desktop version and what you saw
 * [Community Support](../community-support.md) for questions
+
+## Are Flow and the Agent available?
+
+Yes. Flow is included from Desktop 1.0.5, and the desktop includes the Agent
+and chart Assistant. Update an older installation before looking for Flow.
+[Flow and the Agent](flow-and-agent.md) explains the workflows and boundaries.
+The Python Strategy Host and pandas portfolio/SIP backtesters remain web features.

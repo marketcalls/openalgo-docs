@@ -1,0 +1,17 @@
+Use case: infographic-diagram. Polished OpenAlgo technical documentation infographic, landscape 3:2. Deep navy #0b1020 background, navy panels thin cyan/teal/violet/amber/green outlines. White headings pale gray text, large crisp sans-serif, small outline icons, generous whitespace, explicit arrowheads outside text. No photos, 3D, watermark, extra facts.
+Title: "Docker: three builds, one safe startup"
+Top section "Build". Two independent cards on left pointing to final image on right:
+"1 · Python build" / "python:3.12-trixie" / "uv installs virtualenv" / "gunicorn >=25.0,<26 · eventlet 0.41.2"
+"2 · Web build" / "node:22-trixie-slim" / "npm ci → npm run build" / "frontend/dist"
+Both -> "3 · Final image" / "python:3.12-slim-trixie" / "Copy venv + source + React app" / "IST · runtime libraries · Chromium" / "appuser 1000:1000 · CPU threads 2" / "log db tmp strategies keys · keys mode 700" / "EXPOSE 5000".
+Final image points DOWN to boundary "Container startup · start.sh as appuser". Inside a five-stage left-to-right sequence:
+1 "Check .env" / "If missing: generate only when HOST_SERVER is set; otherwise exit 1."
+2 "Refuse sample keys" / "Block known APP_KEY / pepper when /app cannot be written and keys cannot rotate."
+3 "Migrate databases" / "upgrade/migrate_all.py" / "Failure stops startup"
+4 "Start proxy" / "websocket_proxy.server · :8765" / "Background process; SIGTERM / SIGINT trap stops it"
+5 "Start Gunicorn" / "1 worker · eventlet default or optional gthread" / ":5000 or PORT" / "Timeout 300s · graceful stop 30s" / "/tmp/gunicorn_workers".
+Below inside container a compact "Internal ZeroMQ" / "127.0.0.1:5555" / "Proxy SUB binds; app PUB connects" / "Never exposed or published". Dashed Gunicorn -> bus -> proxy directional arrows.
+Outside container at bottom TWO separate cards: "Persistent data" / "Named volumes: db · log · strategies · keys · tmp" / "Host .env mounted into /app", dashed arrow UP into startup boundary. "Browser + tools" / "Compose publishes 5000 web app + 8765 live data", two arrows UP to Gunicorn and proxy respectively. All text legible; use tall landscape if needed.
+CRITICAL CONNECTION CORRECTION: The internal bus MUST send a dashed arrow UP into the WebSocket proxy (arrowhead ONLY at proxy), because proxy SUB consumes bus messages. Gunicorn sends a separate dashed arrow DOWN LEFT into the internal bus (arrowhead ONLY at bus). Thus directed path is Gunicorn -> ZeroMQ bus -> WebSocket proxy. Do NOT draw Proxy -> bus. Label arrows "PUB connect" and "SUB binds" respectively. Leave sufficient gap under runtime row for these elbows.
+
+Edit the supplied image with one text correction only. In the bottom runtime row, card "5 Start Gunicorn", replace the first bullet "eventlet · 1 worker" with two short lines: "1 worker" and "eventlet default · gthread optional". Keep every other label, all numeric settings, arrows, process boundaries, colors, icons and card positions unchanged. Fit the new text legibly inside the existing card. In particular keep Gunicorn -> ZeroMQ -> proxy arrow directions exactly as shown.

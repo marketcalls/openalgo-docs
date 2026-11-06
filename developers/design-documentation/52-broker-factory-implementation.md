@@ -32,11 +32,7 @@ Pools are keyed by broker and user. The wrapper preserves the adapter interface 
 
 All pooled connections share one thread-safe ZeroMQ publisher. The proxy SUB socket binds `ZMQ_HOST:ZMQ_PORT`; the shared and standalone adapter PUB sockets connect to it. This fixed fan-in direction allows multiple adapter publishers without port-scan or bind races.
 
-```text
-broker connection 1 --\
-broker connection 2 ----> shared PUB connects ---> proxy SUB binds ---> clients
-broker connection 3 --/
-```
+<figure><img src="../../.gitbook/assets/diagram-connection-pooling-topology.png" alt="Per-broker connection pools share a publisher connecting to the fixed bus; the proxy SUB socket is the sole binder"><figcaption></figcaption></figure>
 
 ## Token Refresh And Recovery
 
@@ -44,11 +40,11 @@ Connection pools recognize common authentication failures such as 401, 403, expi
 
 ## Current Plugin Inventory
 
-There are 37 `broker/*/plugin.json` directories, covering 35 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money:
+There are 38 `broker/*/plugin.json` directories, including Dhan Sandbox and Delta Exchange for crypto derivatives:
 
 `aliceblue`, `angel`, `arrow`, `compositedge`, `definedge`, `deltaexchange`, `dhan`, `dhan_sandbox`, `firstock`, `fivepaisa`, `fivepaisaxts`, `flattrade`, `fyers`, `groww`, `hdfcsecurities`, `hdfcsky`, `ibulls`, `iifl`, `iiflcapital`, `indmoney`, `jainamxts`, `kotak`, `motilal`, `mstock`, `nubra`, `paytm`, `pocketful`, `rmoney`, `rupeezy`, `samco`, `shoonya`, `tradejini`, `tradesmart`, `upstox`, `wisdom`, `zebu`, and `zerodha`.
 
-Only `deltaexchange` declares `broker_type: crypto` and `leverage_config: true`; the other 36 declare `broker_type: IN_stock` with `leverage_config: false`.
+Only `deltaexchange` declares `broker_type: crypto` and `leverage_config: true`; the other 37 declare `broker_type: IN_stock` with `leverage_config: false`.
 
 Individual broker symbol limits and depth capabilities are adapter/upstream concerns and must not be inferred from the generic 1000-by-3 pool defaults.
 

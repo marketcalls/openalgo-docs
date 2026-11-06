@@ -1,0 +1,25 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "From an order to a sandbox fill"
+Subtitle: "Analyzer mode uses virtual funds and simulated fills."
+Use seven cards. Main flow is a clearly numbered horizontal row of four cards; use lower row for the execution fork. No outer process boundaries.
+TOP ROW LEFT TO RIGHT:
+"1 · Route and validate" / "POST /api/v1/placeorder" with four explicit condition rows:
+"Semi-auto: eligible live orders queue in Action Center. Analyzer requests bypass this queue."
+"Invalid fields: 400. Invalid API key: 403."
+"Analyzer OFF: live submission attempted; fills confirmed separately."
+"Analyzer ON: continue to sandbox checks."
+Short label "validate_order_data · get_analyze_mode() · place_order_api".
+RIGHTWARD ARROW labeled "Analyzer ON" into:
+"2 · Sandbox checks + margin" / "OrderManager.place_order" / "Symbol · F&O lot size · MIS window" / "CNC SELL needs holdings" / "Value / leverage vs balance" / "Reducing-only: zero margin" / "Insufficient margin: reject 400".
+RIGHTWARD ARROW into:
+"3 · Save order" / "Block margin" / "sandbox.db · SandboxOrders" / "open / trigger pending".
+RIGHTWARD ARROW into:
+"4 · Fill now?" / "MARKET, marketable LIMIT or triggered SL" / "Skip inline fill if quote is stale".
+These are the only top-row arrows: 1→2→3→4. No bypass of card2.
+LOWER ROW:
+Bottom-right "Execute and update" / "_execute_order: trade row; order complete" / "_update_position: netting, margin release, realized P&L, consistency check".
+Bottom-middle "Background engine" / "Keep open / trigger pending; reply now" / "WebSocket tick or multiquotes every 5 s" / "Price rule unmet: keep waiting".
+From Fill now, two separate downward arrows: "yes · inline" to Execute and update, and "no · wait" to Background engine. Background engine has one rightward arrow to Execute and update labeled "price rule met".
+Bottom full-width seventh card "Reply to you" / "Inline fill: reply after fill and position update." / "Waiting order: reply after engine handoff, before later fill." / "orderid · mode \"analyze\" · OrderPlacedEvent if emit_event".
+No arrows into reply card; timing is described in text. Keep failure branches as condition rows, not extra misleading connectors. All specified text legible.

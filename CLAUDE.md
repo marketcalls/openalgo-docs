@@ -10,12 +10,15 @@ About 90% of readers are traders and about 10% are developers. Write and draw fo
 a trader first: plain language, what a feature does for them, then the technical
 detail for developers.
 
-## Architecture diagrams are images built from sources, and must track the code
+## Architecture diagrams must track the code
 
 Every architecture, flow and lifecycle diagram in these docs is an illustrated PNG
-(`.gitbook/assets/diagram-<slug>.png`) rendered from an HTML source
-(`diagrams/<slug>.html`) with the kit in `diagrams/_tools/`. There are no text
-(box-drawing) diagrams any more, and new ones must not be added.
+(`.gitbook/assets/diagram-<slug>.png`). The published images use the user-approved
+AI-generated style. Their factual blueprints remain in `diagrams/<slug>.html`,
+and the complete generation prompts live in `diagrams/prompts/<slug>.txt`.
+`diagrams/generated-images.json` records provenance and checksums. The built-in
+generator's model version is not exposed; do not claim a specific model version.
+There are no text (box-drawing) diagrams, and new ones must not be added.
 
 **Whenever the architecture changes, a new feature is implemented, or an existing
 component, flow, port, process, database or integration changes in `openalgo`,
@@ -24,23 +27,24 @@ no longer matches the code is worse than no diagram: traders trust the picture.
 
 How to update:
 
-1. Find the affected diagrams: `grep -rl "diagram-" --include=*.md .` and read the
+1. Find the affected diagrams: `rg -l 'diagram-' -g '*.md'` and read the
    sources in `diagrams/*.html` for the components you changed.
 2. Verify the new behaviour in the `openalgo` code (and its `docs/` design docs),
    not from memory.
-3. Edit `diagrams/<slug>.html` (or create a new one following
-   `diagrams/_tools/KIT.md`), then render:
-   ```bash
-   cd diagrams/_tools && npm install        # once
-   node render.mjs ../<slug>.html ../../.gitbook/assets/diagram-<slug>.png
-   ```
-   Fix any `WARN overflow`, and open the PNG to check it before committing.
+3. Update the HTML blueprint and its generation prompt together. Follow
+   `diagrams/README.md` for the approved style, then use the built-in image
+   generator and copy the final PNG into the existing asset path. Inspect every
+   label, arrow, branch and boundary against the source. Regenerate errors and
+   refresh the manifest checksums. The HTML renderer remains available for
+   reference previews; render those to a separate path so they do not overwrite
+   the published AI-generated asset.
 4. For a new diagram, embed it with the repo convention, on its own line:
    `<figure><img src="REL/.gitbook/assets/diagram-<slug>.png" alt="..."><figcaption></figcaption></figure>`
    where `REL` is the relative path for the page depth.
 5. Update the alt text and any surrounding prose that the change made wrong.
 
-Never edit a diagram PNG directly, and never leave a source and its PNG out of sync.
+Never leave a blueprint, prompt and published PNG describing different behaviour.
+Do not manually paint over generated labels; correct the prompt and regenerate.
 
 ## Conventions
 

@@ -1,5 +1,9 @@
 # Nubra
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Nubra, by Zanskar Securities Private Limited, is a modern trading platform built for algorithmic and institutional traders. It provides REST-like resource-based endpoints with low-latency order execution, comprehensive market data access including quotes, Greeks, and historical candles, and a phone OTP plus MPIN login, making it an excellent choice for automated trading with OpenAlgo.
 
 1. **Navigate** to the Nubra's Dashboard Login [https://nubra.io/](https://nubra.io/) Open Demat

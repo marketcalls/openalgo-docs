@@ -120,12 +120,16 @@ Qty  Price                              Price  Qty
 399 769.20                             769.80  430
 ```
 
+## Availability
+
+This is one broker snapshot. Fields and freshness depend on the broker and instrument; indices may lack tradable depth or volume. Some mappers use zero for unavailable values, so do not infer that every zero is a measured value. Streamed fields differ: REST normally uses `prev_close` and `bids`/`asks`, while WebSockets use `close` and `depth.buy`/`depth.sell`.
+
 ## Notes
 
 - Depth shows the **order book** structure for a symbol
 - **Bid-Ask spread** indicates liquidity (tighter = more liquid)
 - **totalbuyqty vs totalsellqty** shows demand-supply balance
-- For F&O, **oi** (open interest) is available
+- For F&O, **oi** (open interest) is available where the broker supplies it
 - The REST call returns one broker snapshot. Use WebSocket Depth for continuous updates.
 
 ## Use Cases

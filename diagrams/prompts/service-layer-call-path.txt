@@ -1,0 +1,17 @@
+Use case: infographic-diagram. Asset type: OpenAlgo documentation diagram. Create a precise, beautiful and highly readable landscape 3:2 technical infographic. Deep navy background (#0b1020), dark navy cards, thin cyan/teal/violet/amber/green outlines, white headings, pale gray text, simple outline icons, crisp modern sans-serif. Flat vector-like raster; large readable text, generous whitespace, clear directed arrowheads outside text. No 3D, photos, clutter, watermark, fake code or invented features. Technical facts and conditional paths are mandatory. Render only the specified exact labels.
+Title: "Every caller uses the same service"
+Subtitle: "Routes check input. Domain services apply policy and return plain results."
+Left-to-right:
+"Caller" / "SDK · web app · webhook · Flow"
+-> "Route checks input" / "Rate limit, then schema or session validation" / "RESTX resource or blueprint"
+-> "Domain service" / "Plain values in; plain result out" / "services/<domain>_service.py"
+-> "Auth and mode policy" / "Who you are; where work goes" / "Action Center routing" / "API key to broker · analyzer mode check".
+Right of policy a boundary "Execution target" contains FOUR parallel stacked options. Separate arrows from policy to each:
+"Broker module" / "Loaded on demand" / "broker/<name>/api";
+"Sandbox manager" / "Analyzer mode";
+"Database" / "Reads and writes";
+"Pure calculation" / "No outside call".
+Above route and domain service draw a LEFT-pointing return arrow FROM Domain service TO Route labelled "Result: (success, data, status)".
+Below route "HTTP response" / "JSON + status code", with DOWN arrow FROM Route labelled "Builds".
+Below domain service "EventBus" / "Typed event; async subscribers", with dashed DOWN arrow FROM Domain service labelled "Publish".
+No arrow between HTTP response and EventBus. No arrows among execution targets. Do not put HTTP response construction in domain service.

@@ -4,6 +4,10 @@
 
 The PlaceOrder API is the core order execution endpoint in OpenAlgo. It handles order validation, authentication, broker routing, and response processing through multiple layers.
 
+## Lost Broker Replies
+
+The shared transport retries eligible broken reads once; writes are never retried automatically. A known connect/pool refusal occurs before send. A lost reply after a possibly sent write leaves an uncertain result: PlaceOrder returns HTTP 502 and asks the trader to check the broker order book before placing it again. The broker may already hold the order. A gthread broker-pacer refusal is returned before send with HTTP 429. Sources: `utils/httpx_client.py`, `utils/broker_backpressure.py`, `services/place_order_service.py`.
+
 ## Complete Flow Diagram
 
 <figure><img src="../../.gitbook/assets/diagram-placeorder-call-flow.png" alt="Numbered placeorder flow: IP ban check, rate limit and OrderSchema, semi-auto routing to the approval queue, validate_order_data, broker session lookup in auth_db, then the sandbox in analyzer mode or the broker plugin when live, with the reply to the client and events fanned out on the event bus"><figcaption></figcaption></figure>

@@ -72,7 +72,7 @@ OpenAlgo uses a **Python Flask** backend with a **React 19** single-page applica
 * **websockets 15.0+** - WebSocket client and server
 * **pyzmq** - ZeroMQ for high-performance message queue
 * **APScheduler** - Background task scheduling
-* **scipy / py\_vollib / numba** - Options analytics and Greeks
+* **opengreeks** - Black-76 options analytics and Greeks
 
 #### Security & Performance
 
@@ -81,7 +81,7 @@ OpenAlgo uses a **Python Flask** backend with a **React 19** single-page applica
 * **Flask-Limiter** - Rate limiting
 * **Flask-CORS** - CORS protection
 
-> \[!IMPORTANT] You will need **Python 3.12+**, **Node.js 20/22/24**, and the **uv** package manager.
+> \[!IMPORTANT] You will need **Python 3.12+**, **Node.js for frontend work only**, and the **uv** package manager.
 
 ***
 
@@ -92,7 +92,7 @@ OpenAlgo uses a **Python Flask** backend with a **React 19** single-page applica
 Before you begin, make sure you have the following installed:
 
 * **Python 3.12+** - [Download Python](https://www.python.org/downloads/)
-* **Node.js 20, 22, or 24** - [Download Node.js](https://nodejs.org/)
+* **Node.js for frontend contributors** - Match `frontend/package.json`: `^22.23.4 || ^24.22.1 || >=26.12.1`. Backend and documentation work use the CI-built frontend.
 * **Git** - [Download Git](https://git-scm.com/downloads)
 * **Code Editor** - VS Code recommended with extensions:
   * Python
@@ -114,7 +114,7 @@ pip install uv
 # Sync Python dependencies (uv handles virtualenv automatically)
 uv sync
 
-# Build React frontend (required before first run)
+# Build React frontend only if changing frontend source
 cd frontend
 npm install
 npm run build
@@ -125,19 +125,14 @@ cd ..
 
 #### Configure Environment
 
-```bash
-# Copy the sample environment file
-cp .sample.env .env
+A fresh first start creates `.env` with unique installation secrets when no
+existing database is present. Create the admin account, sign in and use
+**Select Broker → Configure** to save broker keys. Keep `VALID_BROKERS` set;
+an existing `.env` broker keeps precedence for its own keys. See
+[Broker Configuration](connect-brokers/broker-configuration.md).
 
-# Generate secure random keys for APP_KEY and API_KEY_PEPPER:
-uv run python -c "import secrets; print(secrets.token_hex(32))"
-
-# Edit .env and update:
-# 1. APP_KEY (paste generated key)
-# 2. API_KEY_PEPPER (paste another generated key)
-# 3. VALID_BROKERS (comma-separated list of brokers to enable)
-# 4. Broker API credentials
-```
+Back up `.env` together with the database. Do not replace installation secrets
+as a routine upgrade step; existing encrypted data needs the original keys.
 
 > \[!NOTE] **Static IP whitelisting:** Many Indian brokers require you to whitelist a static IP address when generating API keys and secrets. If you are developing locally, you may need to whitelist your public IP. For cloud/VPS deployments, use the server's static IP. Check your broker's API documentation for specific requirements.
 
@@ -177,9 +172,13 @@ uv run app.py
 
 #### Production Mode (Linux only)
 
+Use the supplied launcher after installing the production dependencies. One
+worker is mandatory; eventlet is the default and gthread is opt-in. See
+[the worker guide](getting-started/gthread-migration.md) for setup and rollback.
+
 ```bash
 # Run with Gunicorn
-uv run gunicorn --worker-class eventlet -w 1 app:app
+install/openalgo-gunicorn.sh --bind 127.0.0.1:5000 app:app
 
 # IMPORTANT: Use -w 1 (one worker) for WebSocket compatibility
 ```
@@ -195,9 +194,9 @@ uv run gunicorn --worker-class eventlet -w 1 app:app
 #### Access Points
 
 * **Main app**: http://127.0.0.1:5000
-* **React frontend**: http://127.0.0.1:5000/react
+* **React frontend**: served at http://127.0.0.1:5000
 * **API documentation**: [OpenAlgo API v1](api-documentation/v1/README.md)
-* **API Analyzer**: http://127.0.0.1:5000/analyzer
+* **Analyzer mode**: switch the Live/Analyze control in the app header
 
 ***
 
@@ -227,7 +226,7 @@ openalgo/
 │   ├── auth.py               # Authentication routes
 │   ├── react_app.py          # Serves React SPA from frontend/dist/
 │   └── ...
-├── broker/                   # 37 broker plugin directories
+├── broker/                   # 38 broker plugin directories
 │   ├── zerodha/              # Reference implementation
 │   ├── dhan/                 # Modern API design
 │   ├── angel/                # AngelOne integration
@@ -392,9 +391,9 @@ npm run e2e
 
 # Manual testing:
 # 1. Web UI: http://127.0.0.1:5000
-# 2. React UI: http://127.0.0.1:5000/react
+# 2. React UI: http://127.0.0.1:5000
 # 3. API: run documented requests against http://127.0.0.1:5000/api/v1
-# 4. API Analyzer: http://127.0.0.1:5000/analyzer
+# 4. Analyzer mode: use the header mode control
 ```
 
 **Testing Checklist**
@@ -611,144 +610,18 @@ test('feature works end to end', async ({ page }) => {
 
 ### Adding a New Broker
 
-One of the most valuable contributions is adding support for new brokers. Here's a comprehensive guide:
+Start with the maintained [broker integration checklist](developers/design-documentation/broker-integration-checklist.md)
+and [broker folder reference](developers/design-documentation/33-broker-folder-explanations.md).
+The plugin must implement the current authentication, order, account, mapping,
+master-contract and streaming interfaces; copying old illustrative function
+stubs is not a working integration.
 
-#### 1. Broker Integration Structure
-
-Create a new directory under `/broker/your_broker_name/`:
-
-```
-broker/your_broker_name/
-├── api/
-│   ├── auth_api.py           # Authentication and session management
-│   ├── order_api.py          # Order placement, modification, cancellation
-│   ├── data.py               # Market data, quotes, historical data
-│   └── funds.py              # Account balance and margin
-├── database/
-│   └── master_contract_db.py # Symbol master contract management
-├── mapping/
-│   ├── order_data.py         # Transform OpenAlgo format to broker format
-│   └── transform_data.py     # General data transformations
-├── streaming/
-│   └── broker_adapter.py     # WebSocket adapter for live data
-└── plugin.json               # Broker configuration metadata
-```
-
-#### 2. Implement Required Modules
-
-**2.1 Authentication API (`api/auth_api.py`)**
-
-```python
-"""Authentication module for BrokerName."""
-
-def authenticate_broker(data):
-    """Authenticate user with broker.
-
-    Args:
-        data (dict): Authentication credentials
-
-    Returns:
-        dict: Authentication response with status and token
-    """
-    pass
-
-def get_auth_token():
-    """Retrieve stored authentication token.
-
-    Returns:
-        str: Active auth token or None
-    """
-    pass
-```
-
-**2.2 Order API (`api/order_api.py`)**
-
-```python
-"""Order management module for BrokerName."""
-
-def place_order_api(data):
-    """Place a new order with the broker."""
-    pass
-
-def modify_order_api(data):
-    """Modify an existing order."""
-    pass
-
-def cancel_order_api(order_id):
-    """Cancel an order."""
-    pass
-
-def get_order_book():
-    """Get all orders for the day."""
-    pass
-
-def get_trade_book():
-    """Get all executed trades."""
-    pass
-
-def get_positions():
-    """Get current open positions."""
-    pass
-
-def get_holdings():
-    """Get demat holdings."""
-    pass
-```
-
-**2.3 Data API (`api/data.py`)**
-
-```python
-"""Market data module for BrokerName."""
-
-def get_quotes(symbols):
-    """Get real-time quotes for symbols."""
-    pass
-
-def get_market_depth(symbol):
-    """Get market depth/order book."""
-    pass
-
-def get_historical_data(symbol, interval, start_date, end_date):
-    """Get historical OHLC data."""
-    pass
-```
-
-**2.4 Plugin Configuration (`plugin.json`)**
-
-```json
-{
-  "broker_name": "brokername",
-  "display_name": "Broker Name",
-  "version": "1.0.0",
-  "auth_type": "oauth2",
-  "api_base_url": "https://api.broker.com",
-  "features": {
-    "place_order": true,
-    "modify_order": true,
-    "cancel_order": true,
-    "websocket": true,
-    "market_depth": true,
-    "historical_data": true
-  }
-}
-```
-
-#### 3. Testing Your Broker Integration
-
-1. Add broker to `VALID_BROKERS` in `.env`
-2. Configure broker credentials in `.env`
-3. Test authentication flow
-4. Test each implemented endpoint with its documented request shape and automated API coverage
-5. Test WebSocket streaming (if supported)
-6. Validate error handling
-
-#### 4. Reference Implementations
-
-Study existing broker implementations:
-
-* `/broker/zerodha/` - Most complete implementation
-* `/broker/dhan/` - Modern API design
-* `/broker/angel/` - WebSocket streaming
+Register broker metadata in `plugin.json`, enable the ID in `VALID_BROKERS`,
+provide setup fields in `utils/broker_setup_guide.py`, and integrate the
+server-started login/callback helpers. Read keys when called so request-staged
+keys stay with the login they belong to. Validate broker identity, exchange and
+instrument support, normalized responses, reconnects and cleanup using the
+repository's broker test harnesses before making capability claims.
 
 ***
 
@@ -921,9 +794,11 @@ npm run check
     # Bad - Never do this!
     API_KEY = 'abc123xyz'
 
-    # Good - Use environment variables
+    # Read request-staged broker keys when called, not at module import.
     import os
-    API_KEY = os.getenv('BROKER_API_KEY')
+
+    def broker_api_key():
+        return os.getenv('BROKER_API_KEY')
     ```
 2.  **Validate all inputs at system boundaries**
 
@@ -932,8 +807,8 @@ npm run check
         if data.get('quantity', 0) <= 0:
             raise ValueError('Quantity must be positive')
 
-        valid_types = ['MARKET', 'LIMIT', 'SL', 'SLM']
-        if data.get('order_type') not in valid_types:
+        valid_types = ['MARKET', 'LIMIT', 'SL', 'SL-M']
+        if data.get('pricetype') not in valid_types:
             raise ValueError('Invalid order type')
     ```
 3.  **Use parameterized queries (SQLAlchemy ORM)**
@@ -967,16 +842,14 @@ npm run check
 2.  **Use caching**
 
     ```python
-    from cachetools import TTLCache
+    from utils.thread_safe_cache import LockedTTLCache
 
-    symbol_cache = TTLCache(maxsize=1000, ttl=300)
+    symbol_cache = LockedTTLCache(maxsize=1000, ttl=300)
 
     def get_symbol_info(symbol):
-        if symbol in symbol_cache:
-            return symbol_cache[symbol]
-        info = fetch_symbol_from_db(symbol)
-        symbol_cache[symbol] = info
-        return info
+        return symbol_cache.get_or_load(symbol, lambda: fetch_symbol_from_db(symbol))
+
+    # After committing a changed symbol: symbol_cache.invalidate(symbol)
     ```
 3.  **Minimize API calls: use batch endpoints**
 
@@ -1022,7 +895,7 @@ npm run check
 **Frontend Build Errors**
 
 ```bash
-# Ensure correct Node.js version (20, 22, or 24)
+# Match frontend/package.json: ^22.23.4 || ^24.22.1 || >=26.12.1
 node --version
 
 # Clean install
@@ -1054,7 +927,7 @@ WEBSOCKET_HOST='127.0.0.1'
 WEBSOCKET_PORT='8765'
 
 # Ensure only one worker with Gunicorn:
-uv run gunicorn --worker-class eventlet -w 1 app:app
+install/openalgo-gunicorn.sh --bind 127.0.0.1:5000 app:app
 
 # Check firewall settings for port 8765
 ```

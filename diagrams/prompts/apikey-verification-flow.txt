@@ -1,0 +1,14 @@
+Use case: infographic-diagram. OpenAlgo technical documentation image, landscape 3:2, deep navy #0b1020, navy panels thin cyan/teal/violet/amber/green outlines, white headings pale gray text, large crisp sans-serif, simple outline icons, generous whitespace. No photos, 3D, watermark, extra facts.
+Title: "API keys: fast checks from memory"
+Subtitle: "Only cache misses need the full Argon2 database check."
+Left outside boundary: "Your API call" / "Client sends apikey".
+Large boundary labeled "verify_api_key() · database/auth_db.py". Inside, main row LEFT TO RIGHT:
+1 "Fingerprint" / "sha256(apikey)"
+2 "Known bad key?" / "invalid_api_key_cache" / "512 keys · 5 min"
+3 "Known good key?" / "verified_api_key_cache" / "1024 keys · 10 h"
+4 "Full Argon2 check" / "Argon2 + pepper" / "ApiKeys.query.all()" / "Check every saved key".
+Arrows: Your API call -> Fingerprint -> Known bad key. Known bad -> Known good labeled "miss". Known good -> Full check labeled "miss".
+Bottom outcomes aligned below respective nodes: Known bad has downward "hit" arrow to "Reject immediately" / "Invalid API key · None" / "No database work". Known good has downward "hit" arrow to "Accept from memory" / "Run as user_id". Full check has two distinct branches: down-left labeled "hash matches" to "Accept + cache good" / "Run as user_id"; down-right labeled "no match" to "Reject + cache bad" / "Invalid API key · None".
+Below rejection from full check ONLY, draw arrow to "Invalid key tracker" / "InvalidAPIKeyTracker · db/logs.db" / "Caller IP + 16-character hash prefix" / "Auto-ban only if enabled and threshold reached". Do not draw tracker arrow from immediate cache rejection.
+Bottom note: "Caches store SHA-256 fingerprints, never raw keys. Regenerating a key clears both caches: the old key stops working immediately."
+All arrowheads and miss/hit labels unambiguous, outside text.

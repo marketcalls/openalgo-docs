@@ -16,7 +16,7 @@ broker/
 │   │   ├── data.py                   # class BrokerData
 │   │   ├── funds.py                  # get_margin_data()
 │   │   ├── margin_api.py             # order margin preview (optional)
-│   │   └── gtt_api.py                # GTT lifecycle (Dhan and Zerodha only)
+│   │   └── gtt_api.py                # GTT lifecycle (six broker implementations)
 │   ├── mapping/
 │   │   ├── transform_data.py         # OpenAlgo request to broker request
 │   │   ├── order_data.py             # broker response to OpenAlgo shape
@@ -35,10 +35,10 @@ broker/
 │   └── ... (same shape)
 ├── angel/
 │   └── ... (same shape)
-└── ... (37 broker plugins total)
+└── ... (38 broker plugins total)
 ```
 
-The streaming files are named after the broker, so Angel uses `broker/angel/streaming/angel_adapter.py` and so on. Not every plugin ships every optional module: `gtt_api.py` exists only for Dhan and Zerodha, and `<broker>_order_adapter.py` only where the broker pushes order updates. `mapping/` and `database/` have no `__init__.py` in most plugins.
+The streaming files are named after the broker, so Angel uses `broker/angel/streaming/angel_adapter.py` and so on. Not every plugin ships every optional module: `gtt_api.py` exists for Angel One, Dhan, Fyers, Rupeezy, Upstox and Zerodha, and `<broker>_order_adapter.py` only where the broker pushes order updates. `mapping/` and `database/` have no `__init__.py` in most plugins.
 
 ## File Explanations
 
@@ -272,7 +272,7 @@ Broker metadata plus a small amount of capability configuration.
 > URLs, credentials or rate limits. Authentication methods, API endpoints and WebSocket
 > URLs are handled directly in the broker's Python code. Of the 37 plugins, only
 > `deltaexchange` declares `"broker_type": "crypto"` with `"leverage_config": true`;
-> the other 36 declare `"broker_type": "IN_stock"` with `"leverage_config": false`.
+> the other 37 declare `"broker_type": "IN_stock"` with `"leverage_config": false`.
 
 ## Adding a New Broker
 
@@ -301,7 +301,7 @@ touch broker/newbroker/{api,mapping,database,streaming}/__init__.py
 VALID_BROKERS = 'zerodha,dhan,angel,newbroker'
 ```
 
-`VALID_BROKERS` in `.sample.env` currently lists all 37 plugins.
+`VALID_BROKERS` in `.sample.env` currently lists all 38 plugins.
 
 ## Field Mapping Examples
 

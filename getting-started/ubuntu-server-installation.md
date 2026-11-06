@@ -43,7 +43,7 @@ OpenAlgo runs on Ubuntu, Debian, Raspbian, RHEL, Rocky, AlmaLinux, Amazon Linux,
    * Go to SSL/TLS section
    * Set encryption mode to **Full (strict)**
 
-**Broker Setup (Required)**
+**Broker Setup (After Installation)**
 
 * Obtain your broker's API credentials per the OpenAlgo documentation:
   * API Key
@@ -88,10 +88,9 @@ sudo ./install.sh
 The script will interactively prompt you for:
 
 * Your domain name (root domains and subdomains both supported)
-* Broker selection from the 37 installed plugins
-* Broker API credentials (Key + Secret)
-* For XTS-based brokers (5paisa XTS, Compositedge, IIFL, etc.): additional market-data API key/secret
 * **Enable Remote MCP?** (y/N), opt-in to expose `/mcp` and `/oauth/*` for hosted AI clients (Claude.ai, ChatGPT) at the same domain. You can also enable this later from the admin UI
+
+The installer leaves broker fields empty. After creating your account, open [Broker Configuration](../connect-brokers/broker-configuration.md) to save keys; it shows the redirect URL to register with the broker. An existing installation keeps its keys when the installer preserves its data.
 
 The installer will:
 
@@ -128,7 +127,7 @@ chmod +x install-multi.sh
 sudo ./install-multi.sh
 ```
 
-`install-multi.sh` asks how many instances you want, then collects a domain, broker and credentials for each. Instances are numbered, not named after the domain:
+`install-multi.sh` asks how many instances you want, then collects a domain and instance configuration for each. Add that instance's broker keys in its own Broker Configuration after signing in. Instances are numbered, not named after the domain:
 
 ```
 /var/python/openalgo-flask/openalgo1/        instance 1 repo
@@ -148,9 +147,15 @@ Each instance also gets its own ports, allocated in sequence from the single-dep
 
 Each deployment gets its own service, configuration, virtual environment, SSL certificate, and log file.
 
-{% hint style="warning" %}
-`install/update.sh` currently detects the single-deploy layout at `/var/python/openalgo` and an older multi-deploy layout of the form `/var/python/openalgo-flask/<name>/openalgo/` with a service called `openalgo-<name>`. It does not recognise the `openalgo1`, `openalgo2` directories that the current `install-multi.sh` creates. Update those instances by hand: `cd /var/python/openalgo-flask/openalgo1 && sudo git pull`, re-sync dependencies, then `sudo systemctl restart openalgo1`.
-{% endhint %}
+To update a numbered instance, run the updater from inside that instance, one at a time:
+
+```bash
+cd /var/python/openalgo-flask/openalgo1
+sudo bash install/update.sh
+```
+
+The updater recognizes the numbered layout and service. Back up the instance's matching `.env`, databases and user strategies before updating.
+
 
 **3. Verify the Installation**
 
@@ -332,14 +337,14 @@ The script updates `.env` (`HOST_SERVER`, `WEBSOCKET_URL`), the Nginx vhost's `s
     Contains `APP_KEY`, `API_KEY_PEPPER`, and broker credentials. The installer sets `chmod 600` on it and ownership to the service user (`www-data` on Ubuntu/Debian, `nginx` on RHEL, `http` on Arch). Never commit this file or expose it via Nginx.
 4.  **Auto-logout**
 
-    Indian broker tokens expire daily at \~3:00 AM IST and the app forces a re-login at that time. For 24/7 crypto brokers (Delta Exchange), the installer detects this and disables the auto-logout.
+    Indian broker tokens expire daily at \~3:00 AM IST and the app forces a re-login at that time. Crypto broker sessions are recognized separately by the broker-key session logic; an Indian broker's default rollover remains 03:00 IST.
 5.  **Single user per deployment**
 
     OpenAlgo is designed for one trader per server. There is no multi-user model, server access equals full control of the broker session. Don't share the host.
 
 #### Post-Installation
 
-1. Configure your broker login on the dashboard
+1. Sign in, open Broker Configuration, save the broker keys, and start its login from Select Broker
 2. Set up monitoring and Telegram alerts if desired
 3. Periodically review `log/errors.jsonl` for issues
 4. Apply security updates regularly

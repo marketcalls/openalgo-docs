@@ -169,7 +169,7 @@ overall = latency_session.query(
 sla_200ms = (overall.under_200 / overall.total * 100) if overall.total else 0
 ```
 
-The whole statistics block is computed in a handful of aggregate queries and cached for 60 seconds (`_stats_cache`, a `TTLCache` of size 1). Percentiles are computed only over the last `PERCENTILE_WINDOW_DAYS` (30) days so the fetch cannot grow without bound.
+The whole statistics block is computed in a handful of aggregate queries and cached for 60 seconds (`_stats_cache`, a `LockedTTLCache` of size 1). Percentiles are computed only over the last `PERCENTILE_WINDOW_DAYS` (30) days so the fetch cannot grow without bound.
 
 ## Broker Comparison
 

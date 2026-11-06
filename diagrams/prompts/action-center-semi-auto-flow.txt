@@ -1,0 +1,17 @@
+Use case: infographic-diagram. Landscape 3:2 OpenAlgo documentation diagram. Deep navy #0b1020, navy cards, thin cyan/teal/violet/amber/green outlines, white headings and pale gray text, large crisp sans-serif, simple outline icons. Generous space, explicit directional arrowheads, no 3D, photos, watermark, invented text.
+Title: "Semi-auto: review before submission"
+Subtitle: "Eligible live API-key placements wait. Analyzer goes directly to sandbox."
+Use two horizontal sections. Top is routing, bottom is review. Top routing row left to right:
+"Order request" / "Strategy + API key" -> decision "Close, cancel, modify or lookup?".
+YES arrow DOWN from this first decision to side note card "Never queued" / "Semi-auto live: close, cancel, modify refused (403)." / "Analyzer: execute in sandbox. Read-only calls run."
+NO arrow RIGHT from first decision to second decision "Semi-auto mode?" / "Per-user setting · get_order_mode()".
+NO arrow DOWN from second decision to "Execute now" / "Auto: broker, or sandbox with Analyzer."
+YES arrow RIGHT from second decision to card "Pending queue" / "queue_order() · pending_orders" / "status = pending" / "Best-effort Socket.IO: pending_order_created" / "HTTP 200 · mode = semi_auto · pending_order_id".
+Arrow from Pending queue DOWN to lower section "Action Center review" / "Approve · reject · leave pending".
+Three distinct branches from Review:
+Top branch labeled "Approve" -> "Claim sending once" / "Compare-and-set approval" -> "Attempt submission" / "Normal order service + auth token" / "Sandbox if Analyzer is on" -> "Save confirmed result" / "Broker ID + status; reconcile unanswered sends".
+Middle branch labeled "Reject" -> "Reject order" / "status = rejected · reason stored".
+Bottom branch labeled "Ignore" -> "Leave pending".
+Confirmed result and Reject order each have their own arrow to shared "Refresh screens" / "pending_order_updated".
+At bottom, amber note exactly: "HTTP 200 pending is not broker success. Sending is not a confirmed fill. Interrupted or unanswered sends are never automatically resent. The UI may label a lost reply rejected: reconcile with the broker."
+Do not merge branch arrows. Large readable text; exact code identifiers.

@@ -1,0 +1,19 @@
+Use case: infographic-diagram. Polished OpenAlgo technical documentation image, landscape 3:2. Deep navy #0b1020 background, navy cards thin cyan/teal/violet/amber/green outlines, white headings pale gray text, large readable sans-serif, simple outline icons, generous whitespace, clear arrowheads outside text. No3D/photo/watermark/invented facts.
+Title: "How waiting sandbox orders fill"
+Subtitle: "Recheck on every live tick, or every5s in polling mode."
+Top row flow:
+"1 · Pending orders" / "open · trigger pending" branches to TWO parallel source cards "2a · Live tick" / "WebSocket: LTP stands in for bid + ask" and "2b · Quote batch" / "Polling: one multiquotes call every5s" / "No per-symbol fallback".
+Both source cards -> decision "3 · Already filled?" / "Another path booked a trade?".
+YES arrow DOWN -> terminal "Mark complete" / "Publish fill event".
+NO arrow RIGHT -> decision "4 · Price sane?" / "Valid LTP inside day high-low".
+NO arrow RIGHT -> "Keep pending" / "Next tick / cycle".
+YES arrow DOWN from Price sane -> middle boundary "5 · Fill rules by type", with FIVE PARALLEL short rule cards, no sequence arrows:
+"MARKET" / "BUY at ask, SELL at bid, else LTP"
+"LIMIT" / "BUY: LTP <= price" / "SELL: LTP >= price" / "Fill at limit price"
+"SL" / "Trigger crossed + limit satisfiable" / "Fill at LTP"
+"SL-M" / "Trigger crossed" / "Fill at LTP"
+"Trigger pending" / "SL-M fills on trigger" / "SL fills, or moves to open if limit not met".
+Rule boundary dashed arrow UP to Keep pending labeled "rule not met". Rule boundary arrow DOWN labeled "any type that fills" -> "6 · Book trade" / "_execute_order" / "Write trade row; order complete".
+Book trade -> RIGHT "7 · Update position" / "_update_position" / "New, add, reduce, close or reverse" / "Release margin + book P&L" -> RIGHT "8 · Check margin" / "validate_margin_consistency" / "Blocked margin matches positions; auto-reconcile mismatch".
+Book trade also arrow DOWN -> "EventBus" / "Fill + order-update events".
+Large legible exact rule text. Separate terminal for already-filled recovery; never book twice.

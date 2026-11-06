@@ -1,5 +1,9 @@
 # TradeSmart
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 TradeSmart is an Indian discount broker known for its flat-fee brokerage model that keeps trading costs low across equity, derivatives, and commodities. The platform offers fast order execution, real-time data, and a clean web and mobile experience. For automation, TradeSmart exposes a secure REST API built on the Noren v2 stack, letting you integrate it with OpenAlgo using a generated App ID and Secret Key.
 
 ### Getting API Credentials

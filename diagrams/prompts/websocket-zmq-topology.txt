@@ -1,0 +1,15 @@
+Use case: infographic-diagram. Polished OpenAlgo technical documentation landscape 3:2. Deep navy #0b1020 background, navy cards thin cyan/teal/violet/amber/green borders, white headings pale gray body, crisp large sans-serif, outline icons, generous space, clear arrowheads outside text. No3D/photos/watermark/invented features.
+Title: "Every live update meets on one private bus"
+Subtitle: "Publish locally, route available updates to authenticated subscribers."
+Landscape with large top-middle boundary "WebSocket proxy · separate production process". Outside left card "Your broker" / "Market-data feeds". Inside proxy boundary, LEFT TO RIGHT cards:
+"Broker streaming adapters" / "Normalize broker ticks" / "PUB · connect"
+"Bus listener" / "Only binder · all bus topics" / "SUB · bind"
+"Subscription index" / "Find matches; route available ticks" / "zmq_listener"
+"WebSocket server" / "Sign in with API key" / "Port8765 · WEBSOCKET_PORT".
+Arrow Your broker -> adapters. No direct adapters-to-listener arrow: data travels through bus below.
+Inside flow Bus listener -> Subscription index -> WebSocket server. Server points RIGHT to outside card "Connected tools" / "Authenticated clients" / "SDKs · React market data · risk monitor".
+Below proxy boundary a separate card "Internal ZeroMQ bus" / "tcp://127.0.0.1:5555" / "ZMQ_HOST : ZMQ_PORT" / "Local only · never internet-exposed".
+Adapters have a directed DOWNWARD arrow into bus labeled "publish". Bus has a distinct UPWARD arrow into Bus listener labeled "bus topics".
+Separate bottom-right boundary "Flask web app process" containing "Shared publisher" / "SharedZmqPublisher" / "Cache invalidation + order updates" / "PUB · connect". Dashed arrow LEFT from Shared publisher into ZeroMQ bus labeled "publish". Flask boundary must remain OUTSIDE proxy process boundary.
+Bottom note: "Both Gunicorn worker classes use one child proxy; Docker starts it separately. Dev uses a real thread. Fixed port: no publisher bind or fallback scan."
+Arrowheads exactly in stated directions; keep endpoint and process separation readable.

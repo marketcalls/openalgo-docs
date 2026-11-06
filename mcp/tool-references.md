@@ -4,7 +4,7 @@
 
 Companion reference to the main MCP setup guide. Once the MCP server is wired into Claude Desktop, Cursor, Windsurf, Antigravity, or any other MCP-capable client, you can ask for these operations in plain English; the client decides which tool to call.
 
-The supported tools are grouped below. The live MCP `tools/list` response is authoritative for the exact registry and schemas exposed by a running version. Each entry includes:
+The 49 tools declared in the shared registry are grouped below. Example symbols/expiries are illustrative; resolve an available contract and its lot/freeze limits before placing an order. The live MCP `tools/list` response is authoritative for the exact registry and schemas exposed by a running version. Each entry includes:
 
 * What the tool does
 * Key parameters (required / optional)
@@ -16,9 +16,17 @@ The supported tools are grouped below. The live MCP `tools/list` response is aut
 * **Product type defaults**: `MIS` for equity. Use `NRML` for F\&O carry; `CNC` for delivery.
 * **Exchange codes**: `NSE`, `BSE`, `NFO`, `BFO`, `CDS`, `BCD`, `MCX`, `NCDEX` + `NSE_INDEX` / `BSE_INDEX` for index values.
 * **Toolsets**: every tool belongs to exactly one of `orders`, `account`, `marketdata`, `research`, or `utility`. Those five names are the only values `OPENALGO_MCP_TOOLSETS` accepts. The section headings below group tools by task, which does not always match the toolset: `close_all_positions` and `analyzer_toggle` are in `orders`, `calculate_margin` and `analyzer_status` are in `account`, and the calendar and instrument tools are in `marketdata`.
-* **Lot size**: never hardcoded. The model will call `get_option_symbol` / `get_option_chain` / `get_symbol_info` to read the live `lotsize` from the broker master contract, then compute `quantity = lots × lotsize` for you.
+* **Lot size**: ask the assistant to resolve the exact contract using `get_option_symbol`, `get_option_chain` or `get_symbol_info`, then check `quantity = lots × lotsize` and the applicable freeze limit before sending. A prompt is not a guarantee the assistant performs that lookup.
 
 ***
+
+### Responses and order outcomes
+
+Tool replies use a trust envelope, `{"_openalgo_mcp_security": {...}, "data": {...}}`; broker-relayed text is data, not an instruction to the assistant. Failures can include a structured `error` object. A timed-out write can include `retry_safe: false`, `verify_first: true` and `verify_with`; verify broker books before retrying because an order may already exist. A broker reply lost after sending can also surface the REST possible-placement error. There is no universal client idempotency key.
+
+HTTP/tool success can mean an eligible entry was queued for Action Center approval (`mode: "semi_auto"`, `pending_order_id`), not sent to the broker. A placement acknowledgement still needs fill confirmation; inspect each basket/split child result. See [REST outcomes](../api-documentation/v1/README.md#order-outcomes-and-retries).
+
+`OPENALGO_MCP_READ_ONLY=1` removes state-changing tools, and `OPENALGO_MCP_TOOLSETS` narrows the registered toolsets at startup. The installed server's tool schemas and annotations remain authoritative.
 
 ### Order Management
 
@@ -141,10 +149,12 @@ Change price / quantity / type / trigger on a working order.
 
 #### `cancel_all_orders`
 
+Cancels eligible pending orders across the active account. `strategy` is a tracking label, not a filter; it can affect manual and other-strategy orders. Analyzer mode uses sandbox orders.
+
 **Prompts:**
 
 * _"Cancel every pending order I have"_
-* _"Kill all open orders for strategy 'nifty scalper'"_
+* _"Cancel eligible pending account orders and label the request 'nifty scalper'"_
 
 ***
 
@@ -152,7 +162,7 @@ Change price / quantity / type / trigger on a working order.
 
 #### `close_all_positions`
 
-Square off everything for a strategy.
+Request a square-off of the active account's eligible positions. `strategy` is a tracking label, not a filter; it can affect manual and other-strategy positions. Verify remaining positions and executions afterwards. Analyzer mode uses sandbox positions.
 
 **Prompt:** _"Close all my open positions now"_
 
@@ -363,7 +373,7 @@ Bulk instrument master download for an exchange (or all exchanges when `exchange
 
 #### `get_index_symbols`
 
-Returns the full standardized OpenAlgo index symbol list (57 NSE + 40 BSE), rolled out uniformly across every supported broker.
+Returns the standardized OpenAlgo index-name inventory. The names are shared across brokers, but this inventory does not guarantee that the active broker publishes history/quotes for every listed index. Check symbol availability before requesting data.
 
 **Prompts:**
 

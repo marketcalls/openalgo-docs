@@ -1,0 +1,21 @@
+Use case: infographic-diagram.
+Create a polished OpenAlgo documentation diagram, landscape 3:2. Deep navy background #0b1020, navy cards with thin cyan/teal/violet/amber/green outlines, white headings, pale gray body text, crisp modern sans-serif, large readable text, generous whitespace, simple outline icons. Flat vector-like raster. Clear arrowheads outside cards. No photos, 3D, watermarks, invented features, decorative code or clutter. Match the approved OpenAlgo documentation style. Exact labels below.
+Title: "Rebuild your intraday P&L from trades and prices"
+Subtitle: "Page load or Refresh fetches data and replays positions minute by minute."
+Landscape architecture with top data row and bottom calculation row.
+Top left card "/pnl-tracker page" / "Metric cards: current/max/min MTM and max drawdown" / "P&L + drawdown panes · openalgo-charts".
+Arrow right labeled "load / Refresh" into "P&L endpoint" / "POST /pnltracker/api/pnl" / "Check login; load auth token + API key" / "auth_db".
+Then arrow right into "Data services · API key" group with three parallel readable rows:
+"Today's trades · tradebook_service"
+"Current positions · positionbook_service"
+"1-minute bars · history_service · source=api".
+Right support cards: "Your broker" / "Trades · positions · minute bars" and "Sandbox · sandbox.db" / "Analyzer on: trades and positions only".
+Data services→broker. Dashed arrows from ONLY tradebook and positionbook rows→sandbox; no arrow from history to sandbox.
+Data-services group points DOWN into bottom calculation boundary titled "blueprints/pnltracker.py". Four cards left-to-right inside:
+"1 · Position windows" / "Group trades by symbol" / "Include carried positions"
+→ "2 · Pace history" / "2 calls/sec"
+→ "3 · MTM per window" / "Long: (close − entry) × qty" / "Short: (entry − close) × qty" / "Realized P&L after exit"
+→ "4 · Portfolio total" / "Total_PnL · running peak · drawdown" / "Zero fill from 09:15".
+Portfolio total points to "JSON response" / "Current/max/min MTM with times" / "max_drawdown" / "pnl_series · drawdown_series".
+JSON response points UP/LEFT back into /pnl-tracker page.
+Avoid invented chart plots. Ensure sandbox receives trades/positions only and minute bars stay broker sourced. Clear readable formulas.

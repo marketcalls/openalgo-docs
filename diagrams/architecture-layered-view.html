@@ -25,7 +25,7 @@
   </div>
 
   <div class="zone" style="--c:var(--app); margin-top:64px; padding:44px 30px 30px">
-    <div class="zl" style="left:252px"><span data-icon="server"></span>OpenAlgo server · port 5000</div>
+    <div class="zl" style="left:252px"><span data-icon="server"></span>OpenAlgo server · one worker</div>
     <div class="col" style="gap:48px">
       <div class="node security" id="mw"><div class="ic" data-icon="shield"></div><div class="tx"><b>Front-door guards</b><span>logs traffic, bans abusive IPs, sets browser security headers</span>
         <div class="chips"><span class="chip">traffic log</span><span class="chip">IP ban</span><span class="chip">CSP</span><span class="chip">CORS</span></div></div>
@@ -34,22 +34,22 @@
 
       <div class="g4" style="align-items:stretch">
         <div class="node app" id="bp" style="grid-column:1 / span 2"><div class="ic" data-icon="layout-dashboard"></div><div class="tx"><b>Web app pages</b><span>login with password and TOTP, CSRF protected</span>
-          <div class="chips"><span class="chip">~60 blueprints</span></div></div></div>
+          <div class="chips"><span class="chip">session APIs</span></div></div></div>
         <div class="node security" id="api" style="grid-column:3 / span 2"><div class="ic" data-icon="key-round"></div><div class="tx"><b>REST API v1</b><span>API key, field checks and rate limits</span>
-          <div class="chips"><span class="chip">restx_api</span></div></div></div>
+          <div class="chips"><span class="chip">74 methods / paths</span></div></div></div>
       </div>
 
       <div class="node service hero big" id="svc"><div class="ic" data-icon="layers"></div><div class="tx"><b>Service layer</b><span>the business logic: orders, market data, options, strategies, Flow</span>
-        <div class="chips"><span class="chip">~85 modules</span></div></div>
+        <div class="chips"><span class="chip">shared services</span></div></div>
         <i class="anc x12 t" id="svL"></i><i class="anc x34 t" id="svR"></i>
         <i class="anc x1 b" id="sv1"></i><i class="anc x2 b" id="sv2"></i><i class="anc x3 b" id="sv3"></i><i class="anc x4 b" id="sv4"></i></div>
 
       <div class="g4" style="align-items:stretch; margin-top:24px">
-        <div class="node security" id="ac" style="border-style:dashed"><div class="ic" data-icon="hand"></div><div class="tx"><b>Action Center</b><span>holds orders for your approval in semi-auto mode</span></div></div>
-        <div class="node data" id="sbx"><div class="ic" data-icon="test-tube-diagonal"></div><div class="tx"><b>Sandbox engine</b><span>virtual orders when Analyzer mode is on</span></div></div>
+        <div class="node security" id="ac" style="border-style:dashed"><div class="ic" data-icon="hand"></div><div class="tx"><b>Action Center</b><span>holds eligible live placements for approval</span></div></div>
+        <div class="node data" id="sbx"><div class="ic" data-icon="test-tube-diagonal"></div><div class="tx"><b>Sandbox engine</b><span>sandbox orders when Analyzer mode is on</span></div></div>
         <div class="node service" id="bus"><div class="ic" data-icon="bell"></div><div class="tx"><b>Event bus</b><span>logs, live screen, Telegram, WhatsApp, strategy book</span></div></div>
         <div class="node broker" id="plug"><div class="ic" data-icon="plug-zap"></div><div class="tx"><b>Broker plugins</b><span>translate symbols and orders for each broker</span>
-          <div class="chips"><span class="chip">37 plugins</span></div></div></div>
+          <div class="chips"><span class="chip">38 plugins</span></div></div></div>
       </div>
     </div>
   </div>
@@ -61,6 +61,7 @@
     <div class="node broker big" id="brokers" style="grid-column:4"><div class="ic" data-icon="radio-tower"></div><div class="tx"><b>Your broker</b><span>broker API</span></div></div>
   </div>
 
+  <div class="note" style="margin-top:32px; max-width:1200px"><span data-icon="lightbulb"></span><div>Production: one worker process, eventlet by default or opt-in gthread with 64 request threads. The development server uses standard threading.</div></div>
   <div class="legend">
     <span style="--c:var(--client)"><i></i>Your tools</span>
     <span style="--c:var(--security)"><i></i>Protection and checks</span>

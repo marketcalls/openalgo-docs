@@ -40,7 +40,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/tradebook \
       "exchange": "NSE",
       "orderid": "250408000989443",
       "product": "MIS",
-      "quantity": 0.0,
+      "quantity": 1.0,
       "average_price": 1180.1,
       "timestamp": "13:58:03",
       "trade_value": 1180.1
@@ -51,7 +51,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/tradebook \
       "exchange": "NSE",
       "orderid": "250408001086129",
       "product": "MIS",
-      "quantity": 0.0,
+      "quantity": 1.0,
       "average_price": 83.74,
       "timestamp": "14:28:49",
       "trade_value": 83.74
@@ -80,6 +80,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/tradebook \
 | Field | Type | Description |
 |-------|------|-------------|
 | orderid | string | Order ID that generated this trade |
+| tradeid | string | Per-fill ID where supplied by the broker; not universal across adapters |
 | symbol | string | Trading symbol |
 | exchange | string | Exchange code |
 | action | string | BUY or SELL |
@@ -95,7 +96,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/tradebook \
 - A single order may have **multiple trades** (partial fills)
 - **trade_value** is the monetary value of the trade
 - Use for trade reconciliation and P&L calculation
-- Trades are sorted by execution time
+- Timestamp format and row ordering are broker-dependent. Zerodha uses fill time, falling back to order time; `orderid` alone does not identify an individual fill
 
 ## Difference: OrderBook vs TradeBook
 

@@ -2,13 +2,15 @@
 
 ## Overview
 
-OpenAlgo provides Docker support for containerized deployment with **3-stage builds** (Python builder, Frontend builder, Production), IST timezone configuration, and proper security isolation. The Docker setup uses Python 3.12, Gunicorn with Eventlet workers, and runs as a non-root user. It includes Railway/cloud deployment support with automatic `.env` generation.
+OpenAlgo provides Docker support for containerized deployment with **3-stage builds** (Python builder, Frontend builder, Production), IST timezone configuration, and proper security isolation. The Docker setup uses Python 3.12, one Gunicorn eventlet worker by default or opt-in gthread with 64 request threads, and runs as a non-root user. It includes Railway/cloud deployment support with automatic `.env` generation.
 
 ## Architecture Diagram
 
 <figure><img src="../../.gitbook/assets/diagram-docker-build-and-runtime.png" alt="Docker three-stage build (python-builder, frontend-builder, production) and start.sh runtime with WebSocket proxy, Gunicorn and ZeroMQ bus"><figcaption></figcaption></figure>
 
 ## Dockerfile
+
+The maintained `Dockerfile` in the application repository is authoritative. The excerpt below illustrates the build stages; retain the current launcher/helper line-ending normalization and numerical-library environment limits when building production images.
 
 ```dockerfile
 # ------------------------------ Python Builder Stage ----------------------- #
@@ -72,7 +74,7 @@ services:
       - "${FLASK_PORT:-5000}:5000"
       - "${WEBSOCKET_PORT:-8765}:8765"
 
-    # persistent DB, strategies, logs + mount the host .env read-only so dotenv can read it
+    # persistent DB, strategies, logs + mount the existing host .env read/write for startup rotation and setting saves
     volumes:
       - openalgo_db:/app/db
       - openalgo_log:/app/log            # Application logs (named volume)
@@ -162,94 +164,13 @@ Container /app/
 └── app.py                 # Main application
 ```
 
-## Start Script
+## Start Script And Production Workers
 
-The `start.sh` script is a sophisticated 246-line entrypoint that handles:
+The maintained source is `start.sh` in the application repository. It prepares directories, generates/restores configuration for supported cloud deployments, runs registered upgrade migrations, and starts the market-data proxy separately from Gunicorn. Eventlet remains the default. When `.env` chooses gthread, it starts the supplied launcher with one worker, 64 request threads, graceful shutdown and proxy supervision.
 
-1. **Railway/Cloud Environment Detection** - Auto-generates `.env` from environment variables
-2. **Directory Setup** - Creates required directories with proper permissions
-3. **Database Migrations** - Runs `upgrade/migrate_all.py` if present
-4. **WebSocket Proxy** - Starts in background with PID tracking
-5. **Signal Handling** - Graceful shutdown on SIGTERM/SIGINT
-6. **Gunicorn Startup** - Eventlet worker with optimized settings
+Both production workers require exactly one worker process. The proxy SUB socket binds the fixed loopback ZMQ endpoint; all broker, cache-invalidation and order-update publishers connect. Do not publish port 5555.
 
-```bash
-#!/bin/bash
-# start.sh (simplified overview - actual script is 246 lines)
-
-echo "[OpenAlgo] Starting up..."
-
-# ============================================
-# RAILWAY/CLOUD ENVIRONMENT DETECTION
-# ============================================
-# If HOST_SERVER is set and no .env exists, auto-generate .env
-# with 40+ configuration variables including:
-# - Broker configuration
-# - Database URLs
-# - CORS, CSP, CSRF settings
-# - Rate limiting
-# - WebSocket/ZeroMQ configuration
-
-# ============================================
-# DIRECTORY SETUP
-# ============================================
-for dir in db log log/strategies strategies strategies/scripts keys; do
-    mkdir -p "$dir" 2>/dev/null || true
-done
-
-# ============================================
-# DATABASE MIGRATIONS
-# ============================================
-if [ -f "/app/upgrade/migrate_all.py" ]; then
-    /app/.venv/bin/python /app/upgrade/migrate_all.py
-fi
-
-# ============================================
-# WEBSOCKET PROXY SERVER
-# ============================================
-/app/.venv/bin/python -m websocket_proxy.server &
-WEBSOCKET_PID=$!
-
-# ============================================
-# SIGNAL HANDLING
-# ============================================
-cleanup() {
-    echo "[OpenAlgo] Shutting down..."
-    kill $WEBSOCKET_PID 2>/dev/null
-    exit 0
-}
-trap cleanup SIGTERM SIGINT
-
-# ============================================
-# GUNICORN STARTUP
-# ============================================
-APP_PORT="${PORT:-5000}"  # Railway uses PORT env var
-mkdir -p /tmp/gunicorn_workers
-
-exec /app/.venv/bin/gunicorn \
-    --worker-class eventlet \
-    --workers 1 \
-    --bind 0.0.0.0:${APP_PORT} \
-    --timeout 300 \
-    --graceful-timeout 30 \
-    --worker-tmp-dir /tmp/gunicorn_workers \
-    --log-level warning \
-    app:app
-```
-
-### Key Differences from Simple Script
-
-| Feature | Old (6 lines) | Actual (341 lines) |
-|---------|---------------|-------------------|
-| Cloud Support | None | Full Railway/Render support |
-| .env Generation | None | 40+ variables auto-generated |
-| Migrations | None | Auto-runs on startup |
-| Signal Handling | None | Graceful shutdown |
-| Timeout | 120s | 300s |
-| Graceful Timeout | None | 30s |
-| Worker Temp Dir | Default | /tmp/gunicorn_workers |
-| Control Socket | Enabled | Disabled with `--no-control-socket` |
-| Compromised-key preflight | None | Blocks startup on the known leaked `APP_KEY`/`API_KEY_PEPPER` when `.env` is not writable |
+For gthread, give the container at least 45 seconds to stop, allowing its 30-second drain plus cleanup. Desktop runners already configure this; Compose uses `stop_grace_period: 45s`. See [worker selection](../../getting-started/gthread-migration.md). A normal restart retains the existing image; rebuild/pull and recreate to apply new application code.
 
 ## Build Commands
 
@@ -264,7 +185,8 @@ docker run -d \
   -p 8765:8765 \
   -v $(pwd)/db:/app/db \
   -v $(pwd)/log:/app/log \
-  -v $(pwd)/.env:/app/.env:ro \
+  --stop-timeout 45 \
+  -v $(pwd)/.env:/app/.env \
   openalgo
 
 # View logs

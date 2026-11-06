@@ -1,0 +1,38 @@
+Use case: infographic-diagram.
+Asset type: sample replacement image for OpenAlgo technical documentation.
+Create a polished, accurate, very readable documentation diagram, landscape 3:2 aspect ratio, generous margins. Flat vector-like infographic rendered as a raster image. Deep navy background (#0b1020), slightly lighter navy cards with thin colored outlines, white headings, pale gray body text, crisp modern sans-serif typography. Restrained cyan, teal, violet, amber and green accents. Small simple outline icons. No 3D, no photos, no gradients obscuring text, no decorative pseudo-code, no invented UI, no watermark.
+
+Title: "Broker login & saved keys"
+Subtitle: "Store keys for multiple brokers. Use one active broker session."
+
+Six equally sized cards in two rows of three, with unambiguous numbered steps and arrows forming a snake:
+top left 1 -> top middle 2 -> top right 3 -> bottom right 4 -> bottom middle 5 -> bottom left 6.
+Use right-pointing arrows across top row, a downward arrow on right, and left-pointing arrows across bottom row. Arrows stay between cards, never behind text. Step 6 has a subtle green highlight. Each card has a short heading, one body paragraph and an optional small code-style label. Render every word legibly, with large type and ample spacing.
+
+Exact card text:
+1. "Choose a broker"
+"Open Broker Configuration and save keys before broker login."
+Small label: "/broker/config"
+
+2. "Resolve its keys"
+"Matching populated .env settings take precedence. Other brokers use encrypted saved keys."
+
+3. "Start login"
+"A CSRF-checked request creates one-use pending state that expires after 10 minutes."
+Small label: "POST /auth/broker/login"
+
+4. "Validate callback"
+"Match the started login. Stage its keys only for this request; other requests keep the active keys."
+
+5. "Commit & publish"
+"Recheck key changes, revocation and switch safety. Publish process keys only after a successful commit."
+
+6. "One active broker"
+"Hand over the shared session after successful login. Other devices can resume it."
+Small label: "POST /auth/broker/resume"
+
+Below the cards, two compact readable notes:
+"Switch protection: running Live automation or protected scalping positions can block a broker switch."
+"Backup: keep the original .env with the database. Its secrets decrypt saved keys."
+
+Do not add any other facts or text. All text must be spelled exactly. Prioritize technical clarity and readable text over ornament.

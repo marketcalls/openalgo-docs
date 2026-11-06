@@ -1,5 +1,9 @@
 # Fyers
 
+{% hint style="info" %}
+Use [Broker Configuration and Login](../broker-configuration.md) to save these credentials in OpenAlgo and connect the broker. The `.env` examples below remain supported; `.env` keys for the selected broker take precedence over database-saved keys.
+{% endhint %}
+
 Fyers is a cutting-edge technology-driven brokerage firm that offers a comprehensive trading and investment platform. Renowned for their user-friendly applications and robust trading tools, Fyers aims to provide traders with an efficient and streamlined trading experience. They cater to a wide spectrum of users from casual investors to active day traders with services designed to accommodate various trading styles and strategies.
 
 

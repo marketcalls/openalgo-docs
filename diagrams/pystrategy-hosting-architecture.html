@@ -17,7 +17,7 @@
         <div class="node app hero" id="bp" style="align-self:stretch; position:relative"><i id="bpS" style="position:absolute;bottom:0;left:calc((100% - 84px) / 4);width:1px;height:1px"></i><i id="bpT" style="position:absolute;bottom:0;left:calc(75% + 21px);width:1px;height:1px"></i><i id="bpA" style="position:absolute;left:0;top:28%;width:1px;height:1px"></i><i id="bpB" style="position:absolute;left:0;top:78%;width:1px;height:1px"></i><div class="ic" data-icon="code-xml"></div><div class="tx"><b>Strategy manager</b><span>new, start, stop, schedule, delete, logs, live status (SSE)</span>
           <div class="chips"><span class="chip">python_strategy_bp</span><span class="chip">/python</span><span class="chip">/python/api/events</span></div></div></div>
         <div class="row" style="gap:84px; align-items:stretch">
-          <div class="node service" id="sched" style="flex:1; position:relative"><div class="wlabel" style="left:calc(100% + 42px); top:calc(50% - 22px); border-color:#a78bfa66">start / stop</div><div class="ic" data-icon="calendar-clock"></div><div class="tx"><b>Scheduler (IST)</b><span>start and stop time per strategy, plus housekeeping jobs</span>
+          <div class="node service" id="sched" style="flex:1; position:relative"><div class="wlabel" style="left:calc(100% + 42px); top:calc(50% - 22px); border-color:#a78bfa66">start / stop</div><div class="ic" data-icon="calendar-clock"></div><div class="tx"><b>Scheduler (IST)</b><span>IST schedules; CRYPTO Run 24/7 skips daily stops</span>
             <div class="chips"><span class="chip">APScheduler</span><span class="chip">trading-day check 00:01</span><span class="chip">hours enforcer 1 min</span><span class="chip">reap dead 60 s</span></div></div></div>
           <div class="node service" id="state" style="flex:1"><div class="ic" data-icon="layers"></div><div class="tx"><b>Live process table</b><span>what is running, starting or stopping, kept in memory</span>
             <div class="chips"><span class="chip">RUNNING_STRATEGIES</span><span class="chip">PROCESS_LOCK</span></div></div></div>
@@ -40,7 +40,7 @@
       <div class="chips"><span class="chip">&lt;name&gt;_&lt;timestamp&gt;.py</span></div></div></div>
 
     <div class="row" style="gap:84px; align-items:stretch; padding:0 26px">
-      <div class="node data" id="cal" style="flex:1"><div class="ic" data-icon="calendar"></div><div class="tx"><b>Market calendar</b><span>holidays and trading sessions per exchange</span>
+      <div class="node data" id="cal" style="flex:1"><div class="ic" data-icon="calendar"></div><div class="tx"><b>Market calendar</b><span>securities holidays and sessions; CRYPTO runs every day</span>
         <div class="chips"><span class="chip">market_calendar_db</span></div></div></div>
       <div class="node data" id="cfg" style="flex:1"><div class="ic" data-icon="file-text"></div><div class="tx"><b>Strategy settings</b><span>strategies/ folder, schedules and status flags</span>
         <div class="chips"><span class="chip">strategy_configs.json</span></div></div></div>

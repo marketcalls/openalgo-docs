@@ -31,22 +31,24 @@ Click the **Add Strategy** button to open the configuration interface.
 
 #### Configuration & Scheduling
 
-* **Exchange:** Select the target exchange (e.g., NSE Equity, MCX Commodity, Crypto). OpenAlgo is holiday-aware and will only run the strategy during valid market hours for the selected exchange.
-* **Schedule:** Define the **Start Time**, **Stop Time**, and active days. Scheduling is required. Regular exchanges default to 09:00-16:00 IST on weekdays; crypto can run on all seven days.
+* **Exchange:** Choose from the connected broker's supported exchanges. The initial choice follows its default. This controls the host's holiday calendar and session window; your script still needs the correct exchange in each API request.
+* **Schedule:** Scheduling is required and all times are IST. Securities exchanges use the calendar database, including holidays, partial sessions and special sessions. A process stops at the earlier of your stop time or that exchange's session close.
+* **Crypto:** For `CRYPTO`, turn on **Run 24/7** to run every day with no stop time and no Indian-exchange holiday checks. Turn it off for particular days and hours; timed crypto windows may cross midnight. Identical start/stop times are refused, so use Run 24/7 when you intend no stop.
 
 ### 3. Monitoring & Management
 
 Once a strategy is added, it will appear on your Python Strategies page.
 
-* **Start/Stop:** Use the manual controls to trigger or halt the script execution.
+* **Start / Stop / Cancel:** Start runs the saved file immediately within its eligible window, or schedules it for later. Read the returned message. Stop ends a process; Cancel cancels a scheduled auto-start. Neither is an instruction to close broker positions.
 * **View Logs:** Click "View Logs" to see real-time output. This section tracks data fetching, signal generation, and order execution. You can copy or download these logs for debugging.
-* **Edit Code:** The built-in code editor allows for quick modifications directly within the browser, though it is recommended to test major changes locally first.
+* **Edit Code:** Running strategies open read-only; stop before editing. Save or discard unsaved edits before Start or View Logs. `Ctrl+S`/`Cmd+S` saves; `F11` opens fullscreen and `Esc` leaves it. Start/Stop/Cancel and View Logs remain available in fullscreen.
+* **Schedule:** Edit it while stopped. The card displays **24/7** for a continuous crypto schedule; the schedule cannot simply be disabled.
 
 ### 4. Execution Modes
 
 OpenAlgo features a toggle to prevent accidental trades during development:
 
-* **Analyzer Mode:** Use this for testing purposes. It allows the script to run and generate logs without sending real orders to the broker.
+* **Analyzer Mode:** Use this for testing purposes. Supported orders sent through OpenAlgo use the sandbox instead of the live broker. Python code is trusted code on your server; analyzer mode does not prevent arbitrary code from calling a broker directly.
 * **Live Mode:** Once your strategy is verified, switch to Live Mode to enable actual order placement.
 
 ### 5. Technical Environment Variables
@@ -79,7 +81,14 @@ After a trade is triggered by your Python strategy, you can verify it in two pla
 * Ensure your OpenAlgo instance has a stable internet connection if running on a local machine to prevent WebSocket disconnections.
 * Run only code you trust. Hosted scripts execute as the OpenAlgo operating-system user and inherit the application environment.
 * Keep one Gunicorn web worker. Strategy ownership, schedules, and live process state are process-local.
-* On an experimental gthread installation, each open Python Strategies page keeps one live status connection, which holds one of the instance's 64 request threads. At most eight windows get live status at once; the next still works, without live updates.
-* Current main still has known threaded-shutdown risks around Unix `preexec_fn` and forced process-tree cleanup. Do not interpret process isolation as a guarantee of unattended 24x7 lifecycle recovery; after an abnormal server stop, verify that no old strategy process remains.
+* On a gthread installation, each open Python Strategies page keeps one live status connection, which holds one of the instance's 64 request threads. At most eight windows get live status at once; the next still works, without live updates.
+* The host restores schedules and reconciles saved running strategies after restart. This is process recovery, not proof that your script safely reconstructs positions; reconcile broker orders and positions before new entries. After an abnormal stop, verify actual process and account state.
 
-The production default remains Gunicorn with one eventlet worker. The [gthread migration](../getting-started/gthread-migration.md) is opt-in and experimental until it is merged into the application main branch.
+The production default remains Gunicorn with one eventlet worker. [gthread](../getting-started/gthread-migration.md) is available on main as an opt-in worker with 64 request threads; `uv run app.py` uses the development server and ignores that worker setting.
+
+
+## Before a Live Run
+
+Verify the broker, **Live/Analyze** badge and saved schedule before starting. Logging out or closing the browser does not stop hosted strategies. [Broker switching](../connect-brokers/broker-configuration.md#switching-brokers) is refused while relevant live automation still runs.
+
+A successful order response is an acceptance, not a fill. If a response is lost or times out, reconcile order book, trades and positions before sending a replacement. In Semi-Auto, a queued request still needs approval in [Action Center](action-center.md). Do not build an automatic order retry around an unclear response.

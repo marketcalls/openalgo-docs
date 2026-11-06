@@ -1,10 +1,10 @@
 # Chartink Integration
 
-OpenAlgo turns a Chartink scanner alert into orders. Configure the strategy at `/chartink`, point the Chartink alert at the strategy's webhook URL, and every scan that fires places orders for the symbols it returns.
+OpenAlgo turns a Chartink scanner alert into orders. Configure the strategy at `/chartink`, point the Chartink alert at the strategy's webhook URL, and an eligible active scan queues work for its configured symbols. Queue acceptance is separate from broker acceptance and fills.
 
 ## How a Scan Becomes an Order
 
-The action is read from the **scan name**, not from the payload. The name must contain one of four keywords:
+The action is read from the payload's **`scan_name`** field, not a separate action field. The name must contain one of four keywords:
 
 | Keyword in scan name | Action sent | Order type | Treated as |
 | --- | --- | --- | --- |
@@ -13,9 +13,9 @@ The action is read from the **scan name**, not from the payload. The name must c
 | `SELL` | SELL | `placesmartorder` with `position_size: 0` | Exit |
 | `COVER` | BUY | `placesmartorder` with `position_size: 0` | Exit |
 
-A scan name containing none of these is rejected with HTTP 400.
+A scan name containing none of these is rejected with HTTP 400. Use exactly one keyword: the parser checks BUY, SELL, SHORT and COVER in that order.
 
-Exits use a smart order with a zero target position, so the broker's own net position decides the exit quantity. You do not have to track how much is open.
+Exits use a smart order with both `quantity: 0` and a zero target position, so the broker's own net position decides the exit quantity. You do not have to track how much is open.
 
 ## Dual Queue and Rate Limiting
 
@@ -64,3 +64,8 @@ Test in Analyzer mode first. Chartink orders use the same service layer as the R
 
 * [Strategy RMS Engine](strategy-rms-engine.md) for the separate `/strategy` webhook used by alert senders. Batch strategies accept `start` and `stop`; signal strategies accept `long_entry`, `long_exit`, `short_entry`, and `short_exit` from the JSON payload. Chartink remains a separate integration that derives its action from the scan name.
 * [ChartInk](../trading-platform/chartink.md) for the platform-side setup.
+
+
+## Verify the Outcome
+
+Keep the generated webhook URL private: its identifier selects the strategy and the receiver retrieves the saved account API key itself. Check logs and order/trade/position books after a test. A successful queue response is not a completed fill, and repeated entry scans can submit repeated orders. Reconcile ambiguous responses before sending replacements.

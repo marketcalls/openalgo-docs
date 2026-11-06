@@ -2,6 +2,8 @@
 
 Cancel all open orders and trigger pending orders in a single request.
 
+`strategy` is a tracking label, **not a filter**. This operation can cancel orders created by other strategies or manually in the active account. Analyzer mode uses the user's sandbox account instead.
+
 ## Endpoint URL
 
 ```http
@@ -89,7 +91,7 @@ Analyzer mode returns richer failure entries and adds `mode`:
 | Parameter | Description | Mandatory/Optional | Default Value |
 |-----------|-------------|-------------------|---------------|
 | apikey | Your OpenAlgo API key | Mandatory | - |
-| strategy | Strategy identifier | Mandatory | - |
+| strategy | Tracking label; does not restrict the affected account orders/positions | Mandatory | - |
 
 `CancelAllOrderSchema` declares exactly these two fields and both are required. Omitting `strategy` returns HTTP 400, and any additional field returns HTTP 400 as well.
 
