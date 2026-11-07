@@ -17,7 +17,7 @@ That's when you realize the SDK is not enough.
 
 It's not just an API wrapper. OpenAlgo is **the open source trading ecosystem for everyone**: an all-in-one platform you run on your own machine, a complete trading desk rather than only an execution layer.
 
-<figure><img src=".gitbook/assets/image (123).png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/diagram-openalgo-platform-overview.png" alt="OpenAlgo feature overview: chart and scalping trading with 112 indicators; Python hosting, Flow with 61 nodes and OpenScript; Agent, Chart Assistant and MCP; 20 analytics tools including Strike Profile, Sector Rotation and Portfolio Analyzer; Historify and backtesting; sandbox testing and Action Center approvals; monitoring and alerts; 38 broker plugins and 8 SDKs. One active broker per instance."><figcaption>OpenAlgo's self-hosted trading workspace and companion apps.</figcaption></figure>
 
 ***
 
@@ -54,20 +54,21 @@ See [Scalping Terminal](new-features/fast-scalper.md).
 
 A full options desk is built in, with real-time Greeks and payoff diagrams:
 
-| Tool | Tool | Tool |
-| --- | --- | --- |
-| Strategy Builder | Strategy Portfolio | Option Chain |
-| Option Greeks | OI Tracker and Range | Max Pain |
-| Straddle Chart | Straddle PnL | OI Profile |
-| Vol Surface | IV Smile | GEX Dashboard |
-| Gamma Density | Futures Arbitrage Scanner | Portfolio Backtester |
-| SIP Backtester | | |
+| Tool | Tool | Tool | Tool |
+| --- | --- | --- | --- |
+| Strategy Builder | Strategy Portfolio | Option Chain | Option Greeks |
+| OI Tracker | OI Range | OI Profile | Max Pain |
+| Vol Surface | IV Smile | GEX Dashboard | Strike Profile |
+| Gamma Density | Straddle Chart | Straddle PnL | Futures Arbitrage Scanner |
+| Portfolio Backtester | SIP Backtester | Portfolio Analyzer | Sector Rotation |
+
+See [Analytics and Options Tools](analytics-and-options-tools.md) for all 20 tools and their data requirements.
 
 <figure><img src=".gitbook/assets/openalgo-ui-tools-hub.png" alt="Tools page grid of options and analytics tools"><figcaption></figcaption></figure>
 
 #### Action Center
 
-Square off, cancel, and manage open exposure from one screen, with exchange-aligned auto square-off.
+Review eligible live API-key placements in semi-auto mode, then approve or reject them before submission. A queued acknowledgement is not a broker order or a confirmed fill.
 
 See [Action Center](new-features/action-center.md).
 
@@ -83,11 +84,12 @@ Host your **Python strategies directly inside OpenAlgo**, alongside strategies f
 | --- | --- |
 | **Python Strategy Hosting** | Upload and run Python scripts with scheduling |
 | **Flow Visual Builder** | Drag-and-drop canvas wiring 61 node types from triggers to indicators, conditions and orders |
+| **OpenScript** | Write chart indicators and strategies in the built-in editor, with chart panels and server runs |
 | **Multi-Platform Support** | TradingView, Amibroker, ChartInk, Excel, and more |
 | **Centralized Control** | Manage all strategies from one dashboard |
 | **Process Isolation** | Hosted strategies run in separate processes |
 
-See [Python Strategy Hosting](new-features/python-strategy-hosting.md) and [Flow](new-features/flow-visual-strategy-builder.md).
+See [Python Strategy Hosting](new-features/python-strategy-hosting.md), [Flow](new-features/flow-visual-strategy-builder.md) and [OpenScript](new-features/openscript.md).
 
 #### Sandbox Testing and API Analyzer
 
@@ -228,6 +230,8 @@ The Python SDK also ships an indicator library and visualization helpers. See [I
 
 | Product | Description |
 | --- | --- |
+| [**Built-in Agent**](new-features/agent/README.md) | Work with market data, charts and trading tools from the Agent interface |
+| [**Chart Assistant**](new-features/trading-terminal.md) | Ask about the current chart and its context from the trading terminal |
 | [**OpenAlgo MCP**](mcp/README.md) | Connect your OpenAlgo account to Claude, Cursor, Windsurf, or ChatGPT |
 | [**OpenAlgo Skills**](skills/README.md) | Indicator, execution, and backtesting skills with ready-made strategies across India, US, and crypto markets |
 

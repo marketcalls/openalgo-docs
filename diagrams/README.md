@@ -1,6 +1,6 @@
 # Documentation diagrams
 
-The documentation uses 65 architecture, flow and lifecycle images in
+The documentation uses 66 feature, architecture, flow and lifecycle images in
 `.gitbook/assets/diagram-<slug>.png`. Each has an HTML factual blueprint and a
 saved generation prompt. The user approved the style using the broker-login and
 market-data samples in `previews/`.

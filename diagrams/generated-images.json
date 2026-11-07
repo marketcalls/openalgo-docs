@@ -556,6 +556,20 @@
       "prompt_sha256": "e4b7ca791c07383915f6ca97ba49a07aaa612174517b9975d925234f9ee17ab7"
     },
     {
+      "slug": "openalgo-platform-overview",
+      "source": "diagrams/openalgo-platform-overview.html",
+      "prompt": "diagrams/prompts/openalgo-platform-overview.txt",
+      "image": ".gitbook/assets/diagram-openalgo-platform-overview.png",
+      "provider": "built-in image generator",
+      "model_version": "unverified",
+      "generated_on": "2026-11-07",
+      "visual_qa": "passed",
+      "qa_notes": "Checked all eight feature groups, companion-app strip, 112 indicators,61 Flow node types,20 analytics tools,38 broker plugins,8 SDKs and single-active-broker wording. A feature map with no implied request sequence or companion-app feature parity.",
+      "source_sha256": "6d079aee85660682bb298161e01e71ce08abd1c67970f80dd9d32364803938c8",
+      "prompt_sha256": "4d04a98402e2bd5be67fd3fe811a9fb54184b4e9bb6eea6e1d48ab7577397e42",
+      "image_sha256": "007488f8dc0f9e4529e846c77274db792d32d296d92d227b55b4b03f294c30ac"
+    },
+    {
       "slug": "password-reset-flow",
       "source": "diagrams/password-reset-flow.html",
       "prompt": "diagrams/prompts/password-reset-flow.txt",
@@ -919,5 +933,6 @@
       "qa_notes": "Verified chart/code API convergence, in-process Flow, common symbol/order layer, bidirectional SDK/live-feed and plugin/feed edges,38 total plugins/36 stock brokers and parallel Delta/Dhan options.",
       "prompt_sha256": "44ac3dc0f648d2384200ac5a58f216d2fc2136740aa2b733b04634db54d8997e"
     }
-  ]
+  ],
+  "updated_on": "2026-11-07"
 }

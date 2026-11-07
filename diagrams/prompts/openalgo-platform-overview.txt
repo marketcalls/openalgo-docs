@@ -1,0 +1,62 @@
+Use case: infographic-diagram.
+Asset type: feature-overview hero image for the "Why to Build with OpenAlgo?" documentation page.
+Create a polished, highly readable OpenAlgo feature map in landscape 3:2 format. Use the approved documentation style: deep navy #0b1020 background, dark navy cards, thin cyan/teal/violet/amber/green/rose outlines, white headings, pale gray text, crisp modern sans-serif and simple outline icons. Flat vector-like raster, generous whitespace, balanced margins. This is a FEATURE MAP, not a request flow: do not draw arrows or a broker-network topology. No screenshots, 3D, photos, watermark, decorative code, claims about returns, or extra text.
+
+Large title exactly: "OpenAlgo"
+Subtitle exactly: "Build, trade, test and monitor in one workspace"
+
+Eight equal cards in a clear grid of four columns and two rows. Each card has a small outline icon, a bold heading and large readable short text lines. Render all words correctly. Do not shrink the body text to cram in extra decoration.
+
+Top row, left to right:
+1. Heading "Chart trading"
+Text lines:
+"112 built-in indicators"
+"Chart orders · Scalping"
+
+2. Heading "Build and run strategies"
+Text lines:
+"Python hosting"
+"Flow: 61 node types"
+"OpenScript"
+
+3. Heading "AI tools"
+Text lines:
+"Built-in Agent"
+"Chart Assistant · MCP"
+
+4. Heading "Options and portfolios"
+Text lines:
+"20 analytics tools"
+"GEX · OI · Strike Profile"
+"Sector Rotation · Portfolio Analyzer"
+
+Bottom row, left to right:
+5. Heading "Research and backtest"
+Text lines:
+"Historify history"
+"Portfolio and SIP backtests"
+
+6. Heading "Test and approve"
+Text lines:
+"Analyzer sandbox"
+"Action Center approvals"
+"GTT orders"
+
+7. Heading "Monitor and notify"
+Text lines:
+"P&L · Latency · Logs"
+"Telegram · WhatsApp"
+
+8. Heading "Connect your tools"
+Text lines:
+"38 broker plugins"
+"REST · WebSocket"
+"8 official SDKs"
+
+Below the grid, a clearly separate full-width compact strip, exact text:
+"Companion apps: OpenAlgo Desktop · FastScalper · Excel Add-in · Chrome Extension"
+
+Footer, exact text:
+"Self-hosted · AGPL-3.0 · One active broker per instance"
+
+The companion-app strip denotes separate products, not identical feature availability across all products. Don't imply simultaneous active brokers. Prioritize legibility and completeness of the exact feature labels over ornaments.
