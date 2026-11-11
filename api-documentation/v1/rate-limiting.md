@@ -70,6 +70,8 @@ Several resources do not use `API_RATE_LIMIT`. Each reads its own environment va
 | `TELEGRAM_RATE_LIMIT` | 30 per minute | Telegram resources except broadcast |
 | (hard-coded) | 5 per minute | `/api/v1/telegram/broadcast` |
 | `WHATSAPP_RATE_LIMIT` | 30 per minute | `/api/v1/whatsapp/notify` |
+| (hard-coded) | 30 per minute | `/api/v1/slack/notify` |
+| (hard-coded) | 30 per minute | `/api/v1/discord/notify` |
 
 `/api/v1/multioptiongreeks` uses `API_RATE_LIMIT`, not `GREEKS_RATE_LIMIT`. `/api/v1/portfolio/benchmarks` also uses `API_RATE_LIMIT`.
 

@@ -13,7 +13,7 @@ Replace the local host with the configured HTTPS/WSS domain in a remote deployme
 
 ## Authentication
 
-Most POST endpoints accept the OpenAlgo API key as `apikey` in a JSON object. GET endpoints accept it as the `apikey` query parameter. Telegram and WhatsApp management endpoints may also accept `X-API-KEY`; the Telegram webhook authenticates with `X-Telegram-Bot-Api-Secret-Token` instead of an OpenAlgo key.
+Most POST endpoints accept the OpenAlgo API key as `apikey` in a JSON object. GET endpoints accept it as the `apikey` query parameter. Telegram and WhatsApp management endpoints, and the Slack and Discord notify endpoints, may also accept `X-API-KEY`; the Telegram webhook authenticates with `X-Telegram-Bot-Api-Secret-Token` instead of an OpenAlgo key.
 
 ```json
 {
@@ -31,7 +31,7 @@ GET resources (`/instruments`, `/ticker/<symbol>`, `/chart`, `/telegram/*`) read
 
 ## Registered REST Inventory
 
-The current v1 surface contains **74 method/path pairs**. A resource with both GET and POST counts as two endpoints.
+The current v1 surface contains **76 method/path pairs**. A resource with both GET and POST counts as two endpoints.
 
 ### Order Management
 
@@ -171,8 +171,21 @@ The fixed options list needs no API key. A map request verifies `apikey`, even w
 | GET | `/telegram/stats` | [Telegram REST surface](./utilities-api/telegram.md) |
 | GET, POST | `/telegram/preferences` | [Telegram REST surface](./utilities-api/telegram.md) |
 | POST | `/whatsapp/notify` | [WhatsApp notification](./utilities-api/whatsapp.md) |
+| POST | `/slack/notify` | [Slack notification](./utilities-api/slack.md) |
+| POST | `/discord/notify` | [Discord notification](./utilities-api/discord.md) |
 
 The Telegram resource contributes 11 method/path pairs. Its webhook acknowledges validated updates but does not yet dispatch them, and the REST broadcast handler currently returns zero delivery counts. Those limitations are documented on the Telegram page.
+
+The four `notify` endpoints post a message you write. Each refuses with HTTP 409 when its channel cannot send, and each names the missing step:
+
+| Endpoint | Refused while |
+|---|---|
+| `/telegram/notify` | The Telegram bot is stopped |
+| `/whatsapp/notify` | No WhatsApp device is paired and connected |
+| `/slack/notify` | Slack is switched off on `/alerts`, or no Slack webhook is saved |
+| `/discord/notify` | Discord is switched off on `/alerts`, or no Discord webhook is saved |
+
+The **Alerts** page (`/alerts`) switches each channel on or off and chooses which order events it hears about. That switch applies to `notify` for Slack and Discord only. For Telegram and WhatsApp it, and the event groups for every channel, govern the automatic order alerts, which need no API call.
 
 ## WebSocket Protocol
 
@@ -233,7 +246,7 @@ A gthread broker-queue refusal is different: the request is refused before sendi
 
 ## Rate Limits
 
-Defaults from `.sample.env` are `API_RATE_LIMIT="50 per second"`, `ORDER_RATE_LIMIT="10 per second"`, and `SMART_ORDER_RATE_LIMIT="10 per second"`. Option Greeks, portfolio, SIP, Sector Rotation, Telegram, and WhatsApp resources each read their own variable, none of which appears in `.sample.env`, so their in-code fallbacks apply on a stock install. All values are deployment configuration and may contain compound semicolon-separated limits. See [rate limiting](./rate-limiting.md).
+Defaults from `.sample.env` are `API_RATE_LIMIT="50 per second"`, `ORDER_RATE_LIMIT="10 per second"`, and `SMART_ORDER_RATE_LIMIT="10 per second"`. Option Greeks, portfolio, SIP, Sector Rotation, Telegram, and WhatsApp resources each read their own variable, none of which appears in `.sample.env`, so their in-code fallbacks apply on a stock install. Slack and Discord notify are fixed at 30 per minute each and have no setting. All values are deployment configuration and may contain compound semicolon-separated limits. See [rate limiting](./rate-limiting.md).
 
 ## Client Libraries
 

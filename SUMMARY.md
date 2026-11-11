@@ -193,6 +193,8 @@
     * [Timings](api-documentation/v1/utilities-api/timings.md)
     * [Telegram](api-documentation/v1/utilities-api/telegram.md)
     * [WhatsApp](api-documentation/v1/utilities-api/whatsapp.md)
+    * [Slack](api-documentation/v1/utilities-api/slack.md)
+    * [Discord](api-documentation/v1/utilities-api/discord.md)
     * [SIP Backtest](api-documentation/v1/utilities-api/sip-backtest.md)
   * [Portfolio API](api-documentation/v1/portfolio.md)
   * [Sector Rotation API](api-documentation/v1/sectorrotation.md)
