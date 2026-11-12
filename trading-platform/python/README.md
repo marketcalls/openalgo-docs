@@ -2103,13 +2103,13 @@ Analyzer Toggle Response
 ### Strategy Module
 
 OpenAlgo's `/strategy` module runs multi-leg options strategies with end-to-end risk
-management, plus a signal-driven mode for TradingView alerts. Two surfaces reach it,
+management, plus a signal-driven mode for chart and scanner alerts. Two surfaces reach it,
 and they take different credentials:
 
 | Surface | Credential | Use for |
 |---------|-----------|---------|
 | `api(api_key=...)` | Your OpenAlgo API key | Lifecycle and reads: list, status, start, stop, close_all, close_leg, runs, orders, events |
-| `Strategy(...)` | The strategy's `oaws_` webhook token | The public webhook at `/strategy/webhook/<token>`, which is what TradingView posts to |
+| `Strategy(...)` | The strategy's `oaws_` webhook token | The public webhook at `/strategy/webhook/<token>`, which is what alert senders post to |
 
 Building a strategy stays in the browser wizard at `/strategy`. The API-key surface is
 lifecycle plus reads only: nothing on it can create a strategy, edit its
@@ -2460,7 +2460,7 @@ Events an operator should not ignore:
 
 ### Strategy Webhook Example
 
-The public webhook at `/strategy/webhook/<token>` is what TradingView and other alert
+The public webhook at `/strategy/webhook/<token>` is what charting and scanner alert
 senders post to. It is not under `/api/v1` and takes no API key: the `oaws_` token in
 the URL is the whole credential. The SDK's `Strategy` class speaks its protocol:
 

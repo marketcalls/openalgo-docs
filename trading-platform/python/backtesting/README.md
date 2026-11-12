@@ -53,7 +53,7 @@ The engine ships inside the `openalgo` package; nothing else is needed. It needs
 pip install -U openalgo
 ```
 
-A backtest on your own data needs no OpenAlgo server, no API key and no other package: not yfinance for data, not openstatz for reports. To backtest on history from your OpenAlgo server (broker history or Historify), pass an `openalgo.api` client instead of data.
+A backtest on your own data needs no OpenAlgo server, no API key and no other package. To backtest on history from your OpenAlgo server (broker history or Historify), pass an `openalgo.api` client instead of data.
 
 ## Your first backtest in five minutes
 
