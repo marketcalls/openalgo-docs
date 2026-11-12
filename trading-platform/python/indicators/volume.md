@@ -127,16 +127,24 @@ vwap = ta.vwap(high, low, close, volume, source="hlc3", anchor="Session")
 
 #### Parameters
 
-* **high** _(pandas.Series)_: High prices
-* **low** _(pandas.Series)_: Low prices
-* **close** _(pandas.Series)_: Closing prices
-* **volume** _(pandas.Series)_: Volume data
+* **high** _(array-like)_: High prices
+* **low** _(array-like)_: Low prices
+* **close** _(array-like)_: Closing prices
+* **volume** _(array-like)_: Volume data
 * **source** _(str, default="hlc3")_: Price source - "hlc3", "hl2", "ohlc4", "close"
-* **anchor** _(str, default="Session")_: Anchor period - "Session", "Week", "Month", etc.
+* **anchor** _(str or None, default="Session")_: The period the VWAP restarts on: "Session" (or "D"), "Week", "Month", "Quarter", "Year", "3M", "6M", "12M", "4H", "1H", "30m", "15m", "5m" or "1m". `None` gives one running VWAP from the first bar.
+* **timestamps** _(array-like, optional)_: Bar times, one per bar, for inputs that carry none (NumPy arrays and lists): datetimes, or numbers read as Unix epoch seconds.
+* **session\_starts** _(array-like of bool, optional)_: True on the first bar of each period. Overrides `anchor` and `timestamps`.
 
 #### Returns
 
-* **pandas.Series**: VWAP values
+* **pandas.Series** for pandas input, a NumPy array otherwise: VWAP values. A bar whose price or volume is NaN is NaN, and so is every bar of a period until it has some volume.
+
+{% hint style="info" %}
+**From the next SDK release, `anchor` is honoured.** In SDK 2.0.5 the anchor was ignored and the VWAP ran from the first bar of the input. It now restarts every anchor period (every session by default) whenever the bar times are known: a pandas Series whose index holds dates or times, or `timestamps=`. Plain arrays without `timestamps=` are one period, as before. To keep the 2.0.5 result on Series input, pass `anchor=None`.
+
+Also from the next release: on daily, weekly or monthly bars the default `"Session"` makes every bar its own period, so the VWAP equals the bar's own typical price and a warning says so (pass `anchor=None` or a longer anchor there); an unknown anchor raises `ValueError`; a period that starts with zero volume is NaN until volume arrives (2.0.5 raised `RuntimeError`); and a NaN bar no longer leaves the rest of the series NaN.
+{% endhint %}
 
 #### Example
 
@@ -151,6 +159,44 @@ df['VWAP'] = vwap_values
 df['VWAP_Close'] = vwap_close
 
 print(df[['close', 'VWAP', 'VWAP_Close']].tail())
+```
+
+The example below needs no server. It builds two sessions of 5-minute bars and shows the session VWAP restarting at the second day's open, next to the running VWAP of `anchor=None`:
+
+<!-- runnable -->
+```python
+import numpy as np
+import pandas as pd
+
+from openalgo import ta
+
+# Two sessions of synthetic 5-minute bars, indexed by IST bar time.
+times = pd.DatetimeIndex(
+    [t for day in ("2026-10-05", "2026-10-06")
+     for t in pd.date_range(f"{day} 09:15", periods=75, freq="5min", tz="Asia/Kolkata")]
+)
+k = np.arange(len(times))
+close = pd.Series((800 + 0.1 * k + 2 * np.sin(k / 6)).round(2), index=times)
+high, low = close + 1, close - 1
+volume = pd.Series(1000.0 + 10 * (k % 7), index=times)
+
+session = ta.vwap(high, low, close, volume)               # restarts every session
+running = ta.vwap(high, low, close, volume, anchor=None)  # one VWAP from the first bar
+print("last bar of day 1 :", round(session.iloc[74], 2), round(running.iloc[74], 2))
+print("first bar of day 2:", round(session.iloc[75], 2), round(running.iloc[75], 2))
+print("its typical price :", round((high.iloc[75] + low.iloc[75] + close.iloc[75]) / 3, 2))
+
+# NumPy arrays carry no bar times: give them with timestamps=.
+arrays = ta.vwap(high.to_numpy(), low.to_numpy(), close.to_numpy(), volume.to_numpy(), timestamps=times)
+print("arrays with timestamps, first bar of day 2:", round(arrays[75], 2))
+```
+
+<!-- output -->
+```text
+last bar of day 1 : 803.7 803.7
+first bar of day 2: 807.37 803.75
+its typical price : 807.37
+arrays with timestamps, first bar of day 2: 807.37
 ```
 
 ***

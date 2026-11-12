@@ -157,7 +157,7 @@ highest_values = ta.highest(data, period)
 **Parameters**
 
 * **data** _(array-like)_: Input data series
-* **period** _(int)_: Window size for finding highest value
+* **period** _(int)_: Window size for finding highest value. From the next SDK release, a period of 0, or one far larger than the series, returns all NaN, and a window that holds a NaN is NaN.
 
 **Returns**
 
@@ -190,7 +190,7 @@ lowest_values = ta.lowest(data, period)
 **Parameters**
 
 * **data** _(array-like)_: Input data series
-* **period** _(int)_: Window size for finding lowest value
+* **period** _(int)_: Window size for finding lowest value. From the next SDK release, a period of 0, or one far larger than the series, returns all NaN, and a window that holds a NaN is NaN.
 
 **Returns**
 
@@ -225,7 +225,7 @@ change_values = ta.change(data, length=1)
 **Parameters**
 
 * **data** _(array-like)_: Input data series
-* **length** _(int, default=1)_: Number of periods to look back
+* **length** _(int, default=1)_: Number of periods to look back. From the next SDK release, a negative length raises `ValueError` (SDK 2.0.5 raised `IndexError`).
 
 **Returns**
 
@@ -338,7 +338,7 @@ rising_condition = ta.rising(data, length)
 **Parameters**
 
 * **data** _(array-like)_: Input data series
-* **length** _(int)_: Number of periods to look back
+* **length** _(int)_: Number of periods to look back. From the next SDK release, a negative length raises `ValueError` (SDK 2.0.5 raised `IndexError`).
 
 **Returns**
 
@@ -379,7 +379,7 @@ falling_condition = ta.falling(data, length)
 **Parameters**
 
 * **data** _(array-like)_: Input data series
-* **length** _(int)_: Number of periods to look back
+* **length** _(int)_: Number of periods to look back. From the next SDK release, a negative length raises `ValueError` (SDK 2.0.5 raised `IndexError`).
 
 **Returns**
 
@@ -498,7 +498,7 @@ conditional_values = ta.valuewhen(condition_array, value_array, n=1)
 
 * **condition\_array** _(array-like)_: Expression array (boolean-like)
 * **value\_array** _(array-like)_: Value array to sample from
-* **n** _(int, default=1)_: Which occurrence to get (1 = most recent)
+* **n** _(int, default=1)_: Which occurrence to get (1 = most recent). From the next SDK release, an `n` below 1 returns all NaN.
 
 **Returns**
 

@@ -419,6 +419,37 @@ print("Response at price peaks:")
 print(peak_periods[['close', 'EMA_20', 'DEMA_20', 'TEMA_20']].tail())
 ```
 
+{% hint style="info" %}
+**From the next SDK release, a NaN bar affects only itself.** A NaN in the input makes only that bar of DEMA and TEMA NaN; the averages carry their state across it, as the EMA does. In SDK 2.0.5 a NaN could make more bars NaN, and `ta.tema` dropped NaN bars before its third average, so its values after a gap depended on later bars (a look-ahead). Series without NaN give the same values as before.
+{% endhint %}
+
+On a series with one missing value, without a server:
+
+<!-- runnable -->
+```python
+import numpy as np
+import pandas as pd
+
+from openalgo import ta
+
+prices = pd.Series(np.arange(1.0, 31.0))
+prices[15] = np.nan  # one missing bar
+
+table = pd.DataFrame({"price": prices, "ema": ta.ema(prices, 5), "dema": ta.dema(prices, 5), "tema": ta.tema(prices, 5)})
+print(table.iloc[13:19].round(3).to_string())
+```
+
+<!-- output -->
+```text
+    price     ema    dema    tema
+13   14.0  12.010  13.927  14.235
+14   15.0  13.007  14.949  15.171
+15    NaN     NaN     NaN     NaN
+16   17.0  14.338  16.520  16.828
+17   18.0  15.559  17.827  18.090
+18   19.0  16.706  18.983  19.164
+```
+
 ***
 
 ### Complete Trading Analysis Example
