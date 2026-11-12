@@ -60,7 +60,9 @@ A DataFrame works when the engine can tell three things, none of which it guesse
 
 1. **The columns.** `open`, `high`, `low`, `close` and `volume`, in any letter case (`Open`, `CLOSE`). An `oi` column is optional.
 2. **The time.** A `DatetimeIndex`, or a column named `timestamp`, `datetime`, `date`, `time` or `ts`.
-3. **The time zone.** A time-zone-aware index or column, or `tz=` for naive times (`tz="Asia/Kolkata"` for IST clock times). There is no default, because a wrong guess shifts every bar by 5 hours 30 minutes. With naive times, also pass `start=` and `end=`.
+3. **The time zone.** A time-zone-aware index or column, or `tz=` for naive times (`tz="Asia/Kolkata"` for IST clock times). There is no default, because a wrong guess shifts every bar by 5 hours 30 minutes. Numbers counted from 1970 (epoch values, with `unit=`) are UTC by definition and need no `tz=`.
+
+The run takes its `start` and `end` from a DataFrame (naive with `tz=`, or time-zone aware) when you leave them out. A file path does not give them: pass `start=` and `end=` with `data="...csv"`.
 
 Each timestamp is the instant the bar **opens** (the OpenAlgo convention). A daily bar is stamped with its date: midnight IST, 00:00 UTC of the session date, or the session open all work (other times of day are mapped to their IST date, with a warning).
 
@@ -96,8 +98,9 @@ class BuyAndHold(bt.Strategy):
 
 
 # The same bars from the DataFrame and from the CSV file.
+# The DataFrame gives the run its dates; the file needs them.
+from_frame = bt.backtest(BuyAndHold, data=frame, tz="Asia/Kolkata", capital=100_000)
 dates = {"start": "2026-04-01", "end": "2026-06-30"}
-from_frame = bt.backtest(BuyAndHold, data=frame, tz="Asia/Kolkata", capital=100_000, **dates)
 from_file = bt.backtest(BuyAndHold, data="sbin_daily.csv", tz="Asia/Kolkata", capital=100_000, **dates)
 print(len(from_frame.equity), "sessions;", "same result:", from_frame.fills.equals(from_file.fills))
 ```

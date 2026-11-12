@@ -99,16 +99,21 @@ What the class declares:
 | Attribute | Meaning |
 |---|---|
 | `symbol` | The one symbol it trades, in OpenAlgo format (`"SBIN"`, `"NIFTY27OCT26FUT"`) |
-| `symbols` | Several symbols on the same exchange, instead of `symbol` (see [Several symbols](#several-symbols)) |
+| `symbols` | Several symbols on the same exchange, instead of `symbol` (see [Several symbols](#several-symbols)); on a futures exchange, underlyings such as `("HDFCBANK", "ICICIBANK")` |
+| `underlying`, `expiry` | A futures strategy: the underlying (`"NIFTY"` with `exchange = "NFO"`) instead of a contract, and the contract rank, `"current_month"` (default) or `"next_month"` (see [Futures](futures.md)) |
 | `exchange` | `"NSE"`, `"BSE"`, `"NFO"`, `"BFO"`, `"MCX"`, `"CDS"` or `"BCD"` |
 | `interval` | The strategy bar: `"1m"`, `"3m"`, `"5m"`, `"15m"`, `"30m"`, `"1h"` (any whole number of minutes or hours) or `"D"` |
 | `product` | `"MIS"`, `"CNC"` or `"NRML"`; when left out, MIS for intraday intervals, CNC for daily equity and NRML for daily F&O |
 | `size` | The default sizer for orders without a quantity, such as `bt.size.percent(50)` (see [Costs, Slippage and Margin](costs-slippage-and-margin.md#sizing)) |
+| `leverage` | The default intraday leverage of every order (a number, 1 or more); `leverage=` on an order wins |
+| `max_adds`, `max_position`, `min_spacing`, `max_risk`, `allow_averaging_down` | Scale-in limits on adds (see [Orders and Risk](orders-and-risk.md#scale-in-limits)) |
 | `max_daily_loss`, `drawdown_halt`, `cooldown`, `entry_from`, `entry_until`, `square_off` | Risk and session settings; a class attribute wins over the `bt.backtest` argument of the same name (see [Orders and Risk](orders-and-risk.md)) |
 | `max_hold` | Exit a position after this many base bars (class attribute only) |
-| `pyramiding` | How many adds a condition strategy makes while its entry stays true (default 0; see [Condition strategies](#condition-strategies)) |
+| `pyramiding` | How many adds a condition strategy makes while its entry stays true (default 0; see [Condition strategies](#condition-strategies)). An `on_bar` strategy places its own adds, so there it is named in the warnings as unused |
 
 Every other public class attribute with a number, bool or text value is a **parameter**. Change parameters for one run with `params=`, without editing the class. A name the class does not have is an error.
+
+**No setting is ignored.** Every class attribute above and every `bt.backtest` argument either works, raises an error, or is named in `result.warnings` with the reason it did nothing in this run (such as `pyramiding` on an `on_bar` strategy, or `entry_until` on a CNC run). Two names are refused outright: a class attribute `state` raises `ConfigError` (`self.state` is the strategy's own dict, filled while the run goes), and `after_risk_exit="allow_reentry"` raises `NotImplementedError` (it would govern only the combined rules, which are not built yet). Every value the run used, defaults resolved, is in the Assumptions block (`result.assumptions`).
 
 <!-- continues -->
 ```python
@@ -291,7 +296,7 @@ print(len(filtered.trades), "trades")
 | `self.equity` | Equity of the strategy's account in rupees (cash plus open P&L) |
 | `self.cash` | Free cash in rupees: equity not blocked as margin |
 | `self.now` | The current decision time in IST |
-| `self.state` | A dict for your own values; it starts empty each run |
+| `self.state` | A dict for your own values; it starts empty each run (do not declare `state` as a class attribute: it is refused) |
 
 <!-- continues -->
 ```python
@@ -382,7 +387,7 @@ A condition is any of:
 
 A view of another interval (`self.data["SBIN", "15m"]`) counts with its latest closed bar. Anything else, such as a plain `True`, a number or an indicator output that looks ahead, raises a `ConfigError` that tells you to use `on_bar`.
 
-The order arguments are `qty`, `size`, `lots`, `stop`, `target`, `targets`, `trail`, `breakeven`, `after_first_target`, `product`, `leverage` and `tag`; every entry is a market order. ATR distances (`bt.atr`, `bt.trail_atr`) and `bt.size.atr_risk` are not available in conditions yet. A condition strategy trades one symbol and has no callbacks or timers (they would call Python during the run); `on_stop` still runs. A strategy uses `on_bar` or conditions, never both.
+The order arguments are `qty`, `size`, `lots`, `stop`, `target`, `targets`, `trail`, `breakeven`, `after_first_target`, `product`, `leverage` and `tag`; every entry is a market order. ATR distances (`bt.atr`, `bt.trail_atr`) and `bt.size.atr_risk` are not available in conditions yet. A condition strategy trades one symbol (not yet a futures underlying) and has no callbacks or timers (they would call Python during the run); `on_stop` still runs. A strategy uses `on_bar` or conditions, never both.
 
 <!-- continues -->
 ```python

@@ -285,6 +285,7 @@
     * [Writing Strategies](trading-platform/python/backtesting/writing-strategies.md)
     * [Orders and Risk](trading-platform/python/backtesting/orders-and-risk.md)
     * [Costs, Slippage and Margin](trading-platform/python/backtesting/costs-slippage-and-margin.md)
+    * [Futures](trading-platform/python/backtesting/futures.md)
     * [Data](trading-platform/python/backtesting/data.md)
     * [Results and Reports](trading-platform/python/backtesting/results-and-reports.md)
     * [Metric Definitions](trading-platform/python/backtesting/metric-definitions.md)

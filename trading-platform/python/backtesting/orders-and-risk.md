@@ -81,7 +81,7 @@ The arguments of `buy` and `sell`:
 | `size` | A sizer such as `bt.size.percent(50)` (see [Sizing](costs-slippage-and-margin.md#sizing)) |
 | `stop`, `target`, `targets`, `trail`, `breakeven`, `after_first_target` | The leg rules of the position the order opens (below) |
 | `product` | `"MIS"`, `"CNC"` or `"NRML"` for this order; the strategy's product otherwise |
-| `leverage` | Intraday (MIS) leverage asked for, up to 5 for cash equity (see [Margin](costs-slippage-and-margin.md#margin)) |
+| `leverage` | Intraday (MIS) leverage asked for, up to 5 for cash equity (see [Margin](costs-slippage-and-margin.md#margin)); the class attribute `leverage` sets the default for every order |
 | `reverse` | `True` lets an order larger than the opposite position close it and open the rest on the other side |
 | `symbol` | Required when the strategy trades several symbols |
 | `tag` | Your own label, kept in the orders table |
@@ -331,6 +331,67 @@ o4 Rejected reverse_not_allowed
 2026-10-05 15:00:00+05:30  BUY           125.0         512.6 scheduler         None
 ```
 
+## Scale-in limits
+
+An `on_bar` strategy adds whenever it buys while long (or sells while short). The scale-in limits, set as class attributes, cap those adds. Each sets nothing unless you give it:
+
+| Class attribute | What it limits |
+|---|---|
+| `max_adds` | Adds to one position (a whole number; 0 forbids adding) |
+| `max_position` | The largest position after an add: a number or `bt.size.qty(n)` is units, `bt.size.lots(n)` lots, `bt.rupees(x)` or `bt.size.value(x)` rupees of value at the decision price, `bt.pct(x)` or `bt.size.percent(x)` a percent of equity |
+| `min_spacing` | The least gap between adds: a whole number is base bars closed after the bar in which the last tranche filled; `bt.points(x)`, `bt.pct(x)` (of the last tranche's price) or `bt.ticks(n)` is the least price distance from the last tranche |
+| `max_risk` | The open risk of the whole position after the add, from the average price to the stop: a number or `bt.rupees(x)` is rupees, `bt.pct(x)` a percent of equity. A position without a stop has no bounded risk, so with `max_risk` set its adds are refused |
+| `allow_averaging_down` | `False` (default) refuses an add while the decision price is worse than the average price (below it for a long, above it for a short); `True` allows it |
+
+The limits are checked at submission on every add (an entry from flat is not an add), at the decision price, and adds still waiting for their fill count, so several adds decided together cannot slip past a limit. An add that breaks one is rejected with the reject code `scale_in_limit`. The Assumptions block lists every limit the run used.
+
+<!-- continues -->
+```python
+class Pyramid(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "15m"
+    max_adds = 2                 # an entry and at most two adds
+    allow_averaging_down = False  # the default: never add below the average price
+
+    def init(self):
+        self.state["orders"] = []
+
+    def on_bar(self, bar):
+        if len(self.close) <= 8:  # try to buy 100 at each of the first eight bar closes
+            order = self.buy(qty=100)
+            self.state["orders"].append((f"{self.now:%H:%M}", order.status, order.reject_code))
+
+    def on_stop(self):
+        for decided, status, code in self.state["orders"]:
+            print(decided, status, code or "")
+
+
+pyramid = bt.backtest(Pyramid, data=rising, **QUIET)
+show(pyramid)
+print({key: pyramid.assumptions[key] for key in ("max_adds", "allow_averaging_down")})
+```
+
+<!-- output -->
+```text
+09:30 Submitted
+09:45 Submitted
+10:00 Submitted
+10:15 Rejected scale_in_limit
+10:30 Rejected scale_in_limit
+10:45 Rejected scale_in_limit
+11:00 Rejected scale_in_limit
+11:15 Rejected scale_in_limit
+                     time side  quantity_units  price_rupees    reason target_index
+2026-10-05 09:30:00+05:30  BUY           100.0         502.3     entry         None
+2026-10-05 09:45:00+05:30  BUY           100.0         504.8       add         None
+2026-10-05 10:00:00+05:30  BUY           100.0         507.3       add         None
+2026-10-05 15:00:00+05:30 SELL           300.0         512.6 scheduler         None
+{'max_adds': 2, 'allow_averaging_down': False}
+```
+
+The entry and two adds filled as the price rose (average price 504.80); every later buy was refused by `max_adds`. Had the price fallen below 504.80, an add would also have been refused as averaging down.
+
+**Class-level leverage.** The class attribute `leverage` (a number, 1 or more) is the default leverage of every order of the strategy, `on_bar` and condition strategies alike; `leverage=` on an order wins over it. It is subject to the same limits as on an order: intraday (MIS) cash equity only, up to 5.
+
 ## Intraday entry window and square-off
 
 For MIS positions the engine applies the session times a broker applies:
@@ -402,7 +463,7 @@ These rules watch the whole strategy, not one position. Pass them to `bt.backtes
 
 The day's loss is the realized P&L of the trades closed that session plus the open P&L of the position since its first fill. A breach exits at the next base-bar open; on daily bars, at that day's close (flagged `filled_at_last_close`). `on_risk_event` receives `daily_loss_limit_hit`, `risk_halt` and `trading_state_changed` events (the state goes `ACTIVE` to `REDUCING` after a daily-loss breach and back at the next session, or to `HALTED`).
 
-`after_risk_exit` (`"lock_session"` or `"allow_reentry"`) is accepted but applies to the combined rules, which are not available yet; today it changes nothing, and a daily-loss breach always blocks entries until the next session.
+`after_risk_exit` governs only the exits of the combined rules, which are not available yet. The default `"lock_session"` changes nothing today, and `"allow_reentry"` raises `NotImplementedError`; a daily-loss breach always blocks entries until the next session.
 
 <!-- continues -->
 ```python
@@ -456,6 +517,7 @@ A rejected order has `status == "Rejected"` and one of these codes, both on its 
 | `max_positions` | An entry beyond `max_positions` |
 | `halted` | An entry while the strategy is halted by `drawdown_halt` |
 | `reverse_not_allowed` | An order larger than the opposite position, without `reverse=True` |
+| `scale_in_limit` | An add that breaks a scale-in limit: `max_adds`, `max_position`, `min_spacing`, `max_risk` or averaging down without `allow_averaging_down` |
 | `tick` | A limit or trigger price off the tick grid |
 | `instrument_unknown` | A symbol the run does not trade (from Python you get a `ConfigError` first) |
 | `rate_limit` | The order rate limit (live trading, not available yet) |
@@ -472,3 +534,5 @@ Every fill has a `reason` in `result.fills`, and every closed trade an `exit_rea
 | `scheduler` | The intraday square-off |
 | `eod` | An MIS position closed at the session's last close because no bar came at or after the square-off |
 | `daily_loss_limit`, `drawdown_halt`, `time_exit` | The strategy risk rules above |
+| `roll` | Both legs of a futures roll: the exit from the expiring contract and the entry in the next (see [Futures](futures.md)) |
+| `expiry` | A futures position held to expiry and settled at the close of its last trading day |

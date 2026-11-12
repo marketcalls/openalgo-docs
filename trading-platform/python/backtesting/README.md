@@ -11,6 +11,7 @@ A backtest replays your strategy on past price bars and shows what it would have
 * **Charges** on every fill: brokerage (Zerodha's rates by default), STT, exchange and IPFT charges, SEBI fee, stamp duty, GST and the DP charge on delivery sells, at the rates in force on each trade date.
 * **Slippage** on every fill, from a dated table per instrument class.
 * **Lot size, tick size and freeze quantity** of futures and options, from dated reference tables.
+* **The futures roll**: a futures strategy names an underlying, and its position rolls to the next contract the session before expiry, with daily mark to market.
 * **Session times and holidays** of NSE, BSE, NFO, BFO, MCX, CDS and BCD, including the dated intraday entry cut-off and square-off for MIS.
 * **Margin**: an order that needs more margin than your free cash is rejected, as a broker would.
 
@@ -42,6 +43,7 @@ You can run a backtest with only a strategy, data and capital. Everything else h
 | Intraday times (MIS) | Entries stop and positions are squared off at the dated exchange defaults (NSE cash from 3 August 2026: 14:50 and 15:00 IST) | `entry_until=`, `square_off=` |
 | Stops and targets | For an intraday strategy, tested on 1-minute bars when 1-minute data covers the whole run, otherwise on the strategy bars; daily bars for a daily strategy | `base=` |
 | Calendar | Built-in holiday lists for 2019 to 2026 and dated session hours | `calendar=` |
+| Futures | The current-month contract, rolled one session before expiry | `expiry` (class), `roll=` |
 
 See [Orders and Risk](orders-and-risk.md) and [Costs, Slippage and Margin](costs-slippage-and-margin.md) for the details.
 
@@ -154,6 +156,7 @@ print(result)
 Result(SBIN)
   base: D
   product: CNC
+  entry_from: None
   entry_until: None
   square_off: None
   fill: next_open
@@ -168,6 +171,12 @@ Result(SBIN)
   cooldown: None
   max_positions: None
   max_hold: None
+  leverage: None
+  max_adds: None
+  max_position: None
+  min_spacing: None
+  max_risk: None
+  allow_averaging_down: False
   base_rule: base D (a daily or longer strategy): stops are tested on the day's range and fill at the stop level, or at the open on a gap; combined and daily-loss exits fill at the day's close
   instruments: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
   indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 5): truncation passed at 4 cuts, warm-up 32 bars
@@ -181,7 +190,11 @@ A few lines worth knowing:
 * `base_rule` says which bars stops are tested on and where fills happen. A daily strategy uses daily bars.
 * `indicator_checks` reports the look-ahead check every indicator passes before the run (see [Writing Strategies](writing-strategies.md#indicators-and-look-ahead-checks)).
 * `gross P&L` is before charges and includes any position still open at the end, marked at the last close. `charges` are what the contract notes charged at each session close, so `net P&L` is exactly the change in equity. The `Charges` figure printed earlier is the metric `total_costs`, the sum of the closed trades' charges before contract-note rounding. The two differ slightly because a contract note rounds STT and stamp duty to the rupee.
+* `entry_from`, `entry_until` and `square_off` apply to MIS runs and are stated as they applied over the whole run: one clock time, a rule such as "20 minutes before each session's close" (MCX), or dated periods when a default changed during the run (NSE cash on 3 August 2026). This daily CNC run has none.
+* `leverage` and the scale-in limits (`max_adds`, `max_position`, `min_spacing`, `max_risk`, `allow_averaging_down`) are listed even when unset, so you see that no limit applied.
 * The last line is a warning you will see on every cash-equity backtest without `instrument=`: the engine used the generic lot 1 and tick 0.05.
+
+No setting is accepted and then ignored. Every class attribute and every `bt.backtest` argument either works, raises an error (`ConfigError` for a value that cannot be used, `NotImplementedError` for a feature not built yet), or, when it does nothing in this particular run, is named in `result.warnings` with the reason (for example `pyramiding` on a strategy with `on_bar`, `client=` together with `data=`, or intraday times on a CNC run).
 
 [Results and Reports](results-and-reports.md) explains every table and figure.
 
@@ -190,6 +203,7 @@ A few lines worth knowing:
 * [Writing Strategies](writing-strategies.md): the strategy class, indicators, other timeframes, positions, timers, and condition strategies that run without a Python call per bar.
 * [Orders and Risk](orders-and-risk.md): orders, stops, targets, trailing stops, intraday times and the strategy risk rules.
 * [Costs, Slippage and Margin](costs-slippage-and-margin.md): what is charged and how to change it.
+* [Futures](futures.md): futures strategies by underlying, the roll, mark to market and settlement.
 * [Data](data.md): OpenAlgo history, your own data, time zones and the cache.
 * [Results and Reports](results-and-reports.md): the tables, the performance figures, Monte Carlo, the HTML tearsheet in four modes and reruns; [Metric Definitions](metric-definitions.md) defines every figure.
 * [Optimization](optimization.md): parameter sweeps.
@@ -203,10 +217,10 @@ The following are part of the design but not built. Each raises `NotImplementedE
 * `bt.live`: trading a strategy through OpenAlgo in sandbox or live mode.
 * `fill="close"` (filling at the decision bar's close).
 * `self.target(...)`: trading to a target position size.
-* The futures roll (`roll=`).
 * Walk-forward optimization (`bt.walk_forward`).
-* Several strategies in one run, pairs (`pair_long`, `pair_short`), portfolio rebalancing (`bt.rebalance`), and strategies declared on a `universe` or an `underlying`.
-* The combined rules `combined_stop`, `combined_target`, `lock_profit` and `trail_sl_to_entry`.
+* Several strategies in one run, pairs (`pair_long`, `pair_short`), portfolio rebalancing (`bt.rebalance`), and strategies declared on a `universe`.
+* Condition strategies on a futures underlying, and other intervals of a futures series (`self.data[underlying, "15m"]`).
+* The combined rules `combined_stop`, `combined_target`, `lock_profit` and `trail_sl_to_entry`, and `after_risk_exit="allow_reentry"`, which only they would use.
 * `cooldown` and `max_hold` given as a time (such as `"30m"`); give them in bars.
 * One indicator over two symbols or two intervals, and open interest in strategy bars.
-* Charges for a delivery buy and sell of the same scrip on the same day; the margin of stock futures, BSE and MCX futures, and short options.
+* The margin of SENSEX and SENSEX50 futures and of short options.

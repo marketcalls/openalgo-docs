@@ -52,7 +52,7 @@ With no `costs=` argument a backtest uses `costs="zerodha"`: Zerodha's brokerage
 | `sebi_fee` | SEBI turnover fee |
 | `stamp_duty` | Stamp duty on the buy side |
 | `gst` | 18 percent GST on brokerage, exchange charges and the SEBI fee |
-| `dp_charge` | On the first delivery (CNC) sell of a scrip in a day: Rs 13 plus GST under the Zerodha preset |
+| `dp_charge` | On the first delivery (CNC) sell of a scrip in a day from holdings: Rs 13 plus GST under the Zerodha preset |
 
 Segments covered: NSE and BSE equity (delivery and intraday), NFO and BFO futures and options, and MCX futures. Currency derivatives (CDS, BCD) and MCX options are not costed yet; a run on them stops before it starts with a `CostError` that tells you to pass `costs=None`.
 
@@ -124,7 +124,20 @@ none                                      charges    0.00   net P&L  1490.00
 
 Choose it with `costs=bt.costs.CostModel(rounding="calculator")`. To price a trade on its own, without a backtest, use the [cost calculator](support-functions/cost-calculator.md).
 
-Not available yet: the charges of a delivery (CNC) buy and sell of the same scrip on the same day (`NotImplementedError`).
+**A CNC buy and sell of one scrip on the same day** is charged as a broker charges it: as intraday, with no DP charge. The units a CNC fill matches against that day's fills on the other side are charged at the intraday rates, and the earlier fill of the pair is charged again at those rates.
+
+<!-- continues -->
+```python
+same_day = bt.backtest(round_trip(qty=100), data=bars, capital=500_000, product="CNC")
+print(same_day.costs[["side", "product", "segment", "stt", "dp_charge", "total"]].round(2).to_string(index=False))
+```
+
+<!-- output -->
+```text
+side product         segment  stt  dp_charge  total
+ BUY     CNC NSE_EQ_INTRADAY  0.0        0.0  29.00
+SELL     CNC NSE_EQ_INTRADAY 20.4        0.0  47.05
+```
 
 ## Slippage
 
@@ -187,14 +200,14 @@ An order that needs more margin than the strategy's free cash is rejected with `
 | Position | Margin blocked | Status |
 |---|---|---|
 | Cash equity, CNC (delivery) | The full value; no leverage | Verified |
-| Cash equity, MIS (intraday) | The value divided by the leverage the order asks for with `leverage=` (1 when it asks for none), up to 5 (a 20 percent margin) | Verified from 1 September 2021; earlier dates use the same 5x limit, unverified |
+| Cash equity, MIS (intraday) | The value divided by the leverage the order asks for with `leverage=`, or the strategy's class attribute `leverage` (1 when neither asks), up to 5 (a 20 percent margin) | Verified from 1 September 2021; earlier dates use the same 5x limit, unverified |
 | Long options | The premium paid | Verified |
-| NIFTY futures | 11.37 percent of the value | Unverified |
-| BANKNIFTY and FINNIFTY futures | 11.38 percent of the value | Unverified |
-| MIDCPNIFTY futures | 12.07 percent of the value | Unverified |
-| NIFTYNXT50 futures | 11.41 percent of the value | Unverified |
+| NSE index futures | A percent of the value per underlying: NIFTY 11.37, BANKNIFTY and FINNIFTY 11.38, MIDCPNIFTY 12.07, NIFTYNXT50 11.41, NIFTYFPI 9.36 | Unverified |
+| NSE stock futures | A percent of the value per underlying, for 218 underlyings (from 17.31 to 47.12 percent) | Unverified |
+| BSE BANKEX futures | 11.23 percent of the value | Unverified |
+| MCX futures | A percent of the value per commodity, for 30 commodities (from 6.33 to 37.57 percent) | Unverified |
 
-The index-futures rows are one day's observation of SPAN plus exposure margin (12 November 2026) applied to every date, so a run that uses them names the row in `result.warnings`. Leverage on CNC, or above 5, is a `ConfigError`. Not available yet: the margin of stock futures, BSE and MCX futures, and short options (`NotImplementedError`).
+The futures rows are one day's observation of a broker's public margin page (SPAN plus exposure margin, read on 12 November 2026) applied to every date, so a run that uses one names the row in `result.warnings`. Leverage on CNC, or above 5, is a `ConfigError`. Not available yet: the margin of SENSEX and SENSEX50 futures (no row, so a run that trades them stops before any data is loaded) and of short options (`NotImplementedError`).
 
 <!-- continues -->
 ```python

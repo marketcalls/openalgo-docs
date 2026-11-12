@@ -13,7 +13,7 @@
 | `source` | `"auto"` (Historify when it covers the whole range, else the broker), `"db"` (Historify), `"api"` (the broker), or a registered data provider |
 | `client` | An `openalgo.api` client; needed for the server sources |
 | `data` | Your own data instead: a DataFrame, a dict of columns, NumPy arrays, or a CSV, Parquet or Feather path |
-| `tz` | The time zone of naive timestamps in your data (`"Asia/Kolkata"` or `"UTC"`; `"UTC"` for Unix seconds); there is no default |
+| `tz` | The time zone of naive timestamps in your data (`"Asia/Kolkata"` or `"UTC"`); there is no default. Epoch numbers (with `unit=`) are UTC and need none; another zone for them is a `ConfigError` |
 | `columns` | Your column names, such as `{"timestamp": "Date", "close": "Adj Close"}` |
 | `label` | `"open"` (default, the OpenAlgo convention) when a timestamp is the bar's open, `"close"` when it is the bar's close |
 | `unit`, `timestamp_format` | For numeric timestamps (`unit="s"` for Unix seconds) or text in a fixed format |
@@ -52,7 +52,6 @@ bars, meta = bt.data.load_bars(
     data="sbin_15m.csv",
     columns={"timestamp": "epoch", "open": "o", "high": "h", "low": "l", "close": "c", "volume": "qty"},
     unit="s",
-    tz="UTC",  # Unix seconds count from UTC midnight, so declare UTC
     label="close",
 )
 print(meta.source, meta.rows, "bars from", meta.obtained_start, "to", meta.obtained_end, "quality ok:", meta.quality.ok)
