@@ -18,7 +18,7 @@ A backtest needs bars: open, high, low, close and volume for every interval of t
 import openalgo.backtest as bt
 from openalgo import api, ta
 
-client = api(api_key="your_api_key_here", host="http://127.0.0.1:5000")
+client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
 
 
 class EmaCross(bt.Strategy):

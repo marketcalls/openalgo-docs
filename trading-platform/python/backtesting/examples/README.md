@@ -1,12 +1,21 @@
 # Examples
 
-Four complete strategies you can copy and run. Each builds synthetic bars in its first lines, so it runs anywhere with only the `openalgo` package and no OpenAlgo server, and each shows the output to expect. Each page ends with the same strategy on data from your OpenAlgo server.
+Real strategies backtested on real market data. Each page gives the rules, one block of code you can copy and run, the output it printed, and a few changes to try. The data comes from your OpenAlgo server: replace `your_api_key` in the code with the API key from your OpenAlgo dashboard.
 
-| Example | What it shows |
-|---|---|
-| [EMA Crossover on Daily Bars](ema-crossover.md) | A positional delivery (CNC) strategy, the engine's default sizing and charges, the tearsheet, and the same strategy written as conditions |
-| [Opening Range Breakout](opening-range-breakout.md) | An intraday (MIS) strategy on 1-minute data with a stop, a target, the dated square-off, and longs and shorts |
-| [Scale-Out with Two Targets and a Trailing Stop](scale-out-trailing-stop.md) | Booking part of a position at two targets, moving the stop to breakeven, and trailing the rest |
-| [Optimizing the EMA Crossover](ema-crossover-optimization.md) | A parameter sweep in worker processes, the heatmap, and an out-of-sample check |
+Every run uses the engine's defaults for Indian markets without being asked: charges at each trade date's rates, slippage, lot and tick sizes, session times and holidays, and the MIS square-off.
 
-The synthetic prices are smooth waves, chosen so that every rule fires at least once. Their figures say nothing about how a strategy does on real prices; run the OpenAlgo version of each page for that.
+## Equity
+
+| Example | Market | Timeframe | In one line |
+|---|---|---|---|
+| [EMA Crossover](ema-crossover.md) | RELIANCE, NSE, CNC | Daily | Buy when the 20-day EMA crosses above the 50-day, sell when it crosses back. Start here |
+| [SMA Golden Cross](sma-golden-cross.md) | HDFCBANK, NSE, CNC | Daily | Hold while the 50-day SMA is above the 200-day |
+| [MACD Crossover](macd-crossover.md) | ICICIBANK, NSE, CNC | Daily | Buy when the MACD line crosses above its signal line, sell when it crosses back |
+| [Supertrend](supertrend.md) | SBIN, NSE, CNC | Daily | Hold while Supertrend (10, 3) shows an uptrend |
+| [RSI Pullback](rsi-pullback.md) | INFY, NSE, CNC | Daily | Buy a low RSI above the 200-day average, sell when the RSI recovers |
+| [Opening Range Breakout](opening-range-breakout.md) | SBIN, NSE, MIS | 5 minutes | Trade the first break of the 15-minute opening range, long or short, stop at the other side |
+| [Position Sizing](position-sizing.md) | RELIANCE, NSE, CNC | Daily | The EMA crossover with a fixed quantity, a percent of equity and a fixed risk |
+| [Tuning a Strategy](ema-crossover-optimization.md) | RELIANCE, NSE, CNC | Daily | Find the best EMA lengths with `bt.optimize` and check them on later data |
+| [Backtest on yfinance Data](yfinance-data.md) | RELIANCE.NS | Daily | The EMA crossover on bars downloaded with yfinance, no server needed |
+
+## Futures

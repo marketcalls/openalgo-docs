@@ -84,7 +84,7 @@ from openalgo import api
 
 import openalgo.backtest as bt
 
-client = api(api_key="your_api_key_here", host="http://127.0.0.1:5000")
+client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
 
 bars, meta = bt.data.load_bars("SBIN", "NSE", "5m", "2025-01-01", "2025-06-30", client=client)
 print(meta.source, meta.broker, meta.cache, meta.rows)
