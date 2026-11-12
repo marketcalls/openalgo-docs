@@ -8,114 +8,69 @@
 **The examples use SDK 2.1.1, which is being released.** With 2.1.0, a backtest that starts before 1 October 2024 stops with a charges error, and `self.rebalance`, `result.to_csv` and `result.to_excel` are not there yet. Upgrade with `pip install --upgrade openalgo` once 2.1.1 is out.
 {% endhint %}
 
-Looking for a quick answer, such as how to add a stop-loss or use NIFTY as the benchmark? See [How do I ...?](how-to.md).
+## What is a backtest?
 
-## What it does for you
+A backtest runs a trading strategy on past prices to show what it would have done. You write the rules once in Python (when to buy, when to sell), and OpenAlgo replays years of real prices from your broker through them, with Indian charges, slippage and session times applied to every trade. You see the profit, the worst fall along the way and every trade before you risk any money.
 
-A backtest replays your strategy on past price bars and shows what it would have done: every order, fill, trade, the equity curve, the charges you would have paid and the usual performance figures. The OpenAlgo engine is built for Indian markets, so the things that usually make a backtest look better than real trading are applied for you:
+## What you need
 
-* **Charges** on every fill: brokerage (Zerodha's rates by default), STT, exchange and IPFT charges, SEBI fee, stamp duty, GST and the DP charge on delivery sells, at the rates in force on each trade date.
-* **Slippage** on every fill, from a dated table per instrument class.
-* **Lot size, tick size and freeze quantity** of futures and options, from dated reference tables.
-* **The futures roll**: a futures strategy names an underlying, and its position rolls to the next contract the session before expiry, with daily mark to market.
-* **Session times and holidays** of NSE, BSE, NFO, BFO, MCX, CDS and BCD, including the dated intraday entry cut-off and square-off for MIS.
-* **Margin**: an order that needs more margin than your free cash is rejected, as a broker would. Futures block 20 percent of the contract value by default, or your broker's figures with `margin=`.
-* **Splits and bonuses**: OpenAlgo history may not be adjusted for them, so the bars of NSE and BSE shares are checked for an overnight gap that looks like an unadjusted split or bonus. The run stops with the date and what to do, instead of trading on a fall in price that never happened (see [Data](data.md#splits-and-bonuses)).
-
-You write the strategy once as a small Python class. The engine runs it bar by bar, decides at each bar close and fills at the next bar's open, so a strategy can never trade on a price it could not have seen.
-
-The calculations (fills, positions, charges, the ledger, the metrics) run in a compiled Rust core, so the same inputs always give the same result (see [Speed and repeatable results](#speed-and-repeatable-results)).
-
-## Two ways to run a strategy
-
-| Function | What it does | Status |
-|---|---|---|
-| `bt.backtest(Strategy, ...)` | Runs the strategy on past bars and returns a `Result` | Available |
-| `bt.live(Strategy, client, ...)` | Will trade the same strategy class through your OpenAlgo server | Planned |
-
-With `bt.live`, whether orders are simulated or sent to your broker will be decided inside OpenAlgo by the analyzer mode switch (sandbox mode), never by an argument in your code. The same switch you already use for API orders decides it. `bt.live` is not available yet; calling it raises `NotImplementedError`.
-
-## What is applied by default
-
-You can run a backtest with only a strategy, data and capital. Everything else has a default for Indian markets, and the result lists every value it used (the Assumptions block).
-
-| Aspect | Default | Change it with |
-|---|---|---|
-| Product | MIS for intraday intervals; CNC for daily equity; NRML for daily F&O | `product=` |
-| Fill timing | Decide at the bar close, fill at the next bar's open | (fixed for now) |
-| Charges | Zerodha brokerage plus all statutory and exchange charges, at the rates of each trade date | `costs=` |
-| Slippage | The dated default table: 2 basis points for cash equity, ticks for futures, a percent of premium for options | `slippage=` |
-| Quantity | 1x the capital (net of estimated charges) for cash equity, one lot for futures and options | `qty=`, `lots=`, `size=` |
-| Instrument | Cash equity: lot 1, tick 0.05, no freeze quantity. Futures and options: lot, tick and freeze quantity from the reference tables | `instrument=` |
-| Intraday times (MIS) | Entries stop and positions are squared off at the dated exchange defaults (NSE cash from 3 August 2026: 14:50 and 15:00 IST) | `entry_until=`, `square_off=` |
-| Stops and targets | For an intraday strategy, tested on 1-minute bars when 1-minute data covers the whole run, otherwise on the strategy bars; daily bars for a daily strategy | `base=` |
-| Calendar | Built-in holiday lists for 2019 to 2026 and dated session hours | `calendar=` |
-| Futures | The current-month contract, rolled one session before expiry | `expiry` (class), `roll=` |
-| Futures margin | 20 percent of the contract value (5x), for every underlying and date | `margin=` |
-| Benchmark | None: no alpha, beta or other benchmark figures | `benchmark=` |
-
-See [Orders and Risk](orders-and-risk.md) and [Costs, Slippage and Margin](costs-slippage-and-margin.md) for the details.
-
-## Speed and repeatable results
-
-The engine is fast enough to sweep parameters over years of 1-minute bars on a desktop computer. Measured on one core of a current desktop with the speed benchmark in the SDK repository (`benchmark/backtest_speed.py`):
-
-| Run | Time |
-|---|---|
-| A strategy with `on_bar`, one call per bar | About 575,000 bars a second: 1.75 microseconds per bar for the whole run, of which about 1 microsecond is the Python call itself |
-| A [condition strategy](writing-strategies.md#condition-strategies) on 1,000,000 one-minute bars, with the default charges and slippage, about 9,300 round trips and every metric | About 1.1 seconds (the target is 2 seconds) |
-
-Adding trades adds time in proportion (about 17 microseconds per round trip), and so does adding bars, so a long run costs what its length suggests. Your own `on_bar` code and indicators add their own time on top.
-
-**Results repeat exactly.** The same strategy on the same data and settings gives the same result every time, bit for bit, on the same platform. The equity curve and the trade table use only exact arithmetic (prices in whole price units, the ledger in paise), so they are identical on every platform. The metrics also use the platform's math library (logarithms, exponentials and powers for CAGR, annualised figures and the distribution figures), so on another operating system a metric can differ in its last digits, always within one part in a billion (1e-9). The SDK's test suite pins four reference runs (an intraday strategy, a condition strategy, a futures strategy across a roll and a GTT positional strategy) to these rules.
-
-## Install
-
-The engine ships inside the `openalgo` package from SDK 2.1.0; nothing else is needed. It needs Python 3.12 or newer.
+1. **A running OpenAlgo server**, logged in to your broker. See [Getting Started](../../../getting-started/README.md) to install it.
+2. **Your API key**, from the API Key page of your OpenAlgo dashboard. The code on these pages writes `OPENALGO_API_KEY` where your key goes.
+3. **Python 3.12 or newer, and the OpenAlgo library:**
 
 ```bash
 pip install -U openalgo
 ```
 
-A backtest on your own data needs no OpenAlgo server, no API key and no other package. To backtest on history from your OpenAlgo server (broker history or Historify), pass an `openalgo.api` client instead of data.
-
 ## Your first backtest in five minutes
 
-The example below loads six years of SBIN daily bars from your OpenAlgo server, defines an EMA crossover strategy and runs it with Rs 1,00,000. Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`. It is the first of the [examples](examples/ema-crossover.md), which explains the strategy and what to try next.
+The strategy buys SBIN when its 20-day EMA crosses above its 50-day EMA, and sells when the 20-day EMA crosses back below. An EMA (exponential moving average) is the average closing price of the last few days, with the recent days counting more. The test runs on daily bars (one bar of prices per trading day) from 1 January 2021 to 11 November 2026, starting with Rs 1,00,000.
+
+Copy the code into a file such as `first_backtest.py`, put your API key in place of `OPENALGO_API_KEY`, and run `python first_backtest.py`.
 
 <!-- requires-server -->
 ```python
+# Load the backtesting engine (bt), the OpenAlgo client (api) and the indicators (ta).
 import openalgo.backtest as bt
 from openalgo import api, ta
 
+# Connect to your OpenAlgo server.
 client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
+# The strategy. A class groups the strategy's settings and steps under one name.
 class EmaCrossover(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "D"  # daily bars
-    fast = 20  # days
-    slow = 50
+    symbol, exchange, interval = "SBIN", "NSE", "D"  # SBIN on NSE, daily bars
+    fast = 20  # days in the fast EMA
+    slow = 50  # days in the slow EMA
 
+    # init runs once, before the first bar. (def starts a method: steps that belong to the class.)
     def init(self):
-        self.fast_ema = self.I(ta.ema, self.close, self.fast)
-        self.slow_ema = self.I(ta.ema, self.close, self.slow)
+        # self.I(...) makes an indicator line that the strategy can read at every bar.
+        self.fast_ema = self.I(ta.ema, self.close, self.fast)  # 20-day EMA of the closes
+        self.slow_ema = self.I(ta.ema, self.close, self.slow)  # 50-day EMA of the closes
 
+    # on_bar runs at the close of every bar (here once a day) and decides what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # wait until the slow EMA has enough days
+        if len(self.close) < self.slow:  # warm-up: wait until there are 50 days for the slow EMA
             return
+        # Buy when holding nothing (is_flat) and the fast EMA crosses above the slow EMA.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # with all the capital, at the next day's open
+        # Sell when holding shares (is_long) and the fast EMA crosses back below.
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
-            self.exit()
+            self.exit()  # sell all the shares at the next day's open
 
 
+# Run the backtest: 1 January 2021 to 11 November 2026, starting with Rs 1,00,000.
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+
+# Print the summary. f"..." is an f-string: the values in braces are filled in.
 m = result.metrics
 print(f"Net profit   : Rs {m['net_profit']:,.2f}")
 print(f"Return       : {m['total_return']:.2%}")
 print(f"Max drawdown : {m['max_drawdown']:.2%}")
 print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
-print(f"Charges      : Rs {m['total_costs']:,.2f}")
 ```
 
 <!-- output -->
@@ -124,98 +79,47 @@ Net profit   : Rs 53,267.29
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
-Charges      : Rs 3,363.76
 ```
 
-What happened, in plain words:
+[Lesson 1](tutorial/01-first-backtest.md) explains this code line by line.
 
-* The engine loaded the daily bars (from Historify when it holds the whole range, otherwise from your broker), checked them against the NSE calendar and cached them, so a second run makes no request.
-* `self.buy()` with no quantity bought as many shares as the capital allowed after estimated charges, at the open of the session after the crossover (plus 2 basis points of slippage).
-* The position is CNC (delivery), because the strategy is daily and SBIN is cash equity. Delivery charges, including the DP charge on each sell, were deducted.
-* No stop was set, so each trade ended on the opposite crossover. A position still open on 11 November 2026 is valued at that day's close: it counts in the net profit but not in the 11 closed trades.
+## What the four numbers mean
 
-To run the same strategy without a server, pass your own bars with `data=` instead of the client (see [Data](data.md#your-own-data) and [Backtest on yfinance Data](examples/yfinance-data.md)).
+* **Net profit:** the strategy turned Rs 1,00,000 into Rs 1,53,267.29, after every charge (brokerage, STT, stamp duty, GST and the rest).
+* **Return:** that profit as a percent of the starting capital.
+* **Max drawdown:** the largest fall of the account from its highest value to a later low. At its worst, the account was 29.82 percent below its best value so far.
+* **Trades:** 11 round trips (a buy and the sell that closed it), of which 36 percent, 4 trades, made money. A few long rises paid for the many small losses.
 
-## Reading the result
-
-`print(result)` shows the Assumptions block (every setting the run used, defaults resolved), the gross and net P&L and the warnings. Here it is for the first backtest:
-
-<!-- requires-server -->
-<!-- continues -->
-```python
-print(result)
-```
-
-<!-- output -->
-```text
-Result(SBIN)
-  base: D
-  product: CNC
-  entry_from: None
-  entry_until: None
-  square_off: None
-  fill: next_open
-  quantity_mode: fractional
-  costs: zerodha (contract-note rounding)
-  slippage: default table
-  capital: 100000.0
-  max_daily_loss: None
-  risk_basis: gross
-  after_risk_exit: lock_session
-  drawdown_halt: None
-  cooldown: None
-  max_positions: None
-  max_hold: None
-  leverage: None
-  max_adds: None
-  max_position: None
-  min_spacing: None
-  max_risk: None
-  allow_averaging_down: False
-  reinvest: True
-  size_caps: None
-  base_rule: base D (a daily or longer strategy): stops are tested on the day's range and fill at the stop level, or at the open on a gap; combined and daily-loss exits fill at the day's close
-  instruments: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
-  benchmark: None
-  indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 20): truncation passed at 4 cuts, warm-up 128 bars
-  gross P&L: 56627.86 (realized 56627.86)
-  charges: 3360.57; net P&L: 53267.29
-  warning: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
-  warning: charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2024-10-01 are unverified for 4 fills, from 2024-11-05
-```
-
-A few lines worth knowing:
-
-* `base_rule` says which bars stops are tested on and where fills happen. A daily strategy uses daily bars.
-* `indicator_checks` reports the look-ahead check every indicator passes before the run (see [Writing Strategies](writing-strategies.md#indicators-and-look-ahead-checks)).
-* `gross P&L` is before charges and includes any position still open at the end, marked at the last close (here every trade was closed by 11 November 2026, so all of it is realized). `charges` are what the contract notes charged at each session close, so `net P&L` is exactly the change in equity. The `Charges` figure printed earlier is the metric `total_costs`, the sum of the closed trades' charges before contract-note rounding. The two differ because a contract note rounds STT and stamp duty to the rupee, and because the open position's buy charges are in `charges` only.
-* `entry_from`, `entry_until` and `square_off` apply to MIS runs and are stated as they applied over the whole run: one clock time, a rule such as "20 minutes before each session's close" (MCX), or dated periods when a default changed during the run (NSE cash on 3 August 2026). This daily CNC run has none.
-* `leverage` and the scale-in limits (`max_adds`, `max_position`, `min_spacing`, `max_risk`, `allow_averaging_down`) are listed even when unset, so you see that no limit applied. So are `reinvest` (whether sizes compound with the equity) and `size_caps` (see [Sizing](costs-slippage-and-margin.md#reinvest-and-size-caps)).
-* `benchmark` names what the run is compared with and where its closes came from; `None` means no benchmark figures (see [A benchmark](results-and-reports.md#a-benchmark)).
-* The last lines are warnings. The first you will see on every cash-equity backtest without `instrument=`: the engine used the generic lot 1 and tick 0.05. The second says which fills were charged at rates not yet verified against their source (see [Charges](costs-slippage-and-margin.md#charges)); Python shows the same as an `UnverifiedScheduleWarning`. Orders the engine rejected (for margin, a product rule or the intraday entry window) would be listed here too.
-
-No setting is accepted and then ignored. Every class attribute and every `bt.backtest` argument either works, raises an error (`ConfigError` for a value that cannot be used, `NotImplementedError` for a feature not built yet), or, when it does nothing in this particular run, is named in `result.warnings` with the reason (for example `pyramiding` on a strategy with `on_bar`, `client=` together with `data=`, or intraday times on a CNC run).
-
-[Results and Reports](results-and-reports.md) explains every table and figure.
+[Lesson 2](tutorial/02-read-the-results.md) shows every trade, the full HTML report, and what the engine assumed for you (the product, fills, charges, slippage and sessions).
 
 ## Where to go next
 
-* [How do I ...?](how-to.md): short answers to the common questions (long and short, stops, sizing, a NIFTY benchmark, the tearsheet, the trade list, optimization, older years, rebalancing a portfolio, your own data, exporting), each with a small example.
-* [Writing Strategies](writing-strategies.md): the strategy class, indicators, other timeframes, positions, timers, and condition strategies that run without a Python call per bar.
-* [Orders and Risk](orders-and-risk.md): orders, target positions, stops, targets, trailing stops, intraday times and the strategy risk rules.
-* [Costs, Slippage and Margin](costs-slippage-and-margin.md): what is charged and how to change it, margin, and sizing (your own sizing function, size caps).
-* [Futures](futures.md): futures strategies by underlying, the roll, mark to market and settlement.
-* [Data](data.md): OpenAlgo history, your own data, time zones, quality checks, splits and bonuses, and the cache.
-* [Results and Reports](results-and-reports.md): the tables, the performance figures, a benchmark, Monte Carlo, R-multiples, the HTML tearsheet in four modes and reruns; [Metric Definitions](metric-definitions.md) defines every figure.
+* [Tutorial](tutorial/README.md): eleven short lessons, from this first backtest to stops, sizing, intraday, shorts, futures and portfolios. Start here.
+* [Examples](examples/README.md): complete strategies on real market data (EMA, SMA, MACD, Supertrend, RSI, the opening range breakout and futures), each with its code and its output.
+* [How do I ...?](how-to.md): short answers to the common questions, each with a small example.
+
+The reference pages explain every option:
+
+* [Writing Strategies](writing-strategies.md): the strategy class, indicators, other timeframes and condition strategies.
+* [Orders and Risk](orders-and-risk.md): orders, stops, targets, trailing stops, intraday times and risk rules.
+* [Costs, Slippage and Margin](costs-slippage-and-margin.md): what is charged, margin and sizing.
+* [Futures](futures.md): futures by underlying, the roll, mark to market and settlement.
+* [Data](data.md): OpenAlgo history, your own data, quality checks, splits and bonuses.
+* [Results and Reports](results-and-reports.md) and [Metric Definitions](metric-definitions.md): every table, figure and the tearsheet.
 * [Optimization](optimization.md): parameter sweeps.
-* [Support Functions](support-functions/README.md): the calendar, cost calculator, reference data, resampling, data loading and metrics on their own.
-* [Examples](examples/README.md): real strategies on real market data, each with the code and its output.
+* [Support Functions](support-functions/README.md): the calendar, cost calculator, reference data, resampling and metrics on their own.
+
+## Speed and repeatable results
+
+The calculations (fills, positions, charges, the ledger, the metrics) run in a compiled Rust core. On one core of a current desktop, a strategy with `on_bar` runs about 575,000 bars a second, and a [condition strategy](writing-strategies.md#condition-strategies) on 1,000,000 one-minute bars with about 9,300 round trips takes about 1.1 seconds (measured with `benchmark/backtest_speed.py` in the SDK repository). Your own `on_bar` code and indicators add their own time.
+
+The same strategy on the same data and settings gives the same result every time. The equity curve and the trade table use exact arithmetic (prices in whole price units, the ledger in paise), so they are identical on every platform; a metric that uses logarithms or powers can differ in its last digits on another operating system, always within one part in a billion.
 
 ## Not available yet
 
-The following are part of the design but not built. Each raises `NotImplementedError` with a message that says it is not supported in this version and what to do instead, so nothing is ignored silently. Pages for them will be added as they land.
+The following are part of the design but not built. Each raises `NotImplementedError` with a message that says what to do instead, so nothing is ignored silently.
 
-* `bt.live`: trading a strategy through OpenAlgo in sandbox or live mode.
+* `bt.live`: trading a strategy through OpenAlgo. Whether its orders are simulated (sandbox mode) or sent to your broker will be decided by the analyzer switch inside OpenAlgo, never by an argument in your code.
 * `fill="close"` (filling at the decision bar's close).
 * Walk-forward optimization (`bt.walk_forward`).
 * Several strategies in one run, pairs (`pair_long`, `pair_short`), the portfolio runner `bt.rebalance` (to rebalance today, call `self.rebalance` inside a strategy, as in [Equal-Weight Rebalancing](examples/rebalancing.md)), and strategies declared on a `universe`.
