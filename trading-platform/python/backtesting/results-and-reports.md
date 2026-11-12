@@ -119,7 +119,8 @@ The [Metrics](support-functions/metrics.md) support page shows each of these tab
 * **Drawdowns are zero or negative.** `max_drawdown` is a fraction (-0.072 is a fall of 7.2 percent from the peak) and `max_drawdown_amount` is in rupees (a fall of Rs 7,887 is -7,887). Episode depths, the conditional drawdown and the drawdowns of the horizon summary and of Monte Carlo follow the same rule. Durations and the ulcer index are zero or positive.
 * **Per session.** Returns are taken per IST session date and annualised with the real number of sessions per year of the traded exchange (from the holiday calendar), never a fixed 252. CAGR uses calendar days (365.25 a year) and is NaN for runs shorter than 28 days.
 * **After charges.** Net figures subtract every charge. Trade statistics count closed trades only; an open position at the end counts for exposure and turnover.
-* `result.metrics` uses a risk-free rate of 0 and no benchmark. For a risk-free rate, a benchmark (alpha, beta, R squared, tracking error, information and Treynor ratios) or deposits and withdrawals, call [`metrics.analyse`](support-functions/metrics.md) on the run's equity and trades.
+* `result.metrics` uses a risk-free rate of 0 and no benchmark. For a risk-free rate, a benchmark (alpha, beta, R squared, tracking error, information and Treynor ratios) or deposits and withdrawals, call [`metrics.analyse`](support-functions/metrics.md) on the run's equity and trades. The run's benchmark return, the "Since start" row of the horizon summary and `benchmark_comparison` all take a span's benchmark return by one rule, the one in the [`benchmark_total_return` definition](metric-definitions.md#benchmark); a span with no benchmark return is NaN.
+* The figures cover the run up to its end, which can be before `end` (see [Where a run ends](#where-a-run-ends)).
 * A figure the data cannot define is NaN (for example a Sharpe ratio with no variation); a positive figure over a zero denominator is infinite.
 
 <!-- continues -->
@@ -284,4 +285,60 @@ print("fast=3, slow=15 net profit:", round(faster.metrics["net_profit"], 2))
 True
 identical: True
 fast=3, slow=15 net profit: 11917.48
+```
+
+## Where a run ends
+
+A run ends at the earliest of three times: the `end` you asked for, the close of the last bar in the data, and the present. When that is before `end`, the first warning of the result names the end it used and why.
+
+* **Equity, trades and metrics stop there.** The equity series, the performance figures and the report cover the run up to that instant, never empty time after the data.
+* **A position still open is reported open**, marked at the last close in `result.final_positions` and counted as an open trade. It is not squared off at a stale price, even on MIS: the run simply has no later bar to act on.
+* **Charges do not depend on where the data stops.** The contract notes of the final session are settled at the run's end exactly as at a session close, so a run whose data ends at noon is charged what the same fills would be charged in a full session.
+* **The present** is the clock by default: bars that have not closed yet are dropped, so a run for today stops at the last completed bar. `bt.backtest(now=...)` fixes the present instead (a datetime, an ISO string read as IST, or UTC nanoseconds), which makes a test or a rerun on today's data repeatable.
+
+The example below has data only until noon. The run ends at 12:00, the position bought at 09:30 is still open, and the day's contract note is settled:
+
+```python
+import numpy as np
+import pandas as pd
+
+import openalgo.backtest as bt
+
+minute = np.arange(165)  # 1-minute bars from 09:15 to 11:59
+close = np.interp(minute, [0, 164], [800, 808]).round(1)
+open_ = np.r_[close[0], close[:-1]]
+morning = pd.DataFrame(
+    {"open": open_, "high": np.maximum(open_, close) + 0.1, "low": np.minimum(open_, close) - 0.1,
+     "close": close, "volume": 1_000},
+    index=pd.Timestamp("2026-10-05 09:15", tz="Asia/Kolkata") + pd.to_timedelta(minute, unit="min"),
+)
+
+
+class Hold(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "15m"
+
+    def on_bar(self, bar):
+        if len(self.close) == 1:
+            self.buy(qty=100)
+
+
+partial = bt.backtest(Hold, data=morning, capital=500_000)
+print(partial.warnings[0])
+print("last equity point:", partial.equity.index[-1], "| open trades:", partial.metrics["open_trades"])
+print(partial.final_positions[["symbol", "quantity_units", "average_price_rupees", "mark_rupees", "unrealized_rupees"]].to_string(index=False))
+print(partial.contract_notes[["date", "charged_total", "adjustment", "settled"]].to_string(index=False))
+
+earlier = bt.backtest(Hold, data=morning, capital=500_000, now="2026-10-05 10:30")
+print(earlier.warnings[0].split(", before")[0])
+```
+
+<!-- output -->
+```text
+The run ends at 2026-10-05 12:00 IST, the close of the last bar in the data, before the end of its range at 2026-10-05 15:30 IST: equity, trades and metrics stop there, and positions still open are reported open
+last equity point: 2026-10-05 12:00:00+05:30 | open trades: 1
+symbol  quantity_units  average_price_rupees  mark_rupees  unrealized_rupees
+  SBIN           100.0                 800.9        808.0              710.0
+      date  charged_total  adjustment  settled
+2026-10-05           28.6        -0.4     True
+The run ends at 2026-10-05 10:30 IST, the present (now=)
 ```

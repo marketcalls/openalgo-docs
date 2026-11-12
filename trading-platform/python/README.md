@@ -2491,7 +2491,7 @@ In SDK 2.0.5, `api(..., auto_reconnect=True)` is the default. After a drop the S
 
 Callbacks receive an envelope with `symbol`, `exchange`, numeric `mode` and a nested `data` object. The pinned SDK normalizes this data rather than forwarding all raw fields:
 
-- Quote callbacks/cache include a fixed field set, defaulting absent OHLC/volume/change fields to zero. A zero here may mean unavailable upstream, not a measured market value. Raw WebSocket frames can omit those fields.
+- Quote callbacks/cache include a fixed field set: `timestamp`, `open`, `high`, `low`, `close`, `ltp`, `volume`, `last_trade_quantity`, `avg_trade_price`, `change` and `change_percent`, defaulting absent fields to zero. A zero here may mean unavailable upstream, not a measured market value. Raw WebSocket frames can omit those fields. In SDK 2.0.5 `avg_trade_price` and `last_trade_quantity` are always 0, because the server sends them as `average_price` and `last_quantity`. From the next SDK release they are filled from those server fields, and quotes also carry `ltt`, `total_buy_quantity`, `total_sell_quantity` and `oi` (0 when the server does not send them).
 - Depth callbacks/cache retain `ltp`, `timestamp` and `depth`; extra OHLC, OI or total buy/sell quantity fields on the raw server frame are not retained. Use a raw WebSocket client when those extra fields are needed.
 - `get_ltp(exchange=None, symbol=None)`, `get_quotes(...)`, and `get_depth(...)` read SDK memory; they do not issue REST requests or create subscriptions. Results nest under `ltp`, `quote` and `depth`, then exchange and symbol. `client.quotes(...)` and `client.depth(...)` are separate REST snapshot methods.
 

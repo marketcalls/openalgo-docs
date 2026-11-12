@@ -52,7 +52,7 @@ What to expect from each source:
 * Weekly, monthly, quarterly and yearly bars from the server are always built from daily bars by the engine, never taken from the server's own aggregation.
 * The bar still forming at the time of the request (today's partial candle) is dropped.
 
-`start` and `end` are IST dates, both included. A datetime bounds the run to that time of day, which helps when you want part of a session.
+`start` and `end` are IST dates, both included. A datetime bounds the run to that time of day, which helps when you want part of a session. A run never goes past its data or the present: it ends at the earliest of `end`, the close of the last bar in the data and the present (`now=`, the clock by default), with a warning that names the end used. See [Where a run ends](results-and-reports.md#where-a-run-ends).
 
 ## Your own data
 

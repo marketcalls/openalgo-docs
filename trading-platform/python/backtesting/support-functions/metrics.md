@@ -42,20 +42,12 @@ import pandas as pd
 import openalgo.backtest as bt
 from openalgo.backtest import metrics, report
 
-def session_closes(start, end):
-    """The IST close of every NSE session from start to end."""
-    sessions = bt.calendar.default_calendar().sessions("NSE", start, end)
-    return sessions, pd.DatetimeIndex(pd.to_datetime(sessions["close"], utc=True)).tz_convert("Asia/Kolkata")
-
-
-# One equity point per NSE session from 1 April to 6 November 2026. The benchmark starts
-# one session earlier, so its level when the account opened is known.
-sessions, closes = session_closes("2026-04-01", "2026-11-06")
+# One equity point and one benchmark close per NSE session, 1 April to 6 November 2026.
+sessions = bt.calendar.default_calendar().sessions("NSE", "2026-04-01", "2026-11-06")
+closes = pd.DatetimeIndex(pd.to_datetime(sessions["close"], utc=True)).tz_convert("Asia/Kolkata")
 k = np.arange(len(sessions))
 equity = pd.Series(500_000 * (1 + 0.0006 * k + 0.01 * np.sin(k / 7)), index=closes)
-_, benchmark_closes = session_closes("2026-03-30", "2026-11-06")
-j = np.arange(len(benchmark_closes))
-nifty = pd.Series(25_000 * (1 + 0.0004 * j + 0.008 * np.sin(j / 9)), index=benchmark_closes)
+nifty = pd.Series(25_000 * (1 + 0.0004 * k + 0.008 * np.sin(k / 9)), index=closes)
 
 performance = metrics.analyse(equity, exchanges="NSE", benchmark=nifty, risk_free_rate=0.065, opening_wealth=500_000)
 m = performance.metrics
@@ -74,10 +66,10 @@ volatility                0.0150   Volatility
 sharpe                    5.8546   Sharpe ratio
 sortino                  12.0508   Sortino ratio
 max_drawdown             -0.0084   Maximum drawdown
-benchmark_total_return    0.0535   Benchmark return
-alpha                     0.0938   Alpha
-beta                     -0.2495   Beta
-correlation              -0.1617   Correlation
+benchmark_total_return    0.0536   Benchmark return
+alpha                     0.0957   Alpha
+beta                     -0.2817   Beta
+correlation              -0.1824   Correlation
 sessions_per_year       247.1692   Sessions per year
 my_curve.html
 ```
@@ -133,8 +125,8 @@ for key in ("net_profit", "sharpe", "alpha", "beta"):
 ```text
 net_profit plain  4688.2800   with benchmark  4688.2800
 sharpe     plain     0.9370   with benchmark     0.1903
-alpha      plain        nan   with benchmark     0.0067
-beta       plain        nan   with benchmark     0.4091
+alpha      plain        nan   with benchmark     0.0071
+beta       plain        nan   with benchmark     0.4024
 ```
 
 `alpha` and `beta` exist only when a benchmark is given, so the plain run shows NaN for them here, and its Sharpe ratio is higher because it subtracts no risk-free return.
@@ -162,12 +154,12 @@ print(two_months.rolling.dropna().iloc[::20].round(3).to_string())
 window: 42 sessions
             volatility  sharpe  sortino  win_rate   beta
 date
-2026-06-03       0.056   4.936  696.085     0.833 -0.058
-2026-07-02       0.094   1.767    2.876     0.500 -2.317
-2026-07-30       0.100   2.950    5.074     0.560 -6.769
-2026-08-27       0.090  -0.677   -0.910     0.455 -1.161
-2026-09-25       0.110   2.191    3.620     0.556  3.105
-2026-10-27       0.093   1.892    3.333     0.522  4.971
+2026-06-03       0.056   4.936  696.085     0.833 -0.340
+2026-07-02       0.094   1.767    2.876     0.500 -2.645
+2026-07-30       0.100   2.950    5.074     0.560 -7.561
+2026-08-27       0.090  -0.677   -0.910     0.455 -0.414
+2026-09-25       0.110   2.191    3.620     0.556  3.532
+2026-10-27       0.093   1.892    3.333     0.522  5.156
 ```
 
 ## Drawdown episodes
@@ -206,10 +198,10 @@ print(streaks[(streaks["sessions"] > 0) | (streaks["trades"] > 0)].to_string())
 ```text
                    from  sessions  total_return    cagr  volatility  sharpe  max_drawdown  benchmark_return
 horizon
-1M           2026-10-06        22       -0.0396 -0.3789      0.0524 -9.8345       -0.0396           -0.0054
-3M           2026-08-06        63       -0.0360 -0.1354      0.0928 -2.1824       -0.0638            0.0199
-6M           2026-05-06       127        0.0469  0.0952      0.0917  0.3312       -0.0720            0.0393
-Since start  2026-04-01       150        0.0469  0.0793      0.0844  0.1903       -0.0720            0.0535
+1M           2026-10-06        22       -0.0396 -0.3789      0.0524 -9.8345       -0.0396           -0.0049
+3M           2026-08-06        63       -0.0360 -0.1354      0.0928 -2.1824       -0.0638            0.0196
+6M           2026-05-06       127        0.0469  0.0952      0.0917  0.3312       -0.0720            0.0391
+Since start  2026-04-01       150        0.0469  0.0793      0.0844  0.1903       -0.0720            0.0536
         sessions  trades
 length
 1              3       1
@@ -222,6 +214,8 @@ length
 
 ## Benchmark comparison
 
+One rule gives every benchmark return: the run's `benchmark_total_return`, the "Since start" and other rows of the horizon summary, and each period of `benchmark_comparison` compound the benchmark's session returns over the span, from its value as of the span's start (with an opening wealth, its last value before the first point) or else as of the first session end it covers. A span in which the benchmark has no session return is NaN.
+
 With a benchmark, `performance.benchmark_comparison("year")` or `("month")` sets the strategy's compounded return against the benchmark's for each calendar year or month: `strategy`, `benchmark`, `excess` (strategy minus benchmark) and `beat` (True when the strategy did better). `performance.benchmark_returns` holds the benchmark's session returns on the strategy's session dates.
 
 <!-- continues -->
@@ -233,14 +227,14 @@ print(with_benchmark.benchmark_comparison("month").round(4).to_string())
 ```text
          strategy  benchmark  excess   beat
 month
-2026-04    0.0000     0.0144 -0.0144  False
-2026-05    0.0077    -0.0061  0.0138   True
-2026-06    0.0200     0.0187  0.0014   True
-2026-07    0.0516     0.0076  0.0440   True
-2026-08   -0.0595     0.0000 -0.0595  False
-2026-09    0.0935     0.0222  0.0713   True
-2026-10   -0.0583    -0.0027 -0.0556  False
-2026-11    0.0000    -0.0013  0.0013   True
+2026-04    0.0000     0.0145 -0.0145  False
+2026-05    0.0077    -0.0062  0.0140   True
+2026-06    0.0200     0.0175  0.0026   True
+2026-07    0.0516     0.0093  0.0424   True
+2026-08   -0.0595    -0.0012 -0.0583  False
+2026-09    0.0935     0.0223  0.0712   True
+2026-10   -0.0583    -0.0017 -0.0566  False
+2026-11    0.0000    -0.0016  0.0016   True
 ```
 
 ## Monte Carlo
@@ -338,5 +332,5 @@ sharpe            Returns and risk  Sharpe ratio  0.190334
 smart_sharpe  Risk-adjusted ratios  Smart Sharpe   0.05485
 omega         Risk-adjusted ratios   Omega ratio  1.043417
 ulcer_index   Risk-adjusted ratios   Ulcer index  0.039351
-beta                     Benchmark          Beta   0.40913
+beta                     Benchmark          Beta  0.402374
 ```

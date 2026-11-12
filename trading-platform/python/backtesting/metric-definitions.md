@@ -109,7 +109,7 @@ These are present only when you give a benchmark to `metrics.analyse`.
 
 | Key | Label | Unit | Definition |
 |---|---|---|---|
-| `benchmark_total_return` | Benchmark return | fraction | Benchmark value at the end over its first value in the run (as of the start, which with an opening wealth is its last value before the first point; else as of the first session end it covers), minus 1. |
+| `benchmark_total_return` | Benchmark return | fraction | Product of (1 + benchmark session return) over the sessions that have one, minus 1: the benchmark value at the end over its first value in the run (as of the start, which with an opening wealth is its last value before the first point; else as of the first session end it covers), minus 1. NaN when no session has a benchmark return. The horizon summary and benchmark_comparison take each span's benchmark return by the same rule. |
 | `benchmark_sessions` | Benchmark sessions | count | Sessions with both a strategy and a benchmark return. |
 | `alpha` | Alpha | fraction | Jensen's alpha per year: (mean(s - rf) - beta * mean(b - rf)) x sessions per year. |
 | `beta` | Beta | ratio | cov(strategy, benchmark) / var(benchmark), per session. |
@@ -137,7 +137,7 @@ These are present only when you give a benchmark to `metrics.analyse`.
 | `risk_adjusted_return` | Return over exposure | fraction | CAGR divided by exposure: the yearly growth per unit of time in the market. |
 | `ulcer_index` | Ulcer index | fraction | Root mean square of the drawdowns at session closes (Martin and McCann 1989); zero or positive. |
 | `ulcer_performance_index` | Ulcer performance index | ratio | (CAGR - risk-free rate) / ulcer index: the Martin ratio. |
-| `serenity_index` | Serenity index | ratio | (CAGR - risk-free rate) / (ulcer index x pitfall), with the pitfall indicator -conditional drawdown / annualised volatility. |
+| `serenity_index` | Serenity index | ratio | (CAGR - risk-free rate) / (ulcer index x pitfall), with the pitfall indicator -conditional drawdown / annualised volatility (the published serenity ratio). |
 | `recovery_factor` | Recovery factor | ratio | Net profit over the magnitude of the maximum drawdown amount, both in rupees. |
 
 ## Session returns

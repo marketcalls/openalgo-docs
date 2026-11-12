@@ -108,7 +108,7 @@ print("margin blocked:", result.equity["margin_rupees"].max(), "charges:", round
 
 <!-- output -->
 ```text
-NIFTY27OCT2625000CE: lot 65, tick 0.05, freeze 3510 from the reference tables (builtin:2026-11-12:3576d2f7e006)
+NIFTY27OCT2625000CE: lot 65, tick 0.05, freeze 3510 from the reference tables (builtin:2026-11-12:319d8b455d2d)
                      time side  quantity_units  price_rupees     reason
 2026-10-05 09:30:00+05:30  BUY           130.0        124.15      entry
 2026-10-05 10:45:00+05:30 SELL           130.0        142.00 leg_target
