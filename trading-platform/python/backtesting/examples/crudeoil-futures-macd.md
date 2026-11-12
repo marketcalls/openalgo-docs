@@ -1,77 +1,49 @@
 # CRUDEOIL Futures: MACD Crossover
 
-MACD measures momentum. The MACD line is the gap between a 12-bar and a 26-bar EMA (an EMA, exponential moving average, is the average closing price of the last few bars, with the recent bars counting more). Its signal line is a 9-bar EMA of that gap. A crossover of the two lines shows momentum turning, and MACD above or below zero shows the trend. Commodity traders use it on MCX crude oil in the evening session, when the international market is most active.
-
-A futures contract is an agreement to buy or sell the commodity at a set date, its expiry. It trades in lots, a fixed number of units (100 barrels for CRUDEOIL), and it can be sold short (sold first and bought back later, to gain from a fall). So this version trades crossovers in the direction of the trend, long and short.
+MACD measures momentum: the MACD line is the gap between a 12-bar and a 26-bar EMA (exponential moving average), and its signal line a 9-bar EMA of that gap. A crossover of the two lines shows momentum turning, and MACD above or below zero shows the trend. Commodity traders use it on MCX crude oil in the evening session, when the international market is most active.
 
 The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the `client = ...` line.
 
 ## Rules
 
-* **Instrument:** CRUDEOIL futures on MCX, the November 2026 contract.
-* **Bars:** 5 minutes. A bar is one period of prices, here 5 minutes, with its open, high, low and close.
-* **Product:** MIS (intraday: every position is closed before the session ends).
-* **Indicator:** MACD (12, 26, 9) from `openalgo.ta`.
-* **Long:** buy one lot (100 barrels) when MACD crosses above its signal line while MACD is above zero.
-* **Short:** sell one lot short when MACD crosses below its signal line while MACD is below zero.
-* **Exit:** the opposite crossover, or the square-off (the forced close of intraday positions) 20 minutes before the session closes. MCX closes at 23:30 or 23:55, depending on the season.
-* **Session:** new trades from 17:00, and none in the last 30 minutes.
+* **Instrument:** CRUDEOIL19NOV26FUT on MCX, the November 2026 contract, 5-minute bars. A bar is one period of prices, here 5 minutes. A lot, the fixed number of units a contract trades in, is 100 barrels.
+* **Long:** buy one lot when MACD (12, 26, 9) crosses above its signal line while MACD is above zero.
+* **Short:** sell one lot short (sell first, buy back later, to gain from a fall) when MACD crosses below its signal line while MACD is below zero.
+* **Exit:** the opposite crossover, or the square-off (the forced close of intraday positions) before the session closes. New trades from 17:00 only.
+* **Product:** MIS (intraday), Rs 3,00,000. The engine blocks 20 percent of the contract value as margin (the money set aside while a position is open).
+* **Data:** 1 October to 11 November 2026. The contract expires on 19 November 2026, after which your broker no longer serves its history: then switch to the current contract and dates inside its life.
 
-## Code
-
-The example tests CRUDEOIL19NOV26FUT, the November 2026 contract, from 1 October to 11 November 2026. MCX contracts are not in the engine's reference tables yet, so the engine needs the contract's terms from you. The first block reads them from the master contract on your OpenAlgo server with `client.symbol`, and builds an `Instrument` from them:
-
-* `underlying="CRUDEOIL"` tells the engine which commodity it is, so it can charge the non-agricultural commodity rates; without it the run stops with a `CostError`.
-* The meaning of `lotsize` on MCX differs by broker. The engine needs units (100 for one CRUDEOIL lot), so if your server shows 1, write `lot_size=100`.
+## The code
 
 <!-- requires-server -->
 ```python
-import datetime as dt
-
+# Imports: the backtest engine (bt), the OpenAlgo client (api) and the indicators (ta).
 import openalgo.backtest as bt
 from openalgo import api, ta
-from openalgo.backtest.reference import Instrument
 
+# Connect to your OpenAlgo server: the bars come from it.
 client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
-# The November 2026 contract and its terms from the master contract on your server.
-contract = "CRUDEOIL19NOV26FUT"
-info = client.symbol(symbol=contract, exchange="MCX")["data"]
-crude = Instrument(
-    symbol=contract, exchange="MCX", kind="future", underlying="CRUDEOIL",
-    lot_size=info["lotsize"],  # units in one lot: 100 barrels
-    tick_size=info["tick_size"],  # the smallest price step: Rs 1
-    expiry=dt.datetime.strptime(info["expiry"], "%d-%b-%y").date(),  # "19-NOV-26"
-)
-print(f"lot size {crude.lot_size}, tick size {crude.tick_size}, expiry {crude.expiry}")
-```
 
-<!-- output -->
-```text
-lot size 100, tick size 1.0, expiry 2026-11-19
-```
-
-The strategy and its backtest, with the contract's terms passed as `instrument=crude`. Everything else is the engine's default: Zerodha charges, the default slippage (the small amount every fill loses to the market) and a margin of 20 percent of the contract value (the money the exchange blocks while a position is open).
-
-<!-- continues -->
-<!-- requires-server -->
-```python
+# The strategy. A class bundles its settings and its functions (each "def").
 class CrudeOilMacd(bt.Strategy):
-    symbol, exchange, interval = contract, "MCX", "5m"
+    symbol, exchange, interval = "CRUDEOIL19NOV26FUT", "MCX", "5m"  # the November contract, 5-minute bars
     entry_from = "17:00"  # new trades in the evening session only
     longs, shorts = True, True  # trade both ways
 
+    # init runs once, before the first bar. self.I works out an indicator so that
+    # each bar sees only the values known at that bar.
     def init(self):
-        # Runs once, before the first bar: the MACD and signal lines (the histogram is not used).
+        # ta.macd gives three lines: MACD, signal and histogram; "_" drops the histogram.
         self.macd, self.signal, _ = self.I(ta.macd, self.close, 12, 26, 9)
 
+    # on_bar runs at the close of every 5-minute bar: decide what to do.
     def on_bar(self, bar):
-        # Runs at the close of every 5-minute bar.
-        if len(self.close) < 35:  # wait for 26 + 9 bars of history
+        if len(self.close) < 35:  # warm-up: MACD needs 26 + 9 bars first
             return
         if self.macd.crossed_above(self.signal):  # momentum turns up
             self.exit()  # close a short, if any
-            if self.longs and self.macd[-1] > 0:  # and the trend is up: buy one lot
+            if self.longs and self.macd[-1] > 0:  # and the trend is up ([-1] is the latest value)
                 self.buy(lots=1)
         elif self.macd.crossed_below(self.signal):  # momentum turns down
             self.exit()  # close a long, if any
@@ -79,43 +51,33 @@ class CrudeOilMacd(bt.Strategy):
                 self.sell(lots=1)
 
 
-result = bt.backtest(
-    CrudeOilMacd, client, start="2026-10-01", end="2026-11-11", capital=300_000, instrument=crude
-)
+# Run the backtest from 1 October to 11 November 2026 with Rs 3,00,000.
+result = bt.backtest(CrudeOilMacd, client, start="2026-10-01", end="2026-11-11", capital=300_000)
 
+# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
 m = result.metrics
-print(f"Net profit    Rs {m['net_profit']:,.2f} after Rs {m['total_costs']:,.2f} of charges")
-print(f"Trades        {m['trades']}, win rate {m['win_rate']:.0%}")
-print(f"Max drawdown  {m['max_drawdown']:.2%}")
-trades = result.trades[["entry_time", "direction", "entry_price_rupees", "exit_price_rupees", "exit_reason", "net_pnl_rupees"]]
-print(trades.head(5).round({"net_pnl_rupees": 2}).to_string(index=False))
+print(f"Net profit   : Rs {m['net_profit']:,.2f}")
+print(f"Return       : {m['total_return']:.2%}")
+print(f"Max drawdown : {m['max_drawdown']:.2%}")
+print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 ```
-
-## Output
-
-CRUDEOIL19NOV26FUT expires on 19 November 2026. After that your broker no longer serves its history, so switch to the current contract and its dates (see Try this).
 
 <!-- output -->
 ```text
-Net profit    Rs 34,383.92 after Rs 14,018.08 of charges
-Trades        70, win rate 37%
-Max drawdown  -12.91%
-               entry_time direction  entry_price_rupees  exit_price_rupees exit_reason  net_pnl_rupees
-2026-10-01 17:25:00+05:30     short              8675.0             8651.0      signal         2203.77
-2026-10-05 18:20:00+05:30     short              8594.0             8561.0      signal         3105.20
-2026-10-05 19:25:00+05:30     short              8537.0             8564.0      signal        -2894.09
-2026-10-06 17:10:00+05:30     short              8371.0             8369.0      signal            8.89
-2026-10-06 21:00:00+05:30      long              8455.0             8571.0      signal        11405.98
+Net profit   : Rs 34,383.92
+Return       : 11.46%
+Max drawdown : -12.91%
+Trades       : 70 (37% won)
 ```
 
-* Most exits are `signal`, the opposite crossover; `scheduler` is the square-off at the end of the session.
-* The strategy made money with a win rate of 37 percent because its average win was more than twice its average loss.
-* The max drawdown is the largest fall of the account from its highest value.
+The strategy made money with only 37 percent of its trades winning, because its average win, Rs 6,163, was more than twice its average loss, Rs 2,860 (`m['average_win']` and `m['average_loss']`). The engine took the contract's lot (100 barrels), tick size (Rs 1) and expiry from its reference tables, and charged the commodity rates. The max drawdown is the largest fall of the account from its highest value.
+
+Python also prints two `ReferenceDataWarning` lines: the MCX contract terms in the engine's tables are not yet confirmed against the exchange circular. The backtest is complete, and the lot and tick size match the master contract on your OpenAlgo server.
 
 ## Try this
 
 * Long only: `longs, shorts = True, False`. Short only: `longs, shorts = False, True`.
 * Trade the whole day: delete the `entry_from` line.
-* After 19 November 2026: the current contract and dates inside its life, for example `contract = "CRUDEOIL18DEC26FUT"` with `start="2026-11-01"` and `end` the last session before the day you run it; `client.symbol` reads its terms.
+* After 19 November 2026: the current contract, for example `"CRUDEOIL18DEC26FUT"`, with `start="2026-11-01"` and `end` the last session before the day you run it.
 
-[Futures](../futures.md) explains how the engine handles contracts, and [Instruments and Reference Data](../support-functions/reference-data.md) describes `Instrument`.
+More: [Trade Futures](../tutorial/07-futures.md), [Futures](../futures.md).
