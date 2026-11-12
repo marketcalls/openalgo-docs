@@ -60,6 +60,7 @@ print(trades.head(5).round({"net_pnl_rupees": 2}).to_string(index=False))
 
 NIFTY23NOV26FUT expires on 23 November 2026. After that your broker no longer serves its history, so switch to the current contract and its dates (see Try this).
 
+<!-- output -->
 ```text
 Net profit    Rs 76,864.15 after Rs 24,343.55 of charges
 Trades        27, win rate 63%

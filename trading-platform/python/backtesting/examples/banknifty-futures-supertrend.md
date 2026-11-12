@@ -52,6 +52,7 @@ print(trades.head(5).round({"net_pnl_rupees": 2}).to_string(index=False))
 
 BANKNIFTY23NOV26FUT expires on 23 November 2026. After that your broker no longer serves its history, so switch to the current contract and its dates (see Try this).
 
+<!-- output -->
 ```text
 Net profit    Rs -6,313.46 after Rs 41,774.67 of charges
 Trades        42, win rate 43%

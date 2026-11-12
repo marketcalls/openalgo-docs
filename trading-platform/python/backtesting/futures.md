@@ -89,6 +89,7 @@ print(result.assumptions["futures_margin"], "| margin blocked:", result.equity["
 
 NIFTY23NOV26FUT expires on 23 November 2026. After that your broker no longer serves its history, so to run the example later, set `start` to the session after the latest monthly expiry and `end` to a session before you run it.
 
+<!-- output -->
 ```text
 NIFTY23NOV26FUT: lot 65, tick 0.1 by the price slab of the NIFTY close on 2026-09-30 (22620.45), freeze 3510, from the reference tables
                      time          symbol side  quantity_units  price_rupees reason
@@ -130,6 +131,7 @@ Real futures margins differ by underlying and change every day, so the engine do
 
 The rerun below continues the example above, so it needs the server too.
 
+<!-- continues -->
 <!-- requires-server -->
 ```python
 # One NIFTY lot at the margin a broker's calculator shows, and BANKNIFTY at 12 percent.
@@ -144,6 +146,7 @@ except bt.errors.ConfigError as error:
     print(str(error).split(";")[0])
 ```
 
+<!-- output -->
 ```text
 NIFTY 200000 rupees per lot (margin=)
 largest margin: 200000.0

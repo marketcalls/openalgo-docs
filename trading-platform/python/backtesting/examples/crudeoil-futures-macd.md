@@ -71,6 +71,7 @@ print(trades.head(5).round({"net_pnl_rupees": 2}).to_string(index=False))
 
 CRUDEOIL19NOV26FUT expires on 19 November 2026. After that your broker no longer serves its history, so switch to the current contract and its dates (see Try this).
 
+<!-- output -->
 ```text
 Net profit    Rs 34,383.92 after Rs 14,018.08 of charges
 Trades        70, win rate 37%

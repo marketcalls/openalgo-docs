@@ -18,7 +18,7 @@ A backtest needs bars: open, high, low, close and volume for every interval of t
 import openalgo.backtest as bt
 from openalgo import api, ta
 
-client = api(api_key="your_api_key_here", host="http://127.0.0.1:5000")
+client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
 
 
 class EmaCross(bt.Strategy):
@@ -35,14 +35,21 @@ class EmaCross(bt.Strategy):
             self.exit()
 
 
-# Historify if it covers 2025, otherwise the broker.
-result = bt.backtest(EmaCross, client, start="2025-01-01", end="2025-12-31", capital=200_000)
-
-# Historify only, or the broker only.
-from_db = bt.backtest(EmaCross, client, start="2025-01-01", end="2025-12-31", capital=200_000, source="db")
-from_broker = bt.backtest(EmaCross, client, start="2025-10-01", end="2025-12-31", capital=200_000, source="api")
-print(result.warnings)
+# source="auto", the default: Historify when it holds the whole range, otherwise the broker.
+result = bt.backtest(EmaCross, client, start="2026-07-01", end="2026-11-11", capital=200_000)
+print(result.assumptions["base_rule"])
+for warning in result.warnings:
+    print(warning)
 ```
+
+<!-- output -->
+```text
+base 1m (1-minute data covers the run for every instrument): stops are tested on 1-minute ranges and orders fill at 1-minute bar opens
+The run ends at 2026-11-11 15:15 IST, the close of the last bar in the data, before the end of its range at 2026-11-11 15:30 IST: equity, trades and metrics stop there, and positions still open are reported open
+SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
+```
+
+On the server this ran on, Historify did not hold the range, so the bars came from the broker. Its 1-minute bars covered the run, so stops were tested on 1-minute ranges, and the last of them on 11 November closes at 15:15, so the run ends there with a warning. To pick the source yourself, pass `source="db"` (Historify only; it stops with `NoDataError` when Historify holds no bars for the range) or `source="api"` (the broker only).
 
 What to expect from each source:
 
