@@ -1,14 +1,17 @@
 # SMA Golden Cross
 
-The golden cross is the long-term trend signal that positional traders and investors watch: the 50-day simple moving average (SMA) moving above the 200-day. It is slow by design. It trades a few times in several years, stays in through long uptrends and steps aside when the 50-day falls back below the 200-day (the death cross).
+The golden cross is the long-term trend signal that positional traders and investors watch. An SMA (simple moving average) is the plain average of the last few closing prices. The golden cross is the 50-day SMA moving above the 200-day SMA. It is slow by design: it trades a few times in several years, stays in through long uptrends, and steps aside when the 50-day falls back below the 200-day (the death cross).
+
+The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the `client = ...` line.
 
 ## Rules
 
 * **Entry:** buy when the 50-day SMA crosses above the 200-day SMA.
 * **Exit:** sell when the 50-day SMA crosses back below the 200-day SMA.
-* **Stop:** none; the death cross is the exit.
+* **Stop-loss:** none. A stop-loss is an exit that limits the loss of a trade; here the death cross is the only exit.
 * **Size:** all the capital (Rs 1,00,000 at the start).
-* **Product:** CNC (delivery), long only, on HDFCBANK (NSE) daily bars from January 2021 to 11 November 2026.
+* **Product:** CNC (delivery: the shares are held overnight, for as long as the trade lasts), long only (it buys, and never sells short).
+* **Data:** HDFCBANK (NSE) daily bars from January 2021 to 11 November 2026. A bar is one period of prices, here one trading day, with its open, high, low and close.
 
 ## The code
 
@@ -17,17 +20,21 @@ The golden cross is the long-term trend signal that positional traders and inves
 import openalgo.backtest as bt
 from openalgo import api, ta
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
 class GoldenCross(bt.Strategy):
-    symbol, exchange, interval = "HDFCBANK", "NSE", "D"
+    symbol, exchange, interval = "HDFCBANK", "NSE", "D"  # "D": daily bars
 
     def init(self):
+        # Runs once, before the first bar: the two SMAs of the closing prices.
         self.sma50 = self.I(ta.sma, self.close, 50)
         self.sma200 = self.I(ta.sma, self.close, 200)
 
     def on_bar(self, bar):
+        # Runs at the close of every bar, here once a day.
+        if len(self.close) < 200:  # wait until the 200-day SMA has 200 days
+            return
         if self.position.is_flat and self.sma50.crossed_above(self.sma200):
             self.buy()  # golden cross: the 50-day average moves above the 200-day
         elif self.position.is_long and self.sma50.crossed_below(self.sma200):
@@ -57,12 +64,18 @@ Trades       : 3 (67% won)
 2025-03-26 09:15:00+05:30 2026-01-29 09:15:00+05:30              912.70             929.90         1704.61
 ```
 
-Three trades in almost six years, each held for months. A 200-day average needs 200 sessions before it has a value, so no trade can come in the first ten months of a run: here the first golden cross after that was in September 2022. The prices are adjusted for the 1:1 bonus of August 2025, so they are about half the quoted prices before it.
+## Reading it
+
+* `self.position.is_flat` is true while the strategy holds nothing, and `is_long` while it holds shares. Each cross was decided at a session's close and filled at the next session's open (09:15 IST).
+* Three trades in almost six years, each held for months.
+* A 200-day average needs 200 sessions before it has a value, so no trade can come in the first ten months of a run: here the first golden cross after that was in September 2022.
+* The prices are adjusted for the 1:1 bonus of August 2025, so they are about half the quoted prices before it.
+* The max drawdown is the largest fall of the account from its highest value.
 
 ## Try this
 
 * Another stock: `symbol = "SBIN"`.
 * Price above its 200-day average instead of the cross: buy on `self.close.crossed_above(self.sma200)`, sell on `self.close.crossed_below(self.sma200)`.
-* Exponential averages: `ta.ema` in place of `ta.sma`.
+* Exponential averages, which give the recent days more weight: `ta.ema` in place of `ta.sma`.
 
 More: [Writing Strategies](../writing-strategies.md), [Indicators](../../indicators/README.md).

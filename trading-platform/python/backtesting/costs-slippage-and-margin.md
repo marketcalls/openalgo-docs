@@ -2,42 +2,57 @@
 
 A backtest that ignores charges and slippage overstates every strategy, and an intraday strategy most of all. The engine charges every fill by default, adds slippage to every fill, and rejects an order your free cash cannot margin. This page shows what is applied and how to change it.
 
-The examples on this page use one synthetic session of 1-minute bars in which SBIN rises from 800 to 820. This first block builds it; the blocks after it continue from it.
+A few words used on this page:
 
+* A **fill** is an executed order: the price and quantity you actually traded.
+* **Charges** are what a trade costs besides the price: brokerage and the taxes and fees the exchange and government collect.
+* **Slippage** is the gap between the price you expected (the bar's open) and the price you got.
+* **Margin** is the money blocked in your account while a position is open.
+* **CNC** is delivery (shares held overnight); **MIS** is intraday (closed the same day).
+
+## The strategies the examples use
+
+Every example on this page runs on real SBIN history from your OpenAlgo server. Run this block first; the blocks after it continue from it. Put your own API key from the OpenAlgo dashboard in place of `OPENALGO_API_KEY`.
+
+It defines two plain EMA crossovers (an **EMA** is a moving average of closing prices that weighs recent days more): one on daily bars, held overnight as CNC, and one on 15-minute bars, traded intraday as MIS. Each buys when the fast EMA crosses above the slow one and sells when it crosses back below; the `enter` method places the buy, and the examples below change only that.
+
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
-
 import openalgo.backtest as bt
+from openalgo import api, ta
 
-minute = np.arange(375)
-close = np.interp(minute, [0, 374], [800, 820]).round(1)
-open_ = np.r_[close[0], close[:-1]]
-bars = pd.DataFrame(
-    {
-        "open": open_,
-        "high": np.maximum(open_, close) + 0.1,
-        "low": np.minimum(open_, close) - 0.1,
-        "close": close,
-        "volume": 1_000,
-    },
-    index=pd.Timestamp("2026-10-05 09:15", tz="Asia/Kolkata") + pd.to_timedelta(minute, unit="min"),
-)
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
-def round_trip(**order):
-    """A 15-minute strategy that buys at its first bar close and exits at its 20th."""
+class EmaCross(bt.Strategy):
+    """10-day and 30-day EMA crossover on daily bars: CNC, held overnight."""
 
-    class RoundTrip(bt.Strategy):
-        symbol, exchange, interval = "SBIN", "NSE", "15m"
+    symbol, exchange, interval = "SBIN", "NSE", "D"
 
-        def on_bar(self, bar):
-            if len(self.close) == 1:
-                self.buy(**order)
-            elif len(self.close) == 20:
-                self.exit()
+    def init(self):
+        self.fast_ema = self.I(ta.ema, self.close, 10)
+        self.slow_ema = self.I(ta.ema, self.close, 30)
 
-    return RoundTrip
+    def on_bar(self, bar):
+        if len(self.close) < 30:  # wait until the slow EMA has enough bars
+            return
+        if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
+            self.enter()
+        elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
+            self.exit()
+
+    def enter(self):
+        self.buy(qty=100)  # 100 shares
+
+
+class EmaIntraday(EmaCross):
+    """9 and 21 EMA crossover on 15-minute bars: MIS, squared off every session."""
+
+    interval = "15m"
+
+    def init(self):
+        self.fast_ema = self.I(ta.ema, self.close, 9)
+        self.slow_ema = self.I(ta.ema, self.close, 21)
 ```
 
 ## Charges
@@ -66,25 +81,61 @@ The rates are dated **schedules**. A fill is charged at the schedule in force on
 
 Charges are built in from 1 July 2020, the day stamp duty became one rate across the states. A trade dated earlier has no schedule, so a run that starts earlier stops with a `CostError` (pass `costs=None`, or a `bt.costs.CostModel(backfill=True)` to charge such trades at the first schedule's rates with a warning). Fills charged at unverified rates are counted in `result.warnings`, and Python also shows an `UnverifiedScheduleWarning`.
 
+The charges of one delivery trade: the daily crossover's first trade of 2026, 100 SBIN shares bought on 22 April and sold on 6 May.
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-result = bt.backtest(round_trip(qty=100), data=bars, capital=500_000)
-columns = ["side", "price_rupees", "brokerage", "stt", "exchange_txn", "sebi_fee", "stamp_duty", "gst", "total"]
-print(result.costs[columns].round(2).to_string(index=False))
-notes = result.contract_notes[["date", "note_group", "charged_total", "accrued_total", "adjustment"]]
-print(notes.round(2).to_string(index=False))
+delivery = bt.backtest(EmaCross, client, start="2026-01-01", end="2026-11-11", capital=200_000)
+columns = ["side", "price_rupees", "brokerage", "stt", "exchange_txn", "sebi_fee", "stamp_duty", "gst", "dp_charge", "total"]
+print(delivery.costs[columns].head(2).round(2).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-side  price_rupees  brokerage  stt  exchange_txn  sebi_fee  stamp_duty  gst  total
- BUY         800.9       20.0  0.0          2.46      0.08         2.4 4.06  29.00
-SELL         815.8       20.0 20.4          2.50      0.08         0.0 4.07  47.05
-      date note_group  charged_total  accrued_total  adjustment
-2026-10-05     NSE_EQ          75.24          76.05       -0.81
+side  price_rupees  brokerage    stt  exchange_txn  sebi_fee  stamp_duty  gst  dp_charge  total
+ BUY       1110.25        0.0 111.02          3.41      0.11       16.65 0.63       0.00 131.83
+SELL       1071.75        0.0 107.18          3.29      0.11        0.00 0.61      15.34 126.52
 ```
 
-`result.costs` has one row per fill with every component (plus the schedule that priced it and whether it is verified). `result.contract_notes` has one row per contract note: what was charged after rounding, the unrounded total, and the rounding adjustment posted at the session close.
+Reading the buy: the order value is 100 x 1110.25 = Rs 1,11,025. Delivery brokerage is zero. STT is 0.1 percent (Rs 111.025), the exchange charge 0.00307 percent (Rs 3.41), the SEBI fee Rs 10 per crore of value (Rs 0.11), stamp duty 0.015 percent on the buy side (Rs 16.65), and GST 18 percent of the exchange charge and SEBI fee (Rs 0.63). The sell pays STT again, no stamp duty, and the DP charge of Rs 13 plus 18 percent GST, Rs 15.34.
+
+`result.costs` has one row per fill with every component (plus the schedule that priced it and whether it is verified).
+
+The charges of one intraday trade: the 15-minute crossover bought 100 SBIN at 12:15 on 6 November 2026 and was squared off at 15:00.
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+intraday = bt.backtest(EmaIntraday, client, start="2026-11-04", end="2026-11-06", capital=200_000)
+print(intraday.costs[columns].round(2).to_string(index=False))
+```
+
+<!-- output -->
+```text
+side  price_rupees  brokerage   stt  exchange_txn  sebi_fee  stamp_duty  gst  dp_charge  total
+ BUY       1002.00       20.0  0.00          3.08       0.1        3.01 4.17        0.0  30.35
+SELL       1013.55       20.0 25.34          3.11       0.1        0.00 4.18        0.0  52.73
+```
+
+Reading it: the buy's value is Rs 1,00,200, and 0.03 percent of it is Rs 30.06, so the brokerage is the Rs 20 cap. Intraday STT is 0.025 percent on the sell side only (Rs 25.34), and intraday stamp duty 0.003 percent on the buy side (Rs 3.01). GST is 18 percent of the brokerage, exchange charge and SEBI fee: 0.18 x (20 + 3.08 + 0.10) = Rs 4.17.
+
+The contract note of that day: what a broker would charge after rounding.
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+notes = intraday.contract_notes[["date", "note_group", "stt", "stamp_duty", "charged_total", "accrued_total", "adjustment"]]
+print(notes.to_string(index=False))
+```
+
+<!-- output -->
+```text
+      date note_group  stt  stamp_duty  charged_total  accrued_total  adjustment
+2026-11-06     NSE_EQ 25.0         3.0          82.74      83.084116       -0.34
+```
+
+`result.contract_notes` has one row per contract note: what was charged after rounding (`charged_total`), the unrounded total (`accrued_total`), and the rounding adjustment posted at the session close. Here STT of Rs 25.34 was rounded to Rs 25 and stamp duty of Rs 3.01 to Rs 3, so the note charged Rs 0.34 less than the fills accrued.
 
 ### Presets
 
@@ -100,21 +151,24 @@ SELL         815.8       20.0 20.4          2.50      0.08         0.0 4.07  47.
 
 Statutory charges apply under every preset; only the brokerage (and the DP fee where you give `dp_fee`) changes. A preset without its own DP fee uses Zerodha's Rs 13 and says so.
 
+The same intraday trade with a zero-brokerage broker:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-for costs in ("zerodha", "zero_brokerage", bt.costs.flat(20), None):
-    run = bt.backtest(round_trip(qty=100), data=bars, capital=500_000, costs=costs)
-    label = run.assumptions["costs"]
-    print(f"{label:41} charges {run.equity['costs_rupees'].iloc[-1]:7.2f}   net P&L {run.metrics['net_profit']:8.2f}")
+no_brokerage = bt.backtest(EmaIntraday, client, start="2026-11-04", end="2026-11-06", capital=200_000,
+                           costs="zero_brokerage")
+print(no_brokerage.costs[["side", "brokerage", "gst", "total"]].round(2).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-zerodha (contract-note rounding)          charges   75.24   net P&L  1414.76
-zero_brokerage (contract-note rounding)   charges   28.04   net P&L  1461.96
-flat(20) (contract-note rounding)         charges   75.24   net P&L  1414.76
-none                                      charges    0.00   net P&L  1490.00
+side  brokerage  gst  total
+ BUY        0.0 0.57   6.75
+SELL        0.0 0.58  29.13
 ```
+
+The brokerage and the GST on it are gone: the round trip costs Rs 35.88 instead of Rs 83.08.
 
 ### Rounding modes
 
@@ -123,26 +177,61 @@ none                                      charges    0.00   net P&L  1490.00
 | `"contract_note"` (default) | Each fill accrues its charges unrounded. At each session close the day's charges are summed per contract note (one per trade date and exchange segment), STT and stamp duty are rounded to the nearest rupee and the other charges to the paisa, as a broker's contract note does. This rule is an assumption, not checked against a real contract note, and `result.contract_notes.attrs["rule"]` states it |
 | `"calculator"` | Each fill is charged and rounded the way the Zerodha brokerage calculator rounds one trade, to the paisa. Useful to compare with the calculator; there are no contract notes |
 
-Choose it with `costs=bt.costs.CostModel(rounding="calculator")`. To price a trade on its own, without a backtest, use the [cost calculator](support-functions/cost-calculator.md).
+To price a trade on its own, without a backtest, use the [cost calculator](support-functions/cost-calculator.md).
+
+The same intraday trade, rounded the way the brokerage calculator rounds it:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+calculator = bt.backtest(EmaIntraday, client, start="2026-11-04", end="2026-11-06", capital=200_000,
+                         costs=bt.costs.CostModel(rounding="calculator"))
+print(calculator.costs[["side", "stt", "stamp_duty", "total"]].to_string(index=False))
+```
+
+<!-- output -->
+```text
+side  stt  stamp_duty  total
+ BUY  0.0         3.0  30.35
+SELL 25.0         0.0  52.39
+```
+
+The calculator rounds the STT and stamp duty of each trade to the rupee (Rs 25 and Rs 3).
 
 **A CNC buy and sell of one scrip on the same day** is charged as a broker charges it: as intraday, with no DP charge. The units a CNC fill matches against that day's fills on the other side are charged at the intraday rates, and the earlier fill of the pair is charged again at those rates.
 
+A CNC trade that buys 100 SBIN at 09:20 and sells them at 14:30 on 6 November 2026. `self.at` runs a method at a clock time every session:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-same_day = bt.backtest(round_trip(qty=100), data=bars, capital=500_000, product="CNC")
+class SameDayCnc(bt.Strategy):
+    symbol, exchange, interval, product = "SBIN", "NSE", "15m", "CNC"
+
+    def init(self):
+        self.at("09:20", self.enter)
+        self.at("14:30", self.exit)
+
+    def enter(self):
+        self.buy(qty=100)
+
+
+same_day = bt.backtest(SameDayCnc, client, start="2026-11-06", end="2026-11-06", capital=200_000)
 print(same_day.costs[["side", "product", "segment", "stt", "dp_charge", "total"]].round(2).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-side product         segment  stt  dp_charge  total
- BUY     CNC NSE_EQ_INTRADAY  0.0        0.0  29.00
-SELL     CNC NSE_EQ_INTRADAY 20.4        0.0  47.05
+side product         segment   stt  dp_charge  total
+ BUY     CNC NSE_EQ_INTRADAY  0.00        0.0  30.32
+SELL     CNC NSE_EQ_INTRADAY 25.33        0.0  52.72
 ```
+
+Both fills are charged in the intraday segment (`NSE_EQ_INTRADAY`): STT on the sell side only and no DP charge, as a broker charges a CNC buy sold the same day.
 
 ## Slippage
 
-Every fill pays slippage against you: a buy fills higher, a sell lower, and the price is rounded to the tick away from you. With no `slippage=` argument the engine uses the dated default table, one row per class of instrument:
+Every fill pays slippage against you: a buy fills higher, a sell lower, and the price is rounded to the tick away from you (the **tick** is the smallest step a price can move, 0.05 rupees for SBIN). With no `slippage=` argument the engine uses the dated default table, one row per class of instrument:
 
 | Class | Applies to | Default |
 |---|---|---|
@@ -156,7 +245,7 @@ Every fill pays slippage against you: a buy fills higher, a sell lower, and the 
 | `MCX_OPT` | MCX options | 1 percent of the premium, at least 1 tick |
 | `CDS` | Currency derivatives | 1 tick |
 
-These are starting assumptions to calibrate against your own live fills; `bt.slippage.defaults()` lists each row with its source and notes. Whether a derivative is on an index or a stock comes from the reference tables; an underlying they do not list as an index takes the stock row, with a warning.
+A **basis point** is one hundredth of a percent: 2 basis points of Rs 1,000 is 20 paise. These are starting assumptions to calibrate against your own live fills; `bt.slippage.defaults()` lists each row with its source and notes. Whether a derivative is on an index or a stock comes from the reference tables; an underlying they do not list as an index takes the stock row, with a warning.
 
 | `slippage=` | Meaning |
 |---|---|
@@ -168,31 +257,43 @@ These are starting assumptions to calibrate against your own live fills; `bt.sli
 | `bt.slippage.table(overrides={"INDEX_FUT": bt.ticks(2)}, low_volume=("IDEA",))` | The default table with some classes replaced, and the cash-equity symbols to treat as low volume |
 | `{"INDEX_FUT": bt.ticks(2)}` | Short for `bt.slippage.table(overrides=...)` |
 
+The intraday trade above filled at 1002.00 and 1013.55. The 1-minute bars it filled on, straight from OpenAlgo, show the opens it started from:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-forms = {
-    "default": "default",
-    "zero": 0,
-    "3 ticks": bt.ticks(3),
-    "0.1 percent": bt.pct(0.1),
-    "low volume": bt.slippage.table(low_volume=("SBIN",)),
-}
-for name, slippage in forms.items():
-    run = bt.backtest(round_trip(qty=100), data=bars, capital=500_000, costs=None, slippage=slippage)
-    buy, sell = run.fills["price_rupees"]
-    print(f"{name:12} buy {buy:.2f}  sell {sell:.2f}")
+bars = client.history(symbol="SBIN", exchange="NSE", interval="1m", start_date="2026-11-06", end_date="2026-11-06")
+print(bars.loc[["2026-11-06 12:15", "2026-11-06 15:00"], ["open"]])
 ```
 
 <!-- output -->
 ```text
-default      buy 800.90  sell 815.80
-zero         buy 800.70  sell 816.00
-3 ticks      buy 800.85  sell 815.85
-0.1 percent  buy 801.55  sell 815.15
-low volume   buy 801.15  sell 815.55
+                              open
+timestamp
+2026-11-06 12:15:00+05:30  1001.75
+2026-11-06 15:00:00+05:30  1013.80
 ```
 
-The bar opens were 800.70 for the buy and 816.00 for the sell. Two basis points of 800.70 is 0.16, and the buyer's price rounds up to the next tick (800.90); two basis points of 816.00 is also 0.16, and the seller's price rounds down (815.80).
+Reading it: the buy started from the 12:15 open of 1001.75. Two basis points of that is 0.20, and a buy's price is rounded up to the next tick: 1002.00. The sell started from the 15:00 open of 1013.80, less 0.20, rounded down: 1013.55.
+
+The same trade with 3 ticks of slippage on every fill:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+three_ticks = bt.backtest(EmaIntraday, client, start="2026-11-04", end="2026-11-06", capital=200_000,
+                          slippage=bt.ticks(3))
+print(three_ticks.fills[["time", "side", "price_rupees"]].to_string(index=False))
+```
+
+<!-- output -->
+```text
+                     time side  price_rupees
+2026-11-06 12:15:00+05:30  BUY       1001.90
+2026-11-06 15:00:00+05:30 SELL       1013.65
+```
+
+3 ticks are 0.15 rupees: 1001.75 + 0.15 = 1001.90 for the buy and 1013.80 - 0.15 = 1013.65 for the sell.
 
 ## Margin
 
@@ -205,24 +306,56 @@ An order that needs more margin than the strategy's free cash is rejected with `
 | Long options | The premium paid | Verified |
 | Futures, any exchange and underlying | 20 percent of the contract value (5x) on every date, unless `margin=` gives your own: a percent of the value or rupees per lot, for every underlying or per underlying (see [Futures](futures.md#your-own-margin)) | The engine's default, stated in the Assumptions block |
 
-Real futures margins differ by underlying and change every day, so the engine uses one stated default instead of a guess per contract; pass your broker's figures with `margin=` when they matter. It is a backtest assumption only: in live trading your broker computes the margin. Leverage on CNC, or above 5, is a `ConfigError`. Not available yet: selling an option to open a short position (short-option margin raises `NotImplementedError`).
+**Leverage** lets an intraday position be larger than your cash: at 5x, Rs 20,000 of margin holds Rs 1,00,000 of shares. Real futures margins differ by underlying and change every day, so the engine uses one stated default instead of a guess per contract; pass your broker's figures with `margin=` when they matter. It is a backtest assumption only: in live trading your broker computes the margin. Leverage on CNC, or above 5, is a `ConfigError`. Not available yet: selling an option to open a short position (short-option margin raises `NotImplementedError`).
 
 A sizer is never cut down to the free cash: an order a sizer sized beyond the margin is rejected with `margin` like any other, and `result.warnings` says so and names the remedy, a size cap such as `size_caps = bt.size.caps(leverage=1)` (see [Reinvest and size caps](#reinvest-and-size-caps)). The `sizer` column of `result.orders` names the sizer that set each order's quantity.
 
-<!-- continues -->
-```python
-too_big = bt.backtest(round_trip(qty=1_000), data=bars, capital=500_000, costs=None)
-print("1,000 shares, no leverage:", too_big.orders["reject_code"].iloc[0])
+200 shares of SBIN (about Rs 2,00,000) on Rs 1,00,000 of capital, without leverage: the buy is rejected.
 
-leveraged = bt.backtest(round_trip(qty=1_000, leverage=5), data=bars, capital=500_000, costs=None)
-print("1,000 shares at 5x: margin", leveraged.equity["margin_rupees"].max().round(2))
+<!-- continues -->
+<!-- requires-server -->
+```python
+class TooBig(EmaIntraday):
+    def enter(self):
+        self.buy(qty=200)
+
+
+too_big = bt.backtest(TooBig, client, start="2026-11-04", end="2026-11-06", capital=100_000)
+print(too_big.orders[["time", "side", "quantity_units", "status", "reject_code"]].to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-1,000 shares, no leverage: margin
-1,000 shares at 5x: margin 160140.0
+                     time side  quantity_units   status reject_code
+2026-11-06 12:15:00+05:30  BUY           200.0 Rejected      margin
 ```
+
+The margin is checked at the open the buy would fill on: 200 shares at about Rs 1,002 need about Rs 2,00,000, twice the free cash.
+
+The same 200 shares at 5x intraday leverage: the buy fills and blocks a fifth of its value.
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class Leveraged(EmaIntraday):
+    def enter(self):
+        self.buy(qty=200, leverage=5)
+
+
+leveraged = bt.backtest(Leveraged, client, start="2026-11-04", end="2026-11-06", capital=100_000)
+print(leveraged.fills[["time", "side", "quantity_units", "price_rupees"]].to_string(index=False))
+print("margin blocked:", leveraged.equity["margin_rupees"].max().round(2))
+```
+
+<!-- output -->
+```text
+                     time side  quantity_units  price_rupees
+2026-11-06 12:15:00+05:30  BUY           200.0       1002.00
+2026-11-06 15:00:00+05:30 SELL           200.0       1013.55
+margin blocked: 40070.0
+```
+
+At 5x the margin is a fifth of the value at the open: 200 x 1001.75 / 5 = Rs 40,070.
 
 ## Sizing
 
@@ -242,31 +375,90 @@ A sized quantity is cut to the strategy's size caps (see [Reinvest and size caps
 
 **Quantity mode.** `quantity_mode="fractional"` (the default) lets cash equity hold fractional shares, so results do not depend on the share price. `quantity_mode="venue"` uses whole shares and whole lots, and the engine default keeps a 2 percent cash buffer; a fractional `qty` is then rejected with `quantity_rule`.
 
+Each example below sizes the daily crossover's first trade of 2026, with Rs 1,00,000 of capital. The strategy decided at the close of 21 April (1111.85, the **decision price** the sizers use) and bought at the next open, 1110.25 on 22 April.
+
+With no quantity at all, the engine default buys with the whole equity, in fractional shares:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-sizers = {
-    "engine default": {},
-    "percent(50)": {"size": bt.size.percent(50)},
-    "value(1 lakh)": {"size": bt.size.value(100_000)},
-    "fixed_risk(1) stop 2%": {"size": bt.size.fixed_risk(1), "stop": bt.pct(2)},
-}
-for name, order in sizers.items():
-    for mode in ("fractional", "venue"):
-        run = bt.backtest(round_trip(**order), data=bars, capital=500_000, quantity_mode=mode)
-        print(f"{name:22} {mode:10} {run.fills['quantity_units'].iloc[0]:10.2f} shares")
+class AllIn(EmaCross):
+    def enter(self):
+        self.buy()
+
+
+all_in = bt.backtest(AllIn, client, start="2026-01-01", end="2026-11-11", capital=100_000)
+print(all_in.trades[["entry_time", "entry_units", "entry_price_rupees"]].head(1).round(2).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-engine default         fractional     624.23 shares
-engine default         venue          611.00 shares
-percent(50)            fractional     312.23 shares
-percent(50)            venue          312.00 shares
-value(1 lakh)          fractional     124.89 shares
-value(1 lakh)          venue          124.00 shares
-fixed_risk(1) stop 2%  fractional     303.74 shares
-fixed_risk(1) stop 2%  venue          303.00 shares
+               entry_time  entry_units  entry_price_rupees
+2026-04-22 09:15:00+05:30        89.96             1110.25
 ```
+
+89.96 shares at 1110.25 is about Rs 99,880: the whole Rs 1,00,000 less the estimated charges of the buy.
+
+The same default in whole shares, with `quantity_mode="venue"`:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+whole = bt.backtest(AllIn, client, start="2026-01-01", end="2026-11-11", capital=100_000, quantity_mode="venue")
+print(whole.trades[["entry_time", "entry_units", "entry_price_rupees"]].head(1).round(2).to_string(index=False))
+```
+
+<!-- output -->
+```text
+               entry_time  entry_units  entry_price_rupees
+2026-04-22 09:15:00+05:30         88.0             1110.25
+```
+
+Whole shares, with 2 percent kept as a cash buffer: Rs 98,000 at the decision price of 1111.85 is 88.1 shares, so 88.
+
+Half the equity in every trade, with `bt.size.percent(50)`:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class HalfEquity(EmaCross):
+    def enter(self):
+        self.buy(size=bt.size.percent(50))
+
+
+half = bt.backtest(HalfEquity, client, start="2026-01-01", end="2026-11-11", capital=100_000)
+print(half.trades[["entry_time", "entry_units", "entry_price_rupees"]].head(1).round(2).to_string(index=False))
+```
+
+<!-- output -->
+```text
+               entry_time  entry_units  entry_price_rupees
+2026-04-22 09:15:00+05:30        44.97             1110.25
+```
+
+50 percent of Rs 1,00,000 at the decision price of 1111.85 is 44.97 shares.
+
+Risk 1 percent of equity to a stop 5 percent below the entry, with `bt.size.fixed_risk(1)`:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class OnePercentRisk(EmaCross):
+    def enter(self):
+        self.buy(size=bt.size.fixed_risk(1), stop=bt.pct(5))
+
+
+risk = bt.backtest(OnePercentRisk, client, start="2026-01-01", end="2026-11-11", capital=100_000)
+print(risk.trades[["entry_time", "entry_units", "entry_price_rupees"]].head(1).round(2).to_string(index=False))
+```
+
+<!-- output -->
+```text
+               entry_time  entry_units  entry_price_rupees
+2026-04-22 09:15:00+05:30        17.19             1110.25
+```
+
+The stop is 5 percent below the decision price, Rs 55.59 a share. Rs 1,000 of risk, less the estimated charges of the round trip, buys 17.19 shares: if the stop is hit, the trade loses about 1 percent of equity.
 
 ### Your own sizing function
 
@@ -285,36 +477,36 @@ fixed_risk(1) stop 2%  venue          303.00 shares
 
 `order` has `symbol`, `side` (`"BUY"` or `"SELL"`), `product` and `tag`. Return 0 to skip the order (listed in `result.skipped` as `rounded_to_zero`). A negative number, NaN or anything that is not a number stops the run with a `ConfigError` naming your function. What it returns is then treated like any sizer's quantity: cut to the size caps, rounded down to the venue rule and capped at the freeze quantity. Condition strategies run without calling Python, so they cannot use a sizing function.
 
+A sizing function that risks 1 percent of equity to the stop but never puts more than 40 percent of equity into one trade, on the daily crossover with a 2 percent stop:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-def half_percent_risk(ctx, order):
-    """Risk 0.5 percent of equity to the stop, with at most 40 percent of equity in the position."""
+def one_percent_risk(ctx, order):
+    """Units that lose 1 percent of equity at the stop, at most 40 percent of equity in value."""
     if ctx.stop_distance is None:
         return 0  # no stop, no trade
-    by_risk = 0.005 * ctx.equity / ctx.stop_distance
+    by_risk = 0.01 * ctx.equity / ctx.stop_distance
     by_value = 0.40 * ctx.equity / ctx.price
     return min(by_risk, by_value)
 
 
-def first_quantity(run):
-    if len(run.fills):
-        return f"{run.fills['quantity_units'].iloc[0]:6.0f} shares"
-    return f"skipped: {run.skipped['reason'].iloc[0]}"
+class OwnSizer(EmaCross):
+    def enter(self):
+        self.buy(size=one_percent_risk, stop=bt.pct(2))
 
 
-for label, stop in (("stop 20", bt.points(20)), ("stop 5", bt.points(5)), ("no stop", None)):
-    run = bt.backtest(round_trip(size=half_percent_risk, stop=stop), data=bars, capital=500_000, quantity_mode="venue")
-    print(f"{label:8} {first_quantity(run)}")
+own = bt.backtest(OwnSizer, client, start="2026-01-01", end="2026-11-11", capital=100_000, quantity_mode="venue")
+print(own.trades[["entry_time", "entry_units", "entry_price_rupees"]].head(1).round(2).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-stop 20     125 shares
-stop 5      249 shares
-no stop  skipped: rounded_to_zero
+               entry_time  entry_units  entry_price_rupees
+2026-04-22 09:15:00+05:30         35.0             1110.25
 ```
 
-With a 20-point stop the risk rule gives 125 shares (Rs 2,500 at risk). With a 5-point stop it would give 500, so the 40 percent value rule decides: Rs 2,00,000 at about 801 is 249 whole shares. Without a stop the function returns 0 and the order is skipped.
+The risk rule gives 1,000 / 22.24 (2 percent of 1111.85) = 44.97 shares and the value rule 40,000 / 1111.85 = 35.98. The smaller wins, rounded down to whole shares: 35.
 
 ### Reinvest and size caps
 
@@ -331,39 +523,31 @@ Two class attributes control every sizer of a strategy:
 
 The capped quantity is then rounded down to the venue rule. When a cap leaves no room, the order is skipped with reason `cap`. Caps bound sizers only: an explicit `qty=` or `lots=`, and `target()`, trade what they ask for. Both settings are in the Assumptions block.
 
+A sizer that asks for 80 percent of equity, held to at most 20 percent by a position cap:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-def capped(**order):
-    """`round_trip` with at most 20 percent of equity in the position and Rs 1,000 at risk."""
+class Capped(EmaCross):
+    size_caps = bt.size.caps(position=bt.pct(20))  # no position above 20 percent of equity
 
-    class Capped(round_trip(**order)):
-        size_caps = bt.size.caps(position=bt.pct(20), risk=bt.rupees(1_000))
-
-    return Capped
+    def enter(self):
+        self.buy(size=bt.size.percent(80))
 
 
-cases = {
-    "percent(80), stop 5": {"size": bt.size.percent(80), "stop": bt.points(5)},
-    "percent(80), stop 20": {"size": bt.size.percent(80), "stop": bt.points(20)},
-    "percent(80), no stop": {"size": bt.size.percent(80)},
-    "qty=400, stop 5": {"qty": 400, "stop": bt.points(5)},
-}
-for label, order in cases.items():
-    run = bt.backtest(capped(**order), data=bars, capital=500_000, quantity_mode="venue")
-    print(f"{label:22} {first_quantity(run)}")
-print("size_caps:", run.assumptions["size_caps"])
+capped = bt.backtest(Capped, client, start="2026-01-01", end="2026-11-11", capital=100_000)
+first = capped.trades.iloc[0]
+print("units", round(first["entry_units"], 2), "at", first["entry_price_rupees"])
+print("size_caps:", capped.assumptions["size_caps"])
 ```
 
 <!-- output -->
 ```text
-percent(80), stop 5       124 shares
-percent(80), stop 20       50 shares
-percent(80), no stop   skipped: cap
-qty=400, stop 5           400 shares
-size_caps: position 20 percent of equity; risk 1000 rupees
+units 17.99 at 1110.25
+size_caps: position 20 percent of equity
 ```
 
-80 percent of equity would be 499 shares. With a 5-point stop the position cap decides (Rs 1,00,000 is 124 shares); with a 20-point stop the risk cap does (Rs 1,000 over 20 points is 50 shares). Without a stop the risk cap leaves no room, so the order is skipped. The explicit `qty=400` is not capped.
+80 percent of equity would be about 72 shares. The cap holds the position to 20 percent: Rs 20,000 / 1111.85 = 17.99 shares.
 
 ## Warnings to read
 
@@ -374,5 +558,21 @@ The engine never hides an assumption. These are the warnings you will meet; each
 * A margin row that is not verified, named by its row id (such as `FUT_NIFTY/1`).
 * `generic cash-equity instrument assumed (lot 1, tick 0.05)`: no `instrument=` was given for a cash-equity symbol.
 * A derivative whose underlying is not a listed index takes the stock-derivative slippage row.
+
+The warnings of the daily crossover over 2021 to 2026:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+long_run = bt.backtest(EmaCross, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+for text in long_run.warnings:
+    print(text)
+```
+
+<!-- output -->
+```text
+SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
+charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2024-10-01 are unverified for 14 fills, from 2024-10-18
+```
 
 Python warnings appear as well: `UnverifiedScheduleWarning` for unverified cost rates, `ReferenceDataWarning` when a reference row is unverified or used after the date it was last checked, and `CalendarWarning` for a year without a holiday list.

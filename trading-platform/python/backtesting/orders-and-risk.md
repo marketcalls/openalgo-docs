@@ -1,60 +1,59 @@
 # Orders and Risk
 
-This page covers how a strategy places orders, how stops, targets and trailing stops work, the intraday entry window and square-off, the strategy-level risk rules, and when exactly an order fills.
+This page covers how a strategy places orders, how a stop-loss, a target and a trailing stop work, the intraday entry window and square-off, the strategy-level risk rules, and when exactly an order fills.
 
-The examples use two synthetic sessions of 1-minute bars: a rising day (5 October 2026) and a falling day (6 October 2026). This first block builds them; the blocks after it continue from it.
+A few words used throughout:
 
+* A **bar** is one candle: the open, high, low and close prices of one period (one day, 15 minutes).
+* A **stop-loss** (or stop) is a price at which you sell to cap a loss; a **target** is a price at which you sell to book a profit.
+* **CNC** is delivery: shares held overnight. **MIS** is intraday: the position is closed (squared off) before the market closes the same day.
+
+## The strategies the examples build on
+
+Every example on this page runs on real SBIN history from your OpenAlgo server. Run this block first; the blocks after it continue from it. Put your own API key from the OpenAlgo dashboard in place of `OPENALGO_API_KEY`.
+
+It defines two plain EMA crossovers (an **EMA** is a moving average of closing prices that gives more weight to recent days). Each buys when the fast EMA crosses above the slow one and sells when it crosses back below. The examples below change only one thing at a time, usually the `enter` method, which places the buy order.
+
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
-
 import openalgo.backtest as bt
+from openalgo import api, ta
+
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
-def path_bars(day, knots, prices):
-    """1-minute bars of one NSE session whose close follows straight lines between
-    (minute after 09:15, price) points."""
-    minute = np.arange(375)
-    close = np.interp(minute, knots, prices).round(1)
-    open_ = np.r_[close[0], close[:-1]]
-    index = pd.Timestamp(f"{day} 09:15", tz="Asia/Kolkata") + pd.to_timedelta(minute, unit="min")
-    return pd.DataFrame(
-        {
-            "open": open_,
-            "high": np.maximum(open_, close) + 0.1,
-            "low": np.minimum(open_, close) - 0.1,
-            "close": close,
-            "volume": 1_000,
-        },
-        index=index,
-    )
+class EmaCross(bt.Strategy):
+    """10-day and 30-day EMA crossover on daily bars: CNC, held overnight."""
+
+    symbol, exchange, interval = "SBIN", "NSE", "D"
+
+    def init(self):
+        self.fast_ema = self.I(ta.ema, self.close, 10)
+        self.slow_ema = self.I(ta.ema, self.close, 30)
+
+    def on_bar(self, bar):
+        if len(self.close) < 30:  # wait until the slow EMA has enough bars
+            return
+        if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
+            self.enter()
+        elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
+            self.exit()
+
+    def enter(self):
+        self.buy()  # all the capital, at the next open
 
 
-rising = path_bars("2026-10-05", [0, 60, 120, 180, 374], [500, 510, 506, 516, 512])
-falling = path_bars("2026-10-06", [0, 90, 374], [512, 494, 498])
-bars = pd.concat([rising, falling])
+class EmaIntraday(EmaCross):
+    """9 and 21 EMA crossover on 15-minute bars: MIS, squared off every session."""
 
+    interval = "15m"
 
-def first_bar(**order):
-    """A 15-minute strategy that buys 100 SBIN at its first bar close with `order`."""
+    def init(self):
+        self.fast_ema = self.I(ta.ema, self.close, 9)
+        self.slow_ema = self.I(ta.ema, self.close, 21)
 
-    class FirstBar(bt.Strategy):
-        symbol, exchange, interval = "SBIN", "NSE", "15m"
-
-        def on_bar(self, bar):
-            if len(self.close) == 1:
-                self.buy(qty=100, **order)
-
-    return FirstBar
-
-
-def show(result):
-    columns = ["time", "side", "quantity_units", "price_rupees", "reason", "target_index"]
-    print(result.fills[columns].to_string(index=False))
-
-
-# No charges or slippage here, so the prices are easy to follow.
-QUIET = {"capital": 500_000, "costs": None, "slippage": 0}
+    def enter(self):
+        self.buy(qty=100)  # 100 shares
 ```
 
 ## Placing orders
@@ -69,13 +68,13 @@ QUIET = {"capital": 500_000, "costs": None, "slippage": 0}
 | `self.cancel(order)` | Cancels a working order; returns its state afterwards |
 | `self.cancel_all(symbol=None)` | Cancels every working order, or those of one symbol |
 
-Orders are **market orders** (OpenAlgo `MARKET`, DAY validity) unless you give a price: `price=` makes a limit order and `trigger_price=` a stop order (see [Limit, stop and GTT orders](#limit-stop-and-gtt-orders)).
+Orders are **market orders** (OpenAlgo `MARKET`, DAY validity: they fill at the next price available) unless you give a price: `price=` makes a limit order and `trigger_price=` a stop order (see [Limit, stop and GTT orders](#limit-stop-and-gtt-orders)).
 
 The arguments of `buy` and `sell`:
 
 | Argument | Meaning |
 |---|---|
-| `qty` | Units: shares for equity; for futures and options the number of units, a whole multiple of the lot size |
+| `qty` | Units: shares for equity; for futures and options the number of units, a whole multiple of the lot size (a **lot** is the fixed number of units one contract holds) |
 | `price`, `trigger_price` | A limit price, a stop trigger, or both (below); none for a market order |
 | `validity` | `"day"` (default) or `"gtt"` (below) |
 | `lots` | Number of lots instead of `qty` (not both) |
@@ -109,41 +108,36 @@ With no `qty`, `lots` or `size` (and no strategy `size`), the engine default app
 * Resting limit, stop and GTT orders are left working and are not counted.
 * The order carries no stop or target of its own: an add keeps the position's leg rules, and the side a reversal opens has none. It uses the strategy's product, and its `leverage` when it opens or adds. Size caps do not apply: `target()` trades what you ask for.
 
+An always-in-the-market intraday crossover: long 100 shares after a cross up, short 100 after a cross down. The fills of 6 November 2026:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-class ToTarget(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "15m"
-    # The target position decided at the close of each 15-minute bar, by bar number.
-    plan = {1: {"qty": 100}, 2: {"qty": 300}, 3: {"percent": 20}, 4: {"qty": -100}, 5: {"qty": 0}, 6: {"qty": 0}}
-
+class AlwaysIn(EmaIntraday):
     def on_bar(self, bar):
-        step = len(self.close)
-        if step in self.plan:
-            order = self.target(**self.plan[step])
-            print(f"{self.now:%H:%M}", self.plan[step], "order:", None if order is None else order.id)
+        if len(self.close) < 21:
+            return
+        if self.fast_ema.crossed_above(self.slow_ema):
+            self.target(qty=100)  # be long 100 shares
+        elif self.fast_ema.crossed_below(self.slow_ema):
+            self.target(qty=-100)  # be short 100 shares
 
 
-show(bt.backtest(ToTarget, data=rising, quantity_mode="venue", **QUIET))
+result = bt.backtest(AlwaysIn, client, start="2026-10-26", end="2026-11-11", capital=200_000)
+fills = result.fills[["time", "side", "quantity_units", "price_rupees", "reason"]]
+print(fills[fills["time"].dt.strftime("%Y-%m-%d") == "2026-11-06"].to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-09:30 {'qty': 100} order: o1
-09:45 {'qty': 300} order: o2
-10:00 {'percent': 20} order: o3
-10:15 {'qty': -100} order: o4
-10:30 {'qty': 0} order: o5
-10:45 {'qty': 0} order: None
-                     time side  quantity_units  price_rupees reason target_index
-2026-10-05 09:30:00+05:30  BUY           100.0         502.3  entry         None
-2026-10-05 09:45:00+05:30  BUY           200.0         504.8    add         None
-2026-10-05 10:00:00+05:30 SELL           103.0         507.3 signal         None
-2026-10-05 10:15:00+05:30 SELL           197.0         509.8 signal         None
-2026-10-05 10:15:00+05:30 SELL           100.0         509.8  entry         None
-2026-10-05 10:30:00+05:30  BUY           100.0         509.1 signal         None
+                     time side  quantity_units  price_rupees    reason
+2026-11-06 12:00:00+05:30 SELL           100.0        998.05     entry
+2026-11-06 12:15:00+05:30  BUY           100.0       1002.00    signal
+2026-11-06 12:15:00+05:30  BUY           100.0       1002.00     entry
+2026-11-06 15:00:00+05:30 SELL           100.0       1013.55 scheduler
 ```
 
-Reading it: 100 shares are bought, then 200 more to reach 300. At 10:00 the equity is Rs 5,01,000, and 20 percent of it at the decision price of 507.30 is 197 whole shares, so 103 are sold. A target of -100 sells 297 in one order: 197 close the long (`signal`) and 100 open the short (`entry`). A target of 0 buys the 100 back, and the second 0 sends nothing.
+On 6 November the strategy was short 100 shares from 12:00. At the 12:15 cross up, `target(qty=100)` sent one buy order for 200 shares: 100 closed the short (`signal`) and 100 opened the long (`entry`), both at the same open. The long was squared off at 15:00, the end of the intraday session.
 
 ## Limit, stop and GTT orders
 
@@ -157,96 +151,105 @@ Reading it: 100 shares are bought, then 200 more to reach 300. At 10:00 the equi
 | `price=` and `trigger_price=` | `SL` | Triggers like a stop, then fills like a limit at `price` or better. An exit stop-limit that triggers without filling becomes a market order at the next bar's open |
 
 * A limit or stop order rests from the next base bar and is matched on every base bar, the open first and then the range. It is a DAY order: unfilled at the session close, it expires (status `Expired`).
-* A price off the tick grid is rejected with `tick`. On options, an `SL-M` is sent as an `SL` with its limit 5 percent beyond the trigger.
+* A price off the tick grid is rejected with `tick`. The **tick size** is the smallest step a price can move: 0.05 rupees (5 paise) for SBIN. Round a computed price to it, as below. On options, an `SL-M` is sent as an `SL` with its limit 5 percent beyond the trigger.
 * `self.cancel(order)` cancels an order while it rests; `self.orders` lists the working ones.
 * `result.orders` shows each order's `order_type`, `limit_rupees`, `trigger_rupees` and `validity`.
 
+The crossover again, entering with a limit order 1 percent below the crossover day's close: it fills only if the next session dips that far, and expires otherwise.
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-class Entries(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "15m"
-
-    def on_bar(self, bar):
-        if len(self.close) == 5:  # the 10:30 close, with the price near 509
-            self.state["orders"] = {
-                "limit 507, buy the dip": self.buy(qty=100, price=507),
-                "limit 503, never reached": self.buy(qty=100, price=503),
-                "stop 514, buy the breakout": self.buy(qty=100, trigger_price=514),
-                "limit 507.03, off the tick": self.buy(qty=100, price=507.03),
-            }
-
-    def on_stop(self):
-        for name, order in self.state["orders"].items():
-            print(f"{name:27} {order.status:9} {order.reject_code or '':5} {order.avg_price}")
+class LimitEntry(EmaCross):
+    def enter(self):
+        tick = 0.05  # SBIN prices move in steps of 5 paise
+        price = round(self.close[-1] * 0.99 / tick) * tick  # 1 percent below the close, on the tick grid
+        self.buy(price=price)
 
 
-entries = bt.backtest(Entries, data=rising, **QUIET)
-show(entries)
+limit_run = bt.backtest(LimitEntry, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+orders = limit_run.orders[["time", "side", "order_type", "limit_rupees", "status", "average_fill_rupees"]]
+print(orders.head(5).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-limit 507, buy the dip      Filled          507.0
-limit 503, never reached    Expired         0.0
-stop 514, buy the breakout  Filled          514.0
-limit 507.03, off the tick  Rejected  tick  0.0
-                     time side  quantity_units  price_rupees    reason target_index
-2026-10-05 10:58:00+05:30  BUY           100.0         507.0     entry         None
-2026-10-05 12:03:00+05:30  BUY           100.0         514.0       add         None
-2026-10-05 15:00:00+05:30 SELL           200.0         512.6 scheduler         None
+                     time side order_type  limit_rupees  status  average_fill_rupees
+2021-05-10 15:30:00+05:30  BUY      LIMIT        358.10  Filled               356.85
+2021-08-18 15:30:00+05:30 SELL     MARKET           NaN  Filled               414.90
+2021-09-06 15:30:00+05:30  BUY      LIMIT        426.75  Filled               426.75
+2021-11-26 15:30:00+05:30 SELL     MARKET           NaN  Filled               469.90
+2022-01-06 15:30:00+05:30  BUY      LIMIT        486.80 Expired                 0.00
 ```
+
+The orders table shows each order at the time it was decided (the 15:30 close of a daily bar). A `LIMIT` buy either filled at its limit or better, or expired at the end of the next session.
+
+Entering with a stop order instead: buy only if the next session trades above the crossover day's high, a breakout confirmation.
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class BreakoutEntry(EmaCross):
+    def enter(self):
+        self.buy(trigger_price=self.high[-1] + 0.05)  # one tick above the day's high
+
+
+stop_run = bt.backtest(BreakoutEntry, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+orders = stop_run.orders[["time", "side", "order_type", "trigger_rupees", "status", "average_fill_rupees"]]
+print(orders.head(5).to_string(index=False))
+```
+
+<!-- output -->
+```text
+                     time side order_type  trigger_rupees  status  average_fill_rupees
+2021-05-10 15:30:00+05:30  BUY       SL-M          367.05 Expired                 0.00
+2021-09-06 15:30:00+05:30  BUY       SL-M          433.90 Expired                 0.00
+2022-01-06 15:30:00+05:30  BUY       SL-M          494.45  Filled               494.55
+2022-02-23 15:30:00+05:30 SELL     MARKET             NaN  Filled               479.90
+2022-03-29 15:30:00+05:30  BUY       SL-M          501.45 Expired                 0.00
+```
+
+A filled `SL-M` buy paid the trigger plus slippage, or the open when the session opened above the trigger.
 
 ### GTT orders for positional trades
 
-On CNC and NRML positions, `stop=`, `target=`, `targets=`, `trail=` and `breakeven=` are held the way a broker holds them overnight, as GTT (good till triggered) orders:
+On CNC and NRML positions, `stop=`, `target=`, `targets=`, `trail=` and `breakeven=` are held the way a broker holds them overnight, as GTT (good till triggered) orders: orders that stay with the broker across days until the price reaches them.
 
-* The GTT orders are placed with the fill that opens the position: one per target, as a SINGLE or an OCO with the stop for that part, and a stop for the rest.
+* The GTT orders are placed with the fill that opens the position: one per target, as a SINGLE or an OCO with the stop for that part, and a stop for the rest. An OCO (one cancels the other) holds a stop and a target together; when one fills, the other is cancelled.
 * When a trail, a breakeven move or an add shifts a level by at least a tick, the GTT is modified, at most once per base bar. A GTT is cancelled before any other exit of the position, and re-created when it is older than 360 days.
 * When a GTT fires it places a LIMIT child order 1 percent beyond its trigger (5 percent for options). If a gap leaves the child unfilled, the child is cancelled and the engine exits at the next base-bar open, flagged `gtt_child_unfilled`.
 * `result.events` records `GttPlaced`, `GttModified`, `GttTriggered`, `GttChildFilled`, `GttChildCanceled` and `GttCanceled`, and each fill carries its `gtt_id`.
 
 `validity="gtt"` rests an order of your own the same way, until its trigger `price` is reached or you cancel it, across sessions (CNC and NRML only; on MIS it is rejected with `product_rule`).
 
+The daily crossover with a 5 percent stop-loss and a 10 percent target. Its first trade, and the GTT events that held the two levels:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
-
-import openalgo.backtest as bt
-
-sessions = bt.calendar.default_calendar().sessions("NSE", "2026-09-01", "2026-10-30")
-k = np.arange(len(sessions))
-close = (1000 + 40 * np.sin(k / 5)).round(1)
-daily = pd.DataFrame(
-    {"open": close, "high": close + 5, "low": close - 5, "close": close, "volume": 10_000},
-    index=pd.DatetimeIndex(sessions["date"]).tz_localize("Asia/Kolkata"),
-)
+class StopAndTarget(EmaCross):
+    def enter(self):
+        self.buy(stop=bt.pct(5), target=bt.pct(10))
 
 
-class Positional(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "D"  # daily equity: CNC
-
-    def on_bar(self, bar):
-        if len(self.close) == 2 and self.position.is_flat:
-            self.buy(qty=50, stop=bt.pct(2), target=bt.pct(3))
-
-
-positional = bt.backtest(Positional, data=daily, capital=500_000)
-print(positional.fills[["time", "side", "quantity_units", "price_rupees", "reason", "gtt_id"]].to_string(index=False))
-events = positional.events
-print(events[events["name"].str.startswith("Gtt")][["time", "name"]].to_string(index=False))
+gtt_run = bt.backtest(StopAndTarget, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(gtt_run.fills[["time", "side", "price_rupees", "reason", "gtt_id"]].head(2).to_string(index=False))
+events = gtt_run.events
+print(events[events["name"].str.startswith("Gtt")][["time", "name"]].head(3).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-                     time side  quantity_units  price_rupees reason  gtt_id
-2026-09-03 09:15:00+05:30  BUY            50.0       1015.85  entry     NaN
-2026-09-24 09:15:00+05:30 SELL            50.0        995.35 leg_sl     1.0
+                     time side  price_rupees     reason  gtt_id
+2021-05-11 09:15:00+05:30  BUY        356.95      entry     NaN
+2021-05-21 09:15:00+05:30 SELL        392.55 leg_target     1.0
                      time           name
-2026-09-03 09:15:00+05:30      GttPlaced
-2026-09-24 09:15:00+05:30   GttTriggered
-2026-09-24 09:15:00+05:30 GttChildFilled
+2021-05-11 09:15:00+05:30      GttPlaced
+2021-05-21 09:15:00+05:30   GttTriggered
+2021-05-21 09:15:00+05:30 GttChildFilled
 ```
+
+Reading it: the first trade bought at 356.95. The stop was 5 percent below, 339.10, and the target 10 percent above: 356.95 x 1.10 = 392.645, rounded to the tick, 392.65. Both were placed as one GTT with the entry fill. On 21 May 2021 the price reached 392.65, the GTT fired, and its child order sold at 392.55: the target less the default slippage of 2 basis points, rounded down to the tick.
 
 ## When an order fills
 
@@ -278,7 +281,7 @@ Distances:
 | `bt.pct(x)` | x percent of the position's average fill price |
 | `bt.ticks(n)` | n ticks of the instrument |
 | `bt.rupees(x)` | x rupees of the position's profit or loss (divided by the quantity) |
-| `bt.atr(multiple, period=14)` | A multiple of the ATR from `openalgo.ta` at the strategy bar the order was decided on; needs `period` closed bars |
+| `bt.atr(multiple, period=14)` | A multiple of the ATR from `openalgo.ta` at the strategy bar the order was decided on; needs `period` closed bars. The **ATR** (average true range) is the average size of a bar's move |
 
 How they behave:
 
@@ -288,26 +291,35 @@ How they behave:
 * Exit fills carry the reason `leg_sl` or `leg_target`, and a target fill its `target_index` (0 for the first). `result.positions` shows the levels in force after every change.
 * On **MIS** positions the engine holds the levels itself. On **CNC** and **NRML** positions they are held as GTT orders, the way your broker would hold them overnight (see [GTT orders](#gtt-orders-for-positional-trades)).
 
+Scaling out of an intraday trade: a 0.5 percent stop, half the shares sold at 0.5 percent profit and 30 percent at 1 percent. The trade of 6 November 2026:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-scale_out = first_bar(stop=3, targets=[(bt.points(4), 0.5), (bt.points(8), 0.3)])
-show(bt.backtest(scale_out, data=rising, **QUIET))
+class ScaleOut(EmaIntraday):
+    def enter(self):
+        self.buy(qty=100, stop=bt.pct(0.5), targets=[(bt.pct(0.5), 0.5), (bt.pct(1), 0.3)])
+
+
+scale_run = bt.backtest(ScaleOut, client, start="2026-10-26", end="2026-11-11", capital=200_000)
+fills = scale_run.fills[["time", "side", "quantity_units", "price_rupees", "reason", "target_index"]]
+print(fills[fills["time"].dt.strftime("%Y-%m-%d") == "2026-11-06"].to_string(index=False))
 ```
 
 <!-- output -->
 ```text
                      time side  quantity_units  price_rupees     reason  target_index
-2026-10-05 09:30:00+05:30  BUY           100.0         502.3      entry           NaN
-2026-10-05 09:52:00+05:30 SELL            50.0         506.3 leg_target           0.0
-2026-10-05 11:40:00+05:30 SELL            30.0         510.3 leg_target           1.0
-2026-10-05 15:00:00+05:30 SELL            20.0         512.6  scheduler           NaN
+2026-11-06 12:15:00+05:30  BUY           100.0       1002.00      entry           NaN
+2026-11-06 13:16:00+05:30 SELL            50.0       1006.75 leg_target           0.0
+2026-11-06 13:48:00+05:30 SELL            30.0       1011.75 leg_target           1.0
+2026-11-06 15:00:00+05:30 SELL            20.0       1013.55  scheduler           NaN
 ```
 
-The position was bought at the 09:30 open. Half of it left at the first target (4 points above the entry), 30 units at the second (8 points above), and the last 20 units at the 15:00 square-off.
+The buy filled at 1002.00. The first target, 0.5 percent above, was 1007.00 (1002 x 1.005 = 1007.01, rounded to the tick): 50 shares sold there at 1006.75 after slippage. The second, 1 percent above, was 1012.00: 30 shares at 1011.75. The last 20 shares were squared off at 15:00.
 
 ## Trailing stops
 
-`trail=` takes OpenAlgo's trailing stop, the same `{x, y}` pair the Strategy RMS uses:
+`trail=` takes OpenAlgo's trailing stop, the same `{x, y}` pair the Strategy RMS uses. A **trailing stop** follows the price up (for a long) and never moves down, so it locks in part of a gain.
 
 | Form | Meaning |
 |---|---|
@@ -318,73 +330,121 @@ The position was bought at the 09:30 open. Half of it left at the first target (
 
 `x` and `y` are distances as above (a bare number is points). A trail moves the stop from each bar's best price and the new stop applies from the next base bar. It never loosens.
 
+A continuous 5 percent trail on the daily crossover. The first rows of `result.positions` follow the stop as the price rose after the first entry:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-forms = {
-    "trail_points(4)": {"trail": bt.trail_points(4)},
-    "trail(4, 2), stop 3": {"trail": bt.trail(4, 2), "stop": 3},
-    "trail_pct(1)": {"trail": bt.trail_pct(1)},
-    "breakeven(5)": {"breakeven": bt.breakeven(5), "stop": 3},
-}
-for name, order in forms.items():
-    exit_fill = bt.backtest(first_bar(**order), data=rising, **QUIET).fills.iloc[-1]
-    print(f"{name:20} exit {exit_fill['time']:%H:%M} at {exit_fill['price_rupees']} ({exit_fill['reason']})")
+class Trailing(EmaCross):
+    def enter(self):
+        self.buy(trail=bt.trail_pct(5))
+
+
+trail_run = bt.backtest(Trailing, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+levels = trail_run.positions[["time", "average_price_rupees", "trail_extreme_rupees", "stop_rupees"]]
+print(levels.head(4).to_string(index=False))
+print(trail_run.trades[["exit_time", "exit_price_rupees", "exit_reason"]].head(1).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-trail_points(4)      exit 11:12 at 506.1 (leg_sl)
-trail(4, 2), stop 3  exit 15:00 at 512.6 (scheduler)
-trail_pct(1)         exit 15:00 at 512.6 (scheduler)
-breakeven(5)         exit 15:00 at 512.6 (scheduler)
+                     time  average_price_rupees  trail_extreme_rupees  stop_rupees
+2021-05-11 09:15:00+05:30                356.95                366.40          NaN
+2021-05-17 09:15:00+05:30                356.95                385.20       367.35
+2021-05-18 09:15:00+05:30                356.95                392.55       374.70
+2021-05-21 09:15:00+05:30                356.95                404.40       386.55
+                exit_time  exit_price_rupees exit_reason
+2021-06-08 09:15:00+05:30              424.0      leg_sl
 ```
 
-The continuous 4-point trail armed when the price reached 506.30 and stopped out in the pullback after 10:15. The stepped trail raised its stop by 2 points for every 4 points gained (499.30, 501.30, 503.30, 505.30) and was never hit, so the square-off closed it. A 1 percent trail of an average price of 502.30 is about 5 points, so it also rode through the pullback. The breakeven moved the stop to 502.30 after a 5-point gain.
+5 percent of the buying price 356.95 is 17.85 rupees. The trail had no stop until the price had risen 17.85 (to 374.80). By 17 May the best price was 385.20 and the stop 385.20 - 17.85 = 367.35; it rose with every new high and sold the position on 8 June 2021 at 424.00.
+
+A stepped trail: a 5 percent stop to start, raised by 10 rupees for every 20 rupees the price gains:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class SteppedTrail(EmaCross):
+    def enter(self):
+        self.buy(stop=bt.pct(5), trail=bt.trail(20, 10))
+
+
+stepped_run = bt.backtest(SteppedTrail, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+levels = stepped_run.positions[["time", "average_price_rupees", "trail_extreme_rupees", "stop_rupees"]]
+print(levels.head(5).to_string(index=False))
+```
+
+<!-- output -->
+```text
+                     time  average_price_rupees  trail_extreme_rupees  stop_rupees
+2021-05-11 09:15:00+05:30                356.95                366.40        339.1
+2021-05-17 09:15:00+05:30                356.95                385.20        349.1
+2021-05-21 09:15:00+05:30                356.95                404.40        359.1
+2021-05-24 09:15:00+05:30                356.95                419.20        369.1
+2021-06-02 09:15:00+05:30                356.95                437.95        379.1
+```
+
+The stop started at 339.10, 5 percent below 356.95. Each time the best price gained another 20 rupees over the buying price (376.95, 396.95, 416.95, 436.95), the stop rose by 10: 349.10, 359.10, 369.10, 379.10.
+
+A breakeven stop: a 5 percent stop that moves up to the entry price once the trade is 5 percent in profit, so a winning trade cannot turn into a loss (apart from charges):
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class Breakeven(EmaCross):
+    def enter(self):
+        self.buy(stop=bt.pct(5), breakeven=bt.breakeven(bt.pct(5)))
+
+
+breakeven_run = bt.backtest(Breakeven, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+levels = breakeven_run.positions[["time", "average_price_rupees", "stop_rupees", "breakeven_armed"]]
+print(levels.head(2).to_string(index=False))
+```
+
+<!-- output -->
+```text
+                     time  average_price_rupees  stop_rupees breakeven_armed
+2021-05-11 09:15:00+05:30                356.95       339.10           False
+2021-05-17 09:15:00+05:30                356.95       356.95            True
+```
+
+Once the price reached 374.80, 5 percent above the buying price, the stop moved from 339.10 up to the buying price, 356.95.
 
 ## Adds, partial exits and reverse
 
 * A `buy` while long adds a tranche (fill reason `add`); `self.position.adds` counts them.
-* A `sell` while long reduces it. A `sell` larger than the long is **rejected** with `reverse_not_allowed`, unless you pass `reverse=True`: then it closes the long and opens a short with the rest.
+* A `sell` while long reduces it. A `sell` larger than the long is **rejected** with `reverse_not_allowed`, unless you pass `reverse=True`: then it closes the long and opens a short with the rest. `self.target(...)` does the same in one call (see [Trading to a target position](#trading-to-a-target-position)).
 * `self.exit(fraction=0.5)` closes half; `self.reduce(qty=30)` closes 30 units.
 
+Booking half the profit: buy 100 shares on the crossover, sell half once the close is 10 percent above the buying price, and the rest on the crossover down:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-class Scaling(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "15m"
+class BookHalf(EmaCross):
+    def enter(self):
+        self.buy(qty=100)
 
     def on_bar(self, bar):
-        step = len(self.close)
-        if step == 1:
-            self.buy(qty=100)
-        elif step == 2:
-            self.buy(qty=50)  # an add
-        elif step == 3:
+        super().on_bar(bar)  # the crossover entry and exit, as in EmaCross
+        p = self.position
+        if p.qty == 100 and self.close[-1] > 1.10 * p.avg_price:  # up 10 percent: book half
             self.exit(fraction=0.5)
-        elif step == 4:
-            rejected = self.sell(qty=200)  # more than the 75 held
-            self.state["rejected"] = rejected
-        elif step == 5:
-            self.sell(qty=200, reverse=True)  # close 75, open 125 short
-
-    def on_stop(self):
-        order = self.state["rejected"]
-        print(order.id, order.status, order.reject_code)
 
 
-show(bt.backtest(Scaling, data=rising, **QUIET))
+half_run = bt.backtest(BookHalf, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(half_run.fills[["time", "side", "quantity_units", "price_rupees", "reason"]].head(3).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-o4 Rejected reverse_not_allowed
-                     time side  quantity_units  price_rupees    reason target_index
-2026-10-05 09:30:00+05:30  BUY           100.0         502.3     entry         None
-2026-10-05 09:45:00+05:30  BUY            50.0         504.8       add         None
-2026-10-05 10:00:00+05:30 SELL            75.0         507.3    signal         None
-2026-10-05 10:30:00+05:30 SELL            75.0         509.1    signal         None
-2026-10-05 10:30:00+05:30 SELL           125.0         509.1     entry         None
-2026-10-05 15:00:00+05:30  BUY           125.0         512.6 scheduler         None
+                     time side  quantity_units  price_rupees reason
+2021-05-11 09:15:00+05:30  BUY           100.0        356.95  entry
+2021-05-24 09:15:00+05:30 SELL            50.0        416.90 signal
+2021-08-20 09:15:00+05:30 SELL            50.0        414.90 signal
 ```
+
+The close of 21 May 2021 was more than 10 percent above the buying price of 356.95, so 50 shares were sold at the next open (416.90). The other 50 were sold on the crossover down in August.
 
 ## Scale-in limits
 
@@ -400,50 +460,42 @@ An `on_bar` strategy adds whenever it buys while long (or sells while short). Th
 
 The limits are checked at submission on every add (an entry from flat is not an add), at the decision price, and adds still waiting for their fill count, so several adds decided together cannot slip past a limit. An add that breaks one is rejected with the reject code `scale_in_limit`. The Assumptions block lists every limit the run used.
 
+Pyramiding into a trend: buy 50 shares at every new 20-day closing high while the price is above its 50-day EMA, with at most two adds, and sell everything when the close drops below the EMA:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 class Pyramid(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "15m"
-    max_adds = 2                 # an entry and at most two adds
-    allow_averaging_down = False  # the default: never add below the average price
+    symbol, exchange, interval = "SBIN", "NSE", "D"
+    max_adds = 2  # an entry and at most two adds
 
     def init(self):
-        self.state["orders"] = []
+        self.trend = self.I(ta.ema, self.close, 50)
 
     def on_bar(self, bar):
-        if len(self.close) <= 8:  # try to buy 100 at each of the first eight bar closes
-            order = self.buy(qty=100)
-            self.state["orders"].append((f"{self.now:%H:%M}", order.status, order.reject_code))
+        if len(self.close) < 50:
+            return
+        if self.position.is_long and self.close[-1] < self.trend[-1]:
+            self.exit()
+        elif self.close[-1] > self.trend[-1] and self.close[-1] >= self.close[-20:].max():
+            self.buy(qty=50)  # the close is the highest of the last 20 days
 
-    def on_stop(self):
-        for decided, status, code in self.state["orders"]:
-            print(decided, status, code or "")
 
-
-pyramid = bt.backtest(Pyramid, data=rising, **QUIET)
-show(pyramid)
-print({key: pyramid.assumptions[key] for key in ("max_adds", "allow_averaging_down")})
+pyramid = bt.backtest(Pyramid, client, start="2021-01-01", end="2026-11-11", capital=200_000)
+print(pyramid.orders[["time", "side", "quantity_units", "status", "reject_code"]].head(5).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-09:30 Submitted
-09:45 Submitted
-10:00 Submitted
-10:15 Rejected scale_in_limit
-10:30 Rejected scale_in_limit
-10:45 Rejected scale_in_limit
-11:00 Rejected scale_in_limit
-11:15 Rejected scale_in_limit
-                     time side  quantity_units  price_rupees    reason target_index
-2026-10-05 09:30:00+05:30  BUY           100.0         502.3     entry         None
-2026-10-05 09:45:00+05:30  BUY           100.0         504.8       add         None
-2026-10-05 10:00:00+05:30  BUY           100.0         507.3       add         None
-2026-10-05 15:00:00+05:30 SELL           300.0         512.6 scheduler         None
-{'max_adds': 2, 'allow_averaging_down': False}
+                     time side  quantity_units   status    reject_code
+2021-05-11 15:30:00+05:30  BUY            50.0   Filled            NaN
+2021-05-12 15:30:00+05:30  BUY            50.0   Filled            NaN
+2021-05-17 15:30:00+05:30  BUY            50.0   Filled            NaN
+2021-05-19 15:30:00+05:30  BUY            50.0 Rejected scale_in_limit
+2021-05-20 15:30:00+05:30  BUY            50.0 Rejected scale_in_limit
 ```
 
-The entry and two adds filled as the price rose (average price 504.80); every later buy was refused by `max_adds`. Had the price fallen below 504.80, an add would also have been refused as averaging down.
+The entry and two adds filled on three new highs; the next buys were refused by `max_adds` while the position stayed open. Had the price been below the average price at a new add, the add would also have been refused as averaging down.
 
 **Class-level leverage.** The class attribute `leverage` (a number, 1 or more) is the default leverage of every order of the strategy, `on_bar` and condition strategies alike; `leverage=` on an order wins over it. It is subject to the same limits as on an order: intraday (MIS) cash equity only, up to 5.
 
@@ -466,40 +518,30 @@ The defaults come from a dated table in the engine. They are chosen to be no lat
 
 Each session takes the row of its own date, and a special session (such as a Muhurat session) whose times do not fit takes the minutes-before-close rule. `entry_from` has no default: entries are allowed from the open. Change any of them with `bt.backtest(..., entry_from="09:30", entry_until="14:00", square_off="14:45")` or the class attributes of the same names; a class attribute wins.
 
+The intraday crossover with no new entries from 13:00 and everything closed at 14:00:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-class EveryHour(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "1h"
-
-    def on_bar(self, bar):
-        if self.position.is_flat:
-            self.buy(qty=100)
-
-
-timed = bt.backtest(EveryHour, data=bars, entry_until="13:00", square_off="14:00", **QUIET)
-print(timed.orders[["time", "status", "reject_code"]].to_string(index=False))
-show(timed)
+window = bt.backtest(EmaIntraday, client, start="2026-10-01", end="2026-11-11", capital=200_000,
+                     entry_until="13:00", square_off="14:00")
+orders = window.orders
+print(orders[orders["reject_code"] == "entry_window"][["time", "side", "status", "reject_code"]].head(2).to_string(index=False))
+fills = window.fills
+print(fills[fills["reason"] == "scheduler"][["time", "side", "price_rupees", "reason"]].head(2).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-                     time   status  reject_code
-2026-10-05 10:15:00+05:30   Filled          NaN
-2026-10-05 14:15:00+05:30 Rejected entry_window
-2026-10-05 15:15:00+05:30 Rejected entry_window
-2026-10-05 15:30:00+05:30 Rejected entry_window
-2026-10-06 10:15:00+05:30   Filled          NaN
-2026-10-06 14:15:00+05:30 Rejected entry_window
-2026-10-06 15:15:00+05:30 Rejected entry_window
-2026-10-06 15:30:00+05:30 Rejected entry_window
-                     time side  quantity_units  price_rupees    reason target_index
-2026-10-05 10:15:00+05:30  BUY           100.0         509.8     entry         None
-2026-10-05 14:00:00+05:30 SELL           100.0         513.9 scheduler         None
-2026-10-06 10:15:00+05:30  BUY           100.0         500.2     entry         None
-2026-10-06 14:00:00+05:30 SELL           100.0         496.7 scheduler         None
+                     time side   status  reject_code
+2026-10-05 13:45:00+05:30  BUY Rejected entry_window
+2026-10-13 14:00:00+05:30  BUY Rejected entry_window
+                     time side  price_rupees    reason
+2026-10-09 14:00:00+05:30 SELL        955.55 scheduler
+2026-10-28 14:00:00+05:30 SELL        956.20 scheduler
 ```
 
-The 1-hour bars close at 10:15, 11:15 and so on (the orders table shows each order at its decision time). Each day's first entry filled at 10:15 and was squared off at 14:00. The entries decided after that would have filled after the 13:00 cut-off, so they were rejected with `entry_window`.
+The crossovers decided after 13:00 were rejected with `entry_window`, and the positions still open at 14:00 were closed then (`scheduler`).
 
 ## Strategy risk rules
 
@@ -520,40 +562,36 @@ The day's loss is the realized P&L of the trades closed that session plus the op
 
 `after_risk_exit` governs only the exits of the combined rules, which are not available yet. The default `"lock_session"` changes nothing today, and `"allow_reentry"` raises `NotImplementedError`; a daily-loss breach always blocks entries until the next session.
 
-<!-- continues -->
-```python
-class BuyTheDip(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "15m"
-    max_daily_loss = 1_000
+The intraday crossover with a daily loss limit of Rs 500, from 29 September to 5 October 2026:
 
-    def on_bar(self, bar):
-        if self.position.is_flat:
-            order = self.buy(qty=100)
-            if order.status == "Rejected":
-                print(f"{self.now:%d %b %H:%M} entry rejected: {order.reject_code}")
+<!-- continues -->
+<!-- requires-server -->
+```python
+class Guarded(EmaIntraday):
+    max_daily_loss = 500  # rupees
 
     def on_risk_event(self, event):
-        state = event.get("trading_state")
-        print(f"{event['time']:%d %b %H:%M} {event['name']}", state or "")
+        print(f"{event['time']:%d %b %H:%M} {event['name']}", event.get("trading_state") or "")
 
 
-# A datetime as end= stops the run at that time (a date runs the whole session).
-guarded = bt.backtest(BuyTheDip, data=falling, end=pd.Timestamp("2026-10-06 10:45"), **QUIET)
-show(guarded)
+guarded = bt.backtest(Guarded, client, start="2026-09-29", end="2026-10-05", capital=200_000)
+print(guarded.fills[["time", "side", "price_rupees", "reason"]].to_string(index=False))
+orders = guarded.orders
+print(orders[orders["status"] == "Rejected"][["time", "side", "reject_code"]].to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-06 Oct 10:19 daily_loss_limit_hit
-06 Oct 10:19 trading_state_changed REDUCING
-06 Oct 10:30 entry rejected: daily_loss_gate
-06 Oct 10:45 entry rejected: daily_loss_gate
-                     time side  quantity_units  price_rupees           reason target_index
-2026-10-06 09:30:00+05:30  BUY           100.0         509.2            entry         None
-2026-10-06 10:20:00+05:30 SELL           100.0         499.2 daily_loss_limit         None
+05 Oct 11:09 daily_loss_limit_hit
+05 Oct 11:09 trading_state_changed REDUCING
+                     time side  price_rupees           reason
+2026-10-05 09:45:00+05:30  BUY         965.0            entry
+2026-10-05 11:10:00+05:30 SELL         959.8 daily_loss_limit
+                     time side     reject_code
+2026-10-05 13:45:00+05:30  BUY daily_loss_gate
 ```
 
-The strategy bought 100 at 509.20 on the falling day. At the 10:19 close its open loss reached Rs 1,000, so the engine closed the position at the 10:20 open and blocked new entries for the rest of the session.
+The strategy bought 100 shares at 965.00 at 09:45. At the 11:09 close (the 1-minute base bar) its open loss reached Rs 500, so the engine sold at the 11:10 open (`daily_loss_limit`) and moved the strategy to `REDUCING`. The crossover at 13:45 was then rejected with `daily_loss_gate`. From the next session the strategy is `ACTIVE` again.
 
 ## Reject codes
 
