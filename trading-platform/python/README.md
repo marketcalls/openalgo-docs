@@ -19,6 +19,8 @@ Check the returned `status` and `mode`. Eligible Semi-Auto requests can return s
 
 Portfolio, SIP and Sector Rotation have no named wrappers in SDK 2.0.5; use their documented [REST APIs](../../api-documentation/v1/README.md).
 
+To test a strategy on past bars with Indian charges, slippage and session rules, see [Backtesting](backtesting/README.md), a preview that ships in the next SDK release.
+
 ### Get the OpenAlgo apikey
 
 Make Sure that your OpenAlgo Application is running. Login to OpenAlgo Application with valid credentials and get the OpenAlgo apikey
@@ -50,8 +52,8 @@ api(api_key, host="http://127.0.0.1:5000", version="v1", timeout=120.0,
 * `version` (str): API version. Defaults to `v1`.
 * `timeout` (float): REST request timeout in seconds. Defaults to `120.0`.
 * `ws_port` (int): WebSocket port. Defaults to `8765`.
-* `ws_url` (str): full WebSocket URL. Overrides `host` and `ws_port`. When omitted it is derived as `ws://<host-name>:<ws_port>`, so a local install needs no `ws_url` at all.
-* `verbose` (int): SDK log level for the WebSocket feed. `0`/`False` silent, `1`/`True` basic, `2` full debug. See [Websockets (Verbose Control)](websockets-verbose-control.md).
+* `ws_url` (str): full WebSocket URL. Overrides `host` and `ws_port`. When omitted it is derived as `ws://<host-name>:<ws_port>`, so a local install needs no `ws_url` at all. From the next SDK release, an `https://` host with neither `ws_url` nor `ws_port` connects to `wss://<host-name>/ws`, the address the OpenAlgo installers serve behind TLS; pass `ws_port=8765` to keep `ws://<host-name>:8765`. The `ws_port` default then becomes `None`, and `client.ws_port` still reads 8765.
+* `verbose` (int): SDK log level for the WebSocket feed. `0`/`False` silent, `1`/`True` basic, `2` full debug. See [Websockets (Verbose Control)](websockets-verbose-control.md). From the next SDK release, feed errors (an exception in your callback, an unreadable frame, a rejection from the server) are never silent: they reach `on_error` listeners, or an ERROR record on the `openalgo.feed` logger, at every level.
 * `auto_reconnect` (bool): defaults to `True`. The SDK reconnects, re-authenticates and replays every active subscription after a drop, with exponential backoff. Set to `False` for manual reconnect handling.
 
 All order and data methods are keyword-only, so every argument must be passed by name.
@@ -2483,7 +2485,7 @@ for every field of the nine methods above.
 
 ### WebSocket cache and callback behavior
 
-In SDK 2.0.5, `api(..., auto_reconnect=True)` is the default. After a drop the SDK reconnects with backoff, authenticates and replays desired market-data and order subscriptions. Explicit `disconnect()` stops that reconnect loop. The server itself does not restore sessions or replay missed ticks. Set `ws_url="wss://<domain>/ws"` explicitly for standard HTTPS installations; the SDK's default URL construction uses `ws://<host>:<ws_port>`.
+In SDK 2.0.5, `api(..., auto_reconnect=True)` is the default. After a drop the SDK reconnects with backoff, authenticates and replays desired market-data and order subscriptions. Explicit `disconnect()` stops that reconnect loop. The server itself does not restore sessions or replay missed ticks. Set `ws_url="wss://<domain>/ws"` explicitly for standard HTTPS installations; the SDK 2.0.5 default URL construction uses `ws://<host>:<ws_port>`. From the next SDK release an `https://` host without `ws_url` or `ws_port` connects to `wss://<host>/ws` by itself.
 
 `connect()` returns a boolean for connection/authentication, and `subscribe_ltp()`, `subscribe_quote()`, `subscribe_depth()` and `subscribe_orders()` return whether the request was sent. A sent request is not confirmation that every symbol was accepted or that fresh data arrived.
 
