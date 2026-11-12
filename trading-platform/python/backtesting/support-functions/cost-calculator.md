@@ -25,79 +25,153 @@ Say what is traded either with `segment=` (one of `costs.SEGMENTS`) or with `exc
 
 A `CostBreakdown` has `brokerage`, `stt`, `exchange_txn`, `sebi_fee`, `stamp_duty`, `gst` and `total`, the `schedules` that priced it, and `verified` (whether those rates are verified for the date). `as_dict()` gives the amounts as a dict.
 
-## Example
+## Examples
 
+The examples price real trades of 11 November 2026, at prices taken from your OpenAlgo server. Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`, and run the blocks in order: each continues from the ones before it.
+
+The day's bars of SBIN and RELIANCE: the examples buy at the open and sell at the close.
+
+<!-- requires-server -->
 ```python
+from openalgo import api
 from openalgo.backtest import costs
 
-# One intraday sell of 400 shares at Rs 1,100.
-sell = costs.trade_cost("SELL", 1100, 400, "2026-10-05", exchange="NSE", product="MIS")
-print({name: round(value, 2) for name, value in sell.as_dict().items()}, sell.schedules, sell.verified)
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
-# An intraday round trip, rounded as the Zerodha calculator rounds it.
-trip = costs.round_trip_cost(1000, 1100, 400, "2026-10-05", segment="NSE_EQ_INTRADAY", rounding="calculator")
-print("intraday round trip:", trip.total)
-
-# One lot (65 units) of a NIFTY option bought at 120 and sold at 150, carried forward.
-option = costs.round_trip_cost(120, 150, 65, "2026-10-05", exchange="NFO", product="NRML",
-                               instrument="OPT", rounding="calculator")
-print("option round trip:", option.total)
-
-# A delivery sell also pays the DP charge, once per scrip per day.
-print("DP charge:", costs.dp_charge("2026-10-05").total)
-
-# A small trade under two brokerage presets: 0.03 percent beats a flat Rs 20 here.
-for preset in ("zerodha", costs.flat(20)):
-    small = costs.round_trip_cost(1000, 1010, 20, "2026-10-05", segment="NSE_EQ_INTRADAY",
-                                  brokerage=preset, rounding="calculator")
-    print("20 shares,", getattr(preset, "name", preset), small.total)
+sbin = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2026-11-11", end_date="2026-11-11").iloc[0]
+reliance = client.history(symbol="RELIANCE", exchange="NSE", interval="D", start_date="2026-11-11", end_date="2026-11-11").iloc[0]
+print("SBIN open", sbin["open"], "close", sbin["close"], "| RELIANCE open", reliance["open"], "close", reliance["close"])
 ```
 
 <!-- output -->
 ```text
-{'brokerage': 20.0, 'stt': 110.0, 'exchange_txn': 13.51, 'sebi_fee': 0.44, 'stamp_duty': 0.0, 'gst': 6.11, 'total': 150.06} ('IN-2026-04-01',) True
-intraday round trip: 200.62
-option round trip: 69.59
+SBIN open 1056.0 close 1061.2 | RELIANCE open 1333.5 close 1335.4
+```
+
+`trade_cost` prices one trade. Here, an intraday (MIS) sell of 400 SBIN shares at the close; a sell pays STT, a buy pays stamp duty:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+sell = costs.trade_cost("SELL", sbin["close"], 400, "2026-11-11", exchange="NSE", product="MIS")
+print({name: round(value, 2) for name, value in sell.as_dict().items()})
+print("rates:", sell.schedules, "| verified:", sell.verified)
+```
+
+<!-- output -->
+```text
+{'brokerage': 20.0, 'stt': 106.12, 'exchange_txn': 13.03, 'sebi_fee': 0.42, 'stamp_duty': 0.0, 'gst': 6.02, 'total': 145.6}
+rates: ('IN-2026-04-01',) | verified: True
+```
+
+`round_trip_cost` prices a buy and a sell of the same quantity: 400 SBIN shares bought at the open and sold at the close, intraday, rounded the way the Zerodha brokerage calculator rounds:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+trip = costs.round_trip_cost(sbin["open"], sbin["close"], 400, "2026-11-11", segment="NSE_EQ_INTRADAY", rounding="calculator")
+print("intraday round trip:", trip.total)
+```
+
+<!-- output -->
+```text
+intraday round trip: 197.88
+```
+
+Brokerage presets matter most on small trades. The default preset, Zerodha's (0.03 percent of the order value, at most Rs 20 an order), on a round trip of only 20 SBIN shares:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+small = costs.round_trip_cost(sbin["open"], sbin["close"], 20, "2026-11-11", segment="NSE_EQ_INTRADAY", rounding="calculator")
+print("20 shares, zerodha:", small.total)
+```
+
+<!-- output -->
+```text
+20 shares, zerodha: 22.58
+```
+
+The same 20 shares with a flat Rs 20 an order (`costs.flat(20)`):
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+flat = costs.round_trip_cost(sbin["open"], sbin["close"], 20, "2026-11-11", segment="NSE_EQ_INTRADAY",
+                             brokerage=costs.flat(20), rounding="calculator")
+print("20 shares, flat(20):", flat.total)
+```
+
+<!-- output -->
+```text
+20 shares, flat(20): 54.78
+```
+
+On 20 shares (about Rs 21,000 an order) the percentage preset charges about Rs 6 an order against the flat Rs 20. On the 400-share round trip above, both come to Rs 20 an order, because 0.03 percent of an order above Rs 66,667 reaches the Rs 20 cap.
+
+A delivery (CNC) sell from your holdings also pays the DP charge, once per scrip per day:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+print("DP charge:", costs.dp_charge("2026-11-11").total)
+```
+
+<!-- output -->
+```text
 DP charge: 15.34
-20 shares, zerodha 21.73
-20 shares, flat(20) 54.7
 ```
 
 ## Many trades and a contract note
 
-`trade_costs` prices a whole list of trades at once, and `contract_note` rounds them the way a contract note does: per trade date and exchange segment, each charge summed over the day, STT and stamp duty rounded to the rupee and the others to the paisa. That rounding rule is an assumption, not checked against a real contract note; `costs.CONTRACT_NOTE_RULE` states it.
+`trade_costs` prices a whole list of trades at once, one row per trade. Here the day's four intraday trades: 400 SBIN and 100 RELIANCE, each bought at the open and sold at the close:
 
+<!-- requires-server -->
 <!-- continues -->
 ```python
 trades = costs.trade_costs(
     ["BUY", "SELL", "BUY", "SELL"],
-    [1000, 1010, 500, 495],
-    [100, 100, 200, 200],
-    ["2026-10-05"] * 4,
+    [sbin["open"], sbin["close"], reliance["open"], reliance["close"]],
+    [400, 400, 100, 100],
+    ["2026-11-11"] * 4,
     "NSE_EQ_INTRADAY",
 )
 print(trades[["brokerage", "stt", "stamp_duty", "total"]].round(2).to_string(index=False))
+```
+
+<!-- output -->
+```text
+ brokerage    stt  stamp_duty  total
+      20.0   0.00       12.67  52.07
+      20.0 106.12        0.00 145.60
+      20.0   0.00        4.00  32.59
+      20.0  33.38        0.00  61.98
+```
+
+`contract_note` rounds them the way a contract note does: per trade date and exchange segment, each charge summed over the day, STT and stamp duty rounded to the rupee and the others to the paisa. That rounding rule is an assumption, not checked against a real contract note; `costs.CONTRACT_NOTE_RULE` states it.
+
+<!-- requires-server -->
+<!-- continues -->
+```python
 note = costs.contract_note(trades)
 print(note[["date", "note", "fills", "total", "adjustment"]].round(2).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
- brokerage   stt  stamp_duty  total
-      20.0  0.00         3.0  30.34
-      20.0 25.25         0.0  52.63
-      20.0  0.00         3.0  30.34
-      20.0 24.75         0.0  52.05
       date   note  fills  total  adjustment
-2026-10-05 NSE_EQ      4 165.36        -0.0
+2026-11-11 NSE_EQ      4 293.06        0.82
 ```
 
 ## Dated and verified rates
 
 Each schedule has a start date, and each of its rows records the last date its rates were checked against their source. Charges are built in from 1 July 2020 (`IN-2020-07-01`), one schedule per rate change. A trade dated before the first schedule raises `CostError`, unless the model was built with `CostModel(backfill=True)`, which charges it at the first schedule's rates and warns. A cost from rates that are not verified for its date is still returned, with `verified=False`, and Python shows an `UnverifiedScheduleWarning`.
 
-<!-- continues -->
+The built-in schedules (this block needs no server):
+
 ```python
+from openalgo.backtest import costs
+
 for schedule in costs.schedules():
     print(schedule["id"], schedule["valid_from"], "to", schedule["valid_to"], "verified through", schedule["verified_through"])
 ```

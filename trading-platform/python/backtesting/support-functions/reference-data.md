@@ -30,7 +30,11 @@ Quantities are in units, never lots; prices and tick sizes are in rupees; dates 
 
 `ReferenceTables(user_files=..., snapshots=...)` adds your own CSV rows (they win over the built-in rows, with a warning naming both) or symbol-master snapshots taken from your OpenAlgo server.
 
-## Example
+## Examples
+
+Each block below shows one lookup. They read only the built-in tables, so they need no server. Run the first block first; the others continue from it.
+
+`parse_symbol` reads an OpenAlgo symbol, here the NIFTY 25300 call option that expires on 23 November 2026:
 
 ```python
 import datetime as dt
@@ -38,83 +42,170 @@ import datetime as dt
 from openalgo.backtest import reference as ref
 from openalgo.backtest.calendar import default_calendar
 
-tables = ref.default_tables()
+tables = ref.default_tables()  # the built-in reference tables
 
-print(ref.parse_symbol("NIFTY27OCT2625000CE", "NFO"))
-print(ref.format_symbol("BANKNIFTY", dt.date(2026, 10, 27), 56000, "PE"))
-
-print("NIFTY lot:", tables.lot_size("NIFTY", "NFO", "2025-10-01"), "in Oct 2025,", tables.lot_size("NIFTY", "NFO", "2026-10-05"), "in Oct 2026")
-print("NIFTY freeze quantity:", tables.freeze_qty("NIFTY", "NFO", "2026-10-01"), "on 1 Oct,", tables.freeze_qty("NIFTY", "NFO", "2026-10-05"), "from 5 Oct 2026")
-print("NIFTY strike step:", tables.strike_step("NIFTY", "NFO", "2026-10-05"))
-print("NIFTY expiries in Oct 2026:", tables.expiries("NIFTY", "NFO", "2026-10-01", "2026-10-31", default_calendar()))
-
-option = tables.instrument("NIFTY27OCT2625000CE", "NFO", "2026-10-05")
-print(option.kind, option.lot_size, option.tick_size, option.freeze_qty, option.expiry, option.settlement)
-
-print(ref.round_to_tick(102.123, 0.05), ref.round_to_tick(102.123, 0.05, "up"))
-print(ref.round_to_lot(200, 65), "units,", ref.units_to_lots(130, 65), "lots")
-print(ref.split_by_freeze(7020, 3510, 65))
+print(ref.parse_symbol("NIFTY23NOV2625300CE", "NFO"))
 ```
 
 <!-- output -->
 ```text
-ParsedSymbol(symbol='NIFTY27OCT2625000CE', exchange='NFO', kind='option', underlying='NIFTY', expiry=datetime.date(2026, 10, 27), strike=25000.0, option_type='CE')
-BANKNIFTY27OCT2656000PE
-NIFTY lot: 75 in Oct 2025, 65 in Oct 2026
-NIFTY freeze quantity: 1800 on 1 Oct, 3510 from 5 Oct 2026
-NIFTY strike step: 50.0
-NIFTY expiries in Oct 2026: [datetime.date(2026, 10, 6), datetime.date(2026, 10, 13), datetime.date(2026, 10, 19), datetime.date(2026, 10, 27)]
-option 65 0.05 3510 2026-10-27 cash
-102.1 102.15
-195 units, 2 lots
-[3510, 3510]
+ParsedSymbol(symbol='NIFTY23NOV2625300CE', exchange='NFO', kind='option', underlying='NIFTY', expiry=datetime.date(2026, 11, 23), strike=25300.0, option_type='CE')
 ```
 
-The weekly expiry that would have fallen on Tuesday 20 October 2026 (Dussehra) moved to Monday 19 October; the tables place every expiry with the session calendar.
+`format_symbol` does the reverse. Without a strike and an option type it gives the future:
+
+<!-- continues -->
+```python
+print(ref.format_symbol("NIFTY", dt.date(2026, 11, 23)))
+```
+
+<!-- output -->
+```text
+NIFTY23NOV26FUT
+```
+
+`lot_size` gives the lot size in force on a date. NIFTY's lot changed between these two dates:
+
+<!-- continues -->
+```python
+print("NIFTY lot:", tables.lot_size("NIFTY", "NFO", "2025-10-01"), "in October 2025,", tables.lot_size("NIFTY", "NFO", "2026-11-11"), "in November 2026")
+```
+
+<!-- output -->
+```text
+NIFTY lot: 75 in October 2025, 65 in November 2026
+```
+
+`freeze_qty` is the largest quantity, in units, that the exchange accepts in one order. NSE raised NIFTY's for October 2026 and set it back from 2 November:
+
+<!-- continues -->
+```python
+print("NIFTY freeze quantity:", tables.freeze_qty("NIFTY", "NFO", "2026-10-15"), "on 15 October,", tables.freeze_qty("NIFTY", "NFO", "2026-11-11"), "on 11 November 2026")
+```
+
+<!-- output -->
+```text
+NIFTY freeze quantity: 3510 on 15 October, 1800 on 11 November 2026
+```
+
+`strike_step` is the gap between two strikes of the near contracts:
+
+<!-- continues -->
+```python
+print("NIFTY strike step:", tables.strike_step("NIFTY", "NFO", "2026-11-11"))
+```
+
+<!-- output -->
+```text
+NIFTY strike step: 50.0
+```
+
+`expiries` lists the expiry dates in a range, weekly and monthly, placed on the session calendar:
+
+<!-- continues -->
+```python
+print(tables.expiries("NIFTY", "NFO", "2026-11-01", "2026-11-30", default_calendar()))
+```
+
+<!-- output -->
+```text
+[datetime.date(2026, 11, 3), datetime.date(2026, 11, 9), datetime.date(2026, 11, 17), datetime.date(2026, 11, 23)]
+```
+
+NIFTY's weekly contracts expire on Tuesdays. Tuesday 10 November 2026 was a holiday (Diwali Balipratipada), so that expiry moved to Monday 9 November, and the monthly expiry moved from Tuesday 24 November (Guru Nanak Jayanti) to Monday 23 November: the tables place every expiry with the session calendar.
+
+`instrument` gathers every term of one contract on a date:
+
+<!-- continues -->
+```python
+option = tables.instrument("NIFTY23NOV2625300CE", "NFO", "2026-11-11")
+print(option.kind, "| lot", option.lot_size, "| tick", option.tick_size, "| freeze", option.freeze_qty, "| expiry", option.expiry, "|", option.settlement, "settled")
+```
+
+<!-- output -->
+```text
+option | lot 65 | tick 0.05 | freeze 1800 | expiry 2026-11-23 | cash settled
+```
+
+`round_to_tick` rounds a price to the tick, to the nearest by default or `"up"`:
+
+<!-- continues -->
+```python
+print(ref.round_to_tick(102.123, 0.05), ref.round_to_tick(102.123, 0.05, "up"))
+```
+
+<!-- output -->
+```text
+102.1 102.15
+```
+
+`round_to_lot` rounds a quantity in units down to whole lots of 65:
+
+<!-- continues -->
+```python
+print(ref.round_to_lot(200, 65), "units")
+```
+
+<!-- output -->
+```text
+195 units
+```
+
+`split_by_freeze` splits a large order into orders the exchange accepts, each at most the freeze quantity and a whole number of lots. Here 80 lots of NIFTY (5,200 units) against the freeze quantity of 1,800:
+
+<!-- continues -->
+```python
+print(ref.split_by_freeze(5200, 1800, 65))
+```
+
+<!-- output -->
+```text
+[1755, 1755, 1690]
+```
 
 ## In a backtest
 
 When a strategy trades a future or an option, the engine resolves its lot size, tick size, freeze quantity and expiry from these tables on the run's first date, and says so in the Assumptions block. Orders without a quantity buy one lot, `lots=` counts lots, a sized quantity is capped at the freeze quantity, and an explicit quantity above it is rejected (`freeze_qty`).
 
+The example buys the NIFTY 25300 call of the November 2026 expiry on 11 November 2026, on the option's own 5-minute bars from your OpenAlgo server: two lots when a bar closes above the high of the first 15 minutes, with a stop 10 percent below the entry and a target 15 percent above it. Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`.
+
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
-
 import openalgo.backtest as bt
+from openalgo import api
 
-minute = np.arange(375)
-premium = np.interp(minute, [0, 120, 374], [120, 150, 135]).round(1)
-open_ = np.r_[premium[0], premium[:-1]]
-bars = pd.DataFrame(
-    {"open": open_, "high": np.maximum(open_, premium) + 0.5, "low": np.minimum(open_, premium) - 0.5,
-     "close": premium, "volume": 10_000},
-    index=pd.Timestamp("2026-10-05 09:15", tz="Asia/Kolkata") + pd.to_timedelta(minute, unit="min"),
-)
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
-class BuyCall(bt.Strategy):
-    symbol, exchange, interval = "NIFTY27OCT2625000CE", "NFO", "5m"
+class CallBreakout(bt.Strategy):
+    symbol, exchange, interval = "NIFTY23NOV2625300CE", "NFO", "5m"  # intraday: MIS
+
+    def init(self):
+        self.traded = False  # one trade only
 
     def on_bar(self, bar):
-        if len(self.close) == 3:
-            self.buy(lots=2, stop=bt.pct(10), target=bt.pct(15))
+        if bar.time.strftime("%H:%M") == "09:25":  # the third 5-minute bar: the first 15 minutes are done
+            self.range_high = max(self.high[-3:])
+        elif bar.time.strftime("%H:%M") > "09:25" and not self.traded and bar.close > self.range_high:
+            self.buy(lots=2, stop=bt.pct(10), target=bt.pct(15))  # 2 lots = 130 units
+            self.traded = True
 
 
-result = bt.backtest(BuyCall, data=bars, capital=100_000)
+result = bt.backtest(CallBreakout, client, start="2026-11-11", end="2026-11-11", capital=100_000)
 print(result.assumptions["instruments"])
 print(result.fills[["time", "side", "quantity_units", "price_rupees", "reason"]].to_string(index=False))
-print("margin blocked:", result.equity["margin_rupees"].max(), "charges:", round(result.equity["costs_rupees"].iloc[-1], 2))
 ```
+
+NIFTY23NOV2625300CE expires on 23 November 2026. After that your broker no longer serves its history, so to run the example later, pick an option of the current expiry and a recent session.
 
 <!-- output -->
 ```text
-NIFTY27OCT2625000CE: lot 65, tick 0.05, freeze 3510 from the reference tables (builtin:2026-11-12:319d8b455d2d)
-                     time side  quantity_units  price_rupees     reason
-2026-10-05 09:30:00+05:30  BUY           130.0        124.15      entry
-2026-10-05 10:45:00+05:30 SELL           130.0        142.00 leg_target
-margin blocked: 16055.0 charges: 89.74
+NIFTY23NOV2625300CE: lot 65, tick 0.05, freeze 1800 from the reference tables (builtin:2026-11-12:319d8b455d2d)
+                     time side  quantity_units  price_rupees reason
+2026-11-11 09:45:00+05:30  BUY           130.0        389.25  entry
+2026-11-11 09:55:00+05:30 SELL           130.0        348.55 leg_sl
 ```
 
-The run is MIS (an intraday interval), so the stop and target are held by the engine. Two lots are 130 units. A long option blocks the premium as margin (valued at the fill bar's open), and every fill pays the default slippage for index options, 0.5 percent of the premium, which is why the target, set 15 percent above the 124.15 entry, filled at 142.00.
+The engine took the contract's terms from the tables (first line). The run is intraday (MIS), so the engine holds the stop and target itself. Two lots are 130 units. The breakout came at 09:45 and the buy filled at 389.25; the premium then fell, and the 10 percent stop closed the trade ten minutes later at 348.55. That is a little below the stop level of about 350.35, because every fill pays the default slippage for index options, 0.5 percent of the premium.
 
 To give the terms yourself, pass `instrument=Instrument(symbol=..., exchange=..., kind=..., lot_size=..., tick_size=..., freeze_qty=..., expiry=..., underlying=...)` (or a dict of them by symbol) to `bt.backtest`. This is also how a cash-equity symbol gets its own tick and freeze quantity instead of the generic lot 1 and tick 0.05, and how a future whose tick depends on a price slab is run (the engine asks for `instrument=` when the tables cannot pick the slab).

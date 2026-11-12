@@ -1,6 +1,6 @@
 # Data Loading
 
-`openalgo.backtest.data.load_bars` is the one function the backtest uses to get bars, and you can call it yourself: to fetch and cache history from your OpenAlgo server, to read your own files with an unusual layout, to check a series before a backtest, or to get bars in the canonical layout for [resampling](resampling.md). [Data](../data.md) explains the sources, time zones, quality checks and the cache in plain words; this page is the reference.
+`openalgo.backtest.data.load_bars` is the one function the backtest uses to get bars (the open, high, low, close and volume of each interval), and you can call it yourself: to fetch and cache history from your OpenAlgo server, to read bars in another layout, to check a series before a backtest, or to get bars in the canonical layout for [resampling](resampling.md). [Data](../data.md) explains the sources, time zones, quality checks and the cache in plain words; this page is the reference.
 
 ## The function
 
@@ -32,68 +32,109 @@ The bars come back in the **canonical layout**: a plain index and the columns `t
 
 Errors: `ConfigError` for arguments that do not fit together, `NoDataError` when the source has nothing for the range, `TimestampError` for timestamps that do not fit the session calendar, `DataQualityError` for failed quality checks, and `DataError` for server failures. All are in `openalgo.backtest.errors`.
 
-## Example: your own file
+## Example: from your OpenAlgo server
 
+Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`, and run the blocks in order: each continues from the ones before it. This block loads SBIN's 5-minute bars from 3 August to 11 November 2026. `cache_dir="bars_cache"` keeps the cache in a folder of its own, so the first load here fetches from the server:
+
+<!-- requires-server -->
 ```python
-import numpy as np
 import pandas as pd
 
 import openalgo.backtest as bt
+from openalgo import api
 
-# 15-minute bars stamped at their close time in Unix seconds, with unusual column names.
-start = pd.Timestamp("2026-10-05 09:30", tz="Asia/Kolkata")
-closes = [start + pd.Timedelta(minutes=15 * k) for k in range(25)]
-price = (800 + np.arange(25) * 0.5).round(2)
-pd.DataFrame(
-    {
-        "epoch": [int(t.timestamp()) for t in closes],
-        "o": price - 0.3, "h": price + 1.0, "l": price - 1.0, "c": price, "qty": 5_000,
-    }
-).to_csv("sbin_15m.csv", index=False)
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
-bars, meta = bt.data.load_bars(
-    "SBIN", "NSE", "15m", "2026-10-05", "2026-10-05",
-    data="sbin_15m.csv",
-    columns={"timestamp": "epoch", "open": "o", "high": "h", "low": "l", "close": "c", "volume": "qty"},
-    unit="s",
-    label="close",
-)
-print(meta.source, meta.rows, "bars from", meta.obtained_start, "to", meta.obtained_end, "quality ok:", meta.quality.ok)
-first = bars.iloc[0]
-opens, closes = (pd.Timestamp(first[c], tz="UTC").tz_convert("Asia/Kolkata") for c in ("ts_open", "ts_close"))
-print("first bar opens at", opens.strftime("%H:%M"), "and closes at", closes.strftime("%H:%M"))
-print(bars[["open", "high", "low", "close", "volume"]].head(2).to_string(index=False))
+bars, meta = bt.data.load_bars("SBIN", "NSE", "5m", "2026-08-03", "2026-11-11", client=client, cache_dir="bars_cache")
+print("source:", meta.source, "| cache:", meta.cache, "|", meta.rows, "bars from", meta.obtained_start, "to", meta.obtained_end)
 ```
 
 <!-- output -->
 ```text
-files 25 bars from 2026-10-05 to 2026-10-05 quality ok: True
-first bar opens at 09:15 and closes at 09:30
- open  high   low  close  volume
-799.7 801.0 799.0  800.0  5000.0
-800.2 801.5 799.5  800.5  5000.0
+source: api | cache: miss | 4979 bars from 2026-08-03 to 2026-11-11
 ```
 
-The file stamped each bar at its close (09:30 for the first bar); with `label="close"` the engine stores it as the 09:15 bar, the OpenAlgo convention.
-
-## Example: from your OpenAlgo server
+`meta.source` is what was used: `api` is the broker's history, `db` would be Historify. The bars come back in the canonical layout:
 
 <!-- requires-server -->
+<!-- continues -->
 ```python
-from openalgo import api
+print(bars.head(3).to_string(index=False))
+```
 
-import openalgo.backtest as bt
+<!-- output -->
+```text
+            ts_open            ts_close   open   high    low  close   volume  oi
+1785728700000000000 1785729000000000000 1035.0 1036.8 1033.2 1033.5 297271.0 NaN
+1785729000000000000 1785729300000000000 1034.0 1034.0 1031.6 1033.1 119945.0 NaN
+1785729300000000000 1785729600000000000 1033.2 1034.4 1032.2 1034.0 129129.0 NaN
+```
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
+`ts_open` and `ts_close` are the bar's open and close as UTC nanoseconds (09:15 IST is 03:45 UTC). `oi` is NaN because the source gives no open interest for a share.
 
-bars, meta = bt.data.load_bars("SBIN", "NSE", "5m", "2025-01-01", "2025-06-30", client=client)
-print(meta.source, meta.broker, meta.cache, meta.rows)
-print(meta.warnings)               # a short history is the first warning
+The quality report of the load:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
 print(meta.quality.summary())
+```
 
-# The next call reads the cache and fetches only sessions that are missing or not settled.
-bars, meta = bt.data.load_bars("SBIN", "NSE", "5m", "2025-01-01", "2025-06-30", client=client)
-print(meta.cache)
+<!-- output -->
+```text
+warning: 210 bars of the session grid are missing on the 70 session days that have bars
+info: open interest was 0 in every row (4979 rows), which means the source supplies none: converted to NaN (unknown)
+not run: zero_volume_runs: not checked in this version
+not run: outlier_returns: not checked in this version
+not run: survivorship_bias: a property of a universe, checked where portfolios are built
+not run: adjustment_status: the sources do not say whether a series is adjusted; treat it as unknown
+```
+
+The broker's 5-minute bars of these sessions stop at 15:15, so the last three bars before the 15:30 close are counted as missing, 3 on each of the 70 sessions. That is a warning, not an error: the bars are usable, and a backtest on them ends each session at 15:15. The `not run` lines are the checks this version does not make, listed so that their absence is never read as a pass.
+
+The next load of the same range reads the cache and makes no request:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+bars, meta = bt.data.load_bars("SBIN", "NSE", "5m", "2026-08-03", "2026-11-11", client=client, cache_dir="bars_cache")
+print("cache:", meta.cache)
+```
+
+<!-- output -->
+```text
+cache: hit
 ```
 
 `source="auto"` decides once per load and never stitches Historify and broker rows together; `meta.auto_probe` says how it decided. For a broker, long ranges are fetched in chunks sized for that broker, paced and retried with backoff. The rows are cached under `~/.openalgo/backtest/cache` (or `OPENALGO_BT_CACHE`, or `cache_dir=`), and a session is trusted from the cache only once it was fetched well after its close.
+
+## Example: bars in another layout
+
+`load_bars` also reads bars you pass with `data=` when their layout is not the one the engine expects, for example bars exported by another tool. This block makes such bars from SBIN's 15-minute history of 11 November 2026: short column names (`o`, `h`, `l`, `c`, `qty`) and each bar stamped at its **close** in Unix seconds (seconds since 1 January 1970, UTC). `columns=` names the columns, `unit="s"` reads the seconds and `label="close"` says the stamp is the close:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+history = client.history(symbol="SBIN", exchange="NSE", interval="15m", start_date="2026-11-11", end_date="2026-11-11")
+exported = pd.DataFrame({
+    "epoch": (history.index + pd.Timedelta(minutes=15)).map(pd.Timestamp.timestamp).astype(int),  # close time
+    "o": history["open"], "h": history["high"], "l": history["low"], "c": history["close"], "qty": history["volume"],
+})
+
+bars, meta = bt.data.load_bars(
+    "SBIN", "NSE", "15m", "2026-11-11", "2026-11-11",
+    data=exported,
+    columns={"timestamp": "epoch", "open": "o", "high": "h", "low": "l", "close": "c", "volume": "qty"},
+    unit="s",
+    label="close",
+)
+first_open = pd.Timestamp(bars["ts_open"].iloc[0], tz="UTC").tz_convert("Asia/Kolkata")
+print(meta.rows, "bars; the first is stamped", exported["epoch"].iloc[0], "and opens at", first_open.strftime("%H:%M IST"))
+```
+
+<!-- output -->
+```text
+24 bars; the first is stamped 1794369600 and opens at 09:15 IST
+```
+
+The first bar's stamp is its close, 09:30 IST; with `label="close"` the engine stores it as the bar that opens at 09:15, the OpenAlgo convention.
