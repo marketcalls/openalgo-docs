@@ -77,36 +77,39 @@ A backtest on your own data needs no OpenAlgo server, no API key and no other pa
 
 ## Your first backtest in five minutes
 
-The example below loads six years of RELIANCE daily bars from your OpenAlgo server, defines an EMA crossover strategy and runs it with Rs 1,00,000. Replace `your_api_key` with the API key from your OpenAlgo dashboard. It is the first of the [examples](examples/ema-crossover.md), which explains the strategy and what to try next.
+The example below loads six years of RELIANCE daily bars from your OpenAlgo server, defines an EMA crossover strategy and runs it with Rs 1,00,000. An EMA (exponential moving average) is an average of recent closing prices that gives the latest days the most weight. The strategy buys when the 20-day EMA rises above the 50-day EMA (the price has started to trend up) and sells when it falls back below.
+
+Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the `client = api(...)` line; every example in these pages has the same line. This is the first of the [examples](examples/ema-crossover.md), which explains the strategy and what to try next.
 
 <!-- requires-server -->
 ```python
 import openalgo.backtest as bt
 from openalgo import api, ta
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
-class EmaCrossover(bt.Strategy):
-    symbol, exchange, interval = "RELIANCE", "NSE", "D"  # daily bars
+class EmaCrossover(bt.Strategy):  # a strategy is a class built on bt.Strategy
+    symbol, exchange, interval = "RELIANCE", "NSE", "D"  # what it trades, on daily bars
     fast = 20  # days
     slow = 50
 
-    def init(self):
-        self.fast_ema = self.I(ta.ema, self.close, self.fast)
-        self.slow_ema = self.I(ta.ema, self.close, self.slow)
+    def init(self):  # runs once, before the first bar: set up the indicators
+        self.fast_ema = self.I(ta.ema, self.close, self.fast)  # 20-day EMA of the closes
+        self.slow_ema = self.I(ta.ema, self.close, self.slow)  # 50-day EMA
 
-    def on_bar(self, bar):
+    def on_bar(self, bar):  # runs at the close of every bar, here every day
         if len(self.close) < self.slow:  # wait until the slow EMA has enough days
             return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # with all the capital, at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
-            self.exit()
+            self.exit()  # sell the whole position at the next day's open
 
 
+# Run it on the server's history: 1 January 2021 to 11 November 2026, Rs 1,00,000 to start.
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-m = result.metrics
+m = result.metrics  # the performance figures
 print(f"Net profit   : Rs {m['net_profit']:,.2f}")
 print(f"Return       : {m['total_return']:.2%}")
 print(f"Max drawdown : {m['max_drawdown']:.2%}")

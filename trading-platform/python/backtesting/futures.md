@@ -49,42 +49,37 @@ A futures position is marked to market at every session close, as the exchange d
 
 ## Example
 
-A positional trend trade on NIFTY futures with data from your OpenAlgo server: long while the 15-minute close is above its 50-bar average, held overnight (NRML), with a 2 percent stop. Your broker serves history only for contracts still trading, so the run starts on the session after the October expiry (27 October 2026) and ends on 11 November 2026, inside the November contract's life.
+A positional trend trade on NIFTY futures with data from your OpenAlgo server: long while the 15-minute close is above its 50-bar simple moving average (SMA, the plain average of the last 50 closes), held overnight (NRML), with a 2 percent stop. Your broker serves history only for contracts still trading, so the run starts on the session after the October expiry (27 October 2026) and ends on 11 November 2026, inside the November contract's life.
+
+Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`, and run the blocks in order: each continues from the ones before it. The first block runs the backtest and prints the contract the engine picked:
 
 <!-- requires-server -->
 ```python
 import openalgo.backtest as bt
 from openalgo import api, ta
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
 class TrendFutures(bt.Strategy):
-    underlying, exchange, interval = "NIFTY", "NFO", "15m"  # expiry: the current month
+    underlying, exchange, interval = "NIFTY", "NFO", "15m"  # the underlying, not a contract
     product = "NRML"  # positional: held overnight
 
     def init(self):
         self.mean = self.I(ta.sma, self.close, 50)  # about two sessions of 15-minute bars
 
     def on_bar(self, bar):
-        if len(self.close) < 50:
+        if len(self.close) < 50:  # wait until the average has 50 bars
             return
         if self.position.is_flat and self.close[-1] > self.mean[-1]:
-            self.buy(lots=1, stop=bt.pct(2))
+            self.buy(lots=1, stop=bt.pct(2))  # one lot, stop 2 percent below the entry
         elif self.position.is_long and self.close[-1] < self.mean[-1]:
             self.exit()
 
 
 # From the session after the last monthly expiry (27 October): the October contract has expired.
 result = bt.backtest(TrendFutures, client, start="2026-10-28", end="2026-11-11", capital=500_000)
-
 print(result.assumptions["instruments"])
-print(result.fills[["time", "symbol", "side", "quantity_units", "price_rupees", "reason"]].to_string(index=False))
-print(result.positions[["time", "symbol", "quantity_units", "stop_rupees"]].to_string(index=False))
-settled = result.settlements
-print(settled[["date", "symbol", "quantity_units", "price_rupees", "amount_rupees", "kind"]].head(4).to_string(index=False))
-print("postings", round(settled["amount_rupees"].sum(), 2), "= gross P&L", round(result.gross_pnl["total"], 2))
-print(result.assumptions["futures_margin"], "| margin blocked:", result.equity["margin_rupees"].max())
 ```
 
 NIFTY23NOV26FUT expires on 23 November 2026. After that your broker no longer serves its history, so to run the example later, set `start` to the session after the latest monthly expiry and `end` to a session before you run it.
@@ -92,25 +87,85 @@ NIFTY23NOV26FUT expires on 23 November 2026. After that your broker no longer se
 <!-- output -->
 ```text
 NIFTY23NOV26FUT: lot 65, tick 0.1 by the price slab of the NIFTY close on 2026-09-30 (22620.45), freeze 3510, from the reference tables
+```
+
+The engine picked NIFTY23NOV26FUT, the current month from 28 October, from the reference tables: lot 65, and a tick of 0.1 set by the NIFTY index close on 30 September, which it fetched from your server.
+
+The fills:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+print(result.fills[["time", "symbol", "side", "quantity_units", "price_rupees", "reason"]].to_string(index=False))
+```
+
+<!-- output -->
+```text
                      time          symbol side  quantity_units  price_rupees reason
 2026-10-29 15:15:00+05:30 NIFTY23NOV26FUT  BUY            65.0       23044.6  entry
+```
+
+The position history, with its stop:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+print(result.positions[["time", "symbol", "quantity_units", "stop_rupees"]].to_string(index=False))
+```
+
+<!-- output -->
+```text
                      time          symbol  quantity_units  stop_rupees
 2026-10-29 15:15:00+05:30 NIFTY23NOV26FUT            65.0      22583.7
+```
+
+The position opened at 15:15 on 29 October. Its 2 percent stop, 22,583.70, is held as a GTT order because the position is NRML.
+
+The first daily settlements. A futures position is marked to market at every session close: each row is one day's cash flow:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+settled = result.settlements
+print(settled[["date", "symbol", "quantity_units", "price_rupees", "amount_rupees", "kind"]].head(4).to_string(index=False))
+```
+
+<!-- output -->
+```text
       date          symbol  quantity_units  price_rupees  amount_rupees  kind
 2026-10-29 NIFTY23NOV26FUT            65.0       23053.0          546.0 daily
 2026-10-30 NIFTY23NOV26FUT            65.0       23101.4         3146.0 daily
 2026-11-02 NIFTY23NOV26FUT            65.0       23415.3        20403.5 daily
 2026-11-03 NIFTY23NOV26FUT            65.0       23780.0        23705.5 daily
+```
+
+Together the daily postings add up to the gross P&L (the profit before charges). The position was still open when the run ended, so no trade had closed:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+print("postings", round(settled["amount_rupees"].sum(), 2), "= gross P&L", round(result.gross_pnl["total"], 2))
+```
+
+<!-- output -->
+```text
 postings 142376.0 = gross P&L 142376.0
+```
+
+The futures margin the run used, and the most it blocked:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+print(result.assumptions["futures_margin"], "| margin blocked:", result.equity["margin_rupees"].max())
+```
+
+<!-- output -->
+```text
 NIFTY 20 percent of contract value (default) | margin blocked: 299578.5
 ```
 
-What happened:
-
-* The engine picked NIFTY23NOV26FUT, the current month from 28 October, from the reference tables: lot 65, and a tick of 0.1 set by the NIFTY index close on 30 September, which it fetched from your server.
-* The position opened at 15:15 on 29 October. Its 2 percent stop, 22,583.70, is held as a GTT order because the position is NRML.
-* The position was marked to market at every session close: each row of `result.settlements` is one day's cash flow, and together they add up to the gross P&L. The position was still open when the run ended, so no trade had closed.
-* The last line is the futures margin the run used: the default, 20 percent of the contract value. One lot blocked Rs 2,99,578.50 of the Rs 5,00,000 capital.
+The default is 20 percent of the contract value: one lot blocked about Rs 3 lakh of the Rs 5,00,000 capital.
 
 ## Your own margin
 
@@ -129,17 +184,31 @@ Real futures margins differ by underlying and change every day, so the engine do
 * The Assumptions block states the margin of each underlying traded and whether it is the default or yours; the manifest records it and `rerun()` repeats it.
 * It is a backtest assumption only. In live trading your broker computes the margin.
 
-The rerun below continues the example above, so it needs the server too.
+The rerun below continues the example above, so it needs the server too. It gives one NIFTY lot the margin a broker's calculator shows, Rs 2,00,000, and BANKNIFTY 12 percent:
 
 <!-- continues -->
 <!-- requires-server -->
 ```python
-# One NIFTY lot at the margin a broker's calculator shows, and BANKNIFTY at 12 percent.
 own_margin = result.rerun(margin={"NIFTY": bt.rupees(200_000), "BANKNIFTY": bt.pct(12)})
 print(own_margin.assumptions["futures_margin"])
 print("largest margin:", own_margin.equity["margin_rupees"].max())
 print(own_margin.warnings)
+```
 
+<!-- output -->
+```text
+NIFTY 200000 rupees per lot (margin=)
+largest margin: 200000.0
+['margin= names BANKNIFTY, which this run does not trade as futures; its value is unused']
+```
+
+BANKNIFTY is not traded in this run, so its value is unused and the warning says so.
+
+A bare number is refused, because it could be a percent or rupees:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
 try:
     result.rerun(margin=15)
 except bt.errors.ConfigError as error:
@@ -148,13 +217,8 @@ except bt.errors.ConfigError as error:
 
 <!-- output -->
 ```text
-NIFTY 200000 rupees per lot (margin=)
-largest margin: 200000.0
-['margin= names BANKNIFTY, which this run does not trade as futures; its value is unused']
 margin=: a bare number could be a percent or rupees
 ```
-
-BANKNIFTY is not traded in this run, so its value is unused and the warning says so.
 
 ## Not available yet
 

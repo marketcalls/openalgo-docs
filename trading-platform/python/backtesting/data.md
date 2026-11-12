@@ -1,28 +1,32 @@
 # Data
 
-A backtest needs bars: open, high, low, close and volume for every interval of the run. You can give the engine your own bars, or let it fetch them from your OpenAlgo server. Either way the bars go through the same checks against the exchange calendar, and the result says exactly what was obtained.
+A backtest needs **bars**. A bar is one interval of trading (one day, or 5 minutes) summed up in five numbers: the open, high, low and close price, and the volume traded. The engine gets the bars from your OpenAlgo server, or you hand it bars you already have as a pandas DataFrame. Either way the bars go through the same checks against the exchange calendar, and the result says exactly what was obtained.
+
+Every example on this page takes its data from OpenAlgo. Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the first block, and run the blocks in order: each continues from the ones before it.
 
 ## Where the bars come from
 
 | You pass | The engine uses |
 |---|---|
-| `data=frame` | Your own pandas (or polars) DataFrame. No server needed |
-| `data={"SBIN": frame1, "INFY": frame2}` | Your own bars for each symbol of a strategy with `symbols` |
-| `data="bars.csv"` | A CSV file (Parquet and Feather files need `pyarrow`). The path may contain `{symbol}`, `{exchange}` and `{interval}` |
 | `client` (an `openalgo.api`) with `source="auto"` (default) | Historify when it holds the whole range, otherwise the broker's history; never a mix of both |
 | `client` with `source="db"` | Historify only (the local database of your OpenAlgo server) |
 | `client` with `source="api"` | The broker's history API only |
+| `data=frame` | Bars you already have, as a pandas (or polars) DataFrame |
+| `data={"SBIN": frame1, "INFY": frame2}` | Your bars for each symbol of a strategy with `symbols` |
+| `data="bars.csv"` | Bars in a CSV file (Parquet and Feather files need `pyarrow`). The path may contain `{symbol}`, `{exchange}` and `{interval}` |
+
+The usual way is to pass the client and let the engine fetch the bars. This strategy trades SBIN on 5-minute bars: it buys 50 shares when the 10-bar EMA (an average of recent closes that weights the latest bars most) crosses above the 30-bar EMA, and sells when it crosses back below.
 
 <!-- requires-server -->
 ```python
 import openalgo.backtest as bt
 from openalgo import api, ta
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
 class EmaCross(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "5m"
+    symbol, exchange, interval = "SBIN", "NSE", "5m"  # 5-minute bars: intraday (MIS)
 
     def init(self):
         self.fast = self.I(ta.ema, self.close, 10)
@@ -37,7 +41,7 @@ class EmaCross(bt.Strategy):
 
 # source="auto", the default: Historify when it holds the whole range, otherwise the broker.
 result = bt.backtest(EmaCross, client, start="2026-07-01", end="2026-11-11", capital=200_000)
-print(result.assumptions["base_rule"])
+print(result.assumptions["base_rule"])  # which bars stops and fills were tested on
 for warning in result.warnings:
     print(warning)
 ```
@@ -50,7 +54,14 @@ The run ends at 2026-11-11 15:15 IST, the close of the last bar in the data, bef
 SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
 ```
 
-On the server this ran on, Historify did not hold the range, so the bars came from the broker. Its 1-minute bars covered the run, so stops were tested on 1-minute ranges, and the last of them on 11 November closes at 15:15, so the run ends there with a warning. To pick the source yourself, pass `source="db"` (Historify only; it stops with `NoDataError` when Historify holds no bars for the range) or `source="api"` (the broker only).
+What the output says:
+
+* On the server this ran on, Historify did not hold the range, so the bars came from the broker. Its 1-minute bars covered the run, so stops were tested on 1-minute bars (the first line).
+* The broker's last bar of 11 November closes at 15:15, so the run ends there, with a warning.
+* Some entry orders came after the latest time an intraday (MIS) position may be opened (15:00 until 31 July 2026, 14:50 from 3 August) and were rejected. `result.orders` lists them with their `reject_code`.
+* SBIN is a share, so the engine used the generic lot of 1 share and tick of 5 paise.
+
+To pick the source yourself, pass `source="db"` (Historify only; it stops with `NoDataError` when Historify holds no bars for the range) or `source="api"` (the broker only).
 
 What to expect from each source:
 
@@ -64,56 +75,64 @@ What to expect from each source:
 
 ## Your own data
 
-A DataFrame works when the engine can tell three things, none of which it guesses:
+When you already hold bars in a DataFrame, pass it with `data=` instead of the client. The engine needs three things from it, and guesses none of them:
 
-1. **The columns.** `open`, `high`, `low`, `close` and `volume`, in any letter case (`Open`, `CLOSE`). An `oi` column is optional.
+1. **The columns.** `open`, `high`, `low`, `close` and `volume`, in any letter case (`Open`, `CLOSE`). An `oi` column (open interest) is optional.
 2. **The time.** A `DatetimeIndex`, or a column named `timestamp`, `datetime`, `date`, `time` or `ts`.
-3. **The time zone.** A time-zone-aware index or column, or `tz=` for naive times (`tz="Asia/Kolkata"` for IST clock times). There is no default, because a wrong guess shifts every bar by 5 hours 30 minutes. Numbers counted from 1970 (epoch values, with `unit=`) are UTC by definition and need no `tz=`.
-
-The run takes its `start` and `end` from your data when you leave them out, whether it is a DataFrame (naive with `tz=`, or time-zone aware) or a file.
+3. **The time zone.** Times that carry their zone, or `tz=` for times without one (`tz="Asia/Kolkata"` for IST clock times). There is no default, because a wrong guess shifts every bar by 5 hours 30 minutes. Numbers counted from 1970 (epoch values, with `unit=`) are UTC by definition and need no `tz=`.
 
 Each timestamp is the instant the bar **opens** (the OpenAlgo convention). A daily bar is stamped with its date: midnight IST, 00:00 UTC of the session date, or the session open all work (other times of day are mapped to their IST date, with a warning).
 
+Here the DataFrame is SBIN's daily bars from `client.history`. Its dates have no time zone, so `tz="Asia/Kolkata"` says they are IST dates. The strategy is the same EMA crossover on daily bars, with all the capital in each trade. The run takes its `start` and `end` from the data when you leave them out.
+
+<!-- requires-server -->
+<!-- continues -->
 ```python
-import numpy as np
-import pandas as pd
-
-import openalgo.backtest as bt
-
-# Daily bars as they often arrive from a spreadsheet: a Date column, naive dates, capitalised names.
-sessions = bt.calendar.default_calendar().sessions("NSE", "2026-04-01", "2026-06-30")
-k = np.arange(len(sessions))
-close = (1000 + k + 30 * np.sin(k / 5)).round(1)
-frame = pd.DataFrame(
-    {
-        "Date": pd.to_datetime(sessions["date"]),
-        "Open": close - 2,
-        "High": close + 5,
-        "Low": close - 6,
-        "Close": close,
-        "Volume": 10_000,
-    }
-)
-frame.to_csv("sbin_daily.csv", index=False)
+sbin = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2021-01-01", end_date="2026-11-11")
 
 
-class BuyAndHold(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "D"
+class DailyEmaCross(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "D"  # daily bars: delivery (CNC)
+
+    def init(self):
+        self.fast = self.I(ta.ema, self.close, 10)
+        self.slow = self.I(ta.ema, self.close, 30)
 
     def on_bar(self, bar):
-        if self.position.is_flat:
-            self.buy(qty=50)
+        if len(self.close) <= 30:  # let the slow EMA warm up first
+            return
+        if self.position.is_flat and self.fast.crossed_above(self.slow):
+            self.buy()
+        elif self.position.is_long and self.fast.crossed_below(self.slow):
+            self.exit()
 
 
-# The same bars from the DataFrame and from the CSV file; both give the run its dates.
-from_frame = bt.backtest(BuyAndHold, data=frame, tz="Asia/Kolkata", capital=100_000)
-from_file = bt.backtest(BuyAndHold, data="sbin_daily.csv", tz="Asia/Kolkata", capital=100_000)
-print(len(from_frame.equity), "sessions;", "same result:", from_frame.fills.equals(from_file.fills))
+own = bt.backtest(DailyEmaCross, data=sbin, tz="Asia/Kolkata", capital=100_000)
+print(len(own.equity), "sessions from", own.equity.index[0].date(), "to", own.equity.index[-1].date())
+print(f"Net profit: Rs {own.metrics['net_profit']:,.2f}")
 ```
 
 <!-- output -->
 ```text
-60 sessions; same result: True
+1453 sessions from 2021-01-01 to 2026-11-11
+Net profit: Rs 71,912.03
+```
+
+The column names may be in any letter case, and the time may be a column instead of the index, the way a spreadsheet holds it. The same bars with a `Date` column and `Open`, `High`, `Low`, `Close`, `Volume` give the same trades:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+sheet = sbin.rename(columns=str.title).reset_index(names="Date")
+print(sheet.columns.tolist())
+same = bt.backtest(DailyEmaCross, data=sheet, tz="Asia/Kolkata", capital=100_000)
+print("same fills:", same.fills.equals(own.fills))
+```
+
+<!-- output -->
+```text
+['Date', 'Close', 'High', 'Low', 'Oi', 'Open', 'Volume']
+same fills: True
 ```
 
 For a layout `bt.backtest` cannot read on its own (other column names, bars stamped at their close, Unix seconds), load the bars first with [`load_bars`](support-functions/data-loading.md), which takes `columns=`, `label="close"`, `unit=` and `timestamp_format=`, and pass the frame it returns to `bt.backtest(data=...)`.
@@ -138,33 +157,39 @@ The engine stores every bar with its open and close as UTC instants and checks e
 
 Pre-open bars, bars at or after the close and bars on a date the exchange was closed are dropped and counted in the quality report (add a special session to the calendar to keep them).
 
+The 1-minute bars of `client.history` carry the IST zone. Many files do not: they hold the same clock times (09:15, 09:16, ...) with no zone. This block makes such bars from three sessions of SBIN and loads them with the wrong zone, UTC. The engine sees that every bar would fall 5 hours 30 minutes late and stops:
+
+<!-- requires-server -->
 <!-- continues -->
 ```python
-import numpy as np
-import pandas as pd
-
-import openalgo.backtest as bt
 from openalgo.backtest.errors import TimestampError
 
-frames = []
-for day in ("2026-10-05", "2026-10-06", "2026-10-07"):
-    minutes = pd.Timestamp(f"{day} 09:15") + pd.to_timedelta(np.arange(375), unit="min")
-    frames.append(pd.DataFrame({"open": 100.0, "high": 101.0, "low": 99.0, "close": 100.0, "volume": 1.0}, index=minutes))
-ist_clock_times = pd.concat(frames)  # naive IST times
+minutes = client.history(symbol="SBIN", exchange="NSE", interval="1m", start_date="2026-11-04", end_date="2026-11-06")
+clock_times = minutes.tz_localize(None)  # 09:15, 09:16, ... with the zone removed
 
 try:
-    bt.data.load_bars("SBIN", "NSE", "1m", "2026-10-05", "2026-10-07", data=ist_clock_times, tz="UTC")
+    bt.data.load_bars("SBIN", "NSE", "1m", "2026-11-04", "2026-11-06", data=clock_times, tz="UTC")
 except TimestampError as error:
     print(str(error).split(". ")[0])
+```
 
-bars, meta = bt.data.load_bars("SBIN", "NSE", "1m", "2026-10-05", "2026-10-07", data=ist_clock_times, tz="Asia/Kolkata")
+<!-- output -->
+```text
+NSE:SBIN 1m: timestamps are 5 hours 30 minutes late against the NSE session calendar: 945 of 1080 bars are outside the session or off its lattice as given, 0 after undoing the offset, which then covers 3 days (first bar: 2026-11-04 14:45:00 IST)
+```
+
+The same bars with the right zone load without an error:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+bars, meta = bt.data.load_bars("SBIN", "NSE", "1m", "2026-11-04", "2026-11-06", data=clock_times, tz="Asia/Kolkata")
 print(len(bars), "bars, quality ok:", meta.quality.ok)
 ```
 
 <!-- output -->
 ```text
-NSE:SBIN 1m: timestamps are 5 hours 30 minutes late against the NSE session calendar: 990 of 1125 bars are outside the session or off its lattice as given, 0 after undoing the offset, which then covers 3 days (first bar: 2026-10-05 14:45:00 IST)
-1125 bars, quality ok: True
+1080 bars, quality ok: True
 ```
 
 ## Quality checks
@@ -179,31 +204,46 @@ Every load runs quality checks and keeps the report in its metadata (`meta.quali
 
 Every report also lists the checks that did **not** run, so their absence is never read as a pass: runs of zero volume, outlier returns, survivorship bias, whether a series is adjusted at all, and for an index or a derivative the split and bonus check. `load_bars(..., strict=False)` returns the bars together with a report that has errors, so you can inspect them.
 
+Real bars from OpenAlgo pass these checks. To see what a failed check looks like, this block copies SBIN's daily bars and puts a typing mistake in one row: a high below that day's close. The backtest refuses the bars:
+
+<!-- requires-server -->
 <!-- continues -->
 ```python
 from openalgo.backtest.errors import DataQualityError
 
-broken = frame.set_index("Date")
-broken.iloc[5, broken.columns.get_loc("High")] = broken.iloc[5]["Close"] - 10  # a high below the close
+broken = sbin.copy()
+broken.loc["2026-11-11", "high"] = 1050.00  # the real high was 1077.95; the close was 1061.20
 
 try:
-    bt.backtest(BuyAndHold, data=broken, tz="Asia/Kolkata", capital=100_000)
+    bt.backtest(DailyEmaCross, data=broken, tz="Asia/Kolkata", capital=100_000)
 except DataQualityError as error:
     print(str(error).split(". ")[0])
-
-bars, meta = bt.data.load_bars("SBIN", "NSE", "D", "2026-04-01", "2026-06-30", data=broken, tz="Asia/Kolkata", strict=False)
-print(meta.quality.summary().splitlines()[0])
 ```
 
 <!-- output -->
 ```text
 NSE:SBIN D: data quality check failed: 1 row has a high below the open or close, or a low above them
+```
+
+`strict=False` gives you the bars together with the report, so you can find the row:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+bars, meta = bt.data.load_bars("SBIN", "NSE", "D", "2021-01-01", "2026-11-11", data=broken, tz="Asia/Kolkata", strict=False)
+print(meta.quality.summary().splitlines()[0])
+```
+
+<!-- output -->
+```text
 error: 1 row has a high below the open or close, or a low above them
 ```
 
 ## Splits and bonuses
 
-OpenAlgo history may not be adjusted for splits and bonuses. In unadjusted bars a 1:1 bonus halves the price overnight, and a backtest would read it as a 50 percent fall that never happened. So every load of **NSE and BSE shares** (intraday or daily) looks for them in the bars themselves. An overnight gap is a suspected unadjusted split or bonus when it:
+In a bonus or a split a company gives its shareholders more shares, and the share price falls in the same proportion: after a 1:1 bonus you hold twice the shares at half the price. Bars **adjusted** for it have the earlier prices divided by the same factor, so the chart has no jump. Bars **not adjusted** show the price halving overnight, and a backtest would read that as a 50 percent fall that never happened.
+
+OpenAlgo history may not be adjusted for splits and bonuses, so every load of **NSE and BSE shares** (intraday or daily) looks for them in the bars themselves. An overnight gap is a suspected unadjusted split or bonus when it:
 
 * is within 5 percent of a usual factor, from a 1:3 bonus up to a 10-for-1 split, or a consolidation;
 * lies beyond the widest daily price band, so no ordinary session or circuit-limit day explains it;
@@ -231,96 +271,121 @@ To go on, do one of these:
 
 A declaration does not adjust anything. **Holding across a corporate action is not available yet**: a backtest that holds a position or a GTT order across a declared split or bonus that the bars are not adjusted for raises `NotImplementedError`. `meta.quality.price_gaps` lists every reported gap with its evidence, and the run manifest records the declarations.
 
-The example builds daily bars of a share with a 1:1 bonus on 1 July 2026 that they are not adjusted for. The strategy trades before the ex-date.
+The examples use a real case: RELIANCE gave a 1:1 bonus with the ex-date 28 October 2024. The daily bars from the server this page ran on are adjusted for it: the close of 25 October 2024 is 1,327.85, next to an open of 1,337.00 on the 28th. Before the bonus the shares really traded near Rs 2,655. This block rebuilds those prices as they traded (the adjusted prices before the ex-date times 2) and runs the daily crossover on them. Nothing is declared, so the run stops at the bonus:
 
+<!-- requires-server -->
+<!-- continues -->
+```python
+reliance = client.history(symbol="RELIANCE", exchange="NSE", interval="D", start_date="2024-06-01", end_date="2024-12-31")
+as_traded = reliance.copy()
+before_bonus = as_traded.index < "2024-10-28"
+as_traded.loc[before_bonus, ["open", "high", "low", "close"]] *= 2  # the prices before the 1:1 bonus
+
+
+class RelianceCross(DailyEmaCross):
+    symbol = "RELIANCE"
+
+
+try:
+    bt.backtest(RelianceCross, data=as_traded, tz="Asia/Kolkata", capital=100_000)
+except DataQualityError as error:
+    print(str(error).split(". ")[0])
+```
+
+<!-- output -->
+```text
+NSE:RELIANCE D: data quality check failed: 1 suspected unadjusted split or bonus (2024-10-28: the previous close 2655.70 against the open 1337.00 is a ratio of 1.986, near 2 shares for every 1 (a 1:1 bonus, or a split from face value 10 to 5 or 2 to 1), and the session closed at 1334.35, keeping the new level)
+```
+
+`price_gaps` in the quality report holds the evidence of each gap:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+bars, meta = bt.data.load_bars("RELIANCE", "NSE", "D", "2024-06-01", "2024-12-31", data=as_traded, tz="Asia/Kolkata", strict=False)
+gap = meta.quality.price_gaps[0]
+print("gap:", gap.ex_date, gap.status, round(gap.ratio, 3), "|", gap.reading)
+```
+
+<!-- output -->
+```text
+gap: 2024-10-28 suspected 1.986 | a 1:1 bonus, or a split from face value 10 to 5 or 2 to 1
+```
+
+Declared with `corporate_actions=`, the bonus becomes a warning and the run goes on. The crossover's trades of that period ended before the ex-date:
+
+<!-- requires-server -->
 <!-- continues -->
 ```python
 from openalgo.backtest.data import CorporateAction
 
-# A share's daily bars for June and July 2026, not adjusted for a 1:1 bonus on 1 July.
-june_july = bt.calendar.default_calendar().sessions("NSE", "2026-06-01", "2026-07-31")
-days = pd.DatetimeIndex(june_july["date"]).tz_localize("Asia/Kolkata")
-n = np.arange(len(days))
-close = (1200 + 2 * n + 15 * np.sin(n / 4)).round(1)
-ex_date = days.get_loc(pd.Timestamp("2026-07-01", tz="Asia/Kolkata"))
-close[ex_date:] = (close[ex_date:] / 2).round(1)  # the price halves overnight
-open_ = np.r_[close[0], close[:-1]]
-open_[ex_date] = close[ex_date] - 1
-bonus_bars = pd.DataFrame(
-    {"open": open_, "high": np.maximum(open_, close) + 5, "low": np.minimum(open_, close) - 5,
-     "close": close, "volume": 10_000},
-    index=days,
-)
-
-
-class InAndOut(bt.Strategy):
-    """Buys 10 shares on the 3rd session and sells them on the 10th, before the ex-date."""
-
-    symbol, exchange, interval = "EXAMPLE", "NSE", "D"
-
-    def on_bar(self, bar):
-        if len(self.close) == 3:
-            self.buy(qty=10)
-        elif len(self.close) == 10:
-            self.exit()
-
-
-class Holder(InAndOut):
-    """Buys on the 3rd session and holds through the ex-date."""
-
-    def on_bar(self, bar):
-        if len(self.close) == 3:
-            self.buy(qty=10)
-
-
-# Nothing declared: the run stops at the suspected bonus.
-try:
-    bt.backtest(InAndOut, data=bonus_bars, capital=100_000)
-except DataQualityError as error:
-    print(str(error).split(". ")[0])
-
-loaded, report = bt.data.load_bars("EXAMPLE", "NSE", "D", "2026-06-01", "2026-07-31", data=bonus_bars, strict=False)
-gap = report.quality.price_gaps[0]
-print("gap:", gap.ex_date, gap.status, round(gap.ratio, 3), "|", gap.reading)
-
-# Declared: the run goes on, with a warning.
-bonus = [CorporateAction.bonus("2026-07-01", 1, 1)]
-declared = bt.backtest(InAndOut, data=bonus_bars, capital=100_000, corporate_actions=bonus)
+bonus = [CorporateAction.bonus("2024-10-28", 1, 1)]  # 1 new share for every 1 held
+declared = bt.backtest(RelianceCross, data=as_traded, tz="Asia/Kolkata", capital=100_000, corporate_actions=bonus)
 print(declared.warnings[0].split(". ")[0])
-print("trades:", len(declared.trades))
+print("trades:", len(declared.trades), "| last exit:", declared.trades["exit_time"].iloc[-1].date())
+```
 
-# Holding across it is not available yet.
+<!-- output -->
+```text
+RELIANCE: the bars are not adjusted for 1 declared corporate action (2024-10-28: a bonus (2 shares for every 1); the previous close 2655.70 against the open 1337.00 is a ratio of 1.986)
+trades: 2 | last exit: 2024-10-03
+```
+
+A strategy that holds RELIANCE through 28 October 2024 on these bars stops, because holding across a bonus the bars are not adjusted for is not built yet:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+class BuyAndHold(bt.Strategy):
+    symbol, exchange, interval = "RELIANCE", "NSE", "D"
+
+    def on_bar(self, bar):
+        if self.position.is_flat:
+            self.buy()
+
+
 try:
-    bt.backtest(Holder, data=bonus_bars, capital=100_000, corporate_actions=bonus)
+    bt.backtest(BuyAndHold, data=as_traded, tz="Asia/Kolkata", capital=100_000, corporate_actions=bonus)
 except NotImplementedError as error:
     print(str(error).split(". ")[0])
 ```
 
 <!-- output -->
 ```text
-NSE:EXAMPLE D: data quality check failed: 1 suspected unadjusted split or bonus (2026-07-01: the previous close 1225.60 against the open 613.60 is a ratio of 1.997, near 2 shares for every 1 (a 1:1 bonus, or a split from face value 10 to 5 or 2 to 1), and the session closed at 614.60, keeping the new level)
-gap: 2026-07-01 suspected 1.997 | a 1:1 bonus, or a split from face value 10 to 5 or 2 to 1
-EXAMPLE: the bars are not adjusted for 1 declared corporate action (2026-07-01: a bonus (2 shares for every 1); the previous close 1225.60 against the open 613.60 is a ratio of 1.997)
-trades: 1
-EXAMPLE: a position is held across 2026-07-01, the ex-date of a bonus (2 shares for every 1) that the bars are not adjusted for
+RELIANCE: a position is held across 2024-10-28, the ex-date of a bonus (2 shares for every 1) that the bars are not adjusted for
+```
+
+The bars from your server are adjusted, so the same strategy runs on them through the bonus, and the declaration is only noted:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+held = bt.backtest(BuyAndHold, client, start="2024-06-01", end="2024-12-31", capital=100_000, corporate_actions=bonus)
+print(held.warnings[0])
+```
+
+<!-- output -->
+```text
+RELIANCE: the bars are already adjusted for 1 declared corporate action (2024-10-28: a bonus (2 shares for every 1); the previous close 1327.85 against the open 1337.00 is a ratio of 0.993)
 ```
 
 ## Short history
 
 A source that returns less than you asked for is never silent. The first warning of the result says what was requested, what came back, how many sessions, and what to do, for example to download the range into Historify when the broker keeps only a short intraday history.
 
+Here the run asks for bars from 1 July 2020, but the SBIN bars passed in start on 1 January 2021:
+
+<!-- requires-server -->
 <!-- continues -->
 ```python
-earlier = bt.backtest(BuyAndHold, data=frame, tz="Asia/Kolkata", capital=100_000, start="2026-03-02", end="2026-06-30")
+earlier = bt.backtest(DailyEmaCross, data=sbin, tz="Asia/Kolkata", capital=100_000, start="2020-07-01", end="2026-11-11")
 print(earlier.warnings[0])
 ```
 
 <!-- output -->
 ```text
-Short history: 2026-03-02 to 2026-06-30 was requested but the supplied data returned 2026-04-01 to 2026-06-30, 60 of 79 sessions. The supplied data does not cover the rest of the requested range.
+Short history: 2020-07-01 to 2026-11-11 was requested but the supplied data returned 2021-01-01 to 2026-11-11, 1453 of 1582 sessions. The supplied data does not cover the rest of the requested range.
 ```
-
-(This run also shows an `UnverifiedScheduleWarning` from Python: its requested range starts in March 2026, which the verified cost schedule does not cover.)
 
 ## The local cache
 
@@ -330,8 +395,8 @@ Bars from your OpenAlgo server are cached on disk, so a second run of the same r
 * A session counts as complete only when it was fetched at least 6 hours after its close (and, from a broker, on a later date). Anything else is fetched again on the next run.
 * Every read verifies a content hash. A damaged file is moved aside, never served, and its sessions are fetched again.
 * The folder is `cache_dir=` when you call `load_bars`, else the environment variable `OPENALGO_BT_CACHE`, else `~/.openalgo/backtest/cache`. `load_bars(..., refresh=True)` fetches a range again.
-* Your own data is never cached.
+* Bars you pass with `data=` are never cached.
 
 The run manifest records a hash of the bars of every month the run used, so a later rerun can tell you when the data has changed (see [Results and Reports](results-and-reports.md#reproducing-a-run)).
 
-No market-data downloader is bundled, and none is needed: use your OpenAlgo server, Historify, or your own files.
+No market-data downloader is bundled, and none is needed: use your OpenAlgo server and Historify.
