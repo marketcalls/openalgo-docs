@@ -4,6 +4,8 @@
 **Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. The pages in this section describe the engine as released in SDK 2.1.0.
 {% endhint %}
 
+Looking for a quick answer, such as how to add a stop-loss or use NIFTY as the benchmark? See [How do I ...?](how-to.md).
+
 ## What it does for you
 
 A backtest replays your strategy on past price bars and shows what it would have done: every order, fill, trade, the equity curve, the charges you would have paid and the usual performance figures. The OpenAlgo engine is built for Indian markets, so the things that usually make a backtest look better than real trading are applied for you:
@@ -220,6 +222,7 @@ No setting is accepted and then ignored. Every class attribute and every `bt.bac
 
 ## Where to go next
 
+* [How do I ...?](how-to.md): short answers to the common questions (long and short, stops, sizing, a NIFTY benchmark, the tearsheet, the trade list, optimization, older years, your own data, exporting), each with a small example.
 * [Writing Strategies](writing-strategies.md): the strategy class, indicators, other timeframes, positions, timers, and condition strategies that run without a Python call per bar.
 * [Orders and Risk](orders-and-risk.md): orders, target positions, stops, targets, trailing stops, intraday times and the strategy risk rules.
 * [Costs, Slippage and Margin](costs-slippage-and-margin.md): what is charged and how to change it, margin, and sizing (your own sizing function, size caps).
