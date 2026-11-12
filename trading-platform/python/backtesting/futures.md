@@ -1,6 +1,6 @@
 # Futures
 
-A futures strategy names the **underlying** it trades, such as NIFTY, never a contract. The engine picks the contract, rolls the position to the next contract before expiry, charges both legs of every roll, marks the position to market every day, and gives your indicators one continuous price series across the rolls. You test a futures idea the way you trade it: "long NIFTY futures while above the 10-day average", not "long NIFTY29SEP26FUT, then NIFTY27OCT26FUT, then ...".
+A futures strategy names the **underlying** it trades, such as NIFTY, rather than a contract. The engine picks the contract, rolls the position to the next contract before expiry, charges both legs of every roll, marks the position to market every day, and gives your indicators one continuous price series across the rolls. You test a futures idea the way you trade it: "long NIFTY futures while above the 10-day average", not "long NIFTY29SEP26FUT, then NIFTY27OCT26FUT, then ...".
 
 ## Declaring a futures strategy
 
@@ -14,7 +14,11 @@ The contracts come from `instrument=` when you pass them (an `Instrument` for ea
 
 Inside the strategy everything is addressed by the underlying: `self.close` is the continuous series, `self.position` and `self.positions["NIFTY"]` the position whatever contract holds it, and `self.instrument()` the contract traded at that moment. Orders are placed in lots or units as usual (`self.buy(lots=1)`).
 
+To test one contract over its own life instead, name it as `symbol`, like any other instrument: `symbol = "NIFTY23NOV26FUT"`. The engine takes its terms from the reference tables (or from `instrument=`) and marks it to market every day, but never rolls it, so keep the run inside the contract's life. Your broker serves a contract's history from its listing until it expires, about three months for a NIFTY monthly contract, so this is the way to backtest futures on broker history alone. The [futures examples](examples/README.md#futures) work this way.
+
 ## The roll
+
+A roll needs the history of the expiring contract. Brokers stop serving a contract's history once it expires, so a backtest across a roll needs contract data you stored while the contracts were trading: in Historify (`source="db"`) or in your own files (`data=`, a dict keyed by contract symbol). With broker history alone, a run that starts before the last expiry stops with a `DataError` from the history request, such as `Symbol 'NIFTY27OCT26FUT' not found for exchange 'NFO'`.
 
 `bt.backtest(roll=1)` is the default: a position rolls to the next contract **one session before** the expiring contract's last trading day, at that session's first open. `roll=N` rolls N sessions before, `roll=0` on the last trading day itself.
 
@@ -45,113 +49,67 @@ A futures position is marked to market at every session close, as the exchange d
 
 ## Example
 
-Three synthetic NIFTY futures, September to November 2026, priced at a small premium to a synthetic index that decays to expiry. The strategy is long while the close is above its 10-day average, with a 3 percent stop, which on these NRML positions is held as a GTT order.
+A positional trend trade on NIFTY futures with data from your OpenAlgo server: long while the 15-minute close is above its 50-bar average, held overnight (NRML), with a 2 percent stop. Your broker serves history only for contracts still trading, so the run starts on the session after the October expiry (27 October 2026) and ends on 11 November 2026, inside the November contract's life.
 
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
-
 import openalgo.backtest as bt
-from openalgo import ta
+from openalgo import api, ta
 
-# A synthetic NIFTY index on every NSE session from August to early November 2026.
-sessions = bt.calendar.default_calendar().sessions("NSE", "2026-08-03", "2026-11-06")
-days = pd.DatetimeIndex(sessions["date"]).tz_localize("Asia/Kolkata")
-k = np.arange(len(days))
-index_close = (25_000 + 8 * k + 300 * np.sin(k / 7)).round(1)
-
-# Each contract trades at a premium to the index that shrinks to zero at its expiry.
-data = {"NIFTY": pd.DataFrame(
-    {"open": index_close, "high": index_close + 60, "low": index_close - 60, "close": index_close, "volume": 0.0},
-    index=days,
-)}
-for symbol, expiry in {"NIFTY29SEP26FUT": "2026-09-29", "NIFTY27OCT26FUT": "2026-10-27",
-                       "NIFTY23NOV26FUT": "2026-11-23"}.items():
-    days_left = (pd.Timestamp(expiry).tz_localize("Asia/Kolkata") - days).days.to_numpy()
-    price = (index_close * (1 + 0.00015 * days_left)).round(1)
-    bars = pd.DataFrame(
-        {"open": price - 10, "high": price + 70, "low": price - 70, "close": price, "volume": 100_000.0},
-        index=days,
-    )
-    data[symbol] = bars[days_left >= 0]
+client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
 
 
 class TrendFutures(bt.Strategy):
-    underlying, exchange, interval = "NIFTY", "NFO", "D"  # expiry: the current month
+    underlying, exchange, interval = "NIFTY", "NFO", "15m"  # expiry: the current month
+    product = "NRML"  # positional: held overnight
 
     def init(self):
-        self.mean = self.I(ta.sma, self.close, 10)
+        self.mean = self.I(ta.sma, self.close, 50)  # about two sessions of 15-minute bars
 
     def on_bar(self, bar):
-        if len(self.close) < 10:
+        if len(self.close) < 50:
             return
         if self.position.is_flat and self.close[-1] > self.mean[-1]:
-            self.buy(lots=1, stop=bt.pct(3))
+            self.buy(lots=1, stop=bt.pct(2))
         elif self.position.is_long and self.close[-1] < self.mean[-1]:
             self.exit()
 
 
-result = bt.backtest(TrendFutures, data=data, capital=500_000, start="2026-09-01", end="2026-11-06")
+# From the session after the last monthly expiry (27 October): the October contract has expired.
+result = bt.backtest(TrendFutures, client, start="2026-10-28", end="2026-11-11", capital=500_000)
 
-print(result.assumptions["instruments"].split("; ")[0])
+print(result.assumptions["instruments"])
 print(result.fills[["time", "symbol", "side", "quantity_units", "price_rupees", "reason"]].to_string(index=False))
-print(result.rolls[["time", "from_symbol", "to_symbol", "spread_rupees"]].to_string(index=False))
 print(result.positions[["time", "symbol", "quantity_units", "stop_rupees"]].to_string(index=False))
+settled = result.settlements
+print(settled[["date", "symbol", "quantity_units", "price_rupees", "amount_rupees", "kind"]].head(4).to_string(index=False))
+print("postings", round(settled["amount_rupees"].sum(), 2), "= gross P&L", round(result.gross_pnl["total"], 2))
+print(result.assumptions["futures_margin"], "| margin blocked:", result.equity["margin_rupees"].max())
 ```
 
-<!-- output -->
+NIFTY23NOV26FUT expires on 23 November 2026. After that your broker no longer serves its history, so to run the example later, set `start` to the session after the latest monthly expiry and `end` to a session before you run it.
+
 ```text
-NIFTY29SEP26FUT: lot 65, tick 0.1 by the price slab of the NIFTY close on 2026-08-31 (25244.2), freeze 1800, from the reference tables
+NIFTY23NOV26FUT: lot 65, tick 0.1 by the price slab of the NIFTY close on 2026-09-30 (22620.45), freeze 3510, from the reference tables
                      time          symbol side  quantity_units  price_rupees reason
-2026-09-24 09:15:00+05:30 NIFTY29SEP26FUT  BUY            65.0       25052.9  entry
-2026-09-28 09:15:00+05:30 NIFTY29SEP26FUT SELL            65.0       25109.8   roll
-2026-09-28 09:15:00+05:30 NIFTY27OCT26FUT  BUY            65.0       25215.5   roll
-2026-10-26 09:15:00+05:30 NIFTY27OCT26FUT SELL            65.0       25737.4   roll
-2026-10-26 09:15:00+05:30 NIFTY23NOV26FUT  BUY            65.0       25841.8   roll
-2026-10-29 09:15:00+05:30 NIFTY23NOV26FUT SELL            65.0       25792.3 signal
-                     time     from_symbol       to_symbol  spread_rupees
-2026-09-28 09:15:00+05:30 NIFTY29SEP26FUT NIFTY27OCT26FUT          105.5
-2026-10-26 09:15:00+05:30 NIFTY27OCT26FUT NIFTY23NOV26FUT          104.2
+2026-10-29 15:15:00+05:30 NIFTY23NOV26FUT  BUY            65.0       23044.6  entry
                      time          symbol  quantity_units  stop_rupees
-2026-09-24 09:15:00+05:30 NIFTY29SEP26FUT            65.0      24301.3
-2026-09-28 09:15:00+05:30 NIFTY29SEP26FUT             0.0          NaN
-2026-09-28 09:15:00+05:30 NIFTY27OCT26FUT            65.0      24406.8
-2026-10-26 09:15:00+05:30 NIFTY27OCT26FUT             0.0          NaN
-2026-10-26 09:15:00+05:30 NIFTY23NOV26FUT            65.0      24511.0
-2026-10-29 09:15:00+05:30 NIFTY23NOV26FUT             0.0          NaN
+2026-10-29 15:15:00+05:30 NIFTY23NOV26FUT            65.0      22583.7
+      date          symbol  quantity_units  price_rupees  amount_rupees  kind
+2026-10-29 NIFTY23NOV26FUT            65.0       23053.0          546.0 daily
+2026-10-30 NIFTY23NOV26FUT            65.0       23101.4         3146.0 daily
+2026-11-02 NIFTY23NOV26FUT            65.0       23415.3        20403.5 daily
+2026-11-03 NIFTY23NOV26FUT            65.0       23780.0        23705.5 daily
+postings 142376.0 = gross P&L 142376.0
+NIFTY 20 percent of contract value (default) | margin blocked: 299578.5
 ```
 
 What happened:
 
-* The contracts came from the reference tables: lot 65, and a tick of 0.1 set by the NIFTY close on 31 August (from `data["NIFTY"]`).
-* The position opened on 24 September in the September contract and rolled on 28 September, the session before the 29 September expiry, and again on 26 October; each roll is a pair of fills with the reason `roll`.
-* The stop moved by each roll's spread (24,301.30, then 24,406.80, then 24,511.00), so it kept the same distance below the market across each roll.
-
-<!-- continues -->
-```python
-print(result.trades[["symbol", "exit_reason", "gross_pnl_rupees", "net_pnl_rupees"]].round(2).to_string(index=False))
-settled = result.settlements
-print(settled[["date", "symbol", "quantity_units", "price_rupees", "amount_rupees", "kind"]].head(4).to_string(index=False))
-print("postings", round(settled["amount_rupees"].sum(), 2), "= gross P&L", result.gross_pnl["total"])
-print(result.assumptions["futures_margin"])
-```
-
-<!-- output -->
-```text
-         symbol exit_reason  gross_pnl_rupees  net_pnl_rupees
-NIFTY29SEP26FUT        roll            3698.5         2728.41
-NIFTY27OCT26FUT        roll           33923.5        32931.63
-NIFTY23NOV26FUT      signal           -3217.5        -4212.98
-      date          symbol  quantity_units  price_rupees  amount_rupees  kind
-2026-09-24 NIFTY29SEP26FUT            65.0       25062.8          643.5 daily
-2026-09-25 NIFTY29SEP26FUT            65.0       25092.7         1943.5 daily
-2026-09-28 NIFTY29SEP26FUT             0.0       25119.9         1111.5 daily
-2026-09-28 NIFTY27OCT26FUT            65.0       25225.4          643.5 daily
-postings 34404.5 = gross P&L 34404.5
-NIFTY 20 percent of contract value (default)
-```
-
-The last line is the futures margin the run used: the default, 20 percent of the contract value. The September entry blocked Rs 3,25,686.40 of the Rs 5,00,000 capital, and the largest margin of the run, on the roll into the November contract, was Rs 3,35,942.10.
+* The engine picked NIFTY23NOV26FUT, the current month from 28 October, from the reference tables: lot 65, and a tick of 0.1 set by the NIFTY index close on 30 September, which it fetched from your server.
+* The position opened at 15:15 on 29 October. Its 2 percent stop, 22,583.70, is held as a GTT order because the position is NRML.
+* The position was marked to market at every session close: each row of `result.settlements` is one day's cash flow, and together they add up to the gross P&L. The position was still open when the run ended, so no trade had closed.
+* The last line is the futures margin the run used: the default, 20 percent of the contract value. One lot blocked Rs 2,99,578.50 of the Rs 5,00,000 capital.
 
 ## Your own margin
 
@@ -170,7 +128,9 @@ Real futures margins differ by underlying and change every day, so the engine do
 * The Assumptions block states the margin of each underlying traded and whether it is the default or yours; the manifest records it and `rerun()` repeats it.
 * It is a backtest assumption only. In live trading your broker computes the margin.
 
-<!-- continues -->
+The rerun below continues the example above, so it needs the server too.
+
+<!-- requires-server -->
 ```python
 # One NIFTY lot at the margin a broker's calculator shows, and BANKNIFTY at 12 percent.
 own_margin = result.rerun(margin={"NIFTY": bt.rupees(200_000), "BANKNIFTY": bt.pct(12)})
@@ -184,7 +144,6 @@ except bt.errors.ConfigError as error:
     print(str(error).split(";")[0])
 ```
 
-<!-- output -->
 ```text
 NIFTY 200000 rupees per lot (margin=)
 largest margin: 200000.0
@@ -194,22 +153,8 @@ margin=: a bare number could be a percent or rupees
 
 BANKNIFTY is not traded in this run, so its value is unused and the warning says so.
 
-## With data from OpenAlgo
-
-With a client, the engine loads each contract's bars for the sessions it is traded, from Historify when it holds them (expired contracts are only there) or from your broker.
-
-<!-- requires-server -->
-```python
-from openalgo import api
-
-client = api(api_key="your_api_key_here", host="http://127.0.0.1:5000")
-result = bt.backtest(TrendFutures, client, start="2025-01-01", end="2025-12-31", capital=500_000, source="db")
-print(result.rolls)
-print(result.warnings)
-```
-
 ## Not available yet
 
-* MCX futures from the reference tables: they do not list MCX monthly contracts yet, so pass each MCX contract with `instrument=`.
+* MCX futures from the reference tables: they do not list MCX monthly contracts yet, so pass each MCX contract with `instrument=` (the [CRUDEOIL example](examples/crudeoil-futures-macd.md) reads its terms from the master contract).
 * Condition strategies (`entry_when` and the others) on an underlying, and other intervals of a futures series (`self.data["NIFTY", "15m"]`); both raise `NotImplementedError`.
 * `symbols` that mix underlyings and contract symbols.
