@@ -1,106 +1,106 @@
 # Session Calendar
 
-`openalgo.backtest.calendar` answers, for any OpenAlgo exchange and date: is the exchange open, when does the session open and close, what are the default intraday cut-off and square-off times, and how well is that answer backed by an exchange document. The backtest uses it for every run; you can use it on its own to check your data, plan a run, or count trading days.
+`openalgo.backtest.calendar` knows, for every OpenAlgo exchange and date, whether the exchange is open, when its session opens and closes, and the default intraday times. The backtest uses it on every run, and you can use it on its own to plan a run, count trading days or check your data.
 
-What it holds:
+The first example checks the built-in calendar against real bars from your OpenAlgo server: the NSE trading days of 1 to 11 November 2026, and the days SBIN has a daily bar. Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`.
 
-* Holiday lists for 2019 to 2026 for NSE, BSE, NFO, BFO, MCX, CDS and BCD, with special sessions (Muhurat trading, Budget-day Sunday sessions). `NSE_INDEX` and `BSE_INDEX` follow NSE and BSE.
-* Dated regular hours. For example NFO closes at 15:30, at 15:40 from 3 August 2026 and at 15:45 from 7 December 2026; MCX closes at 23:55, or 23:30 while the United States is on daylight saving time.
-* The dated default intraday times (see [Orders and Risk](../orders-and-risk.md#intraday-entry-window-and-square-off)).
-* For every date, a coverage level: `sourced` (from a cited exchange or regulator document), `unverified` (loaded but not confirmed), or `template` (no holiday list for that year, so only weekends are closed). Nothing is assumed silently: a year without a holiday list is reported as such, never treated as holiday-free.
+<!-- requires-server -->
+```python
+# Load the OpenAlgo client and the built-in calendar
+from openalgo import api
+from openalgo.backtest.calendar import default_calendar
 
-Times are given as IST `"HH:MM"` text or as UTC nanoseconds (the engine's form); dates are IST dates.
+# Connect to your OpenAlgo server
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
-## Main functions
+# The NSE trading days from the calendar: a table with one row per session
+cal = default_calendar()
+sessions = cal.sessions("NSE", "2026-11-01", "2026-11-11")
+print("calendar :", [str(day) for day in sessions["date"]])  # a list of the dates, as text
 
-| Function | Returns |
-|---|---|
-| `default_calendar()` | The shared built-in calendar (read-only; `.copy()` gives an editable one) |
-| `Calendar(builtin=True)` | A new calendar with the built-in holiday data (`builtin=False` for weekdays and regular hours only) |
-| `cal.is_open(exchange, day)` | Whether the exchange has a session that date |
-| `cal.session(exchange, day)` | `(open, close)` in UTC nanoseconds, or `None` when closed |
-| `cal.session_info(exchange, day)` | The session with its kind (`regular` or `special`), coverage and `hours_unverified` |
-| `cal.sessions(exchange, start, end)` | A DataFrame, one row per session |
-| `cal.holidays(exchange, year)` | The dated rules of a year: closures and special sessions, with names |
-| `cal.intraday_times(exchange, day)` | The default `entry_until` and `square_off` of that date |
-| `cal.sessions_per_year(exchanges, start, end)` | The annualisation factor the metrics use |
-| `cal.coverage(exchange, day_or_year)` | `"sourced"`, `"unverified"` or `"template"` |
-| `cal.validate_intraday(bars, exchange=, interval=)` | Checks an intraday series and raises `TimestampError` for wrong timestamps |
-| `cal.add_session(...)`, `cal.add_closure(...)`, `cal.set_regular_hours(...)`, `cal.add_holidays(response)` | Edit a copy |
-| `Calendar.from_openalgo(client, years)` | A calendar with your OpenAlgo server's holiday tables added |
+# The days SBIN has a daily bar on your OpenAlgo server
+bars = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2026-11-01", end_date="2026-11-11")
+print("SBIN bars:", [str(day.date()) for day in bars.index])
+```
 
-## Examples
+<!-- output -->
+```text
+calendar : ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-08', '2026-11-09', '2026-11-11']
+SBIN bars: ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-08', '2026-11-09', '2026-11-11']
+```
 
-Each block shows one question. They read only the built-in calendar, so they need no server. Run the first block first; the others continue from it. A session's open and close come back as UTC nanoseconds (the engine's form), so the first block also defines `ist`, which shows such an instant as an IST clock time.
+The two lists match. Sunday 8 November 2026 is a trading day, NSE's Diwali Muhurat trading session, and Tuesday 10 November is a holiday, Diwali Balipratipada.
 
-Is NSE open on Good Friday, 3 April 2026?
+## Is the exchange open on a day?
 
+`cal.is_open(exchange, day)` answers yes or no. This block and the ones after it read only the built-in calendar, so they need no server; run them in order. Good Friday, 3 April 2026:
+
+```python
+# Load the built-in calendar
+from openalgo.backtest.calendar import default_calendar
+
+cal = default_calendar()
+print("NSE open on Good Friday:", cal.is_open("NSE", "2026-04-03"))
+```
+
+<!-- output -->
+```text
+NSE open on Good Friday: False
+```
+
+## Session hours
+
+`cal.session_info(exchange, day)` gives a session's open and close, and whether it is a regular or a special session. The engine keeps times in UTC nanoseconds (a count from 1970), so this block first defines a small function that shows them as Indian clock times:
+
+<!-- continues -->
 ```python
 import pandas as pd
 
-from openalgo.backtest.calendar import default_calendar
 
-cal = default_calendar()  # the built-in calendar
-
-
+# A function (def) is a named piece of code you can call again.
+# This one turns a time in UTC nanoseconds into an IST clock time such as "09:15".
 def ist(nanos):
-    """An instant in UTC nanoseconds as an IST clock time."""
     return pd.Timestamp(nanos, tz="UTC").tz_convert("Asia/Kolkata").strftime("%H:%M")
 
 
-print("Good Friday open:", cal.is_open("NSE", "2026-04-03"))
-```
-
-<!-- output -->
-```text
-Good Friday open: False
-```
-
-The Muhurat trading session of Diwali, on Sunday 8 November 2026, is a special session with its own hours:
-
-<!-- continues -->
-```python
+# A regular day, and the Muhurat trading session of Diwali
+regular = cal.session_info("NSE", "2026-11-11")
 muhurat = cal.session_info("NSE", "2026-11-08")
-print("Muhurat:", muhurat.kind, ist(muhurat.open), "to", ist(muhurat.close))
+print("11 November:", regular.kind, ist(regular.open), "to", ist(regular.close))
+print("8 November :", muhurat.kind, ist(muhurat.open), "to", ist(muhurat.close))
 ```
 
 <!-- output -->
 ```text
-Muhurat: special 14:20 to 15:30
+11 November: regular 09:15 to 15:30
+8 November : special 14:20 to 15:30
 ```
 
-Regular hours are dated. NFO closed at 15:30 until 31 July 2026 and at 15:40 from 3 August:
+## Intraday times
+
+An intraday (MIS) position must be opened before a cut-off time and is squared off (closed) at a set time before the session ends. Both times are dated, because the exchange changes them. NSE changed them on 3 August 2026:
 
 <!-- continues -->
 ```python
-print("NFO close:", ist(cal.session("NFO", "2026-07-31")[1]), "on 31 July,", ist(cal.session("NFO", "2026-08-03")[1]), "on 3 August 2026")
-```
-
-<!-- output -->
-```text
-NFO close: 15:30 on 31 July, 15:40 on 3 August 2026
-```
-
-The default intraday (MIS) times are dated too: the last time to enter and the square-off time changed on 3 August 2026:
-
-<!-- continues -->
-```python
+# A for loop runs the indented lines once for each day in the list
 for day in ("2026-07-31", "2026-08-03"):
     times = cal.intraday_times("NSE", day)
-    print(day, "entries until", ist(times.entry_until), "square-off", ist(times.square_off))
+    print(day, "entries until", ist(times.entry_until), "| square-off", ist(times.square_off))
 ```
 
 <!-- output -->
 ```text
-2026-07-31 entries until 15:00 square-off 15:10
-2026-08-03 entries until 14:50 square-off 15:00
+2026-07-31 entries until 15:00 | square-off 15:10
+2026-08-03 entries until 14:50 | square-off 15:00
 ```
 
-The last four NSE holidays and special sessions of 2026:
+## Holidays of a year
+
+`cal.holidays(exchange, year)` lists the year's closures and special sessions, with their names. The last four of NSE in 2026:
 
 <!-- continues -->
 ```python
-print(cal.holidays("NSE", 2026)[["date", "name"]].tail(4).to_string(index=False))
+print(cal.holidays("NSE", 2026)[["date", "name"]].tail(4).to_string(index=False))  # tail(4): the last four rows
 ```
 
 <!-- output -->
@@ -112,47 +112,23 @@ print(cal.holidays("NSE", 2026)[["date", "name"]].tail(4).to_string(index=False)
 2026-12-25                            Christmas
 ```
 
-How many sessions NSE has in 2026:
+## Counting trading days
+
+`cal.sessions(exchange, start, end)` has one row per session, so its length is the number of trading days:
 
 <!-- continues -->
 ```python
-print(len(cal.sessions("NSE", "2026-01-01", "2026-12-31")), "NSE sessions in 2026")
+print(len(cal.sessions("NSE", "2026-01-01", "2026-12-31")), "NSE trading days in 2026")
 ```
 
 <!-- output -->
 ```text
-247 NSE sessions in 2026
-```
-
-The sessions per year the metrics annualise with (a year's sessions, adjusted for the part of the year a range covers):
-
-<!-- continues -->
-```python
-print("sessions per year:", round(cal.sessions_per_year("NSE", "2026-01-01", "2026-12-31").value, 2))
-```
-
-<!-- output -->
-```text
-sessions per year: 247.17
-```
-
-How well each answer is backed: NSE 2026 from a cited exchange document, MCX 2026 loaded but not confirmed, and 2027 with no holiday list yet:
-
-<!-- continues -->
-```python
-print("coverage:", cal.coverage("NSE", 2026), cal.coverage("MCX", 2026), cal.coverage("NSE", 2027))
-```
-
-<!-- output -->
-```text
-coverage: sourced unverified template
+247 NSE trading days in 2026
 ```
 
 ## A calendar of your own
 
-The shared calendar is read-only. Copy it to add a closure or a special session the built-in data does not have, and pass it to `bt.backtest(..., calendar=cal)` or `load_bars(..., calendar=cal)`.
-
-A closure, for a day the exchange announces it will stay shut:
+The built-in calendar is read-only. To add a day the exchange announces it will close, copy it, add the closure and pass the copy to `bt.backtest(..., calendar=mine)`:
 
 <!-- continues -->
 ```python
@@ -166,32 +142,23 @@ print("open on 31 December:", mine.is_open("NSE", "2026-12-31"))
 open on 31 December: False
 ```
 
-A special session on a Sunday, from 10:00 to 12:00 IST:
-
-<!-- continues -->
-```python
-mine.add_session("NSE", "2026-12-27", "10:00", "12:00", name="Example Sunday session")
-print("open on Sunday 27 December:", mine.is_open("NSE", "2026-12-27"), "|", ist(mine.session("NSE", "2026-12-27")[0]), "to", ist(mine.session("NSE", "2026-12-27")[1]))
-```
-
-<!-- output -->
-```text
-open on Sunday 27 December: True | 10:00 to 12:00
-```
-
-A backtest with a calendar of its own runs its optimization sweeps in one process (see [Optimization](../optimization.md#worker-processes-and-windows)).
+`mine.add_session("NSE", "2026-12-27", "10:00", "12:00", name="...")` adds a special session the same way.
 
 ## Holidays from your OpenAlgo server
 
-For a year the built-in files do not cover, add the holiday tables your OpenAlgo server serves. Server rows are marked `unverified` and never replace built-in data. Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`:
+For a year the built-in lists do not cover yet, add the holiday tables your OpenAlgo server serves:
 
-<!-- requires-server -->
 <!-- output-varies -->
+<!-- requires-server -->
 ```python
+# Load the OpenAlgo client and the Calendar class
 from openalgo import api
 from openalgo.backtest.calendar import Calendar
 
+# Connect to your OpenAlgo server
 client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
+
+# A calendar with the server's 2027 holidays added
 cal = Calendar.from_openalgo(client, years=[2027])
 print(cal.coverage("NSE", 2027))
 ```
@@ -201,4 +168,15 @@ print(cal.coverage("NSE", 2027))
 template
 ```
 
-The output depends on what your server holds. When this page was last run, in November 2026, the server had no holiday list for 2027 yet, so 2027 stayed `template`: weekdays open, weekends closed, and every run that touches 2027 says so. Once the server serves the 2027 list, the same line prints `unverified`.
+The output depends on what your server holds. When this page was last run, in November 2026, the server had no 2027 list yet, so 2027 stayed `template`: weekdays open, weekends closed. Once the server serves the list, the same line prints `unverified`.
+
+## More options
+
+* Built-in holiday lists cover 2019 to 2026 for NSE, BSE, NFO, BFO, MCX, CDS and BCD, with special sessions (Muhurat trading, Budget-day sessions). `NSE_INDEX` and `BSE_INDEX` follow NSE and BSE.
+* Regular hours are dated: NFO closes at 15:30, at 15:40 from 3 August 2026 and at 15:45 from 7 December 2026; MCX closes at 23:55, or 23:30 while the United States is on daylight saving time.
+* Every date has a coverage level, from `cal.coverage(exchange, day_or_year)`: `sourced` (from a cited exchange or regulator document), `unverified` (loaded but not confirmed) or `template` (no holiday list for that year, so only weekends are closed). A year without a list is reported, never treated as holiday-free. `session_info(...).hours_unverified` flags session hours not yet confirmed.
+* `cal.session(exchange, day)` gives `(open, close)` in UTC nanoseconds, or `None` when closed. Dates are IST dates; times are IST `"HH:MM"` text or UTC nanoseconds.
+* `cal.sessions_per_year(exchanges, start, end)` is the number the metrics annualise with.
+* `cal.validate_intraday(bars, exchange=, interval=)` checks an intraday series and raises `TimestampError` for wrong timestamps.
+* `cal.set_regular_hours(...)` and `cal.add_holidays(response)` edit a copy too; `Calendar(builtin=False)` has weekdays and regular hours only.
+* A backtest given a calendar of its own runs its optimization sweeps in one process (see [Optimization](../optimization.md)).

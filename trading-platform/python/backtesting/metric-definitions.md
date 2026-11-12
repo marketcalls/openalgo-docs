@@ -1,32 +1,103 @@
 # Metric Definitions
 
-Every figure in `result.metrics`, in `metrics.analyse(...).metrics` and on the HTML tearsheet, with its key, its label, its unit and its definition. The tables below are `openalgo.backtest.metrics.DEFINITIONS`, grouped as in `openalgo.backtest.metrics.GROUPS`. The engine and the reports take their labels and definitions from the same table, so this page and a report always agree. Every figure is computed in the Rust core.
+This page lists every figure a backtest reports: its name in code (the key), its label on the report, its unit and how it is worked out. Look a figure up here when a number in `result.metrics` or on the tearsheet is new to you.
 
 {% hint style="warning" %}
 **Preview.** These figures are part of the backtesting engine, new in SDK 2.1.0; the interface may change in later releases.
 {% endhint %}
 
+The example runs the first strategy of this section, the SBIN EMA crossover from [Your First Backtest](tutorial/01-first-backtest.md): it buys SBIN when the 20-day EMA (an average of recent closing prices that counts the latest days most) rises above the 50-day EMA, and sells when it falls back below. Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`.
+
+<!-- requires-server -->
+```python
+# Load the backtest engine, the OpenAlgo client and the indicators (ta)
+import openalgo.backtest as bt
+from openalgo import api, ta
+
+# Connect to your OpenAlgo server
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
+
+
+# The strategy. A class is a recipe; the engine follows it on every bar.
+class EmaCrossover(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "D"  # SBIN on NSE, daily bars
+    fast = 20  # days in the fast EMA
+    slow = 50  # days in the slow EMA
+
+    # init runs once, before the first bar: it sets up the two EMAs
+    def init(self):
+        self.fast_ema = self.I(ta.ema, self.close, self.fast)  # self.I keeps the indicator up to date bar by bar
+        self.slow_ema = self.I(ta.ema, self.close, self.slow)
+
+    # on_bar runs at the close of every bar: it decides whether to buy or sell
+    def on_bar(self, bar):
+        if len(self.close) < self.slow:  # wait until there are 50 days of prices for the slow EMA
+            return
+        if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):  # no shares, fast EMA just rose above slow
+            self.buy()  # buy with all the capital at the next day's open
+        elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):  # holding, fast EMA just fell below slow
+            self.exit()  # sell all the shares at the next day's open
+
+
+# Run the backtest on SBIN's daily bars from your OpenAlgo server
+result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+
+# Print the summary. An f-string (f"...") fills the values in {} into the text.
+m = result.metrics
+print(f"Net profit   : Rs {m['net_profit']:,.2f}")
+print(f"Return       : {m['total_return']:.2%}")
+print(f"Max drawdown : {m['max_drawdown']:.2%}")
+print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+```
+
+<!-- output -->
+```text
+Net profit   : Rs 53,267.29
+Return       : 53.27%
+Max drawdown : -29.82%
+Trades       : 11 (36% won)
+```
+
+`result.metrics_table()` gives every figure of the run with the label, unit and definition listed below. This block continues the first one and looks up four figures:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+table = result.metrics_table()  # one row per figure
+print(table.loc[["cagr", "sharpe", "max_drawdown", "profit_factor"], ["label", "value", "unit"]])  # loc picks rows and columns by name
+```
+
+<!-- output -->
+```text
+                          label     value      unit
+key
+cagr                       CAGR  0.075594  fraction
+sharpe             Sharpe ratio  0.460373     ratio
+max_drawdown   Maximum drawdown -0.298198  fraction
+profit_factor     Profit factor  1.921853     ratio
+```
+
 How to read the units:
 
 | Unit | Meaning |
 |---|---|
-| fraction | 0.01 is one percent (returns, rates, drawdowns, shares) |
+| fraction | 0.01 is one percent: returns, rates, drawdowns and shares. `f"{value:.2%}"` prints a fraction as a percent |
 | rupees | Indian rupees |
-| ratio | A pure number |
+| ratio | A plain number, such as 1.92 |
 | count | A whole number |
-| days | Calendar days, fractional |
-| seconds | Elapsed seconds |
-| sessions | Sessions per year |
-| timestamp | An IST time, or None |
+| days | Calendar days, which can have a fraction |
+| seconds | Seconds |
+| sessions | Trading sessions (days the exchange was open) per year |
+| timestamp | An Indian time (IST), or None |
 | text | Text |
 | flag | True or False |
 
-Conventions that apply throughout:
+A few rules hold for every figure:
 
-* **Drawdowns are zero or negative.** `max_drawdown` is a fraction (-0.07 is a fall of 7 percent from the peak) and `max_drawdown_amount` is in rupees (a fall of Rs 500 is -500), and so are the drawdown depths, the conditional drawdown and the drawdowns of the horizon summary and of Monte Carlo. Durations and the ulcer index are zero or positive. A ratio "over the magnitude of the maximum drawdown" divides by its absolute value.
-* **From your capital and your start.** With an opening wealth (a backtest's capital), the first equity point is already a mark: its P&L counts, its session has a return from the capital, and a fall below the capital is a drawdown. With an opening time (a backtest's first bar open), the start, the elapsed days, CAGR and exposure count from it. See [Results and Reports](results-and-reports.md#how-the-figures-are-measured).
-* **Per session, on the real calendar.** Returns are per IST session date, and every annualised figure uses the sessions per year of the traded exchanges in the years the run touches.
-* A figure the data cannot define is NaN; a positive figure over a zero denominator is infinite. The Benchmark group is present only when you give a benchmark.
+* **Drawdowns are zero or negative.** A drawdown is a fall of the account from its highest value so far: `max_drawdown` of -0.2982 is a fall of 29.82 percent, and `max_drawdown_amount` of -500 is a fall of Rs 500.
+* **NaN** means the data cannot give the figure, for example a Sharpe ratio with no ups and downs to measure.
+* The **Benchmark** group appears only when the run has a benchmark, such as `benchmark="NIFTY"`.
+* Figures are measured from your capital, per trading session, after all charges. [Results and Reports](results-and-reports.md#more-options) has the details.
 
 ## Run
 

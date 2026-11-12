@@ -1,407 +1,266 @@
 # Metrics
 
-`openalgo.backtest.metrics` turns an **equity curve** (the value of an account after every session) into performance figures: returns and risk, risk-adjusted ratios, drawdowns and their episodes, the distribution and tails of session returns, trade statistics and ratios, costs and turnover, monthly and yearly returns, rolling statistics, a horizon summary, and, with a benchmark, alpha, beta, R squared, tracking error and the information and Treynor ratios. It also runs Monte Carlo studies. Every backtest result uses it (`result.metrics`), and you can call it on any equity curve: a backtest with a benchmark and a risk-free rate added, your live account, or several strategies combined. The calculations run in the Rust core.
+`openalgo.backtest.metrics` turns an **equity curve** (the value of an account at the close of every day) into performance figures: returns, risk, drawdowns, trade statistics and Monte Carlo studies. Every backtest uses it for `result.metrics`, and you can call it yourself to add a risk-free rate, look deeper into the bad patches, or combine several strategies.
 
-Two things make the figures fit Indian markets:
-
-* **Real sessions per year.** Volatility, Sharpe, Sortino and alpha are annualised with the number of sessions the traded exchanges actually had in the years the run touches (from the holiday calendar), never a fixed 252 or 365. A year without a holiday list is reported, with a warning.
-* **Returns per session.** Each IST session date gets one return, the time-weighted change of wealth from the previous session's last mark; deposits and withdrawals change equity but are not returns.
-
-Every figure is defined in `metrics.DEFINITIONS` (key, label, unit and definition) and grouped in `metrics.GROUPS`; [Metric Definitions](../metric-definitions.md) lists them all. Every drawdown figure is zero or negative: `max_drawdown` as a fraction, `max_drawdown_amount` in rupees (a fall of Rs 500 is -500).
-
-## Main functions
-
-| Function | Returns |
-|---|---|
-| `analyse(equity, *, exchanges, trades=None, cash_flows=None, benchmark=None, risk_free_rate=0.0, calendar=None, opening_wealth=None, opening_time=None, rolling_window=None)` | A `Performance`: `.metrics`, `.equity`, `.wealth`, `.drawdown`, `.drawdown_episodes`, `.drawdown_details(top)`, `.session_returns`, `.monthly_returns`, `.yearly_returns`, `.rolling`, `.horizons`, `.losing_streaks`, `.trades`, `.cost_breakdown`, `.benchmark_equity`, `.benchmark_returns`, `.benchmark_comparison(period)` |
-| `monte_carlo(performance, *, simulations=1000, seed=2026, resample="sessions", bust=None, goal=None)` | A `MonteCarlo` study (below) |
-| `combine_equity(equities, *, opening_wealth=None)` | The combined equity of strategies run on fixed capital allocations |
-| `return_correlation(strategies)` | The correlation matrix of the strategies' session returns |
-| `DEFINITIONS`, `GROUPS` | Every metric's label, unit and definition, and the groups the reports show them in |
-| `openalgo.backtest.report.tearsheet(performance, path=None, title=None, mode="full", log_scale=False)` | The HTML tearsheet of a `Performance` (see [Reports](#reports)) |
-| `openalgo.backtest.report.metrics_table(performance)` | Every metric as a DataFrame: group, label, value, unit and definition |
-
-The inputs of `analyse`:
-
-* `equity`: a pandas Series of equity in rupees, indexed by time-zone-aware times (or UTC nanoseconds), strictly increasing; each point is the marked equity at that time.
-* `opening_wealth`: the capital before the first point. Pass it whenever the first point can already hold profit or loss (it always can for a backtest; `Result.performance` passes the run's capital). Without it, the first point is taken as the starting equity and belongs to no session.
-* `opening_time`: the instant the account opened with that capital, before the first point (only with `opening_wealth`). The start, the elapsed days and CAGR are counted from it, exposure counts the time up to the first point, and a drawdown from the opening is timed from it. `Result.performance` passes the open of the run's first bar. Without it, the opening is timed at the first point.
-* `rolling_window`: the sessions in each window of the rolling statistics, 2 or more; by default half a year of sessions of the traded calendar.
-* `exchanges`: the exchanges traded (`"NSE"`, or `["NFO", "MCX"]`); their calendars give the sessions per year.
-* `trades`: one row per round trip with `entry_time`, `exit_time` (NaT while open), `entry_price`, `exit_price`, `quantity` (units), `side` (`"BUY"` or `"SELL"`), `gross_pnl`, `costs` and `net_pnl`; optional cost columns are summed into `cost_breakdown`.
-* `benchmark`: index or price levels indexed by time-zone-aware times (NIFTY 50 closes, for example), each stamped when its session closed. Unlike `bt.backtest(benchmark=)`, `analyse` does not accept plain dates; the example below shows how to stamp them.
-* `risk_free_rate`: annual, as a fraction (`0.065` is 6.5 percent). A value written in percent (6.5) is refused.
-* `cash_flows`: deposits (positive) and withdrawals (negative) in rupees, indexed by time.
-
-## Example
-
-The examples on this page analyse a real backtest: the EMA crossover of the [overview](../README.md#your-first-backtest-in-five-minutes) on RELIANCE daily bars from your OpenAlgo server, 1 January 2021 to 11 November 2026, with Rs 1,00,000. An EMA (exponential moving average) is an average of recent closes that weights the latest days most; the strategy buys when the 20-day EMA rises above the 50-day EMA and sells when it falls back below.
-
-Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`, and run the blocks in order: each continues from the ones before it.
+The examples analyse the first strategy of this section, the SBIN EMA crossover from [Your First Backtest](../tutorial/01-first-backtest.md): it buys SBIN when the 20-day EMA (an average of recent closing prices that counts the latest days most) rises above the 50-day EMA, and sells when it falls back below, on daily bars from 1 January 2021 to 11 November 2026, with Rs 1,00,000. Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`, and run the blocks in order: each continues from the ones before.
 
 <!-- requires-server -->
 ```python
-import pandas as pd
-
+# Load the backtest engine, the OpenAlgo client, the indicators (ta) and the metrics module
 import openalgo.backtest as bt
 from openalgo import api, ta
 from openalgo.backtest import metrics
 
+# Connect to your OpenAlgo server
 client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
+# The strategy. A class is a recipe; the engine follows it on every bar.
 class EmaCrossover(bt.Strategy):
-    symbol, exchange, interval = "RELIANCE", "NSE", "D"  # daily bars
-    fast = 20  # days
-    slow = 50
+    symbol, exchange, interval = "SBIN", "NSE", "D"  # SBIN on NSE, daily bars
+    fast = 20  # days in the fast EMA
+    slow = 50  # days in the slow EMA
 
+    # init runs once, before the first bar: it sets up the two EMAs
     def init(self):
-        self.fast_ema = self.I(ta.ema, self.close, self.fast)
+        self.fast_ema = self.I(ta.ema, self.close, self.fast)  # self.I keeps the indicator up to date bar by bar
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
+    # on_bar runs at the close of every bar: it decides whether to buy or sell
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # wait until the slow EMA has enough days
+        if len(self.close) < self.slow:  # wait until there are 50 days of prices for the slow EMA
             return
-        if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
-            self.buy()
-        elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
-            self.exit()
+        if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):  # no shares, fast EMA just rose above slow
+            self.buy()  # buy with all the capital at the next day's open
+        elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):  # holding, fast EMA just fell below slow
+            self.exit()  # sell all the shares at the next day's open
 
 
+# Run the backtest on SBIN's daily bars from your OpenAlgo server
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-print(result.equity["equity_rupees"].tail(3).round(2))
+
+# Print the summary. An f-string (f"...") fills the values in {} into the text.
+m = result.metrics
+print(f"Net profit   : Rs {m['net_profit']:,.2f}")
+print(f"Return       : {m['total_return']:.2%}")
+print(f"Max drawdown : {m['max_drawdown']:.2%}")
+print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 ```
 
 <!-- output -->
 ```text
-time
-2026-11-08 15:30:00+05:30    91241.38
-2026-11-09 15:30:00+05:30    91624.16
-2026-11-11 15:30:00+05:30    92385.16
-Name: equity_rupees, dtype: float64
+Net profit   : Rs 53,267.29
+Return       : 53.27%
+Max drawdown : -29.82%
+Trades       : 11 (36% won)
 ```
 
-`result.equity["equity_rupees"]` is the equity curve: the account value at the close of every session. That Series is what `metrics.analyse` measures.
+## Analyse an equity curve
 
-A **benchmark** is what you compare the strategy with; here the NIFTY 50 index. `load_bars` returns its daily bars with a `ts_close` column, the instant each session closed (in UTC nanoseconds). This block makes a Series of NIFTY closes stamped at those instants, which is the form `analyse` needs. It starts in December 2020, so the first session of the run already has a benchmark return.
-
-<!-- requires-server -->
-<!-- continues -->
-```python
-nifty_bars, _ = bt.data.load_bars("NIFTY", "NSE_INDEX", "D", "2020-12-01", "2026-11-11", client=client)
-closed_at = pd.to_datetime(nifty_bars["ts_close"], utc=True).dt.tz_convert("Asia/Kolkata")
-nifty = pd.Series(nifty_bars["close"].to_numpy(), index=closed_at)
-print(len(nifty), "NIFTY closes,", nifty.index[0], "to", nifty.index[-1])
-```
-
-<!-- output -->
-```text
-1475 NIFTY closes, 2020-12-01 15:30:00+05:30 to 2026-11-11 15:30:00+05:30
-```
-
-Now the analysis, with NIFTY as the benchmark and a **risk-free rate** of 6.5 percent a year: what a safe deposit would have paid, which the Sharpe ratio and alpha subtract. `opening_wealth` is the capital and `opening_time` the open of the run's first bar, the way the backtest measures itself:
+`metrics.analyse` measures any equity curve. The backtest's figures assume money left in cash earns nothing. A **risk-free rate** is what a safe deposit would have paid instead; the Sharpe ratio (return for the risk taken) then counts only the return above it. Here, 6.5 percent a year:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
 performance = metrics.analyse(
-    result.equity["equity_rupees"],
-    exchanges="NSE",
-    trades=result.performance.trades,
-    benchmark=nifty,
-    risk_free_rate=0.065,
-    opening_wealth=100_000,
-    opening_time=result.metrics["start"],
+    result.equity["equity_rupees"],  # the account value at each day's close
+    exchanges="NSE",  # whose trading calendar to count sessions with
+    trades=result.performance.trades,  # the trades, for the trade figures
+    risk_free_rate=0.065,  # 6.5 percent a year, written as a fraction
+    opening_wealth=100_000,  # the capital at the start
+    opening_time=result.metrics["start"],  # when the run started
 )
-m = performance.metrics
-for key in ("total_return", "cagr", "volatility", "sharpe", "max_drawdown",
-            "benchmark_total_return", "alpha", "beta", "correlation", "sessions_per_year"):
-    print(f"{key:22} {m[key]:9.4f}   {metrics.DEFINITIONS[key].label}")
+print(f"Sharpe in the backtest   : {result.metrics['sharpe']:.2f}")
+print(f"Sharpe above 6.5 percent : {performance.metrics['sharpe']:.2f}")
 ```
 
 <!-- output -->
 ```text
-total_return             -0.0761   Total return
-cagr                     -0.0134   CAGR
-volatility                0.1511   Volatility
-sharpe                   -0.4308   Sharpe ratio
-max_drawdown             -0.2459   Maximum drawdown
-benchmark_total_return    0.8063   Benchmark return
-alpha                    -0.0867   Alpha
-beta                      0.4528   Beta
-correlation               0.4207   Correlation
-sessions_per_year       247.8899   Sessions per year
+Sharpe in the backtest   : 0.46
+Sharpe above 6.5 percent : 0.15
 ```
 
-Over these years the crossover lost 7.6 percent while NIFTY 50 gained 80.6 percent. A **beta** of 0.45 means that on an average session the strategy moved about 0.45 percent for each 1 percent move of NIFTY, partly because it held RELIANCE only part of the time. **Alpha**, the yearly return beyond what that beta explains, after the risk-free rate, is -8.7 percent. The Sharpe ratio is negative because the strategy earned less than the safe deposit.
-
-## The same benchmark inside the backtest
-
-`result.metrics` uses a risk-free rate of 0, and a benchmark only when the run is given one (`bt.backtest(benchmark=...)`, see [A benchmark](../results-and-reports.md#a-benchmark)). Given `benchmark="NIFTY"`, the backtest reads the same closes from your server and gives the same beta and correlation as `analyse`. Only alpha differs, because the run subtracts no risk-free return:
-
-<!-- requires-server -->
-<!-- continues -->
-```python
-in_run = result.rerun(benchmark="NIFTY")  # the same run, with NIFTY as its benchmark
-for key in ("alpha", "beta", "correlation"):
-    print(f"{key:12} in the run {in_run.metrics[key]:8.4f}   analysed {performance.metrics[key]:8.4f}")
-```
-
-<!-- output -->
-```text
-alpha        in the run  -0.0523   analysed  -0.0867
-beta         in the run   0.4528   analysed   0.4528
-correlation  in the run   0.4207   analysed   0.4207
-```
-
-## Rolling statistics
-
-`performance.rolling` recomputes volatility, Sharpe, Sortino and the session win rate (and beta, with a benchmark) over a trailing window of sessions, one row per session date. A strategy whose rolling Sharpe drifts down, or whose rolling volatility climbs, is changing character even when the totals look fine. The window is `rolling_window=` sessions (half a year of sessions by default, `metrics["rolling_window_sessions"]`); rows are NaN until a window is full.
-
-One row from each year of the run (every 250th session):
-
-<!-- requires-server -->
-<!-- continues -->
-```python
-print("window:", performance.metrics["rolling_window_sessions"], "sessions")
-print(performance.rolling.dropna().iloc[::250].round(3).to_string())
-```
-
-<!-- output -->
-```text
-window: 124 sessions
-            volatility  sharpe  sortino  win_rate   beta
-date
-2021-07-02       0.082  -1.181   -1.501     0.542  0.021
-2022-07-05       0.235  -0.735   -1.084     0.455  0.590
-2023-07-10       0.109   1.508    3.040     0.562  0.368
-2024-07-11       0.244   0.590    0.906     0.496  1.135
-2025-07-30       0.176  -0.469   -0.707     0.468  0.766
-2026-08-05       0.053  -2.893   -2.889     0.400  0.058
-```
+`performance.metrics` holds the same figures as `result.metrics`; [Metric Definitions](../metric-definitions.md) explains each one.
 
 ## Drawdown episodes
 
-A **drawdown** is a fall of the equity from its highest point so far, lasting until the equity gets back to that point. `performance.drawdown_episodes` lists every drawdown in the order they started: `start` (the peak), `trough`, `end` (the recovery, NaT while unrecovered), `recovered`, `depth` (a fraction, zero or negative), `days` (peak to recovery, or to the last point when unrecovered), `days_to_trough` and `days_to_recover`, in calendar days. `performance.drawdown_details(top=5)` returns the `top` deepest, deepest first.
-
-The three deepest drawdowns of the run:
+A **drawdown** is a fall of the account from its highest value so far, lasting until the account gets back to that value. `drawdown_details(3)` lists the three deepest:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-worst = performance.drawdown_details(3)
+worst = performance.drawdown_details(3)  # the three deepest drawdowns, deepest first
 print(worst[["start", "trough", "end", "depth", "days"]].round(4).to_string())
 ```
 
 <!-- output -->
 ```text
-                         start                    trough                       end   depth    days
+                         start                    trough                       end   depth      days
 rank
-1    2021-10-19 15:30:00+05:30 2025-04-07 15:30:00+05:30                       NaT -0.2459  1849.0
-2    2021-06-15 15:30:00+05:30 2021-07-28 15:30:00+05:30 2021-09-03 15:30:00+05:30 -0.0945    80.0
-3    2021-09-07 15:30:00+05:30 2021-09-14 15:30:00+05:30 2021-09-23 15:30:00+05:30 -0.0297    16.0
+1    2026-02-23 15:30:00+05:30 2026-09-08 15:30:00+05:30                       NaT -0.2982  261.0000
+2    2021-11-04 19:15:00+05:30 2022-07-15 15:30:00+05:30 2024-04-29 15:30:00+05:30 -0.2866  906.8438
+3    2024-06-03 15:30:00+05:30 2025-04-09 15:30:00+05:30 2025-10-27 15:30:00+05:30 -0.1874  511.0000
 ```
 
-The deepest drawdown started at the equity peak of 19 October 2021 and reached its bottom on 7 April 2025, 24.6 percent lower. The end is `NaT` because the equity had still not returned to that peak on 11 November 2026, 1,849 days later.
+`start` is the peak, `trough` the lowest point, `end` the day the account was back at the peak (`NaT`, no time, while it has not recovered), `depth` the fall as a fraction and `days` the calendar days it lasted. The deepest, 29.82 percent, is the max drawdown of the summary and has not recovered yet. The second peaked at 19:15 on 4 November 2021, the close of that year's Diwali Muhurat trading session.
 
 ## Horizon summary
 
-`performance.horizons` measures the last month, 3 months, 6 months, year, 3 years and 5 years (those the run covers) and the whole run since the start: the date each window starts after, sessions, total return, CAGR, volatility, Sharpe, maximum drawdown and, with a benchmark, the benchmark's return and `benchmark_sessions`, the sessions of the window with a benchmark return. It answers "how has this done lately" next to "how has it done overall".
+How has the strategy done lately, next to how it has done overall? `horizons` measures the last month, 3 and 6 months, year, 3 and 5 years, and the whole run:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-print(performance.horizons[["sessions", "total_return", "sharpe", "max_drawdown", "benchmark_return"]].round(4).to_string())
+print(performance.horizons[["sessions", "total_return", "max_drawdown"]].round(4).to_string())
 ```
 
 <!-- output -->
 ```text
-             sessions  total_return  sharpe  max_drawdown  benchmark_return
+             sessions  total_return  max_drawdown
 horizon
-1M                 22        0.0125  2.5424        0.0000            0.1214
-3M                 63        0.0125 -0.7523        0.0000            0.0320
-6M                127       -0.0057 -2.5756       -0.0212            0.0604
-1Y                248       -0.0624 -1.4768       -0.1343           -0.0171
-3Y                744       -0.0340 -0.4515       -0.2299            0.3001
-5Y               1240       -0.1768 -0.5872       -0.2299            0.4130
-Since start      1453       -0.0761 -0.4308       -0.2459            0.8063
+1M                 22        0.0000        0.0000
+3M                 63       -0.0586       -0.0734
+6M                127       -0.0502       -0.0854
+1Y                248       -0.0961       -0.2982
+3Y                744        0.3987       -0.2982
+5Y               1240        0.0928       -0.2982
+Since start      1453        0.5327       -0.2982
 ```
 
 ## Losing streaks
 
-`performance.losing_streaks` counts how many runs of losing sessions, and of losing closed trades in exit order, the run had of each length. A strategy you cannot sit through eight losing days in a row is a strategy you will abandon at the wrong time; this table shows how long its bad runs were.
+How many losing days or losing trades came in a row? `losing_streaks` counts the runs of each length. A strategy whose bad runs you cannot sit through is one you will abandon at the wrong time:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
 streaks = performance.losing_streaks
-print(streaks[(streaks["sessions"] > 0) | (streaks["trades"] > 0)].to_string())
+print(streaks[(streaks["sessions"] > 0) | (streaks["trades"] > 0)].to_string())  # only lengths that happened
 ```
 
 <!-- output -->
 ```text
         sessions  trades
 length
-1             76       2
-2             45       2
-3             24       0
-4             15       1
-5              3       0
-6              2       0
-9              1       0
+1            143       1
+2             55       3
+3             25       0
+4             12       0
+5              9       0
+6              3       0
+7              2       0
 ```
-
-The longest run of losing sessions was 9 in a row, and the longest run of losing trades 4.
 
 ## Benchmark comparison
 
-One rule gives every benchmark return: the run's `benchmark_total_return`, the "Since start" and other rows of the horizon summary, and each period of `benchmark_comparison` compound the benchmark's session returns over the span. A session has a benchmark return only when it and the session before it both have a benchmark close of their own (for the first session, the close of the calendar session before it); **a missing close is never filled from a neighbouring day**, so it leaves its session and the next one without a benchmark return. A span with no benchmark return at all is NaN. Alpha, beta, correlation, R squared, tracking error, the information and Treynor ratios and rolling beta use only the sessions with both a strategy and a benchmark return, counted in `benchmark_sessions` (for the run and for each row of the horizon summary). Give the benchmark one close before the first equity point when you want the first session to count; `bt.backtest(benchmark=)` does this for you.
-
-With a benchmark, `performance.benchmark_comparison("year")` or `("month")` sets the strategy's compounded return against the benchmark's for each calendar year or month: `strategy`, `benchmark`, `excess` (strategy minus benchmark) and `beat` (True when the strategy did better). `performance.benchmark_returns` holds the benchmark's session returns on the strategy's session dates.
+Did the strategy beat NIFTY 50 year by year? Rerun the backtest with `benchmark="NIFTY"` and compare each calendar year:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-print(performance.benchmark_comparison("year").round(4).to_string())
+vs_nifty = result.rerun(benchmark="NIFTY")  # the same run, with NIFTY's closes from your server
+print(vs_nifty.performance.benchmark_comparison("year").round(4).to_string())
 ```
 
 <!-- output -->
 ```text
       strategy  benchmark  excess   beat
 year
-2021    0.0673     0.2412 -0.1738  False
-2022   -0.1226     0.0433 -0.1659  False
-2023    0.0760     0.2003 -0.1243  False
-2024   -0.0039     0.0880 -0.0920  False
-2025    0.0323     0.1051 -0.0728  False
-2026   -0.1084    -0.0335 -0.0749  False
+2021    0.2562     0.2412  0.0150   True
+2022    0.0620     0.0433  0.0187   True
+2023   -0.1367     0.2003 -0.3370  False
+2024    0.1917     0.0880  0.1036   True
+2025    0.2729     0.1051  0.1678   True
+2026   -0.1227    -0.0335 -0.0892  False
 ```
 
-NIFTY beat the crossover in every year of the run.
+`excess` is the strategy's return minus NIFTY's, and `beat` is True in the years the strategy did better. The lesson [Compare with NIFTY](../tutorial/08-compare-with-nifty.md) explains the benchmark figures.
 
 ## Monte Carlo
 
-A backtest is one path through history. `metrics.monte_carlo(performance, ...)` (or `result.monte_carlo(...)` for a run) asks how different the outcome could have been with the same ingredients in another order:
-
-* `resample="sessions"` (default) draws the run's session returns at random with replacement and compounds them into each path. `resample="trades"` draws the closed trades' net P&L in rupees and books them one after another on the start equity at fixed rupee size; a path whose equity reaches zero is ruined there.
-* Each of the `simulations` paths has as many draws as the run had, and is measured like the run: final return, CAGR over the run's elapsed time, maximum drawdown and Sharpe.
-* `seed` fixes the random draws: the same inputs and seed give the same simulations, bit for bit, on every platform.
-* `bust` (a maximum drawdown between -1 and 0) and `goal` (a final return) add the share of paths that reached them.
-
-A `MonteCarlo` study holds:
-
-| Attribute | What it holds |
-|---|---|
-| `runs` | One row per path: `final_return`, `cagr`, `max_drawdown`, `sharpe` |
-| `percentiles` | Those figures at the 1st, 5th, 10th, 25th, 50th, 75th, 90th, 95th and 99th percentiles |
-| `band` | The cumulative return of the paths after each number of draws, at the 5th, 25th, 50th, 75th and 95th percentiles |
-| `actual`, `actual_path` | The same figures, and the cumulative return, of the run's own sequence |
-| `bust_probability`, `goal_probability` | The share of paths that reached `bust` and `goal` (NaN when not asked) |
-| `simulations`, `seed`, `resample`, `bust`, `goal` | The settings of the study |
+A backtest is one path through history. `metrics.monte_carlo` reshuffles the run's daily returns into many other paths and measures each one, to show how different the outcome could have been. `bust=-0.30` adds the share of paths that fell 30 percent at some point, and `goal=0.25` the share that gained 25 percent:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-study = metrics.monte_carlo(performance, simulations=1_000, seed=7, bust=-0.30, goal=0.25)
-print(study.percentiles.loc[[0.05, 0.25, 0.5, 0.75, 0.95]].round(4).to_string())
-print("the run:", {key: round(value, 4) for key, value in study.actual.items()})
-print("drawdown of 30% or more:", study.bust_probability, "| a 25% return or more:", study.goal_probability)
+study = metrics.monte_carlo(performance, simulations=1_000, seed=7, bust=-0.30, goal=0.25)  # seed: the same shuffle every time
+print(study.percentiles.loc[[0.05, 0.5, 0.95], ["final_return", "max_drawdown"]].round(4).to_string())
+print("fell 30% or more:", study.bust_probability, "| gained 25% or more:", study.goal_probability)
 ```
 
 <!-- output -->
 ```text
-            final_return    cagr  max_drawdown  sharpe
+            final_return  max_drawdown
 percentile
-0.05             -0.4908 -0.1088       -0.5738 -1.1286
-0.25             -0.2780 -0.0541       -0.4505 -0.7098
-0.50             -0.0558 -0.0098       -0.3548 -0.4055
-0.75              0.2108  0.0332       -0.2779 -0.1264
-0.95              0.7059  0.0954       -0.1957  0.2599
-the run: {'final_return': -0.0761, 'cagr': -0.0134, 'max_drawdown': -0.2459, 'sharpe': -0.4308}
-drawdown of 30% or more: 0.672 | a 25% return or more: 0.213
+0.05             -0.3291       -0.5558
+0.50              0.6258       -0.3319
+0.95              2.4745       -0.2086
+fell 30% or more: 0.637 | gained 25% or more: 0.7
 ```
 
-Read the 5th percentile row as a sober case: with these session returns in an unlucky order, one path in twenty did no better than that. The share of paths that reached the `bust` drawdown is a plain answer to "how likely is a fall I could not stomach".
+Read the 0.05 row as a bad case: one path in twenty did no better than that. Here 63.7 percent of the reshuffled paths fell 30 percent or more at some point, against the real run's 29.82 percent: the order of the days helped this run.
 
 ## Several strategies
 
-Strategies run on fixed capital allocations combine by adding their equity curves. Give each one's capital to `combine_equity`, and analyse the sum with the combined capital as the opening wealth. Here the same crossover also runs on SBIN with its own Rs 1,00,000:
+Strategies that each run on their own capital combine by adding their equity curves. Here the same crossover also runs on RELIANCE with its own Rs 1,00,000:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-class SbinCrossover(EmaCrossover):
-    symbol = "SBIN"  # everything else as in EmaCrossover
+# The same strategy on RELIANCE: a new class that changes only the symbol
+class RelianceCrossover(EmaCrossover):
+    symbol = "RELIANCE"
 
 
-sbin = bt.backtest(SbinCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+reliance = bt.backtest(RelianceCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+
+# Add the two equity curves, then measure the sum on the combined Rs 2,00,000
 combined = metrics.combine_equity(
-    {"RELIANCE": result.equity["equity_rupees"], "SBIN": sbin.equity["equity_rupees"]},
-    opening_wealth={"RELIANCE": 100_000, "SBIN": 100_000},
+    {"SBIN": result.equity["equity_rupees"], "RELIANCE": reliance.equity["equity_rupees"]},
+    opening_wealth={"SBIN": 100_000, "RELIANCE": 100_000},
 )
 both = metrics.analyse(combined, exchanges="NSE", opening_wealth=200_000)
-for name, run in (("RELIANCE", result), ("SBIN", sbin)):
-    print(f"{name:9} total return {run.metrics['total_return']:8.4f}")
-print(f"together  total return {both.metrics['total_return']:8.4f}")
+print(f"SBIN     : {result.metrics['total_return']:.2%}")
+print(f"RELIANCE : {reliance.metrics['total_return']:.2%}")
+print(f"Together : {both.metrics['total_return']:.2%}")
 ```
 
 <!-- output -->
 ```text
-RELIANCE  total return  -0.0761
-SBIN      total return   0.5327
-together  total return   0.2283
+SBIN     : 53.27%
+RELIANCE : -7.61%
+Together : 22.83%
 ```
 
-`return_correlation` says how closely the two strategies' session returns moved together (1 is in lockstep, 0 is unrelated):
-
-<!-- requires-server -->
-<!-- continues -->
-```python
-print(metrics.return_correlation({"RELIANCE": result.performance, "SBIN": sbin.performance}).round(3))
-```
-
-<!-- output -->
-```text
-          RELIANCE   SBIN
-RELIANCE     1.000  0.284
-SBIN         0.284  1.000
-```
+On the combined Rs 2,00,000 the pair made 22.83 percent: about the average of SBIN's gain and RELIANCE's loss.
 
 ## Reports
 
-`openalgo.backtest.report.tearsheet(performance, path=None, *, title=None, mode="full", log_scale=False)` renders any `Performance` as the same self-contained HTML report a backtest produces: `"full"` (every section), `"basic"` (the essentials), `"metrics"` (every metric with its definition) or `"charts"` (every chart). `log_scale=True` draws the cumulative return on a logarithmic scale. [Results and Reports](../results-and-reports.md#the-html-tearsheet) lists what each mode holds.
-
-The full report of the analysis with NIFTY and the risk-free rate, written to a file you open in your browser:
+`report.tearsheet` writes the same HTML report a backtest makes, for any analysis. Here, the analysis with the 6.5 percent risk-free rate:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
 from openalgo.backtest import report
 
-print(report.tearsheet(performance, "reliance_vs_nifty.html", title="RELIANCE EMA crossover against NIFTY 50"))
+print(report.tearsheet(performance, "sbin_risk_free.html", title="SBIN EMA crossover, risk-free 6.5%"))  # prints the file name
 ```
 
 <!-- output -->
 ```text
-reliance_vs_nifty.html
+sbin_risk_free.html
 ```
 
-`report.metrics_table(performance)` returns every metric as a DataFrame, with its group, label, value, unit and definition:
+## More options
 
-<!-- requires-server -->
-<!-- continues -->
-```python
-table = report.metrics_table(performance)
-print(table.loc[["sharpe", "smart_sharpe", "omega", "ulcer_index", "beta"], ["group", "label", "value"]].round(4).to_string())
-```
-
-<!-- output -->
-```text
-                             group         label     value
-key
-sharpe            Returns and risk  Sharpe ratio -0.430819
-smart_sharpe  Risk-adjusted ratios  Smart Sharpe  -0.44109
-omega         Risk-adjusted ratios   Omega ratio  0.896393
-ulcer_index   Risk-adjusted ratios   Ulcer index  0.166837
-beta                     Benchmark          Beta  0.452772
-```
+* `analyse(equity, *, exchanges, trades=None, cash_flows=None, benchmark=None, risk_free_rate=0.0, calendar=None, opening_wealth=None, opening_time=None, rolling_window=None)` returns a `Performance` with `.metrics`, `.equity`, `.wealth`, `.drawdown`, `.drawdown_episodes`, `.drawdown_details(top)`, `.session_returns`, `.monthly_returns`, `.yearly_returns`, `.rolling`, `.horizons`, `.losing_streaks`, `.trades`, `.cost_breakdown`, `.benchmark_equity`, `.benchmark_returns` and `.benchmark_comparison(period)`.
+* `equity` is a pandas Series in rupees, indexed by time-zone-aware times, strictly increasing. Without `opening_wealth` the first point is the starting equity and belongs to no session.
+* `risk_free_rate` is a yearly fraction (`0.065`); a value written in percent (6.5) is refused.
+* `cash_flows`: deposits (positive) and withdrawals (negative) in rupees, indexed by time. They change equity but are not returns.
+* `benchmark` for `analyse` is a Series of index levels stamped at each session's close (time-zone aware). `bt.data.load_bars("NIFTY", "NSE_INDEX", "D", ...)` gives the close instant of each bar in its `ts_close` column. A missing close is never filled from a neighbouring day: that session and the next have no benchmark return.
+* `performance.rolling` recomputes volatility, Sharpe, Sortino and the win rate (and beta, with a benchmark) over a trailing window of `rolling_window` sessions, half a year by default.
+* Volatility, Sharpe, Sortino and alpha are annualised with the real number of sessions the exchanges had in the years the run touches, never a fixed 252.
+* `monte_carlo(performance, *, simulations=1000, seed=2026, resample="sessions", bust=None, goal=None)`: `resample="trades"` draws the closed trades' rupee P&L instead of the daily returns. A study has `runs`, `percentiles` (1st to 99th), `band`, `actual`, `actual_path`, `bust_probability` and `goal_probability`. The same seed gives the same paths on every platform.
+* `return_correlation({"SBIN": result.performance, "RELIANCE": reliance.performance})` gives how closely strategies' daily returns moved together (1 in step, 0 unrelated).
+* `metrics.DEFINITIONS` holds each figure's label, unit and definition, and `metrics.GROUPS` the groups the reports show them in. `report.metrics_table(performance)` returns them as a table with the values.
+* `report.tearsheet(performance, path=None, *, title=None, mode="full", log_scale=False)`: modes `"full"`, `"basic"`, `"metrics"` and `"charts"`. See [Results and Reports](../results-and-reports.md#the-html-tearsheet).
