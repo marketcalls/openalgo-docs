@@ -45,15 +45,16 @@ trades = result.trades[["entry_time", "exit_time", "entry_price_rupees", "exit_p
 print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
+<!-- output -->
 ```text
-Net profit   : Rs 5,433.79
+Net profit   : Rs 5,432.61
 Return       : 5.43%
 Max drawdown : -13.51%
 Trades       : 3 (67% won)
                entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2022-09-15 09:15:00+05:30 2023-09-20 09:15:00+05:30              765.20             799.30         4208.89
-2024-06-26 09:15:00+05:30 2025-03-17 09:15:00+05:30              854.20             852.30         -478.19
-2025-03-26 09:15:00+05:30 2026-01-29 09:15:00+05:30              912.70             929.90         1704.63
+2022-09-15 09:15:00+05:30 2023-09-20 09:15:00+05:30              765.20             799.30         4208.07
+2024-06-26 09:15:00+05:30 2025-03-17 09:15:00+05:30              854.20             852.30         -478.53
+2025-03-26 09:15:00+05:30 2026-01-29 09:15:00+05:30              912.70             929.90         1704.61
 ```
 
 Three trades in almost six years, each held for months. A 200-day average needs 200 sessions before it has a value, so no trade can come in the first ten months of a run: here the first golden cross after that was in September 2022. The prices are adjusted for the 1:1 bonus of August 2025, so they are about half the quoted prices before it.

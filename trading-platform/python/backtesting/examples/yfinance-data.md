@@ -60,22 +60,23 @@ trades = result.trades[["entry_time", "exit_time", "entry_price_rupees", "exit_p
 print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
+<!-- output -->
 ```text
                              open    high     low   close    volume
 Date
 2021-01-01 00:00:00+05:30  897.27  901.33  894.56  897.05  10015175
 2021-01-04 00:00:00+05:30  900.48  902.19  888.25  898.56  24513534
 2021-01-05 00:00:00+05:30  888.70  895.29  882.83  887.39  24123091
-Net profit   : Rs -4,218.02
-Return       : -4.22%
+Net profit   : Rs -4,226.55
+Return       : -4.23%
 Max drawdown : -24.33%
 Trades       : 15 (33% won)
                entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2021-06-01 09:15:00+05:30 2021-07-30 09:15:00+05:30              977.85             931.90        -4926.19
-2021-08-13 09:15:00+05:30 2021-12-01 09:15:00+05:30              959.20            1101.70        13866.28
-2022-01-14 09:15:00+05:30 2022-01-31 09:15:00+05:30             1148.40            1068.75        -7796.44
-2022-03-23 09:15:00+05:30 2022-06-27 09:15:00+05:30             1142.95            1152.40          594.31
-2022-08-12 09:15:00+05:30 2022-09-23 09:15:00+05:30             1173.45            1128.90        -4095.34
+2021-06-01 09:15:00+05:30 2021-07-30 09:15:00+05:30              977.85             931.90        -4927.05
+2021-08-13 09:15:00+05:30 2021-12-01 09:15:00+05:30              959.20            1101.70        13865.18
+2022-01-14 09:15:00+05:30 2022-01-31 09:15:00+05:30             1148.40            1068.75        -7797.21
+2022-03-23 09:15:00+05:30 2022-06-27 09:15:00+05:30             1142.95            1152.40          593.38
+2022-08-12 09:15:00+05:30 2022-09-23 09:15:00+05:30             1173.45            1128.90        -4096.07
 ```
 
 The run takes its dates from the data. It made the same 15 closed trades as the [OpenAlgo version](ema-crossover.md), at prices about 5 percent lower (Yahoo takes the dividends out of past prices), and a few crossovers moved by a day for the same reason. The engine still applied the Indian defaults: delivery charges, slippage and the NSE calendar.

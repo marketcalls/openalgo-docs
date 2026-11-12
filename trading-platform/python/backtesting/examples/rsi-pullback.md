@@ -48,17 +48,18 @@ trades = result.trades[["entry_time", "exit_time", "entry_price_rupees", "exit_p
 print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
+<!-- output -->
 ```text
-Net profit   : Rs -14,864.59
-Return       : -14.86%
+Net profit   : Rs -14,867.26
+Return       : -14.87%
 Max drawdown : -30.53%
 Trades       : 6 (50% won)
                entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2022-01-25 09:15:00+05:30 2022-03-10 09:15:00+05:30             1652.55            1764.90         6545.91
-2022-04-12 09:15:00+05:30 2022-07-22 09:15:00+05:30             1682.15            1467.60       -13811.23
-2023-10-25 09:15:00+05:30 2023-11-23 09:15:00+05:30             1339.00            1404.30         4290.98
-2024-03-06 09:15:00+05:30 2024-06-10 09:15:00+05:30             1534.15            1459.30        -4954.20
-2024-10-30 09:15:00+05:30 2024-11-27 09:15:00+05:30             1753.40            1846.50         4657.85
+2022-01-25 09:15:00+05:30 2022-03-10 09:15:00+05:30             1652.55            1764.90         6544.95
+2022-04-12 09:15:00+05:30 2022-07-22 09:15:00+05:30             1682.15            1467.60       -13811.94
+2023-10-25 09:15:00+05:30 2023-11-23 09:15:00+05:30             1339.00            1404.30         4290.26
+2024-03-06 09:15:00+05:30 2024-06-10 09:15:00+05:30             1534.15            1459.30        -4954.69
+2024-10-30 09:15:00+05:30 2024-11-27 09:15:00+05:30             1753.40            1846.50         4657.70
 ```
 
 Half the pullbacks recovered, but the April 2022 one did not: the stock kept falling, the RSI never reached 60 for three months, and with no stop the trade lost more than the next two winners made. That is the risk of buying dips without a stop. Like the golden cross, the 200-day average leaves the first ten months of the run without trades.

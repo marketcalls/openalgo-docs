@@ -306,6 +306,7 @@
       * [Supertrend](trading-platform/python/backtesting/examples/supertrend.md)
       * [RSI Pullback](trading-platform/python/backtesting/examples/rsi-pullback.md)
       * [Opening Range Breakout](trading-platform/python/backtesting/examples/opening-range-breakout.md)
+      * [Equal-Weight Rebalancing](trading-platform/python/backtesting/examples/rebalancing.md)
       * [Position Sizing](trading-platform/python/backtesting/examples/position-sizing.md)
       * [Tuning a Strategy](trading-platform/python/backtesting/examples/ema-crossover-optimization.md)
       * [Backtest on yfinance Data](trading-platform/python/backtesting/examples/yfinance-data.md)

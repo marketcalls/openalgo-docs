@@ -94,7 +94,7 @@ print(note[["date", "note", "fills", "total", "adjustment"]].round(2).to_string(
 
 ## Dated and verified rates
 
-Each schedule has a start date, and each of its rows records the last date its rates were checked against their source. A trade dated before the first schedule (1 October 2024) raises `CostError`, unless the model was built with `CostModel(backfill=True)`, which charges it at the first schedule's rates and warns. A cost from rates that are not verified for its date is still returned, with `verified=False`, and Python shows an `UnverifiedScheduleWarning`.
+Each schedule has a start date, and each of its rows records the last date its rates were checked against their source. Charges are built in from 1 July 2020 (`IN-2020-07-01`), one schedule per rate change. A trade dated before the first schedule raises `CostError`, unless the model was built with `CostModel(backfill=True)`, which charges it at the first schedule's rates and warns. A cost from rates that are not verified for its date is still returned, with `verified=False`, and Python shows an `UnverifiedScheduleWarning`.
 
 <!-- continues -->
 ```python
@@ -104,6 +104,16 @@ for schedule in costs.schedules():
 
 <!-- output -->
 ```text
+IN-2020-07-01 2020-07-01 to 2020-12-31 verified through 2020-12-31
+IN-2021-01-01 2021-01-01 to 2021-02-28 verified through 2021-02-28
+IN-2021-03-01 2021-03-01 to 2021-03-31 verified through 2021-03-31
+IN-2021-04-01 2021-04-01 to 2021-04-30 verified through 2021-04-30
+IN-2021-05-01 2021-05-01 to 2022-05-01 verified through 2022-05-01
+IN-2022-05-02 2022-05-02 to 2022-11-30 verified through 2022-11-30
+IN-2022-12-01 2022-12-01 to 2023-03-31 verified through 2023-03-31
+IN-2023-04-01 2023-04-01 to 2023-10-31 verified through 2023-10-31
+IN-2023-11-01 2023-11-01 to 2024-05-12 verified through 2024-05-12
+IN-2024-05-13 2024-05-13 to 2024-09-30 verified through 2024-09-30
 IN-2024-10-01 2024-10-01 to 2026-03-31 verified through None
 IN-2026-04-01 2026-04-01 to None verified through 2026-11-12
 ```

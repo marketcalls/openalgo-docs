@@ -64,38 +64,39 @@ if __name__ == "__main__":  # needed: the optimizer starts worker processes that
         print(f"{params} after 2024: net profit Rs {later.metrics['net_profit']:,.2f}")
 ```
 
+<!-- output -->
 ```text
  fast  slow  net_profit  max_drawdown  trades
-   25    60     8544.50         -0.31     8.0
-   20    60     2756.32         -0.28    10.0
-   10    60     1492.58         -0.25    13.0
-   15    40     1220.07         -0.27    14.0
-   20    50      376.56         -0.24    11.0
+   25    60     8537.40         -0.31     8.0
+   20    60     2747.97         -0.28    10.0
+   10    60     1482.35         -0.25    13.0
+   15    40     1208.63         -0.27    14.0
+   20    50      367.70         -0.24    11.0
 best: {'fast': 25, 'slow': 60}
 fast      10      15      20      25
 slow
-40     125.0  1220.0 -8976.0 -2649.0
-50   -1381.0 -2917.0   377.0 -5976.0
-60    1493.0 -2264.0  2756.0  8544.0
+40     114.0  1209.0 -8985.0 -2658.0
+50   -1391.0 -2926.0   368.0 -5984.0
+60    1482.0 -2273.0  2748.0  8537.0
                entry_time                 exit_time  net_pnl_rupees
-2021-06-02 09:15:00+05:30 2021-12-15 09:15:00+05:30        10213.26
-2022-01-14 09:15:00+05:30 2022-01-31 09:15:00+05:30        -7886.01
-2022-03-24 09:15:00+05:30 2022-07-04 09:15:00+05:30        -5618.43
-2022-08-17 09:15:00+05:30 2022-09-23 09:15:00+05:30        -6788.78
-2022-11-10 09:15:00+05:30 2023-01-12 09:15:00+05:30        -2507.87
+2021-06-02 09:15:00+05:30 2021-12-15 09:15:00+05:30        10212.27
+2022-01-14 09:15:00+05:30 2022-01-31 09:15:00+05:30        -7886.86
+2022-03-24 09:15:00+05:30 2022-07-04 09:15:00+05:30        -5619.20
+2022-08-17 09:15:00+05:30 2022-09-23 09:15:00+05:30        -6789.40
+2022-11-10 09:15:00+05:30 2023-01-12 09:15:00+05:30        -2508.56
 {'fast': 25, 'slow': 60} after 2024: net profit Rs 1,294.40
 {'fast': 20, 'slow': 50} after 2024: net profit Rs -7,213.11
 ```
 
 ## Reading it
 
-* **The table** ranks by the objective, net profit unless you choose another. `max_drawdown` is a fraction: -0.31 is a fall of 31 percent from the peak. 25/60 made Rs 8,544 in 8 trades; the original 20/50 only Rs 377.
-* **The heatmap** shows every pair at once. Half the pairs lost money, and the best one sits in the corner of the grid next to a loss of Rs 5,976 (25/50): a lone peak at the edge is more likely luck than a real edge.
+* **The table** ranks by the objective, net profit unless you choose another. `max_drawdown` is a fraction: -0.31 is a fall of 31 percent from the peak. 25/60 made Rs 8,537 in 8 trades; the original 20/50 only Rs 368.
+* **The heatmap** shows every pair at once. Half the pairs lost money, and the best one sits in the corner of the grid next to a loss of Rs 5,984 (25/50): a lone peak at the edge is more likely luck than a real edge.
 * **The trade list** of the winner comes from `opt.select`, the same full `Result` that `bt.backtest` returns: its trades, equity curve and tearsheet.
 
 ## Is the best pair really better?
 
-The pair that did best on the past is the one that fitted the past best, and part of that fit is luck. So test it on later data the optimizer never saw. Here 25/60 made Rs 1,294 from January 2025 to November 2026 while the original 20/50 lost Rs 7,213: better, but far below its Rs 8,544 of the earlier years. Trust a choice only when it holds up on unseen dates and its neighbours on the heatmap did nearly as well.
+The pair that did best on the past is the one that fitted the past best, and part of that fit is luck. So test it on later data the optimizer never saw. Here 25/60 made Rs 1,294 from January 2025 to November 2026 while the original 20/50 lost Rs 7,213: better, but far below its Rs 8,537 of the earlier years. Trust a choice only when it holds up on unseen dates and its neighbours on the heatmap did nearly as well.
 
 ## Try this
 

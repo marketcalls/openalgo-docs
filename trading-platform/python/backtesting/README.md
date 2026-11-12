@@ -114,12 +114,13 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 print(f"Charges      : Rs {m['total_costs']:,.2f}")
 ```
 
+<!-- output -->
 ```text
-Net profit   : Rs -7,606.60
+Net profit   : Rs -7,614.84
 Return       : -7.61%
 Max drawdown : -24.59%
 Trades       : 15 (33% won)
-Charges      : Rs 3,526.98
+Charges      : Rs 3,535.47
 ```
 
 What happened, in plain words:
@@ -141,6 +142,7 @@ To run the same strategy without a server, pass your own bars with `data=` inste
 print(result)
 ```
 
+<!-- output -->
 ```text
 Result(RELIANCE)
   base: D
@@ -172,10 +174,9 @@ Result(RELIANCE)
   instruments: RELIANCE: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
   benchmark: None
   indicator_checks: window tolerance 1e-06 (relative); ema(RELIANCE.close, 20): truncation passed at 4 cuts, warm-up 128 bars
-  gross P&L: -3969.20 (realized -5221.50)
-  charges: 3637.40; net P&L: -7606.60
+  gross P&L: -3968.78 (realized -5220.97)
+  charges: 3646.06; net P&L: -7614.84
   warning: RELIANCE: generic cash-equity instrument assumed (lot 1, tick 0.05)
-  warning: charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2024-10-01 are backfilled for 22 fills, from 2021-06-01
   warning: charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2024-10-01 are unverified for 6 fills, from 2025-03-26
 ```
 
@@ -187,7 +188,7 @@ A few lines worth knowing:
 * `entry_from`, `entry_until` and `square_off` apply to MIS runs and are stated as they applied over the whole run: one clock time, a rule such as "20 minutes before each session's close" (MCX), or dated periods when a default changed during the run (NSE cash on 3 August 2026). This daily CNC run has none.
 * `leverage` and the scale-in limits (`max_adds`, `max_position`, `min_spacing`, `max_risk`, `allow_averaging_down`) are listed even when unset, so you see that no limit applied. So are `reinvest` (whether sizes compound with the equity) and `size_caps` (see [Sizing](costs-slippage-and-margin.md#reinvest-and-size-caps)).
 * `benchmark` names what the run is compared with and where its closes came from; `None` means no benchmark figures (see [A benchmark](results-and-reports.md#a-benchmark)).
-* The last lines are warnings. The first you will see on every cash-equity backtest without `instrument=`: the engine used the generic lot 1 and tick 0.05. The others say which fills were charged at rates not yet verified against their source (see [Charges](costs-slippage-and-margin.md#charges)); Python shows the same as an `UnverifiedScheduleWarning`.
+* The last lines are warnings. The first you will see on every cash-equity backtest without `instrument=`: the engine used the generic lot 1 and tick 0.05. The second says which fills were charged at rates not yet verified against their source (see [Charges](costs-slippage-and-margin.md#charges)); Python shows the same as an `UnverifiedScheduleWarning`. Orders the engine rejected (for margin, a product rule or the intraday entry window) would be listed here too.
 
 No setting is accepted and then ignored. Every class attribute and every `bt.backtest` argument either works, raises an error (`ConfigError` for a value that cannot be used, `NotImplementedError` for a feature not built yet), or, when it does nothing in this particular run, is named in `result.warnings` with the reason (for example `pyramiding` on a strategy with `on_bar`, `client=` together with `data=`, or intraday times on a CNC run).
 
@@ -195,7 +196,7 @@ No setting is accepted and then ignored. Every class attribute and every `bt.bac
 
 ## Where to go next
 
-* [How do I ...?](how-to.md): short answers to the common questions (long and short, stops, sizing, a NIFTY benchmark, the tearsheet, the trade list, optimization, older years, your own data, exporting), each with a small example.
+* [How do I ...?](how-to.md): short answers to the common questions (long and short, stops, sizing, a NIFTY benchmark, the tearsheet, the trade list, optimization, older years, rebalancing a portfolio, your own data, exporting), each with a small example.
 * [Writing Strategies](writing-strategies.md): the strategy class, indicators, other timeframes, positions, timers, and condition strategies that run without a Python call per bar.
 * [Orders and Risk](orders-and-risk.md): orders, target positions, stops, targets, trailing stops, intraday times and the strategy risk rules.
 * [Costs, Slippage and Margin](costs-slippage-and-margin.md): what is charged and how to change it, margin, and sizing (your own sizing function, size caps).
@@ -213,7 +214,7 @@ The following are part of the design but not built. Each raises `NotImplementedE
 * `bt.live`: trading a strategy through OpenAlgo in sandbox or live mode.
 * `fill="close"` (filling at the decision bar's close).
 * Walk-forward optimization (`bt.walk_forward`).
-* Several strategies in one run, pairs (`pair_long`, `pair_short`), portfolio rebalancing (`bt.rebalance`), and strategies declared on a `universe`.
+* Several strategies in one run, pairs (`pair_long`, `pair_short`), the portfolio runner `bt.rebalance` (to rebalance today, call `self.rebalance` inside a strategy, as in [Equal-Weight Rebalancing](examples/rebalancing.md)), and strategies declared on a `universe`.
 * Condition strategies on a futures underlying, and other intervals of a futures series (`self.data[underlying, "15m"]`).
 * The combined rules `combined_stop`, `combined_target`, `lock_profit` and `trail_sl_to_entry`, and `after_risk_exit="allow_reentry"`, which only they would use.
 * `cooldown` and `max_hold` given as a time (such as `"30m"`); give them in bars.

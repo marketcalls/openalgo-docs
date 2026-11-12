@@ -55,6 +55,7 @@ trades = result.trades[["entry_time", "direction", "entry_price_rupees", "exit_p
 print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
+<!-- output -->
 ```text
 Net profit   : Rs -5,207.41
 Return       : -5.21%
@@ -68,7 +69,7 @@ Trades       : 62 (45% won)
 2026-08-07 09:35:00+05:30      long             1087.15            1098.05   scheduler
 ```
 
-The stop is a distance in rupees from the entry, so the code passes the gap between the breakout close and the other side of the range. `exit_reason` says how each trade ended: `leg_sl` is the stop and `scheduler` the engine's 15:00 square-off. The engine applied the NSE intraday defaults by itself: no new entries after 14:50 (a later breakout order is rejected with the reject code `entry_window`, which `result.orders` lists), everything squared off at 15:00, intraday charges and slippage. With 1-minute history available for the whole run, it tested the stops on 1-minute bars, so a stop is hit at the minute it is reached.
+The stop is a distance in rupees from the entry, so the code passes the gap between the breakout close and the other side of the range. `exit_reason` says how each trade ended: `leg_sl` is the stop and `scheduler` the engine's 15:00 square-off. The engine applied the NSE intraday defaults by itself: no new entries after 14:50 (a later breakout order is rejected with the reject code `entry_window`, and `result.warnings` says how many were), everything squared off at 15:00, intraday charges and slippage. With 1-minute history available for the whole run, it tested the stops on 1-minute bars, so a stop is hit at the minute it is reached.
 
 ## Try this
 

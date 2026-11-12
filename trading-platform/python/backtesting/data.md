@@ -46,6 +46,7 @@ for warning in result.warnings:
 ```text
 base 1m (1-minute data covers the run for every instrument): stops are tested on 1-minute ranges and orders fill at 1-minute bar opens
 The run ends at 2026-11-11 15:15 IST, the close of the last bar in the data, before the end of its range at 2026-11-11 15:30 IST: equity, trades and metrics stop there, and positions still open are reported open
+9 of 195 orders were rejected with reject_code 'entry_window' (result.orders), the first decided at 2026-07-03 15:25 IST: orders after the MIS entry cut-off (entry_until) are rejected, and so are entries before entry_from; check self.now or set entry_until
 SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
 ```
 

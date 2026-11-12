@@ -53,17 +53,18 @@ trades = result.trades[["entry_time", "exit_time", "entry_price_rupees", "exit_p
 print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
+<!-- output -->
 ```text
-Net profit   : Rs 54,567.46
-Return       : 54.57%
+Net profit   : Rs 54,549.78
+Return       : 54.55%
 Max drawdown : -28.46%
 Trades       : 23 (48% won)
                entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2021-02-02 09:15:00+05:30 2021-03-18 09:15:00+05:30              285.60             336.65        17597.35
-2021-05-14 09:15:00+05:30 2021-08-20 09:15:00+05:30              335.45             379.50        15131.38
-2021-09-16 09:15:00+05:30 2021-11-29 09:15:00+05:30              407.05             429.80         7091.40
-2022-01-06 09:15:00+05:30 2022-02-25 09:15:00+05:30              446.25             438.95        -2608.19
-2022-03-17 09:15:00+05:30 2022-05-05 09:15:00+05:30              456.60             443.55        -4233.12
+2021-02-02 09:15:00+05:30 2021-03-18 09:15:00+05:30              285.60             336.65        17596.43
+2021-05-14 09:15:00+05:30 2021-08-20 09:15:00+05:30              335.45             379.50        15130.07
+2021-09-16 09:15:00+05:30 2021-11-29 09:15:00+05:30              407.05             429.80         7090.02
+2022-01-06 09:15:00+05:30 2022-02-25 09:15:00+05:30              446.25             438.95        -2609.36
+2022-03-17 09:15:00+05:30 2022-05-05 09:15:00+05:30              456.60             443.55        -4234.17
 ```
 
 The trades are the same as in the [Supertrend example on OpenAlgo data](backtesting/examples/supertrend.md), but the return is higher: Yahoo takes the dividends out of past prices, so a holding's dividends show up as price gains. The engine applied delivery charges, slippage and the NSE calendar as usual.

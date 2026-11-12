@@ -14,6 +14,7 @@ Every run uses the engine's defaults for Indian markets without being asked: cha
 | [Supertrend](supertrend.md) | SBIN, NSE, CNC | Daily | Hold while Supertrend (10, 3) shows an uptrend |
 | [RSI Pullback](rsi-pullback.md) | INFY, NSE, CNC | Daily | Buy a low RSI above the 200-day average, sell when the RSI recovers |
 | [Opening Range Breakout](opening-range-breakout.md) | SBIN, NSE, MIS | 5 minutes | Trade the first break of the 15-minute opening range, long or short, stop at the other side |
+| [Equal-Weight Rebalancing](rebalancing.md) | RELIANCE, HDFCBANK, INFY, TCS, NSE, CNC | Daily | Four stocks in equal parts, rebalanced every quarter, against NIFTY |
 | [Position Sizing](position-sizing.md) | RELIANCE, NSE, CNC | Daily | The EMA crossover with a fixed quantity, a percent of equity and a fixed risk |
 | [Tuning a Strategy](ema-crossover-optimization.md) | RELIANCE, NSE, CNC | Daily | Find the best EMA lengths with `bt.optimize` and check them on later data |
 | [Backtest on yfinance Data](yfinance-data.md) | RELIANCE.NS | Daily | The EMA crossover on bars downloaded with yfinance, no server needed |

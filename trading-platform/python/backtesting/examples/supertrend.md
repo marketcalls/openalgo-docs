@@ -47,17 +47,18 @@ trades = result.trades[["entry_time", "exit_time", "entry_price_rupees", "exit_p
 print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
+<!-- output -->
 ```text
-Net profit   : Rs 45,052.51
-Return       : 45.05%
-Max drawdown : -30.25%
+Net profit   : Rs 45,036.07
+Return       : 45.04%
+Max drawdown : -30.26%
 Trades       : 23 (48% won)
                entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2021-02-02 09:15:00+05:30 2021-03-18 09:15:00+05:30              315.10             371.40        17590.06
-2021-05-14 09:15:00+05:30 2021-08-20 09:15:00+05:30              370.10             414.90        13925.74
-2021-09-16 09:15:00+05:30 2021-11-29 09:15:00+05:30              444.95             469.90         7050.55
-2022-01-06 09:15:00+05:30 2022-02-25 09:15:00+05:30              487.80             479.90        -2562.36
-2022-03-17 09:15:00+05:30 2022-05-05 09:15:00+05:30              499.10             484.90        -4178.42
+2021-02-02 09:15:00+05:30 2021-03-18 09:15:00+05:30              315.10             371.40        17589.14
+2021-05-14 09:15:00+05:30 2021-08-20 09:15:00+05:30              370.10             414.90        13924.45
+2021-09-16 09:15:00+05:30 2021-11-29 09:15:00+05:30              444.95             469.90         7049.19
+2022-01-06 09:15:00+05:30 2022-02-25 09:15:00+05:30              487.80             479.90        -2563.51
+2022-03-17 09:15:00+05:30 2022-05-05 09:15:00+05:30              499.10             484.90        -4179.46
 ```
 
 `ta.supertrend` returns two series: the line itself and the direction, -1 in an uptrend and 1 in a downtrend. The strategy holds SBIN while the direction is -1. Its winners are the long trends of 2021; the drawdown of about 30 percent is the price of staying in until the line is crossed.

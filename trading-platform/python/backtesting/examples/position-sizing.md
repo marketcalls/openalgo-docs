@@ -58,11 +58,12 @@ for name in SIZERS:
     print(f"{name:14} {m['net_profit']:11,.2f} {m['max_drawdown']:13.2%} {m['trades']:7} {position_value:13,.0f}")
 ```
 
+<!-- output -->
 ```text
 Sizing          Net profit  Max drawdown  Trades  Avg position
-50 shares        -5,549.00       -16.09%      15        64,271
-10% of equity      -675.18        -2.92%      15        10,022
-1% risk          -4,371.26       -10.22%      15        25,505
+50 shares        -5,554.35       -16.09%      15        64,271
+10% of equity      -675.91        -2.92%      15        10,021
+1% risk          -4,371.88       -10.22%      15        25,500
 ```
 
 The signals were the same in all three runs, so the loss and the drawdown grew with the money at work: about Rs 64,000 a trade for 50 shares, Rs 10,000 for 10 percent of equity. Risk sizing put about Rs 25,000 into each trade, sized so that the stop 2 ATR away would cost about 1 percent of equity, which keeps the loss of a trade about the same whether the stock is calm or volatile.

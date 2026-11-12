@@ -53,17 +53,18 @@ trades = result.trades[["entry_time", "exit_time", "entry_price_rupees", "exit_p
 print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
+<!-- output -->
 ```text
-Net profit   : Rs -7,606.60
+Net profit   : Rs -7,614.84
 Return       : -7.61%
 Max drawdown : -24.59%
 Trades       : 15 (33% won)
                entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2021-06-01 09:15:00+05:30 2021-07-29 09:15:00+05:30             1032.55             978.70        -5441.20
-2021-08-16 09:15:00+05:30 2021-12-01 09:15:00+05:30             1024.65            1159.35        12177.49
-2022-01-14 09:15:00+05:30 2022-01-31 09:15:00+05:30             1208.45            1124.65        -7637.70
-2022-03-23 09:15:00+05:30 2022-06-27 09:15:00+05:30             1202.70            1212.65          582.47
-2022-08-12 09:15:00+05:30 2022-09-22 09:15:00+05:30             1234.75            1184.55        -4280.45
+2021-06-01 09:15:00+05:30 2021-07-29 09:15:00+05:30             1032.55             978.70        -5442.05
+2021-08-16 09:15:00+05:30 2021-12-01 09:15:00+05:30             1024.65            1159.35        12176.42
+2022-01-14 09:15:00+05:30 2022-01-31 09:15:00+05:30             1208.45            1124.65        -7638.45
+2022-03-23 09:15:00+05:30 2022-06-27 09:15:00+05:30             1202.70            1212.65          581.56
+2022-08-12 09:15:00+05:30 2022-09-22 09:15:00+05:30             1234.75            1184.55        -4281.15
 ```
 
 Each crossover was decided at a session's close and filled at the next session's open (09:15 IST). The engine applied the defaults for Indian markets without being asked: Zerodha delivery charges at each trade date's rates, 2 basis points of slippage, and NSE session times and holidays. On RELIANCE over these six years the crossover lost money: one good trend (August to December 2021) did not pay for the many false starts.

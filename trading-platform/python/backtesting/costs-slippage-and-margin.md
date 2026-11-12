@@ -60,10 +60,11 @@ The rates are dated **schedules**. A fill is charged at the schedule in force on
 
 | Schedule | Trade dates | Status |
 |---|---|---|
+| `IN-2020-07-01` to `IN-2024-05-13` | 1 July 2020 to 30 September 2024, ten versions, one per rate change | Verified from the exchanges' circulars, SEBI fee notifications and the Finance Acts, except a few rows whose notes say why (BSE groups X and SS, MCX agri and every MCX row of 2020, Sensex options from November 2023 to May 2024). Exchange charges are the first-slab rate of the turnover tiers of the time, the rate brokers passed on to clients |
 | `IN-2024-10-01` | 1 October 2024 to 31 March 2026 | Not verified: the transaction charges, IPFT and F&O STT were sourced for the period; the other rates are assumed equal to the current ones |
 | `IN-2026-04-01` | From 1 April 2026 | Verified on 12 November 2026; later trade dates are charged at these rates and flagged unverified |
 
-A trade dated before 1 October 2024 has no schedule, so a run that starts earlier stops with a `CostError` (pass `costs=None`, or a `bt.costs.CostModel(backfill=True)` to charge such trades at the first schedule with a warning). Fills charged at unverified rates are counted in `result.warnings`, and Python also shows an `UnverifiedScheduleWarning`.
+Charges are built in from 1 July 2020, the day stamp duty became one rate across the states. A trade dated earlier has no schedule, so a run that starts earlier stops with a `CostError` (pass `costs=None`, or a `bt.costs.CostModel(backfill=True)` to charge such trades at the first schedule's rates with a warning). Fills charged at unverified rates are counted in `result.warnings`, and Python also shows an `UnverifiedScheduleWarning`.
 
 <!-- continues -->
 ```python

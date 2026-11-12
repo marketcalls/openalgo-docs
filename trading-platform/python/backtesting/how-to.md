@@ -70,6 +70,7 @@ both = bt.backtest(LongAndShort, client, start="2026-01-01", end="2026-11-11", c
 print(both.trades["direction"].value_counts().to_dict())
 ```
 
+<!-- output -->
 ```text
 {'long': 102, 'short': 94}
 ```
@@ -107,6 +108,7 @@ stops = bt.backtest(EmaWithStops, client, start="2021-01-01", end="2026-11-11", 
 print(stops.trades["exit_reason"].value_counts().to_dict())
 ```
 
+<!-- output -->
 ```text
 {'leg_sl': 21, 'leg_target': 3}
 ```
@@ -190,11 +192,12 @@ print(trades[columns].head(3).round(2).to_string(index=False))
 trades.to_csv("trades.csv", index=False)
 ```
 
+<!-- output -->
 ```text
 symbol direction                entry_time                 exit_time  entry_units  entry_price_rupees  exit_price_rupees  net_pnl_rupees exit_reason
-  SBIN      long 2021-05-11 09:15:00+05:30 2021-08-20 09:15:00+05:30       279.82              356.95              414.9        15961.11      signal
-  SBIN      long 2021-09-07 09:15:00+05:30 2021-11-29 09:15:00+05:30       268.64              431.15              469.9        10125.91      signal
-  SBIN      long 2022-01-07 09:15:00+05:30 2022-02-24 09:15:00+05:30       255.17              493.55              479.9        -3774.94      signal
+  SBIN      long 2021-05-11 09:15:00+05:30 2021-08-20 09:15:00+05:30       279.82              356.95              414.9        15960.07      signal
+  SBIN      long 2021-09-07 09:15:00+05:30 2021-11-29 09:15:00+05:30       268.63              431.15              469.9        10124.68      signal
+  SBIN      long 2022-01-07 09:15:00+05:30 2022-02-24 09:15:00+05:30       255.16              493.55              479.9        -3775.97      signal
 ```
 
 Each trade was decided at a session close and filled at the next session's open, 09:15 IST.
@@ -233,9 +236,9 @@ More: [Optimization](optimization.md), [the optimization example](examples/ema-c
 
 ## Backtest older years?
 
-The built-in charges start on <!-- TODO lead: first schedule date; keep the snippet's start before it -->. A run that starts earlier stops with a `CostError` before it begins. Two ways to go further back:
+Charges are built in from 1 July 2020: every fill is charged at the rates in force on its own trade date, from the dated schedules of exchange charges, STT, stamp duty, the SEBI fee and GST. A run that starts earlier stops with a `CostError` before it begins, and the message says from which date charges are available. Two ways to go further back:
 
-* `costs=bt.costs.CostModel(backfill=True)` charges the earlier trades at the rates of the first schedule, and a warning counts them.
+* `costs=bt.costs.CostModel(backfill=True)` charges every fill dated before 1 July 2020 at the rates of the first schedule (`IN-2020-07-01`), as if those rates had applied then, and a warning counts the fills it charged that way. Fills from 1 July 2020 on are charged at their own dates' rates as usual.
 * `costs=None` runs with no charges at all; every result and report then warns that the P&L is overstated.
 
 <!-- continues -->
@@ -246,11 +249,48 @@ older = bt.backtest(EmaCross, client, start="2019-01-01", end="2026-11-11", capi
 print([text for text in older.warnings if "backfilled" in text])
 ```
 
+<!-- output -->
+```text
+['charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2020-07-01 are backfilled for 9 fills, from 2019-03-13']
+```
+
 More: [Charges](costs-slippage-and-margin.md#charges).
 
 ## Rebalance a buy-and-hold portfolio?
 
-<!-- TODO lead: rebalance -->
+Declare the stocks with `symbols`, and in `on_bar` call `self.rebalance(weights)` whenever your schedule says so. The weights are percent of equity by symbol. The engine sends one order per stock for the difference, sales first so the buys can use their proceeds, and keeps 2 percent of equity in cash for charges and the move to the next open (`cash_buffer=` changes it). The example holds four stocks in equal parts and rebalances at the first session of every quarter:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class EqualWeight(bt.Strategy):
+    symbols, exchange, interval, product = ("RELIANCE", "HDFCBANK", "INFY", "TCS"), "NSE", "D", "CNC"
+
+    def init(self):
+        self.quarter = None
+
+    def on_bar(self, bars):
+        quarter = (self.now.year, (self.now.month - 1) // 3)
+        if quarter != self.quarter:
+            self.quarter = quarter
+            self.rebalance({s: 25 for s in self.symbols})   # percent of equity; 2% kept as cash
+
+
+portfolio = bt.backtest(EqualWeight, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+holdings = portfolio.final_positions
+value = holdings["quantity_units"] * holdings["mark_rupees"]
+weights = (100 * value / portfolio.equity["equity_rupees"].iloc[-1]).round(1)
+print("rebalance orders:", len(portfolio.orders), "| closed trades:", portfolio.metrics["trades"])
+print("weights on 11 November 2026:", dict(zip(holdings["symbol"], weights)))
+```
+
+<!-- output -->
+```text
+rebalance orders: 96 | closed trades: 0
+weights on 11 November 2026: {'HDFCBANK': 23.9, 'INFY': 24.4, 'RELIANCE': 24.5, 'TCS': 25.5}
+```
+
+A rebalance trims and tops up holdings but never closes one, so the run has no closed trades: look at `result.orders`, `result.fills` and `result.final_positions` instead. Between rebalances the weights drift with the prices. More: [the rebalancing example](examples/rebalancing.md).
 
 ## Use my own data or yfinance data?
 
@@ -267,19 +307,23 @@ own = bt.backtest(EmaCross, data="sbin_daily.csv", tz="Asia/Kolkata", capital=10
 print("same fills as from the server:", own.fills.equals(result.fills))
 ```
 
+<!-- output -->
 ```text
 same fills as from the server: True
 ```
 
 ## Export everything to Excel or CSV?
 
-`result.to_dataframes()` returns every table by name (`fills`, `orders`, `trades`, `positions`, `equity`, `events`, `stale_marks`, `costs`, `contract_notes`). Write each one to a CSV file; Excel opens them directly, with the times in IST.
+`result.to_excel("backtest.xlsx")` writes every table of the run (fills, orders, trades, positions, equity, events, charges and contract notes) to one workbook, a sheet per table. It needs `pip install openpyxl`, which the SDK does not install. `result.to_csv("results")` writes the same tables as CSV files into the folder `results`, one file per table. Both write the times as plain IST date-times, which Excel shows as they are; the `_ts` columns stay UTC nanoseconds.
 
 <!-- continues -->
 <!-- requires-server -->
 ```python
-for name, table in result.to_dataframes().items():
-    table.to_csv(f"sbin_ema_{name}.csv")
+paths = result.to_csv("results")
+print([path.name for path in paths])
 ```
 
-For one Excel workbook with a sheet per table, install `openpyxl` and write the tables with `pandas.ExcelWriter`. Excel cannot store a time zone, so first turn the times into plain IST clock times with `.dt.tz_localize(None)` (and the equity table's index with `.tz_localize(None)`); otherwise pandas stops with `Excel does not support datetimes with timezones`.
+<!-- output -->
+```text
+['fills.csv', 'orders.csv', 'trades.csv', 'positions.csv', 'equity.csv', 'events.csv', 'stale_marks.csv', 'costs.csv', 'contract_notes.csv']
+```

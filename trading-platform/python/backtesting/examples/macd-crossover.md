@@ -47,17 +47,18 @@ trades = result.trades[["entry_time", "exit_time", "entry_price_rupees", "exit_p
 print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
+<!-- output -->
 ```text
-Net profit   : Rs 39,600.71
-Return       : 39.60%
+Net profit   : Rs 39,565.21
+Return       : 39.57%
 Max drawdown : -29.75%
 Trades       : 51 (31% won)
                entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2021-04-23 09:15:00+05:30 2021-06-07 09:15:00+05:30              570.05             645.05        12889.93
-2021-07-07 09:15:00+05:30 2021-07-12 09:15:00+05:30              651.05             645.85        -1165.86
-2021-07-13 09:15:00+05:30 2021-07-22 09:15:00+05:30              655.30             652.35         -765.44
-2021-07-26 09:15:00+05:30 2021-08-17 09:15:00+05:30              680.15             699.65         2912.19
-2021-09-01 09:15:00+05:30 2021-09-14 09:15:00+05:30              727.75             713.10        -2555.53
+2021-04-23 09:15:00+05:30 2021-06-07 09:15:00+05:30              570.05             645.05        12888.92
+2021-07-07 09:15:00+05:30 2021-07-12 09:15:00+05:30              651.05             645.85        -1166.85
+2021-07-13 09:15:00+05:30 2021-07-22 09:15:00+05:30              655.30             652.35         -766.42
+2021-07-26 09:15:00+05:30 2021-08-17 09:15:00+05:30              680.15             699.65         2911.09
+2021-09-01 09:15:00+05:30 2021-09-14 09:15:00+05:30              727.75             713.10        -2556.43
 ```
 
 MACD crosses often on daily bars: 51 trades in under six years, and fewer than one in three won. The few long trends paid for the many small losses, which is how most trend strategies make money. Each round trip also pays delivery charges, so a strategy that trades this often needs its winners to be large.
