@@ -55,7 +55,7 @@ Times are IST (`time`, `entry_time`, `exit_time` columns, time-zone aware); colu
 | Property | What it holds |
 |---|---|
 | `result.fills` | One row per fill: time, side, units, price, where in the bar it filled (`fill_at`: open, level, close), `reason`, order id, `target_index`, flags, charges |
-| `result.orders` | Every order with its final status, filled units, average price and `reject_code` |
+| `result.orders` | Every order with its final status, filled units, average price, `reject_code`, `tag` and `sizer` (the sizer that set its quantity, if one did) |
 | `result.trades` | Closed round trips: entry and exit time and price, units, gross P&L, charges, net P&L, `exit_reason`, number of fills, `initial_risk_rupees` and `r_multiple` (see [R-multiples](#r-multiples)) |
 | `result.positions` | The position history: one row whenever a position or its stop, targets or trail changed |
 | `result.equity` | One row per base bar, indexed by its IST close: equity, realized and unrealized P&L, charges so far, margin blocked, exposure |
@@ -66,6 +66,8 @@ Times are IST (`time`, `entry_time`, `exit_time` columns, time-zone aware); colu
 | `result.costs` | What each fill was charged, component by component (see [Costs](costs-slippage-and-margin.md#charges)) |
 | `result.contract_notes` | One row per contract note, with the rounding adjustment |
 | `result.skipped` | Orders a sizer sized to zero (`rounded_to_zero`) or a size cap left no room for (`cap`), with the reason |
+| `result.settlements`, `result.rolls` | Futures runs: the daily mark to market and settlement postings, and every roll (see [Futures](futures.md#mark-to-market-and-settlement)) |
+| `result.r_summary` | The R-multiples of the closed trades (see [R-multiples](#r-multiples)) |
 | `result.gross_pnl` | `{"realized", "unrealized", "total"}` before charges |
 | `result.assumptions` | Every setting the run used, defaults resolved |
 | `result.warnings` | What you must know about the result, most important first |

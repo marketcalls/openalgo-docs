@@ -62,7 +62,7 @@ A DataFrame works when the engine can tell three things, none of which it guesse
 2. **The time.** A `DatetimeIndex`, or a column named `timestamp`, `datetime`, `date`, `time` or `ts`.
 3. **The time zone.** A time-zone-aware index or column, or `tz=` for naive times (`tz="Asia/Kolkata"` for IST clock times). There is no default, because a wrong guess shifts every bar by 5 hours 30 minutes. Numbers counted from 1970 (epoch values, with `unit=`) are UTC by definition and need no `tz=`.
 
-The run takes its `start` and `end` from a DataFrame (naive with `tz=`, or time-zone aware) when you leave them out. A file path does not give them: pass `start=` and `end=` with `data="...csv"`.
+The run takes its `start` and `end` from your data when you leave them out, whether it is a DataFrame (naive with `tz=`, or time-zone aware) or a file.
 
 Each timestamp is the instant the bar **opens** (the OpenAlgo convention). A daily bar is stamped with its date: midnight IST, 00:00 UTC of the session date, or the session open all work (other times of day are mapped to their IST date, with a warning).
 
@@ -97,11 +97,9 @@ class BuyAndHold(bt.Strategy):
             self.buy(qty=50)
 
 
-# The same bars from the DataFrame and from the CSV file.
-# The DataFrame gives the run its dates; the file needs them.
+# The same bars from the DataFrame and from the CSV file; both give the run its dates.
 from_frame = bt.backtest(BuyAndHold, data=frame, tz="Asia/Kolkata", capital=100_000)
-dates = {"start": "2026-04-01", "end": "2026-06-30"}
-from_file = bt.backtest(BuyAndHold, data="sbin_daily.csv", tz="Asia/Kolkata", capital=100_000, **dates)
+from_file = bt.backtest(BuyAndHold, data="sbin_daily.csv", tz="Asia/Kolkata", capital=100_000)
 print(len(from_frame.equity), "sessions;", "same result:", from_frame.fills.equals(from_file.fills))
 ```
 
@@ -181,7 +179,7 @@ broken = frame.set_index("Date")
 broken.iloc[5, broken.columns.get_loc("High")] = broken.iloc[5]["Close"] - 10  # a high below the close
 
 try:
-    bt.backtest(BuyAndHold, data=broken, tz="Asia/Kolkata", capital=100_000, **dates)
+    bt.backtest(BuyAndHold, data=broken, tz="Asia/Kolkata", capital=100_000)
 except DataQualityError as error:
     print(str(error).split(". ")[0])
 
@@ -191,8 +189,8 @@ print(meta.quality.summary().splitlines()[0])
 
 <!-- output -->
 ```text
-NSE:SBIN D: data quality check failed: 1 rows have a high below the open or close, or a low above them
-error: 1 rows have a high below the open or close, or a low above them
+NSE:SBIN D: data quality check failed: 1 row has a high below the open or close, or a low above them
+error: 1 row has a high below the open or close, or a low above them
 ```
 
 ## Splits and bonuses
@@ -294,7 +292,7 @@ except NotImplementedError as error:
 ```text
 NSE:EXAMPLE D: data quality check failed: 1 suspected unadjusted split or bonus (2026-07-01: the previous close 1225.60 against the open 613.60 is a ratio of 1.997, near 2 shares for every 1 (a 1:1 bonus, or a split from face value 10 to 5 or 2 to 1), and the session closed at 614.60, keeping the new level)
 gap: 2026-07-01 suspected 1.997 | a 1:1 bonus, or a split from face value 10 to 5 or 2 to 1
-EXAMPLE: the bars are not adjusted for 1 declared corporate actions (2026-07-01: a bonus (2 shares for every 1); the previous close 1225.60 against the open 613.60 is a ratio of 1.997)
+EXAMPLE: the bars are not adjusted for 1 declared corporate action (2026-07-01: a bonus (2 shares for every 1); the previous close 1225.60 against the open 613.60 is a ratio of 1.997)
 trades: 1
 EXAMPLE: a position is held across 2026-07-01, the ex-date of a bonus (2 shares for every 1) that the bars are not adjusted for
 ```

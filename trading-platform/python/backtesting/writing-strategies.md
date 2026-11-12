@@ -146,7 +146,7 @@ The engine calls these methods; override the ones you need.
 
 The callbacks receive a plain dict. Every event carries `type`, `name`, `time` (IST), `symbol` and the slice it happened in; an order event adds `order_id`, `quantity_units`, `price_rupees` and `reject_code`.
 
-`bar` has `symbol`, `time` (the IST time the bar opened), `close_time`, `open`, `high`, `low`, `close` and `volume`.
+`bar` is a read-only named tuple: `symbol`, `open`, `high`, `low`, `close`, `volume`, `ts_open` and `ts_close` (the open and close instants as UTC nanoseconds), plus `time` (the IST time the bar opened) and `close_time` (the IST time it closed).
 
 <!-- continues -->
 ```python

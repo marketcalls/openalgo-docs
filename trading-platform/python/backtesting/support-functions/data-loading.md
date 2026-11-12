@@ -20,6 +20,9 @@
 | `base` | The interval to obtain and resample from, such as `base="1m"` for 15-minute bars built from 1-minute data |
 | `calendar` | A session calendar (the built-in one by default) |
 | `cache`, `cache_dir`, `refresh` | The local cache of server rows: on by default, its folder, and fetching a range again |
+| `now` | The present: bars that have not closed by then (today's forming candle) are dropped. The clock by default |
+| `broker` | Your broker's name, for the size of each history request; by default the server is asked |
+| `provider_options` | Options for the data source, such as `chunk_days`, `pacing` or `max_retries` for OpenAlgo history |
 | `corporate_actions` | Splits, bonuses and checked dates of a share, a list of `CorporateAction` (see [Splits and bonuses](../data.md#splits-and-bonuses)) |
 | `strict` | `True` (default) stops on a failed error-level quality check; `False` returns the bars with the report |
 

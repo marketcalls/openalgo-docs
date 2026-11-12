@@ -40,7 +40,7 @@ A futures position is marked to market at every session close, as the exchange d
 
 ## Margin and tick size
 
-* **Margin** comes from the dated table on [Costs, Slippage and Margin](costs-slippage-and-margin.md#margin): NSE index and stock futures, BSE BANKEX and 30 MCX commodities, each a percent of the value. These rows are one day's observation of a broker's public margin page, marked unverified, so a run that uses one names it in `result.warnings`. An instrument with no row (SENSEX and SENSEX50 futures today) stops the run before any data is loaded.
+* **Margin.** Every futures contract blocks 20 percent of its contract value (5x) by default, on any exchange, underlying and date. Give your broker's figures with `margin=` (see [Your own margin](#your-own-margin)).
 * **Tick size.** Some NFO and BFO contracts take their tick from a price slab, fixed each month by a reference close (an index future's by the index close on the previous month's last trading day). The engine reads that close from the run's own data: the underlying's bars when the source has them (with your own data, the index's bars under its name, such as `data["NIFTY"]`), otherwise the contract's own close that day. The Assumptions line of each contract says which close set its tick. It still asks for `instrument=` when the data has neither.
 
 ## Example
@@ -133,7 +133,7 @@ print(result.trades[["symbol", "exit_reason", "gross_pnl_rupees", "net_pnl_rupee
 settled = result.settlements
 print(settled[["date", "symbol", "quantity_units", "price_rupees", "amount_rupees", "kind"]].head(4).to_string(index=False))
 print("postings", round(settled["amount_rupees"].sum(), 2), "= gross P&L", result.gross_pnl["total"])
-print(result.warnings[0][:60])
+print(result.assumptions["futures_margin"])
 ```
 
 <!-- output -->
@@ -148,10 +148,51 @@ NIFTY23NOV26FUT      signal           -3217.5        -4212.98
 2026-09-28 NIFTY29SEP26FUT             0.0       25119.9         1111.5 daily
 2026-09-28 NIFTY27OCT26FUT            65.0       25225.4          643.5 daily
 postings 34404.5 = gross P&L 34404.5
-margin row FUT_NIFTY/1, used from 2026-09-24, is unverified:
+NIFTY 20 percent of contract value (default)
 ```
 
-The last line is the margin warning: the NIFTY futures margin row is an unverified observation. Python also shows a `ReferenceDataWarning` from this run, because the expiry calendar it looks up reaches past the date the reference tables were last checked.
+The last line is the futures margin the run used: the default, 20 percent of the contract value. The September entry blocked Rs 3,25,686.40 of the Rs 5,00,000 capital, and the largest margin of the run, on the roll into the November contract, was Rs 3,35,942.10.
+
+## Your own margin
+
+Real futures margins differ by underlying and change every day, so the engine does not guess them. Every futures contract, on any exchange, underlying and date, blocks **20 percent of its contract value (5x)** unless you pass `margin=` to `bt.backtest` or `bt.optimize`:
+
+| `margin=` | Margin blocked |
+|---|---|
+| `None` (default) | 20 percent of the contract value for every futures contract |
+| `bt.pct(x)` | x percent of the contract value for every futures contract (above 0, at most 100) |
+| `bt.rupees(x)` | x rupees per lot of the contract traded, the figure a broker's margin calculator shows for one lot |
+| `{"NIFTY": bt.rupees(200_000), "CRUDEOIL": bt.pct(30)}` | A value per underlying; an underlying the dict does not name keeps the default |
+
+* A bare number is refused, because it could be read as a percent or as rupees; so are a percent above 100, a contract symbol (name the underlying) and a lower-case name. Each raises `ConfigError` saying what to write.
+* Rupees per lot count the lots of the contract traded, so after a roll that changed the lot size the next contract's lots count.
+* An underlying the run does not trade, or `margin=` on a run without futures, is named in `result.warnings` as unused.
+* The Assumptions block states the margin of each underlying traded and whether it is the default or yours; the manifest records it and `rerun()` repeats it.
+* It is a backtest assumption only. In live trading your broker computes the margin.
+
+<!-- continues -->
+```python
+# One NIFTY lot at the margin a broker's calculator shows, and BANKNIFTY at 12 percent.
+own_margin = result.rerun(margin={"NIFTY": bt.rupees(200_000), "BANKNIFTY": bt.pct(12)})
+print(own_margin.assumptions["futures_margin"])
+print("largest margin:", own_margin.equity["margin_rupees"].max())
+print(own_margin.warnings)
+
+try:
+    result.rerun(margin=15)
+except bt.errors.ConfigError as error:
+    print(str(error).split(";")[0])
+```
+
+<!-- output -->
+```text
+NIFTY 200000 rupees per lot (margin=)
+largest margin: 200000.0
+['margin= names BANKNIFTY, which this run does not trade as futures; its value is unused']
+margin=: a bare number could be a percent or rupees
+```
+
+BANKNIFTY is not traded in this run, so its value is unused and the warning says so.
 
 ## With data from OpenAlgo
 
@@ -172,4 +213,3 @@ print(result.warnings)
 * MCX futures from the reference tables: they do not list MCX monthly contracts yet, so pass each MCX contract with `instrument=`.
 * Condition strategies (`entry_when` and the others) on an underlying, and other intervals of a futures series (`self.data["NIFTY", "15m"]`); both raise `NotImplementedError`.
 * `symbols` that mix underlyings and contract symbols.
-* The margin of SENSEX and SENSEX50 futures (no row in the margin table).

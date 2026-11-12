@@ -195,19 +195,18 @@ The bar opens were 800.70 for the buy and 816.00 for the sell. Two basis points 
 
 ## Margin
 
-An order that needs more margin than the strategy's free cash is rejected with `margin`, checked at the open of the bar it would fill on. The margin comes from a dated table:
+An order that needs more margin than the strategy's free cash is rejected with `margin`, checked at the open of the bar it would fill on. The margin blocked:
 
 | Position | Margin blocked | Status |
 |---|---|---|
 | Cash equity, CNC (delivery) | The full value; no leverage | Verified |
 | Cash equity, MIS (intraday) | The value divided by the leverage the order asks for with `leverage=`, or the strategy's class attribute `leverage` (1 when neither asks), up to 5 (a 20 percent margin) | Verified from 1 September 2021; earlier dates use the same 5x limit, unverified |
 | Long options | The premium paid | Verified |
-| NSE index futures | A percent of the value per underlying: NIFTY 11.37, BANKNIFTY and FINNIFTY 11.38, MIDCPNIFTY 12.07, NIFTYNXT50 11.41, NIFTYFPI 9.36 | Unverified |
-| NSE stock futures | A percent of the value per underlying, for 218 underlyings (from 17.31 to 47.12 percent) | Unverified |
-| BSE BANKEX futures | 11.23 percent of the value | Unverified |
-| MCX futures | A percent of the value per commodity, for 30 commodities (from 6.33 to 37.57 percent) | Unverified |
+| Futures, any exchange and underlying | 20 percent of the contract value (5x) on every date, unless `margin=` gives your own: a percent of the value or rupees per lot, for every underlying or per underlying (see [Futures](futures.md#your-own-margin)) | The engine's default, stated in the Assumptions block |
 
-The futures rows are one day's observation of a broker's public margin page (SPAN plus exposure margin, read on 12 November 2026) applied to every date, so a run that uses one names the row in `result.warnings`. Leverage on CNC, or above 5, is a `ConfigError`. Not available yet: the margin of SENSEX and SENSEX50 futures (no row, so a run that trades them stops before any data is loaded) and of short options (`NotImplementedError`).
+Real futures margins differ by underlying and change every day, so the engine uses one stated default instead of a guess per contract; pass your broker's figures with `margin=` when they matter. It is a backtest assumption only: in live trading your broker computes the margin. Leverage on CNC, or above 5, is a `ConfigError`. Not available yet: selling an option to open a short position (short-option margin raises `NotImplementedError`).
+
+A sizer is never cut down to the free cash: an order a sizer sized beyond the margin is rejected with `margin` like any other, and `result.warnings` says so and names the remedy, a size cap such as `size_caps = bt.size.caps(leverage=1)` (see [Reinvest and size caps](#reinvest-and-size-caps)). The `sizer` column of `result.orders` names the sizer that set each order's quantity.
 
 <!-- continues -->
 ```python
@@ -314,7 +313,7 @@ stop 5      249 shares
 no stop  skipped: rounded_to_zero
 ```
 
-With a 20-point stop the risk rule gives 125 shares (Rs 2,500 at risk). With a 5-point stop it would give 500, so the 40 percent value rule decides: Rs 200,000 at about 801 is 249 whole shares. Without a stop the function returns 0 and the order is skipped.
+With a 20-point stop the risk rule gives 125 shares (Rs 2,500 at risk). With a 5-point stop it would give 500, so the 40 percent value rule decides: Rs 2,00,000 at about 801 is 249 whole shares. Without a stop the function returns 0 and the order is skipped.
 
 ### Reinvest and size caps
 
@@ -363,7 +362,7 @@ qty=400, stop 5           400 shares
 size_caps: position 20 percent of equity; risk 1000 rupees
 ```
 
-80 percent of equity would be 499 shares. With a 5-point stop the position cap decides (Rs 100,000 is 124 shares); with a 20-point stop the risk cap does (Rs 1,000 over 20 points is 50 shares). Without a stop the risk cap leaves no room, so the order is skipped. The explicit `qty=400` is not capped.
+80 percent of equity would be 499 shares. With a 5-point stop the position cap decides (Rs 1,00,000 is 124 shares); with a 20-point stop the risk cap does (Rs 1,000 over 20 points is 50 shares). Without a stop the risk cap leaves no room, so the order is skipped. The explicit `qty=400` is not capped.
 
 ## Warnings to read
 

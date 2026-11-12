@@ -143,7 +143,7 @@ show(bt.backtest(ToTarget, data=rising, quantity_mode="venue", **QUIET))
 2026-10-05 10:30:00+05:30  BUY           100.0         509.1 signal         None
 ```
 
-Reading it: 100 shares are bought, then 200 more to reach 300. At 10:00 the equity is Rs 501,000, and 20 percent of it at the decision price of 507.30 is 197 whole shares, so 103 are sold. A target of -100 sells 297 in one order: 197 close the long (`signal`) and 100 open the short (`entry`). A target of 0 buys the 100 back, and the second 0 sends nothing.
+Reading it: 100 shares are bought, then 200 more to reach 300. At 10:00 the equity is Rs 5,01,000, and 20 percent of it at the decision price of 507.30 is 197 whole shares, so 103 are sold. A target of -100 sells 297 in one order: 197 close the long (`signal`) and 100 open the short (`entry`). A target of 0 buys the 100 back, and the second 0 sends nothing.
 
 ## Limit, stop and GTT orders
 

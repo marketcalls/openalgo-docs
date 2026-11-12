@@ -13,12 +13,12 @@ A backtest replays your strategy on past price bars and shows what it would have
 * **Lot size, tick size and freeze quantity** of futures and options, from dated reference tables.
 * **The futures roll**: a futures strategy names an underlying, and its position rolls to the next contract the session before expiry, with daily mark to market.
 * **Session times and holidays** of NSE, BSE, NFO, BFO, MCX, CDS and BCD, including the dated intraday entry cut-off and square-off for MIS.
-* **Margin**: an order that needs more margin than your free cash is rejected, as a broker would.
+* **Margin**: an order that needs more margin than your free cash is rejected, as a broker would. Futures block 20 percent of the contract value by default, or your broker's figures with `margin=`.
 * **Splits and bonuses**: OpenAlgo history may not be adjusted for them, so the bars of NSE and BSE shares are checked for an overnight gap that looks like an unadjusted split or bonus. The run stops with the date and what to do, instead of trading on a fall in price that never happened (see [Data](data.md#splits-and-bonuses)).
 
 You write the strategy once as a small Python class. The engine runs it bar by bar, decides at each bar close and fills at the next bar's open, so a strategy can never trade on a price it could not have seen.
 
-The calculations (fills, positions, charges, the ledger, the metrics) run in a compiled Rust core, so the same inputs always give the same result, bit for bit.
+The calculations (fills, positions, charges, the ledger, the metrics) run in a compiled Rust core, so the same inputs always give the same result (see [Speed and repeatable results](#speed-and-repeatable-results)).
 
 ## Two ways to run a strategy
 
@@ -45,9 +45,23 @@ You can run a backtest with only a strategy, data and capital. Everything else h
 | Stops and targets | For an intraday strategy, tested on 1-minute bars when 1-minute data covers the whole run, otherwise on the strategy bars; daily bars for a daily strategy | `base=` |
 | Calendar | Built-in holiday lists for 2019 to 2026 and dated session hours | `calendar=` |
 | Futures | The current-month contract, rolled one session before expiry | `expiry` (class), `roll=` |
+| Futures margin | 20 percent of the contract value (5x), for every underlying and date | `margin=` |
 | Benchmark | None: no alpha, beta or other benchmark figures | `benchmark=` |
 
 See [Orders and Risk](orders-and-risk.md) and [Costs, Slippage and Margin](costs-slippage-and-margin.md) for the details.
+
+## Speed and repeatable results
+
+The engine is fast enough to sweep parameters over years of 1-minute bars on a desktop computer. Measured on one core of a current desktop with the speed benchmark in the SDK repository (`benchmark/backtest_speed.py`):
+
+| Run | Time |
+|---|---|
+| A strategy with `on_bar`, one call per bar | About 575,000 bars a second: 1.75 microseconds per bar for the whole run, of which about 1 microsecond is the Python call itself |
+| A [condition strategy](writing-strategies.md#condition-strategies) on 1,000,000 one-minute bars, with the default charges and slippage, about 9,300 round trips and every metric | About 1.1 seconds (the target is 2 seconds) |
+
+Adding trades adds time in proportion (about 17 microseconds per round trip), and so does adding bars, so a long run costs what its length suggests. Your own `on_bar` code and indicators add their own time on top.
+
+**Results repeat exactly.** The same strategy on the same data and settings gives the same result every time, bit for bit, on the same platform. The equity curve and the trade table use only exact arithmetic (prices in whole price units, the ledger in paise), so they are identical on every platform. The metrics also use the platform's math library (logarithms, exponentials and powers for CAGR, annualised figures and the distribution figures), so on another operating system a metric can differ in its last digits, always within one part in a billion (1e-9). The SDK's test suite pins four reference runs (an intraday strategy, a condition strategy, a futures strategy across a roll and a GTT positional strategy) to these rules.
 
 ## Install
 
@@ -218,7 +232,7 @@ No setting is accepted and then ignored. Every class attribute and every `bt.bac
 
 ## Not available yet
 
-The following are part of the design but not built. Each raises `NotImplementedError` (with a message naming it) when you use it, so nothing is ignored silently. Pages for them will be added as they land.
+The following are part of the design but not built. Each raises `NotImplementedError` with a message that says it is not supported in this version and what to do instead, so nothing is ignored silently. Pages for them will be added as they land.
 
 * `bt.live`: trading a strategy through OpenAlgo in sandbox or live mode.
 * `fill="close"` (filling at the decision bar's close).
@@ -228,5 +242,5 @@ The following are part of the design but not built. Each raises `NotImplementedE
 * The combined rules `combined_stop`, `combined_target`, `lock_profit` and `trail_sl_to_entry`, and `after_risk_exit="allow_reentry"`, which only they would use.
 * `cooldown` and `max_hold` given as a time (such as `"30m"`); give them in bars.
 * One indicator over two symbols or two intervals, and open interest in strategy bars.
-* The margin of SENSEX and SENSEX50 futures and of short options.
+* Selling an option to open a short position (short-option margin).
 * Holding a position or a GTT order across a split or bonus that the bars are not adjusted for (declared with `corporate_actions=`); supply adjusted bars or run on other dates.
