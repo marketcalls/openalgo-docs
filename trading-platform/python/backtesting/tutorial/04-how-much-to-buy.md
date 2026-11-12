@@ -55,7 +55,7 @@ print(f"Average buy  : Rs {invested.mean():,.0f}")
 
 <!-- output -->
 ```text
-Net profit   : Rs 24,755.99
+Net profit   : Rs 24,756.04
 Return       : 24.76%
 Max drawdown : -23.55%
 Trades       : 11 (36% won)
@@ -95,7 +95,7 @@ print(f"Average buy  : Rs {invested.mean():,.0f}")
 
 <!-- output -->
 ```text
-Net profit   : Rs 27,236.41
+Net profit   : Rs 27,236.50
 Return       : 27.24%
 Max drawdown : -17.62%
 Trades       : 11 (36% won)
@@ -136,7 +136,7 @@ print(f"Average buy  : Rs {invested.mean():,.0f}")
 
 <!-- output -->
 ```text
-Net profit   : Rs 12,426.58
+Net profit   : Rs 12,426.75
 Return       : 12.43%
 Max drawdown : -8.83%
 Trades       : 11 (27% won)
@@ -149,10 +149,10 @@ Average buy  : Rs 33,910
 
 | Size of each buy | Net profit | Return | Max drawdown | Average buy |
 |---|---|---|---|---|
-| All the capital (lesson 1) | Rs 53,267.29 | 53.27% | -29.82% | All the equity |
-| `qty=100` | Rs 24,755.99 | 24.76% | -23.55% | Rs 67,321 |
-| `size=bt.size.percent(50)` | Rs 27,236.41 | 27.24% | -17.62% | Rs 57,191 |
-| `size=bt.size.fixed_risk(1)`, `stop=bt.pct(3)` | Rs 12,426.58 | 12.43% | -8.83% | Rs 33,910 |
+| All the capital (lesson 1) | Rs 53,267.48 | 53.27% | -29.82% | All the equity |
+| `qty=100` | Rs 24,756.04 | 24.76% | -23.55% | Rs 67,321 |
+| `size=bt.size.percent(50)` | Rs 27,236.50 | 27.24% | -17.62% | Rs 57,191 |
+| `size=bt.size.fixed_risk(1)`, `stop=bt.pct(3)` | Rs 12,426.75 | 12.43% | -8.83% | Rs 33,910 |
 
 Profit and drawdown grow together with the money at work. Choose the size by the fall you can live with, then look at the profit.
 

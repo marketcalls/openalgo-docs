@@ -67,7 +67,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs -4,226.55
+Net profit   : Rs -4,226.38
 Return       : -4.23%
 Max drawdown : -24.33%
 Trades       : 15 (33% won)

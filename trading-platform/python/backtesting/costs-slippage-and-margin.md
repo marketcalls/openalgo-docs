@@ -57,11 +57,11 @@ print_summary(result)
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
-Charges      : Rs 3,363.76
+Charges      : Rs 3,363.62
 ```
 
 The net profit is after every charge. The **max drawdown** is the largest fall of the account from its highest value.
@@ -88,8 +88,8 @@ print(result.costs[columns].head(2).round(2).to_string(index=False))
 <!-- output -->
 ```text
 side  price_rupees  brokerage    stt  exchange_txn  sebi_fee  stamp_duty  gst  dp_charge  total
- BUY        362.90        0.0  99.88          3.45      0.10       14.98 0.64       0.00 119.05
-SELL        456.95        0.0 125.77          4.34      0.13        0.00 0.80      15.34 146.37
+ BUY        362.90        0.0  99.88          3.45      0.10       14.98 0.62       0.00 119.03
+SELL        456.95        0.0 125.77          4.34      0.13        0.00 0.78      15.34 146.35
 ```
 
 Reading the buy: about 275 shares at 362.90 is an order of Rs 99,881. Delivery brokerage is zero. STT is 0.1 percent of the value (Rs 99.88), stamp duty 0.015 percent (Rs 14.98), and the exchange charge, SEBI fee and GST add about Rs 4. The sell pays STT again, no stamp duty, and the DP charge of Rs 15.34. Every rate is the one in force on the trade's date.
@@ -117,11 +117,11 @@ print_summary(flat)
 
 <!-- output -->
 ```text
-Net profit   : Rs 52,636.18
+Net profit   : Rs 52,636.37
 Return       : 52.64%
 Max drawdown : -29.87%
 Trades       : 11 (36% won)
-Charges      : Rs 3,875.38
+Charges      : Rs 3,875.24
 ```
 
 Twenty-two orders at Rs 20 each (Rs 440), plus the GST on them, raised the charges and lowered the profit. To price one trade without a backtest, use the [cost calculator](support-functions/cost-calculator.md).
@@ -150,11 +150,11 @@ print_summary(no_slippage)
 
 <!-- output -->
 ```text
-Net profit   : Rs 54,108.64
+Net profit   : Rs 54,108.83
 Return       : 54.11%
 Max drawdown : -29.73%
 Trades       : 11 (36% won)
-Charges      : Rs 3,373.25
+Charges      : Rs 3,373.11
 ```
 
 Over 22 fills, the default slippage cost about Rs 840 of profit. Keep it on: real fills are never exactly at the open.
@@ -218,11 +218,11 @@ print("first buy:", whole.trades["entry_units"].iloc[0], "shares")  # iloc[0]: t
 
 <!-- output -->
 ```text
-Net profit   : Rs 52,025.71
+Net profit   : Rs 52,025.85
 Return       : 52.03%
 Max drawdown : -29.33%
 Trades       : 11 (36% won)
-Charges      : Rs 3,282.13
+Charges      : Rs 3,281.99
 first buy: 268.0 shares
 ```
 
@@ -256,6 +256,7 @@ for text in result.warnings:  # "for" repeats the next line for each warning
 <!-- output -->
 ```text
 SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
+charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 used for 2021-01-01 were never verified against their source, so the charges may be off. Until 2021-03-31 NSE charged EQ-series shares outside the NIFTY 50 and NIFTY Next 50 Rs 2.75 per lakh (NSE/FA/46225) and the shares of those two indices this standard rate. The engine does not know an index's members, so the row is unverified.
 ```
 
 Here there is one: no lot or tick size was given for SBIN, so the engine used the usual ones for a stock, lot 1 and tick 0.05. Fills charged at rates not yet checked against their source, and orders the engine rejected, are listed here too.

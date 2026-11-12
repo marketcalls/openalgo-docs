@@ -80,13 +80,13 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
 ```
 
-The same bars give the same result as the first lesson, to the paisa: Rs 53,267.29 in 11 trades, with a max drawdown (the largest fall of the account from its highest value) of 29.82 percent. Passing the bars yourself changes nothing, until you change the bars.
+The same bars give the same result as the first lesson, to the paisa: Rs 53,267.48 in 11 trades, with a max drawdown (the largest fall of the account from its highest value) of 29.82 percent. Passing the bars yourself changes nothing, until you change the bars.
 
 ## What you learned
 

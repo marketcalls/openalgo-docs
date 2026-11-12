@@ -53,7 +53,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -61,7 +61,7 @@ Trades       : 11 (36% won)
 
 ## What the four numbers mean
 
-* **Net profit** (Rs 53,267.29) is what the strategy made after every charge. A position still open on the last day would count too, valued at that day's close; here the last trade had already closed.
+* **Net profit** (Rs 53,267.48) is what the strategy made after every charge. A position still open on the last day would count too, valued at that day's close; here the last trade had already closed.
 * **Return** (53.27 percent) is the net profit as a percent of the starting capital, Rs 1,00,000.
 * **Max drawdown** (-29.82 percent) is the largest fall of the account from its highest value to a later low. At its worst moment, the account was 29.82 percent below the best value it had reached. Ask yourself whether you would have kept the strategy running through that fall: if not, the profit at the end does not help you.
 * **Trades** (11) counts the round trips: a buy and the sell that closed it. The **win rate** (36 percent) is the share of trades that made money, here 4 of 11. A trend strategy often wins less than half its trades: many small losses, and a few large wins that pay for them. The profit matters more than how often you win.
@@ -82,17 +82,17 @@ print(result.trades[columns].to_string(index=False, float_format="%.2f"))
 <!-- output -->
 ```text
                entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30              362.90             456.95        25619.92
-2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30              503.15             460.20       -10994.83
-2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30              507.15             470.90        -8445.92
-2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30              487.85             535.85        10171.56
-2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30              567.95             565.60         -755.01
-2023-09-15 09:15:00+05:30 2023-10-19 09:15:00+05:30              599.50             569.65        -6015.90
-2023-12-07 09:15:00+05:30 2024-08-14 09:15:00+05:30              610.15             800.75        33895.47
-2024-11-05 09:15:00+05:30 2025-01-01 09:15:00+05:30              830.05             795.35        -6318.88
-2025-04-03 09:15:00+05:30 2026-03-30 09:15:00+05:30              770.20            1004.75        41356.49
-2026-04-27 09:15:00+05:30 2026-05-11 09:15:00+05:30             1111.20            1006.75       -17154.75
-2026-07-03 09:15:00+05:30 2026-09-08 09:15:00+05:30             1055.25            1004.65        -8094.06
+2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30              362.90             456.95        25619.96
+2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30              503.15             460.20       -10994.80
+2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30              507.15             470.90        -8445.89
+2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30              487.85             535.85        10171.59
+2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30              567.95             565.60         -755.02
+2023-09-15 09:15:00+05:30 2023-10-19 09:15:00+05:30              599.50             569.65        -6015.91
+2023-12-07 09:15:00+05:30 2024-08-14 09:15:00+05:30              610.15             800.75        33895.51
+2024-11-05 09:15:00+05:30 2025-01-01 09:15:00+05:30              830.05             795.35        -6318.89
+2025-04-03 09:15:00+05:30 2026-03-30 09:15:00+05:30              770.20            1004.75        41356.54
+2026-04-27 09:15:00+05:30 2026-05-11 09:15:00+05:30             1111.20            1006.75       -17154.77
+2026-07-03 09:15:00+05:30 2026-09-08 09:15:00+05:30             1055.25            1004.65        -8094.07
 ```
 
 * Each row is one trade: bought at `entry_time` and sold at `exit_time`, both in IST (`+05:30`). 09:15 is the market open, when every order of this daily strategy filled.
@@ -175,9 +175,10 @@ Result(SBIN)
   instruments: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
   benchmark: None
   indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 20): truncation passed at 4 cuts, warm-up 128 bars
-  gross P&L: 56627.86 (realized 56627.86)
-  charges: 3360.57; net P&L: 53267.29
+  gross P&L: 56627.91 (realized 56627.91)
+  charges: 3360.43; net P&L: 53267.48
   warning: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
+  warning: charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 used for 2021-01-01 were never verified against their source, so the charges may be off. Until 2021-03-31 NSE charged EQ-series shares outside the NIFTY 50 and NIFTY Next 50 Rs 2.75 per lakh (NSE/FA/46225) and the shares of those two indices this standard rate. The engine does not know an index's members, so the row is unverified.
 ```
 
 A few lines worth knowing:

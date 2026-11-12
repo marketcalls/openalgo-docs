@@ -56,7 +56,7 @@ print(end.round(2).to_string(index=False))
 
 <!-- output -->
 ```text
-Net profit   : Rs 79,625.78
+Net profit   : Rs 79,625.79
 Return       : 79.63% (NIFTY 80.63%)
 Max drawdown : -24.91%
 Orders       : 87

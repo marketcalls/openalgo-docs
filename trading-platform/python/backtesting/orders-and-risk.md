@@ -60,7 +60,7 @@ print_summary(result)
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -91,7 +91,7 @@ print_summary(bt.backtest(BuyFifty, client, start="2021-01-01", end="2026-11-11"
 
 <!-- output -->
 ```text
-Net profit   : Rs 12,294.07
+Net profit   : Rs 12,294.11
 Return       : 12.29%
 Max drawdown : -14.62%
 Trades       : 11 (36% won)
@@ -127,7 +127,7 @@ print_summary(bt.backtest(ExitBelowEma, client, start="2021-01-01", end="2026-11
 
 <!-- output -->
 ```text
-Net profit   : Rs 5,410.32
+Net profit   : Rs 5,410.46
 Return       : 5.41%
 Max drawdown : -20.96%
 Trades       : 11 (18% won)
@@ -162,7 +162,7 @@ print(stopped.trades["exit_reason"].value_counts().to_dict())  # how many trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 22,537.04
+Net profit   : Rs 22,537.18
 Return       : 22.54%
 Max drawdown : -28.97%
 Trades       : 11 (27% won)
@@ -194,7 +194,7 @@ print(booked.trades["exit_reason"].value_counts().to_dict())
 
 <!-- output -->
 ```text
-Net profit   : Rs 16,577.04
+Net profit   : Rs 16,577.22
 Return       : 16.58%
 Max drawdown : -22.24%
 Trades       : 11 (27% won)
@@ -224,7 +224,7 @@ print(trailed.trades["exit_reason"].value_counts().to_dict())
 
 <!-- output -->
 ```text
-Net profit   : Rs 22,961.80
+Net profit   : Rs 22,961.95
 Return       : 22.96%
 Max drawdown : -23.61%
 Trades       : 11 (36% won)

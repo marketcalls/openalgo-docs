@@ -75,7 +75,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -85,7 +85,7 @@ Trades       : 11 (36% won)
 
 ## What the four numbers mean
 
-* **Net profit:** the strategy turned Rs 1,00,000 into Rs 1,53,267.29, after every charge (brokerage, STT, stamp duty, GST and the rest).
+* **Net profit:** the strategy turned Rs 1,00,000 into Rs 1,53,267.48, after every charge (brokerage, STT, stamp duty, GST and the rest).
 * **Return:** that profit as a percent of the starting capital.
 * **Max drawdown:** the largest fall of the account from its highest value to a later low. At its worst, the account was 29.82 percent below its best value so far.
 * **Trades:** 11 round trips (a buy and the sell that closed it), of which 36 percent, 4 trades, made money. A few long rises paid for the many small losses.

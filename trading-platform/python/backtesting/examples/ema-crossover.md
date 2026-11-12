@@ -64,14 +64,14 @@ print(trades.head(3).to_string(index=False, float_format="%.2f"))
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
                entry_time                 exit_time  net_pnl_rupees
-2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30        25619.92
-2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30       -10994.83
-2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30        -8445.92
+2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30        25619.96
+2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30       -10994.80
+2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30        -8445.89
 ```
 
 Only 4 of the 11 trades won, but a few long trends paid for the many short false starts. The max drawdown is the largest fall of the account from its highest value. Every crossover was decided at a day's close and filled at the next day's open (09:15), after delivery charges and slippage.

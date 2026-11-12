@@ -50,7 +50,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -120,7 +120,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -176,7 +176,7 @@ print(f"Net profit   : Rs {same.metrics['net_profit']:,.2f}")
 <!-- output -->
 ```text
 ['Date', 'Close', 'High', 'Low', 'Oi', 'Open', 'Volume']
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 ```
 
 For names the engine cannot match (such as `o`, `h`, `l`, `c`) or bars stamped at their close, load them first with [`load_bars`](support-functions/data-loading.md).

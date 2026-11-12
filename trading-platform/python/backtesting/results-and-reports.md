@@ -48,7 +48,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -78,11 +78,11 @@ print(result.trades[columns].head().to_string(index=False, float_format="%.2f"))
 <!-- output -->
 ```text
                entry_time                 exit_time  entry_units  entry_price_rupees  exit_price_rupees  net_pnl_rupees exit_reason
-2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30       275.23              362.90             456.95        25619.92      signal
-2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30       249.37              503.15             460.20       -10994.83      signal
-2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30       225.75              507.15             470.90        -8445.92      signal
-2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30       217.39              487.85             535.85        10171.56      signal
-2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30       204.62              567.95             565.60         -755.01      signal
+2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30       275.23              362.90             456.95        25619.96      signal
+2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30       249.37              503.15             460.20       -10994.80      signal
+2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30       225.75              507.15             470.90        -8445.89      signal
+2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30       217.39              487.85             535.85        10171.59      signal
+2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30       204.62              567.95             565.60         -755.02      signal
 ```
 
 How to read a row:
@@ -109,12 +109,12 @@ print(f"Last    : Rs {equity.iloc[-1]:,.2f} on {equity.index[-1].date()}")  # il
 
 <!-- output -->
 ```text
-Highest : Rs 218,391.12 on 2026-02-23
-Lowest  : Rs 99,206.50 on 2021-05-14
-Last    : Rs 153,267.29 on 2026-11-11
+Highest : Rs 218,391.39 on 2026-02-23
+Lowest  : Rs 99,206.52 on 2021-05-14
+Last    : Rs 153,267.48 on 2026-11-11
 ```
 
-The account peaked at Rs 2,18,391.12 in February 2026 and ended at Rs 1,53,267.29: that fall of 29.82 percent from the peak is the max drawdown of the summary. The last trade closed on 8 September 2026, so the account then held only cash and its value stopped moving.
+The account peaked at Rs 2,18,391.39 in February 2026 and ended at Rs 1,53,267.48: that fall of 29.82 percent from the peak is the max drawdown of the summary. The last trade closed on 8 September 2026, so the account then held only cash and its value stopped moving.
 
 ## Performance figures
 
@@ -137,7 +137,7 @@ CAGR         : 7.56%
 Sharpe ratio : 0.46
 Exposure     : 66%
 Profit factor: 1.92
-Charges      : Rs 3,363.76
+Charges      : Rs 3,363.62
 ```
 
 Returns, rates and drawdowns are stored as fractions (0.0756 is 7.56 percent); the `:.2%` in the f-string prints them as percents. [Metric Definitions](metric-definitions.md) explains every figure.
@@ -219,6 +219,7 @@ for warning in result.warnings:  # print each warning on its own line
 <!-- output -->
 ```text
 SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
+charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 used for 2021-01-01 were never verified against their source, so the charges may be off. Until 2021-03-31 NSE charged EQ-series shares outside the NIFTY 50 and NIFTY Next 50 Rs 2.75 per lakh (NSE/FA/46225) and the shares of those two indices this standard rate. The engine does not know an index's members, so the row is unverified.
 ```
 
 This run has one: SBIN was traded with the usual terms of a share, a lot of 1 share and a tick (the smallest price step) of 5 paise. You will see it on every share you backtest; it needs no action. Orders the engine rejected (for not enough cash, or outside the intraday hours) are listed here too. `print(result)` shows the warnings together with every setting the run used.
@@ -258,7 +259,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 71,912.03
+Net profit   : Rs 71,912.31
 Return       : 71.91%
 Max drawdown : -23.65%
 Trades       : 23 (39% won)

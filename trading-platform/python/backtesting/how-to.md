@@ -60,7 +60,7 @@ summary(result)
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -92,7 +92,7 @@ print(stopped.trades["exit_reason"].value_counts().to_dict())  # how many trades
 
 <!-- output -->
 ```text
-Net profit   : Rs -10,238.77
+Net profit   : Rs -10,238.63
 Return       : -10.24%
 Max drawdown : -23.85%
 Trades       : 11 (27% won)
@@ -120,7 +120,7 @@ summary(half)
 
 <!-- output -->
 ```text
-Net profit   : Rs 27,236.41
+Net profit   : Rs 27,236.50
 Return       : 27.24%
 Max drawdown : -17.62%
 Trades       : 11 (36% won)
@@ -209,9 +209,9 @@ print(result.trades[columns].head(3).round(2).to_string(index=False))  # head(3)
 <!-- output -->
 ```text
                entry_time                 exit_time  entry_units  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30       275.23              362.90             456.95        25619.92
-2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30       249.37              503.15             460.20       -10994.83
-2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30       225.75              507.15             470.90        -8445.92
+2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30       275.23              362.90             456.95        25619.96
+2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30       249.37              503.15             460.20       -10994.80
+2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30       225.75              507.15             470.90        -8445.89
 ```
 
 Each trade was decided at a day's close and filled at the next day's open, 09:15. `result.trades.to_csv("trades.csv", index=False)` saves the list for a spreadsheet. Lesson: [Read the Results](tutorial/02-read-the-results.md).
@@ -320,7 +320,7 @@ summary(own)
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -344,7 +344,7 @@ print([text for text in older.warnings if "backfilled" in text])  # the warning 
 
 <!-- output -->
 ```text
-Net profit   : Rs 106,083.19
+Net profit   : Rs 106,083.69
 Return       : 106.08%
 Max drawdown : -35.52%
 Trades       : 17 (29% won)
@@ -384,7 +384,7 @@ print("rebalance orders:", len(portfolio.orders))
 
 <!-- output -->
 ```text
-Net profit   : Rs 10,511.19
+Net profit   : Rs 10,511.20
 rebalance orders: 96
 ```
 

@@ -66,11 +66,11 @@ if __name__ == "__main__":
 <!-- output -->
 ```text
  fast  slow  net_profit  trades
-   15    40    50314.94      11
-   10    60    45902.33      12
-   15    60    43845.96       8
-   15    50    41352.42      11
-   20    40    41057.66      10
+   15    40    50315.18      11
+   10    60    45902.60      12
+   15    60    43846.13       8
+   15    50    41352.69      11
+   20    40    41057.93      10
 Best: {'fast': 15, 'slow': 40}
 ```
 
@@ -92,9 +92,9 @@ if __name__ == "__main__":
 ```text
 fast       10       15       20       25
 slow
-40    36013.0  50315.0  41058.0  27569.0
-50    37385.0  41352.0  37248.0  30563.0
-60    45902.0  43846.0  37909.0   9861.0
+40    36014.0  50315.0  41058.0  27569.0
+50    37386.0  41353.0  37249.0  30563.0
+60    45903.0  43846.0  37909.0   9861.0
 ```
 
 Every pair made money on these years, and the cells next to the winner (Rs 36,013, Rs 41,058 and Rs 41,352) did well too. That is a good sign. A lone best cell surrounded by losses would be a warning: more likely luck than a real edge.

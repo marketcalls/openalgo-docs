@@ -58,7 +58,7 @@ print_summary(result)
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -125,7 +125,7 @@ print_summary(bt.backtest(EmaRsi, client, start="2021-01-01", end="2026-11-11", 
 
 <!-- output -->
 ```text
-Net profit   : Rs 17,045.89
+Net profit   : Rs 17,046.03
 Return       : 17.05%
 Max drawdown : -30.94%
 Trades       : 10 (30% won)
@@ -164,7 +164,7 @@ print_summary(bt.backtest(MacdCrossover, client, start="2021-01-01", end="2026-1
 
 <!-- output -->
 ```text
-Net profit   : Rs 76,868.36
+Net profit   : Rs 76,868.88
 Return       : 76.87%
 Max drawdown : -32.98%
 Trades       : 50 (44% won)
@@ -187,7 +187,7 @@ print_summary(faster)
 
 <!-- output -->
 ```text
-Net profit   : Rs 71,912.03
+Net profit   : Rs 71,912.31
 Return       : 71.91%
 Max drawdown : -23.65%
 Trades       : 23 (39% won)
@@ -258,14 +258,14 @@ print(banks.trades.groupby("symbol")["net_pnl_rupees"].agg(["count", "sum"]).rou
 
 <!-- output -->
 ```text
-Net profit   : Rs 99,950.19
+Net profit   : Rs 99,950.72
 Return       : 49.98%
 Max drawdown : -32.50%
 Trades       : 23 (43% won)
            count       sum
 symbol
-ICICIBANK     12  25538.07
-SBIN          11  57104.56
+ICICIBANK     12  25538.32
+SBIN          11  57104.77
 ```
 
 All the symbols of one strategy trade on one exchange.
@@ -296,7 +296,7 @@ print_summary(bt.backtest(EmaRules, client, start="2021-01-01", end="2026-11-11"
 
 <!-- output -->
 ```text
-Net profit   : Rs 79,817.80
+Net profit   : Rs 79,818.10
 Return       : 79.82%
 Max drawdown : -29.82%
 Trades       : 12 (42% won)

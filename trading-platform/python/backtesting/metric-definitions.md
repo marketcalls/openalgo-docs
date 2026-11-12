@@ -52,7 +52,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -72,9 +72,9 @@ print(table.loc[["cagr", "sharpe", "max_drawdown", "profit_factor"], ["label", "
                           label     value      unit
 key
 cagr                       CAGR  0.075594  fraction
-sharpe             Sharpe ratio  0.460373     ratio
+sharpe             Sharpe ratio  0.460374     ratio
 max_drawdown   Maximum drawdown -0.298198  fraction
-profit_factor     Profit factor  1.921853     ratio
+profit_factor     Profit factor  1.921857     ratio
 ```
 
 How to read the units:

@@ -8,7 +8,7 @@ In this lesson you add an exit to every trade of the [EMA crossover](01-first-ba
 
 The distance is written `bt.pct(3)`: 3 percent of your buying price.
 
-Without any of them, lesson 1 made Rs 53,267.29 (53.27 percent), with a max drawdown of -29.82 percent, from 11 trades.
+Without any of them, lesson 1 made Rs 53,267.48 (53.27 percent), with a max drawdown of -29.82 percent, from 11 trades.
 
 ## A stop-loss
 
@@ -58,7 +58,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 39,430.47
+Net profit   : Rs 39,430.64
 Return       : 39.43%
 Max drawdown : -23.57%
 Trades       : 11 (27% won)
@@ -97,7 +97,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 34,098.29
+Net profit   : Rs 34,098.52
 Return       : 34.10%
 Max drawdown : -22.74%
 Trades       : 11 (36% won)
@@ -134,7 +134,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 63,367.58
+Net profit   : Rs 63,367.77
 Return       : 63.37%
 Max drawdown : -25.17%
 Trades       : 11 (36% won)
@@ -146,10 +146,10 @@ Trades       : 11 (36% won)
 
 | Exit added to `self.buy()` | Net profit | Return | Max drawdown | Trades won |
 |---|---|---|---|---|
-| None (lesson 1) | Rs 53,267.29 | 53.27% | -29.82% | 36% |
-| `stop=bt.pct(3)` | Rs 39,430.47 | 39.43% | -23.57% | 27% |
-| `target=bt.pct(20)` | Rs 34,098.29 | 34.10% | -22.74% | 36% |
-| `trail=bt.trail_pct(15)` | Rs 63,367.58 | 63.37% | -25.17% | 36% |
+| None (lesson 1) | Rs 53,267.48 | 53.27% | -29.82% | 36% |
+| `stop=bt.pct(3)` | Rs 39,430.64 | 39.43% | -23.57% | 27% |
+| `target=bt.pct(20)` | Rs 34,098.52 | 34.10% | -22.74% | 36% |
+| `trail=bt.trail_pct(15)` | Rs 63,367.77 | 63.37% | -25.17% | 36% |
 
 These numbers are for SBIN over these six years. Another stock or another period can rank the exits differently, so do not pick a setting only because it did best here; [Find Better Settings](09-find-better-settings.md) shows how to test that properly.
 

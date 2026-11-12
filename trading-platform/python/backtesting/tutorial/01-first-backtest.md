@@ -67,7 +67,7 @@ print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.29
+Net profit   : Rs 53,267.48
 Return       : 53.27%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
@@ -108,7 +108,7 @@ Trades       : 11 (36% won)
 
 ## What happened
 
-* The strategy turned Rs 1,00,000 into Rs 1,53,267.29: a net profit of Rs 53,267.29, or 53.27 percent, after all charges.
+* The strategy turned Rs 1,00,000 into Rs 1,53,267.48: a net profit of Rs 53,267.48, or 53.27 percent, after all charges.
 * Every buy and sell was decided at a day's close and filled at the next day's open, 09:15. A backtest never trades at a price it could not have seen.
 * The engine took Indian charges (brokerage, STT, exchange charges, stamp duty, GST and the rest) and slippage off every trade. **Slippage** is the small amount every fill loses to the market: you rarely get exactly the price you see.
 * Only 4 of the 11 trades made money, but a few long rises paid for the many small losses. The next lesson shows each trade.
