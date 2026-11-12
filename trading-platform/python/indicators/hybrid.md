@@ -108,6 +108,7 @@ Traditional pivot points calculate support and resistance levels based on previo
 
 ```python
 pivot, r1, s1, r2, s2, r3, s3 = ta.pivot_points(high, low, close)
+pivot, r1, s1, r2, s2, r3, s3 = ta.pivot_points(high, low, close, anchor="D")  # from SDK 2.1.0
 ```
 
 #### Parameters
@@ -115,10 +116,16 @@ pivot, r1, s1, r2, s2, r3, s3 = ta.pivot_points(high, low, close)
 * **high** _(array-like)_: High prices
 * **low** _(array-like)_: Low prices
 * **close** _(array-like)_: Closing prices
+* **anchor** _(str or None, default=None)_: From SDK 2.1.0. `None` applies the formula to each bar's own high, low and close: the levels on a bar are the levels for the **next** bar, known only once that bar has closed. `"D"` (or `"Session"`), `"Week"`, `"Month"` and the other anchors of `ta.vwap` return, on every bar, the levels of the **previous completed period**, so an intraday bar carries yesterday's levels. The bars of the first period are NaN. An anchor needs bar times; without them it raises `ValueError`.
+* **timestamps** _(array-like, optional)_: From SDK 2.1.0. Bar times, one per bar, for NumPy arrays and lists, which carry none.
 
 #### Returns
 
-* **tuple**: (pivot, r1, s1, r2, s2, r3, s3) arrays
+* **tuple**: (pivot, r1, s1, r2, s2, r3, s3) arrays, or Series for pandas input
+
+{% hint style="info" %}
+Without `anchor` (the only form in SDK 2.0.5) the levels on a bar come from that same bar, so do not compare them with that bar's own prices in a backtest: use them from the next bar on, or use `anchor="D"` for the classic daily floor pivots.
+{% endhint %}
 
 #### Example
 
@@ -147,28 +154,66 @@ df['Price_Position'] = df.apply(lambda row:
 print(df[['close', 'Pivot', 'Resistance_1', 'Support_1', 'Price_Position']].tail())
 ```
 
+Daily pivots on intraday bars, without a server: two sessions of synthetic 5-minute bars, and the second day's levels taken from the first day's high, low and close.
+
+<!-- runnable -->
+```python
+import numpy as np
+import pandas as pd
+
+from openalgo import ta
+
+times = pd.DatetimeIndex(
+    [t for day in ("2026-10-05", "2026-10-06")
+     for t in pd.date_range(f"{day} 09:15", periods=75, freq="5min", tz="Asia/Kolkata")]
+)
+close = pd.Series(np.linspace(800, 815, len(times)).round(2), index=times)
+high, low = close + 1, close - 1
+
+pivot, r1, s1, r2, s2, r3, s3 = ta.pivot_points(high, low, close, anchor="D")
+print("day 1:", pivot.iloc[0], pivot.iloc[74])  # no completed day yet
+print("day 2: pivot", round(pivot.iloc[75], 2), "R1", round(r1.iloc[75], 2), "S1", round(s1.iloc[75], 2))
+
+day1 = slice(0, 75)
+expected = (high.iloc[day1].max() + low.iloc[day1].min() + close.iloc[74]) / 3
+print("from day 1's high, low and close:", round(expected, 2))
+```
+
+<!-- output -->
+```text
+day 1: nan nan
+day 2: pivot 804.97 R1 810.93 S1 801.48
+from day 1's high, low and close: 804.97
+```
+
 ***
 
 ### Parabolic SAR
 
-Parabolic SAR provides trailing stop levels. `ta.psar` returns the stop levels only; the trend direction is read off the position of the SAR relative to price.
+Parabolic SAR provides trailing stop levels. By default `ta.psar` returns the stop levels only; from SDK 2.1.0 `return_trend=True` also returns the trend.
 
 #### Usage
 
 ```python
 sar_values = ta.psar(high, low, acceleration=0.02, maximum=0.2)
+sar_values, trend = ta.psar(high, low, return_trend=True)  # from SDK 2.1.0
 ```
 
 #### Parameters
 
 * **high** _(array-like)_: High prices
 * **low** _(array-like)_: Low prices
-* **acceleration** _(float, default=0.02)_: Acceleration factor
+* **acceleration** _(float, default=0.02)_: Acceleration factor: its starting value and its step
 * **maximum** _(float, default=0.2)_: Maximum acceleration factor
+* **return\_trend** _(bool, default=False)_: From SDK 2.1.0. True returns `(sar, trend)`
 
 #### Returns
 
-* **array**: SAR stop levels in the same format as input. `ta.psar` returns the SAR values only, not a trend array. Derive the direction by comparing price with the SAR: price above SAR is an uptrend, price below SAR is a downtrend.
+* **array**: SAR stop levels in the same format as input. With `return_trend=True`, a tuple `(sar, trend)`, where trend is `+1` while long (SAR below price) and `-1` while short. The first bar always starts long. Without `return_trend` (and in SDK 2.0.5), derive the direction by comparing price with the SAR: price above SAR is an uptrend, price below SAR is a downtrend.
+
+{% hint style="info" %}
+**From SDK 2.1.0, some SAR values change.** On an outside bar that reverses the trend, the new stop starts at that bar's extreme and is clamped to the two previous bars (SDK 2.0.5 started from the previous extreme point and did not clamp), and a bar that only touches the stop no longer reverses. Values differ from such a bar until the next reversal; ordinary bars are unchanged. A bar with a NaN high or low is NaN and the calculation carries on after it (2.0.5 stayed NaN to the end of the series). There is no switch for the 2.0.5 values.
+{% endhint %}
 
 #### Example
 
@@ -193,6 +238,29 @@ df['SAR_Distance_Pct'] = (df['SAR_Distance'] / df['close']) * 100
 
 print(df[['close', 'SAR', 'SAR_Signal', 'SAR_Distance_Pct']].tail())
 ```
+
+The trend output on synthetic prices, without a server:
+
+<!-- runnable -->
+```python
+import numpy as np
+
+from openalgo import ta
+
+k = np.arange(30)
+close = 100 + 5 * np.sin(k / 4)
+sar, trend = ta.psar(close + 1, close - 1, return_trend=True)
+print("SAR  ", np.round(sar[6:14], 2))
+print("trend", trend[6:14])
+```
+
+<!-- output -->
+```text
+SAR   [100.89 101.6  102.22 102.75 105.99 105.91 105.71 105.35]
+trend [ 1.  1.  1.  1. -1. -1. -1. -1.]
+```
+
+Note the sign: `trend` is `+1` while long, the opposite of the `SAR_Trend` column derived in the example above.
 
 ***
 

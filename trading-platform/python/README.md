@@ -9,7 +9,7 @@ pip install openalgo
 
 ### Version and order-result contracts
 
-The platform currently pins `openalgo==2.0.5` in `pyproject.toml`; the SDK and platform versions are independent. Use `pip install openalgo==2.0.5` with Python 3.12 or newer for a client matching this checkout. `pip install -U openalgo` may install a later version.
+`pip install openalgo` installs SDK 2.1.0, the release these pages describe; it needs Python 3.12 or newer. To upgrade an existing install, use `pip install --upgrade openalgo`. The SDK and platform versions are independent: the platform currently pins `openalgo==2.0.5` in its `pyproject.toml`, and anything marked "from SDK 2.1.0" on these pages needs 2.1.0.
 
 Prices, quantities, expiries and lot sizes below are illustrative. Resolve the actual contract's `lotsize`, `tick_size` and applicable `freeze_qty` with `client.symbol(...)` or `client.search(...)` before trading. On regular order methods the SDK parameter is `price_type`; the REST field it sends is `pricetype`.
 
@@ -18,6 +18,8 @@ Check the returned `status` and `mode`. Eligible Semi-Auto requests can return s
 `strategy` on `cancelallorder()` and `closeposition()` is a tracking label, not a filter; those calls affect the active account. For a Strategy RMS strategy use the module-specific methods described in [Strategy RMS From Python](strategy-management.md).
 
 Portfolio, SIP and Sector Rotation have no named wrappers in SDK 2.0.5; use their documented [REST APIs](../../api-documentation/v1/README.md).
+
+To test a strategy on past bars with Indian charges, slippage and session rules, see [Backtesting](backtesting/README.md), a preview that is new in SDK 2.1.0.
 
 ### Get the OpenAlgo apikey
 
@@ -50,8 +52,8 @@ api(api_key, host="http://127.0.0.1:5000", version="v1", timeout=120.0,
 * `version` (str): API version. Defaults to `v1`.
 * `timeout` (float): REST request timeout in seconds. Defaults to `120.0`.
 * `ws_port` (int): WebSocket port. Defaults to `8765`.
-* `ws_url` (str): full WebSocket URL. Overrides `host` and `ws_port`. When omitted it is derived as `ws://<host-name>:<ws_port>`, so a local install needs no `ws_url` at all.
-* `verbose` (int): SDK log level for the WebSocket feed. `0`/`False` silent, `1`/`True` basic, `2` full debug. See [Websockets (Verbose Control)](websockets-verbose-control.md).
+* `ws_url` (str): full WebSocket URL. Overrides `host` and `ws_port`. When omitted it is derived as `ws://<host-name>:<ws_port>`, so a local install needs no `ws_url` at all. From SDK 2.1.0, an `https://` host with neither `ws_url` nor `ws_port` connects to `wss://<host-name>/ws`, the address the OpenAlgo installers serve behind TLS; pass `ws_port=8765` to keep `ws://<host-name>:8765`. The `ws_port` default then becomes `None`, and `client.ws_port` still reads 8765.
+* `verbose` (int): SDK log level for the WebSocket feed. `0`/`False` silent, `1`/`True` basic, `2` full debug. See [Websockets (Verbose Control)](websockets-verbose-control.md). From SDK 2.1.0, feed errors (an exception in your callback, an unreadable frame, a rejection from the server) are never silent: they reach `on_error` listeners, or an ERROR record on the `openalgo.feed` logger, at every level.
 * `auto_reconnect` (bool): defaults to `True`. The SDK reconnects, re-authenticates and replays every active subscription after a drop, with exponential backoff. Set to `False` for manual reconnect handling.
 
 All order and data methods are keyword-only, so every argument must be passed by name.
@@ -2101,13 +2103,13 @@ Analyzer Toggle Response
 ### Strategy Module
 
 OpenAlgo's `/strategy` module runs multi-leg options strategies with end-to-end risk
-management, plus a signal-driven mode for TradingView alerts. Two surfaces reach it,
+management, plus a signal-driven mode for chart and scanner alerts. Two surfaces reach it,
 and they take different credentials:
 
 | Surface | Credential | Use for |
 |---------|-----------|---------|
 | `api(api_key=...)` | Your OpenAlgo API key | Lifecycle and reads: list, status, start, stop, close_all, close_leg, runs, orders, events |
-| `Strategy(...)` | The strategy's `oaws_` webhook token | The public webhook at `/strategy/webhook/<token>`, which is what TradingView posts to |
+| `Strategy(...)` | The strategy's `oaws_` webhook token | The public webhook at `/strategy/webhook/<token>`, which is what alert senders post to |
 
 Building a strategy stays in the browser wizard at `/strategy`. The API-key surface is
 lifecycle plus reads only: nothing on it can create a strategy, edit its
@@ -2458,7 +2460,7 @@ Events an operator should not ignore:
 
 ### Strategy Webhook Example
 
-The public webhook at `/strategy/webhook/<token>` is what TradingView and other alert
+The public webhook at `/strategy/webhook/<token>` is what charting and scanner alert
 senders post to. It is not under `/api/v1` and takes no API key: the `oaws_` token in
 the URL is the whole credential. The SDK's `Strategy` class speaks its protocol:
 
@@ -2483,13 +2485,13 @@ for every field of the nine methods above.
 
 ### WebSocket cache and callback behavior
 
-In SDK 2.0.5, `api(..., auto_reconnect=True)` is the default. After a drop the SDK reconnects with backoff, authenticates and replays desired market-data and order subscriptions. Explicit `disconnect()` stops that reconnect loop. The server itself does not restore sessions or replay missed ticks. Set `ws_url="wss://<domain>/ws"` explicitly for standard HTTPS installations; the SDK's default URL construction uses `ws://<host>:<ws_port>`.
+In SDK 2.0.5, `api(..., auto_reconnect=True)` is the default. After a drop the SDK reconnects with backoff, authenticates and replays desired market-data and order subscriptions. Explicit `disconnect()` stops that reconnect loop. The server itself does not restore sessions or replay missed ticks. Set `ws_url="wss://<domain>/ws"` explicitly for standard HTTPS installations; the SDK 2.0.5 default URL construction uses `ws://<host>:<ws_port>`. From SDK 2.1.0 an `https://` host without `ws_url` or `ws_port` connects to `wss://<host>/ws` by itself.
 
 `connect()` returns a boolean for connection/authentication, and `subscribe_ltp()`, `subscribe_quote()`, `subscribe_depth()` and `subscribe_orders()` return whether the request was sent. A sent request is not confirmation that every symbol was accepted or that fresh data arrived.
 
 Callbacks receive an envelope with `symbol`, `exchange`, numeric `mode` and a nested `data` object. The pinned SDK normalizes this data rather than forwarding all raw fields:
 
-- Quote callbacks/cache include a fixed field set, defaulting absent OHLC/volume/change fields to zero. A zero here may mean unavailable upstream, not a measured market value. Raw WebSocket frames can omit those fields.
+- Quote callbacks/cache include a fixed field set: `timestamp`, `open`, `high`, `low`, `close`, `ltp`, `volume`, `last_trade_quantity`, `avg_trade_price`, `change` and `change_percent`, defaulting absent fields to zero. A zero here may mean unavailable upstream, not a measured market value. Raw WebSocket frames can omit those fields. In SDK 2.0.5 `avg_trade_price` and `last_trade_quantity` are always 0, because the server sends them as `average_price` and `last_quantity`. From SDK 2.1.0 they are filled from those server fields, and quotes also carry `ltt`, `total_buy_quantity`, `total_sell_quantity` and `oi` (0 when the server does not send them).
 - Depth callbacks/cache retain `ltp`, `timestamp` and `depth`; extra OHLC, OI or total buy/sell quantity fields on the raw server frame are not retained. Use a raw WebSocket client when those extra fields are needed.
 - `get_ltp(exchange=None, symbol=None)`, `get_quotes(...)`, and `get_depth(...)` read SDK memory; they do not issue REST requests or create subscriptions. Results nest under `ltp`, `quote` and `depth`, then exchange and symbol. `client.quotes(...)` and `client.depth(...)` are separate REST snapshot methods.
 

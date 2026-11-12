@@ -271,7 +271,7 @@ median_result = ta.median(data, period=3)
 
 #### Parameters
 
-* **data** _(array-like)_: Price data (default hl2 in Pine Script)
+* **data** _(array-like)_: Price data (often the bar midpoint, (high + low) / 2)
 * **period** _(int, default=3)_: Period for median calculation
 
 #### Returns

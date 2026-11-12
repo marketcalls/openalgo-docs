@@ -4,10 +4,10 @@ OpenAlgo's Strategy RMS runs multi-leg options strategies with end-to-end risk m
 
 | Surface | Credential | Use for |
 | --- | --- | --- |
-| `Strategy(...)` | The strategy's `oaws_` webhook token | The public webhook at `/strategy/webhook/<token>`, the same endpoint TradingView posts to. Batch `start` / `stop`, signal `long_entry` / `long_exit` / `short_entry` / `short_exit`. |
+| `Strategy(...)` | The strategy's `oaws_` webhook token | The public webhook at `/strategy/webhook/<token>`, the same endpoint chart and scanner alerts post to. Batch `start` / `stop`, signal `long_entry` / `long_exit` / `short_entry` / `short_exit`. |
 | `api(api_key=...)` | Your OpenAlgo API key | Lifecycle and reads under `/api/v1/strategy/`: list, status, start, stop, close all, close one leg, runs, orders, events. |
 
-Both need **openalgo 2.0.4 or newer**; this platform checkout pins **2.0.5** (`pip install openalgo==2.0.5`). Building a strategy stays in the browser wizard at `/strategy`: neither surface can create a strategy, edit its configuration, enable live trading, rotate a webhook token, or delete anything.
+Both need **openalgo 2.0.4 or newer**; `pip install --upgrade openalgo` installs SDK 2.1.0, and the platform checkout pins **2.0.5**. Building a strategy stays in the browser wizard at `/strategy`: neither surface can create a strategy, edit its configuration, enable live trading, rotate a webhook token, or delete anything.
 
 Two strategy kinds, and each refuses the other's vocabulary:
 
