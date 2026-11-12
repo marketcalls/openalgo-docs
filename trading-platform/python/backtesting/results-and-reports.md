@@ -56,7 +56,7 @@ Times are IST (`time`, `entry_time`, `exit_time` columns, time-zone aware); colu
 |---|---|
 | `result.fills` | One row per fill: time, side, units, price, where in the bar it filled (`fill_at`: open, level, close), `reason`, order id, `target_index`, flags, charges |
 | `result.orders` | Every order with its final status, filled units, average price and `reject_code` |
-| `result.trades` | Closed round trips: entry and exit time and price, units, gross P&L, charges, net P&L, `exit_reason`, number of fills |
+| `result.trades` | Closed round trips: entry and exit time and price, units, gross P&L, charges, net P&L, `exit_reason`, number of fills, `initial_risk_rupees` and `r_multiple` (see [R-multiples](#r-multiples)) |
 | `result.positions` | The position history: one row whenever a position or its stop, targets or trail changed |
 | `result.equity` | One row per base bar, indexed by its IST close: equity, realized and unrealized P&L, charges so far, margin blocked, exposure |
 | `result.returns` | Simple returns of the equity series, bar to bar; the first bar is measured from the capital |
@@ -65,7 +65,7 @@ Times are IST (`time`, `entry_time`, `exit_time` columns, time-zone aware); colu
 | `result.stale_marks` | Open positions marked at an earlier close because a bar was missing |
 | `result.costs` | What each fill was charged, component by component (see [Costs](costs-slippage-and-margin.md#charges)) |
 | `result.contract_notes` | One row per contract note, with the rounding adjustment |
-| `result.skipped` | Orders a sizer sized to zero, with the reason |
+| `result.skipped` | Orders a sizer sized to zero (`rounded_to_zero`) or a size cap left no room for (`cap`), with the reason |
 | `result.gross_pnl` | `{"realized", "unrealized", "total"}` before charges |
 | `result.assumptions` | Every setting the run used, defaults resolved |
 | `result.warnings` | What you must know about the result, most important first |
@@ -105,7 +105,7 @@ time
 | `session_returns` | The return of each IST session date |
 | `monthly_returns`, `yearly_returns` | Compounded returns per calendar month (rows are years, columns months 1 to 12) and per year |
 | `rolling` | Rolling volatility, Sharpe, Sortino and win rate (and beta, with a benchmark) over trailing windows of sessions |
-| `horizons` | The horizon summary: the last 1, 3 and 6 months, 1, 3 and 5 years, and since the start |
+| `horizons` | The horizon summary: the last 1, 3 and 6 months, 1, 3 and 5 years, and since the start; with a benchmark, its return and `benchmark_sessions` for each span |
 | `losing_streaks` | How many runs of losing sessions and of losing trades of each length the run had |
 | `benchmark_returns`, `benchmark_comparison(period)` | With a benchmark: its session returns, and the strategy against it per year or month |
 | `trades` | The trades table the figures were computed from (closed trades, and positions still open at the end as open trades) |
@@ -119,7 +119,7 @@ The [Metrics](support-functions/metrics.md) support page shows each of these tab
 * **Drawdowns are zero or negative.** `max_drawdown` is a fraction (-0.072 is a fall of 7.2 percent from the peak) and `max_drawdown_amount` is in rupees (a fall of Rs 7,887 is -7,887). Episode depths, the conditional drawdown and the drawdowns of the horizon summary and of Monte Carlo follow the same rule. Durations and the ulcer index are zero or positive.
 * **Per session.** Returns are taken per IST session date and annualised with the real number of sessions per year of the traded exchange (from the holiday calendar), never a fixed 252. CAGR uses calendar days (365.25 a year) and is NaN for runs shorter than 28 days.
 * **After charges.** Net figures subtract every charge. Trade statistics count closed trades only; an open position at the end counts for exposure and turnover.
-* `result.metrics` uses a risk-free rate of 0 and no benchmark. For a risk-free rate, a benchmark (alpha, beta, R squared, tracking error, information and Treynor ratios) or deposits and withdrawals, call [`metrics.analyse`](support-functions/metrics.md) on the run's equity and trades. The run's benchmark return, the "Since start" row of the horizon summary and `benchmark_comparison` all take a span's benchmark return by one rule, the one in the [`benchmark_total_return` definition](metric-definitions.md#benchmark); a span with no benchmark return is NaN.
+* `result.metrics` uses a risk-free rate of 0, and no benchmark unless you pass `benchmark=` (see [A benchmark](#a-benchmark)). For a risk-free rate or deposits and withdrawals, call [`metrics.analyse`](support-functions/metrics.md) on the run's equity and trades. The run's benchmark return, the "Since start" row of the horizon summary and `benchmark_comparison` all take a span's benchmark return by one rule, the one in the [`benchmark_total_return` definition](metric-definitions.md#benchmark); a span with no benchmark return is NaN.
 * The figures cover the run up to its end, which can be before `end` (see [Where a run ends](#where-a-run-ends)).
 * A figure the data cannot define is NaN (for example a Sharpe ratio with no variation); a positive figure over a zero denominator is infinite.
 
@@ -210,6 +210,57 @@ paths with a 10% drawdown: 0.058 | paths reaching +5%: 0.44
 
 The run's own maximum drawdown of -7.2 percent is deeper than the median path's (-5.0 percent) but well inside the simulated range. In 5.8 percent of the paths (about one in seventeen) the drawdown reached 10 percent, and 44 percent of them ended at least 5 percent up. The [Metrics](support-functions/metrics.md#monte-carlo) page describes every option and table of a study.
 
+## A benchmark
+
+`bt.backtest(benchmark=...)` compares the strategy with an index or any price series of your own. The benchmark never trades and never changes a fill; it adds the benchmark figures to `result.metrics` (alpha, beta, correlation, R squared, tracking error, information ratio, Treynor ratio), rolling beta, the benchmark columns of the horizon summary, `benchmark_comparison()` and the benchmark lines of the tearsheet. There is no default: without `benchmark=` the run has no benchmark figures.
+
+| `benchmark=` | What the run compares with |
+|---|---|
+| `"NIFTY"` | An index symbol: read on NSE_INDEX for an NSE or NFO strategy, on BSE_INDEX for a BSE or BFO one |
+| `("SENSEX", "BSE_INDEX")` | A `(symbol, exchange)` pair on NSE_INDEX or BSE_INDEX |
+| a pandas Series of closes | Your own closes (or a DataFrame with a `close` column); a date index is stamped at each session's close |
+
+An index's daily closes come from the run's own source, the same way as the strategy's bars: a dict `data=` holding the symbol, else Historify or your broker through `client`. They are read from the session before the run (so the run's first session has a benchmark return) up to the present, `now=`. The Assumptions block names the benchmark and where its closes came from, the manifest records it with a hash of its closes, `rerun()` reproduces it, and `bt.optimize` measures every combination against it.
+
+Missing benchmark data is a warning, never a stop: a source that cannot serve the benchmark leaves the run without benchmark figures, and the warnings name every session without a close. **A missing session stays missing.** It is never filled from a neighbouring day: that session and the one after it have no benchmark return, and alpha, beta and the other paired figures use only the sessions with both a strategy and a benchmark return, counted in `benchmark_sessions`.
+
+<!-- continues -->
+```python
+# Synthetic index closes on every NSE session from the session before the run.
+index_sessions = bt.calendar.default_calendar().sessions("NSE", "2026-03-30", "2026-11-06")
+j = np.arange(len(index_sessions))
+nifty = pd.Series(
+    (25_000 * (1 + 0.0004 * j + 0.008 * np.sin(j / 9))).round(2),
+    index=pd.DatetimeIndex(index_sessions["date"]).tz_localize("Asia/Kolkata"),
+)
+
+against_nifty = result.rerun(benchmark=nifty)
+print(against_nifty.assumptions["benchmark"])
+m = against_nifty.metrics
+print("benchmark sessions:", m["benchmark_sessions"])
+for key in ("benchmark_total_return", "alpha", "beta", "r_squared", "tracking_error", "information_ratio"):
+    print(f"{key:22} {m[key]:9.4f}")
+
+# One missing close: two sessions lose their benchmark return, and the warning says so.
+with_gap = result.rerun(benchmark=nifty.drop(pd.Timestamp("2026-07-15", tz="Asia/Kolkata")))
+print("benchmark sessions:", with_gap.metrics["benchmark_sessions"])
+print(next(text for text in with_gap.warnings if text.startswith("benchmark")).split(". ")[0])
+```
+
+<!-- output -->
+```text
+the Series given as benchmark=: 151 closes as given, 2026-03-30 to 2026-11-06
+benchmark sessions: 150
+benchmark_total_return    0.0535
+alpha                     0.0439
+beta                      0.4092
+r_squared                 0.0022
+tracking_error            0.0845
+information_ratio        -0.0809
+benchmark sessions: 148
+benchmark the Series given as benchmark=: no close on 1 of the 151 sessions it is read on (the run's sessions and the one before them): 2026-07-15
+```
+
 ## The HTML tearsheet
 
 `result.tearsheet(path, mode="full", log_scale=False)` writes a single, self-contained HTML file and returns its path; without a path it returns the HTML as a string. It needs no plotting package and no internet connection: the charts are inline SVG, there is no script, and the page follows the reader's light or dark setting and reads on a phone. Rupee amounts use Indian digit grouping (12,34,567.89) and lakh and crore units.
@@ -218,7 +269,7 @@ Four modes:
 
 | `mode=` | What the page holds |
 |---|---|
-| `"full"` (default) | Headline figures and fact lists; equity with its longest drawdowns shaded and the drawdown underneath; cumulative return (against the benchmark, when one is given); session return bars; monthly returns as a heat grid; yearly returns; the return distribution by period and its histogram; the worst drawdowns; rolling volatility, Sharpe, Sortino, win rate and beta; the horizon summary; the yearly benchmark comparison (with a benchmark); Monte Carlo (1,000 runs from the session returns, fixed seed); the trade P&L distribution; the trade list; losing streaks; costs; the assumptions; and notes with every definition used |
+| `"full"` (default) | Headline figures and fact lists; equity with its longest drawdowns shaded and the drawdown underneath; cumulative return (against the benchmark, when one is given); session return bars; monthly returns as a heat grid; yearly returns; the return distribution by period and its histogram; the worst drawdowns; rolling volatility, Sharpe, Sortino, win rate and beta; the horizon summary; the yearly benchmark comparison (with a benchmark); Monte Carlo (1,000 runs from the session returns, fixed seed); the trade P&L distribution; the trade list; R-multiples (when a closed trade has a stop); losing streaks; costs; the assumptions; and notes with every definition used |
 | `"basic"` | Headline and basic facts, equity, monthly and yearly returns, the worst drawdowns, trades, costs, assumptions and notes |
 | `"metrics"` | Every metric with its value and definition, and the assumptions |
 | `"charts"` | Every chart and nothing else |
@@ -286,6 +337,66 @@ True
 identical: True
 fast=3, slow=15 net profit: 11917.48
 ```
+
+## R-multiples
+
+An R-multiple measures a trade in units of the risk taken: a trade that risked Rs 2,500 to its stop and made Rs 5,000 is +2R, one that lost the full Rs 2,500 is -1R. It makes trades of different sizes comparable and tells you whether the winners pay for the losers.
+
+* `result.trades` has `initial_risk_rupees`, what the opening fill would have lost at the stop its entry set, and `r_multiple`, the trade's net P&L over it. A trade opened without a stop has no initial risk, so its `r_multiple` is NaN.
+* `result.r_summary` gives the count of closed trades and of those with an initial risk, the mean R (the expectancy in R), median, standard deviation, best, worst, total, the share above zero, and the distribution in one-R bins.
+* The full tearsheet has an R-multiples section when a closed trade has an initial risk.
+
+The example buys 625 shares with a 4-point stop (Rs 2,500 of risk) and an 8-point target on two sessions: the first reaches its target, the second its stop.
+
+```python
+import numpy as np
+import pandas as pd
+
+import openalgo.backtest as bt
+
+
+def session(day, knots, prices):
+    """1-minute bars of one NSE session following straight lines between (minute, price) points."""
+    minute = np.arange(375)
+    close = np.interp(minute, knots, prices).round(1)
+    open_ = np.r_[close[0], close[:-1]]
+    index = pd.Timestamp(f"{day} 09:15", tz="Asia/Kolkata") + pd.to_timedelta(minute, unit="min")
+    return pd.DataFrame(
+        {"open": open_, "high": np.maximum(open_, close) + 0.1, "low": np.minimum(open_, close) - 0.1,
+         "close": close, "volume": 1_000},
+        index=index,
+    )
+
+
+two_days = pd.concat([
+    session("2026-10-05", [0, 60, 120, 374], [500, 510, 506, 512]),
+    session("2026-10-06", [0, 90, 374], [512, 494, 498]),
+])
+
+
+class RiskUnits(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "15m"
+
+    def on_bar(self, bar):
+        if bar.time.strftime("%H:%M") == "09:15":  # the first bar of each session
+            self.buy(qty=625, stop=bt.points(4), target=bt.points(8))
+
+
+run = bt.backtest(RiskUnits, data=two_days, capital=500_000, costs=None, slippage=0)
+print(run.trades[["entry_time", "exit_reason", "initial_risk_rupees", "net_pnl_rupees", "r_multiple"]].to_string(index=False))
+summary = run.r_summary
+print({key: summary[key] for key in ("trades", "trades_with_risk", "mean_r", "total_r", "positive_share", "distribution")})
+```
+
+<!-- output -->
+```text
+               entry_time exit_reason  initial_risk_rupees  net_pnl_rupees  r_multiple
+2026-10-05 09:30:00+05:30  leg_target               2500.0          5000.0         2.0
+2026-10-06 09:30:00+05:30      leg_sl               2500.0         -2500.0        -1.0
+{'trades': 2, 'trades_with_risk': 2, 'mean_r': 0.5, 'total_r': 1.0, 'positive_share': 0.5, 'distribution': {-1: 1, 2: 1}}
+```
+
+Without charges the two trades are exactly +2R and -1R, an expectancy of +0.5R per trade.
 
 ## Where a run ends
 

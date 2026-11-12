@@ -76,7 +76,7 @@ my_curve.html
 
 ## A backtest with a benchmark and a risk-free rate
 
-`result.metrics` uses a risk-free rate of 0 and no benchmark. To add them, analyse the run's own equity and trades again, with its capital as the opening wealth and its first bar's open (`result.metrics["start"]`) as the opening time, as `result.performance` does:
+`result.metrics` uses a risk-free rate of 0, and a benchmark only when the run is given one (`bt.backtest(benchmark=...)`, see [A benchmark](../results-and-reports.md#a-benchmark)). For a risk-free rate, analyse the run's own equity and trades again, with its capital as the opening wealth and its first bar's open (`result.metrics["start"]`) as the opening time, as `result.performance` does:
 
 <!-- continues -->
 ```python
@@ -131,6 +131,27 @@ beta       plain        nan   with benchmark     0.4024
 
 `alpha` and `beta` exist only when a benchmark is given, so the plain run shows NaN for them here, and its Sharpe ratio is higher because it subtracts no risk-free return.
 
+The same closes passed to the backtest itself give the same beta, correlation and information ratio; only alpha differs, because the run's risk-free rate is 0. These closes start on 1 April, so the session before the run has no close and the warning says that the first session has no benchmark return:
+
+<!-- continues -->
+```python
+in_run = bt.backtest(EmaCross, data=bars, capital=100_000, benchmark=nifty)
+print("benchmark sessions: in the run", in_run.metrics["benchmark_sessions"], "  analysed", with_benchmark.metrics["benchmark_sessions"])
+for key in ("alpha", "beta", "correlation", "information_ratio"):
+    print(f"{key:18} in the run {in_run.metrics[key]:8.4f}   analysed {with_benchmark.metrics[key]:8.4f}")
+print(next(text for text in in_run.warnings if text.startswith("benchmark")).split(". ")[0])
+```
+
+<!-- output -->
+```text
+benchmark sessions: in the run 149   analysed 149
+alpha              in the run   0.0447   analysed   0.0071
+beta               in the run   0.4024   analysed   0.4024
+correlation        in the run   0.0464   analysed   0.0464
+information_ratio  in the run  -0.0839   analysed  -0.0839
+benchmark the Series given as benchmark=: no close on 1 of the 151 sessions it is read on (the run's sessions and the one before them): 2026-03-30
+```
+
 ## Rolling statistics
 
 `performance.rolling` recomputes volatility, Sharpe, Sortino and the session win rate (and beta, with a benchmark) over a trailing window of sessions, one row per session date. A strategy whose rolling Sharpe drifts down, or whose rolling volatility climbs, is changing character even when the totals look fine. The window is `rolling_window=` sessions (half a year of sessions by default, `metrics["rolling_window_sessions"]`); rows are NaN until a window is full.
@@ -183,7 +204,7 @@ rank
 
 ## Horizon summary and losing streaks
 
-`performance.horizons` measures the last month, 3 months, 6 months, year, 3 years and 5 years (those the run covers) and the whole run since the start: the date each window starts after, sessions, total return, CAGR, volatility, Sharpe, maximum drawdown and, with a benchmark, the benchmark's return. It answers "how has this done lately" next to "how has it done overall".
+`performance.horizons` measures the last month, 3 months, 6 months, year, 3 years and 5 years (those the run covers) and the whole run since the start: the date each window starts after, sessions, total return, CAGR, volatility, Sharpe, maximum drawdown and, with a benchmark, the benchmark's return and `benchmark_sessions`, the sessions of the window with a benchmark return. It answers "how has this done lately" next to "how has it done overall".
 
 `performance.losing_streaks` counts how many runs of losing sessions, and of losing closed trades in exit order, the run had of each length. A strategy you cannot sit through eight losing days in a row is a strategy you will abandon at the wrong time; this table shows how long its bad runs were.
 
@@ -196,12 +217,12 @@ print(streaks[(streaks["sessions"] > 0) | (streaks["trades"] > 0)].to_string())
 
 <!-- output -->
 ```text
-                   from  sessions  total_return    cagr  volatility  sharpe  max_drawdown  benchmark_return
+                   from  sessions  total_return    cagr  volatility  sharpe  max_drawdown  benchmark_return  benchmark_sessions
 horizon
-1M           2026-10-06        22       -0.0396 -0.3789      0.0524 -9.8345       -0.0396           -0.0049
-3M           2026-08-06        63       -0.0360 -0.1354      0.0928 -2.1824       -0.0638            0.0196
-6M           2026-05-06       127        0.0469  0.0952      0.0917  0.3312       -0.0720            0.0391
-Since start  2026-04-01       150        0.0469  0.0793      0.0844  0.1903       -0.0720            0.0536
+1M           2026-10-06        22       -0.0396 -0.3789      0.0524 -9.8345       -0.0396           -0.0049                  22
+3M           2026-08-06        63       -0.0360 -0.1354      0.0928 -2.1824       -0.0638            0.0196                  63
+6M           2026-05-06       127        0.0469  0.0952      0.0917  0.3312       -0.0720            0.0391                 127
+Since start  2026-04-01       150        0.0469  0.0793      0.0844  0.1903       -0.0720            0.0536                 149
         sessions  trades
 length
 1              3       1
@@ -214,7 +235,7 @@ length
 
 ## Benchmark comparison
 
-One rule gives every benchmark return: the run's `benchmark_total_return`, the "Since start" and other rows of the horizon summary, and each period of `benchmark_comparison` compound the benchmark's session returns over the span, from its value as of the span's start (with an opening wealth, its last value before the first point) or else as of the first session end it covers. A span in which the benchmark has no session return is NaN.
+One rule gives every benchmark return: the run's `benchmark_total_return`, the "Since start" and other rows of the horizon summary, and each period of `benchmark_comparison` compound the benchmark's session returns over the span. A session has a benchmark return only when it and the session before it both have a benchmark close of their own (for the first session, the close of the calendar session before it); **a missing close is never filled from a neighbouring day**, so it leaves its session and the next one without a benchmark return. A span with no benchmark return at all is NaN. Alpha, beta, correlation, R squared, tracking error, the information and Treynor ratios and rolling beta use only the sessions with both a strategy and a benchmark return, counted in `benchmark_sessions` (for the run and for each row of the horizon summary). Give the benchmark one close before the first equity point when you want the first session to count; `bt.backtest(benchmark=)` does this for you.
 
 With a benchmark, `performance.benchmark_comparison("year")` or `("month")` sets the strategy's compounded return against the benchmark's for each calendar year or month: `strategy`, `benchmark`, `excess` (strategy minus benchmark) and `beat` (True when the strategy did better). `performance.benchmark_returns` holds the benchmark's session returns on the strategy's session dates.
 

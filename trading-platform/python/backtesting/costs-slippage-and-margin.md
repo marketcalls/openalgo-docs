@@ -236,8 +236,9 @@ An order's quantity comes, in this order, from `qty=` or `lots=`, from `size=` o
 | `bt.size.percent(p, basis="equity")` | p percent of equity (or of the starting `"capital"`, or of the free `"cash"`) |
 | `bt.size.fixed_risk(risk_pct, units=1, hard_limit=None)` | Risk `risk_pct` percent of equity, less the estimated charges of the round trip, to the order's `stop=` (which it needs); `hard_limit` caps the units, and `units` splits the position into that many equal tranches |
 | `bt.size.atr_risk(risk_pct, mult, period=14)` | Fixed risk with the stop distance taken as `mult` times the ATR of `period` strategy bars |
+| Your own function `size(ctx, order)` | The units it returns (see [Your own sizing function](#your-own-sizing-function)) |
 
-A sized quantity is rounded down to the venue rule (whole lots; whole shares unless the run is fractional) and capped at the freeze quantity. A size that rounds to zero skips the order: the order method returns `None` and `result.skipped` lists the reason.
+A sized quantity is cut to the strategy's size caps (see [Reinvest and size caps](#reinvest-and-size-caps)), rounded down to the venue rule (whole lots; whole shares unless the run is fractional) and capped at the freeze quantity. A size that rounds to zero skips the order (reason `rounded_to_zero`), and so does a cap that leaves no room (reason `cap`): the order method returns `None` and `result.skipped` lists the reason.
 
 **Quantity mode.** `quantity_mode="fractional"` (the default) lets cash equity hold fractional shares, so results do not depend on the share price. `quantity_mode="venue"` uses whole shares and whole lots, and the engine default keeps a 2 percent cash buffer; a fractional `qty` is then rejected with `quantity_rule`.
 
@@ -266,6 +267,103 @@ value(1 lakh)          venue          124.00 shares
 fixed_risk(1) stop 2%  fractional     303.74 shares
 fixed_risk(1) stop 2%  venue          303.00 shares
 ```
+
+### Your own sizing function
+
+`size=` (on an order, or as the strategy's `size`) also takes a function `size(ctx, order)` that returns the quantity in **units**, never lots. The engine calls it when the order is placed. `ctx` holds what the built-in sizers see:
+
+| `ctx.` | Meaning |
+|---|---|
+| `equity` | The sizing equity in rupees: the current equity, or the starting capital when the strategy sets `reinvest = False` |
+| `capital` | The capital at the start of the run |
+| `cash` | Equity not blocked as margin |
+| `price` | The decision price (the last close) |
+| `stop_distance` | Rupees of price from the decision price to the order's stop, or `None` when the order has no stop |
+| `lot_size`, `multiplier` | Units in one lot; rupees per one-rupee move per unit |
+| `fractional` | `True` when fractional quantities are allowed |
+| `position` | Units held now, negative when short |
+
+`order` has `symbol`, `side` (`"BUY"` or `"SELL"`), `product` and `tag`. Return 0 to skip the order (listed in `result.skipped` as `rounded_to_zero`). A negative number, NaN or anything that is not a number stops the run with a `ConfigError` naming your function. What it returns is then treated like any sizer's quantity: cut to the size caps, rounded down to the venue rule and capped at the freeze quantity. Condition strategies run without calling Python, so they cannot use a sizing function.
+
+<!-- continues -->
+```python
+def half_percent_risk(ctx, order):
+    """Risk 0.5 percent of equity to the stop, with at most 40 percent of equity in the position."""
+    if ctx.stop_distance is None:
+        return 0  # no stop, no trade
+    by_risk = 0.005 * ctx.equity / ctx.stop_distance
+    by_value = 0.40 * ctx.equity / ctx.price
+    return min(by_risk, by_value)
+
+
+def first_quantity(run):
+    if len(run.fills):
+        return f"{run.fills['quantity_units'].iloc[0]:6.0f} shares"
+    return f"skipped: {run.skipped['reason'].iloc[0]}"
+
+
+for label, stop in (("stop 20", bt.points(20)), ("stop 5", bt.points(5)), ("no stop", None)):
+    run = bt.backtest(round_trip(size=half_percent_risk, stop=stop), data=bars, capital=500_000, quantity_mode="venue")
+    print(f"{label:8} {first_quantity(run)}")
+```
+
+<!-- output -->
+```text
+stop 20     125 shares
+stop 5      249 shares
+no stop  skipped: rounded_to_zero
+```
+
+With a 20-point stop the risk rule gives 125 shares (Rs 2,500 at risk). With a 5-point stop it would give 500, so the 40 percent value rule decides: Rs 200,000 at about 801 is 249 whole shares. Without a stop the function returns 0 and the order is skipped.
+
+### Reinvest and size caps
+
+Two class attributes control every sizer of a strategy:
+
+* `reinvest = True` (the default) sizes from the current equity, so sizes grow and shrink with the results. `reinvest = False` sizes every sizer, every cap given in percent or as leverage, and `target(percent=)` from the starting capital instead.
+* `size_caps = bt.size.caps(position=..., leverage=..., risk=...)` cuts the quantity any sizer gives. Give one or more caps; the tightest wins.
+
+| Cap | The largest |
+|---|---|
+| `position=` | Position on the order's side after the order, counting what is already held: units (a number or `bt.size.qty(n)`), `bt.size.lots(n)`, rupees of value at the decision price (`bt.rupees(x)` or `bt.size.value(x)`), or a percent of equity (`bt.pct(x)` or `bt.size.percent(x)`) |
+| `leverage=` | Value of that position as a multiple of equity (1 is 1x) |
+| `risk=` | Loss of the order at its stop: rupees (a number or `bt.rupees(x)`) or `bt.pct(x)` of equity, below 100. An order without a stop has no bounded loss, so under a risk cap it is skipped |
+
+The capped quantity is then rounded down to the venue rule. When a cap leaves no room, the order is skipped with reason `cap`. Caps bound sizers only: an explicit `qty=` or `lots=`, and `target()`, trade what they ask for. Both settings are in the Assumptions block.
+
+<!-- continues -->
+```python
+def capped(**order):
+    """`round_trip` with at most 20 percent of equity in the position and Rs 1,000 at risk."""
+
+    class Capped(round_trip(**order)):
+        size_caps = bt.size.caps(position=bt.pct(20), risk=bt.rupees(1_000))
+
+    return Capped
+
+
+cases = {
+    "percent(80), stop 5": {"size": bt.size.percent(80), "stop": bt.points(5)},
+    "percent(80), stop 20": {"size": bt.size.percent(80), "stop": bt.points(20)},
+    "percent(80), no stop": {"size": bt.size.percent(80)},
+    "qty=400, stop 5": {"qty": 400, "stop": bt.points(5)},
+}
+for label, order in cases.items():
+    run = bt.backtest(capped(**order), data=bars, capital=500_000, quantity_mode="venue")
+    print(f"{label:22} {first_quantity(run)}")
+print("size_caps:", run.assumptions["size_caps"])
+```
+
+<!-- output -->
+```text
+percent(80), stop 5       124 shares
+percent(80), stop 20       50 shares
+percent(80), no stop   skipped: cap
+qty=400, stop 5           400 shares
+size_caps: position 20 percent of equity; risk 1000 rupees
+```
+
+80 percent of equity would be 499 shares. With a 5-point stop the position cap decides (Rs 100,000 is 124 shares); with a 20-point stop the risk cap does (Rs 1,000 over 20 points is 50 shares). Without a stop the risk cap leaves no room, so the order is skipped. The explicit `qty=400` is not capped.
 
 ## Warnings to read
 

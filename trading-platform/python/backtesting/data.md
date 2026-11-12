@@ -167,11 +167,11 @@ Every load runs quality checks and keeps the report in its metadata (`meta.quali
 
 | Severity | Checks |
 |---|---|
-| Error (the load stops with `DataQualityError`) | A price that is NaN, infinite, zero or negative; a high below the open or close, or a low above them |
+| Error (the load stops with `DataQualityError`) | A price that is NaN, infinite, zero or negative; a high below the open or close, or a low above them; a suspected unadjusted split or bonus in the bars of a share (see [Splits and bonuses](#splits-and-bonuses)) |
 | Warning (counted) | Duplicate timestamps; bars missing from the session grid; bars off the session lattice; sessions with no bar at all; bars dropped after the close, on closed days, partial or built from part of a period; sessions whose first bar opens late |
 | Info | Open interest of 0 on every row turned into "unknown"; pre-open bars dropped |
 
-Every report also lists the checks that did **not** run, so their absence is never read as a pass: split and bonus adjustments, runs of zero volume, outlier returns, survivorship bias, and whether a series is adjusted at all. `load_bars(..., strict=False)` returns the bars together with a report that has errors, so you can inspect them.
+Every report also lists the checks that did **not** run, so their absence is never read as a pass: runs of zero volume, outlier returns, survivorship bias, whether a series is adjusted at all, and for an index or a derivative the split and bonus check. `load_bars(..., strict=False)` returns the bars together with a report that has errors, so you can inspect them.
 
 <!-- continues -->
 ```python
@@ -193,6 +193,110 @@ print(meta.quality.summary().splitlines()[0])
 ```text
 NSE:SBIN D: data quality check failed: 1 rows have a high below the open or close, or a low above them
 error: 1 rows have a high below the open or close, or a low above them
+```
+
+## Splits and bonuses
+
+OpenAlgo history may not be adjusted for splits and bonuses. In unadjusted bars a 1:1 bonus halves the price overnight, and a backtest would read it as a 50 percent fall that never happened. So every load of **NSE and BSE shares** (intraday or daily) looks for them in the bars themselves. An overnight gap is a suspected unadjusted split or bonus when it:
+
+* is within 5 percent of a usual factor, from a 1:3 bonus up to a 10-for-1 split, or a consolidation;
+* lies beyond the widest daily price band, so no ordinary session or circuit-limit day explains it;
+* still holds at that session's close, so it is not a bad print at the open.
+
+A suspected split or bonus is an **error**: `load_bars` and `bt.backtest` stop with the date, the ratio, the prices and what to do. Smaller bonuses (1:4, 1:5, 1:10) move the price no further than an ordinary session can and are not detected. Indices and derivatives are not checked; their report lists the check among those that did not run.
+
+To go on, do one of these:
+
+* supply bars adjusted for it (`data=`);
+* run on dates that do not span it;
+* declare what happened with `corporate_actions=` (on `bt.backtest` and `bt.data.load_bars`): a list of `CorporateAction` from `openalgo.backtest.data`, or a dict of such lists by symbol.
+
+| Declaration | Meaning |
+|---|---|
+| `CorporateAction.split(ex_date, from_face_value, to_face_value)` | A face-value split, for example from Rs 10 to Rs 2 (5 shares for every 1); a consolidation when the face value rises |
+| `CorporateAction.bonus(ex_date, bonus, held)` | A bonus of `bonus` new shares for every `held` shares, as announced ("1:1" doubles the shares) |
+| `CorporateAction.none(ex_date)` | The date was checked and had no corporate action: the gap is a genuine price move |
+
+`ex_date` is the IST date of the first session at the new price. What a declaration does:
+
+* A declared split or bonus that the bars are **not** adjusted for becomes a warning (in the quality report and in `result.warnings`). The run goes on, but an indicator whose window spans the ex-date reads prices from both sides of it.
+* One that the bars are already adjusted for is noted, and `none` turns the gap into a genuine move; neither stops the run.
+* A declared factor that does not match the gap in the bars is an error.
+
+A declaration does not adjust anything. **Holding across a corporate action is not available yet**: a backtest that holds a position or a GTT order across a declared split or bonus that the bars are not adjusted for raises `NotImplementedError`. `meta.quality.price_gaps` lists every reported gap with its evidence, and the run manifest records the declarations.
+
+The example builds daily bars of a share with a 1:1 bonus on 1 July 2026 that they are not adjusted for. The strategy trades before the ex-date.
+
+<!-- continues -->
+```python
+from openalgo.backtest.data import CorporateAction
+
+# A share's daily bars for June and July 2026, not adjusted for a 1:1 bonus on 1 July.
+june_july = bt.calendar.default_calendar().sessions("NSE", "2026-06-01", "2026-07-31")
+days = pd.DatetimeIndex(june_july["date"]).tz_localize("Asia/Kolkata")
+n = np.arange(len(days))
+close = (1200 + 2 * n + 15 * np.sin(n / 4)).round(1)
+ex_date = days.get_loc(pd.Timestamp("2026-07-01", tz="Asia/Kolkata"))
+close[ex_date:] = (close[ex_date:] / 2).round(1)  # the price halves overnight
+open_ = np.r_[close[0], close[:-1]]
+open_[ex_date] = close[ex_date] - 1
+bonus_bars = pd.DataFrame(
+    {"open": open_, "high": np.maximum(open_, close) + 5, "low": np.minimum(open_, close) - 5,
+     "close": close, "volume": 10_000},
+    index=days,
+)
+
+
+class InAndOut(bt.Strategy):
+    """Buys 10 shares on the 3rd session and sells them on the 10th, before the ex-date."""
+
+    symbol, exchange, interval = "EXAMPLE", "NSE", "D"
+
+    def on_bar(self, bar):
+        if len(self.close) == 3:
+            self.buy(qty=10)
+        elif len(self.close) == 10:
+            self.exit()
+
+
+class Holder(InAndOut):
+    """Buys on the 3rd session and holds through the ex-date."""
+
+    def on_bar(self, bar):
+        if len(self.close) == 3:
+            self.buy(qty=10)
+
+
+# Nothing declared: the run stops at the suspected bonus.
+try:
+    bt.backtest(InAndOut, data=bonus_bars, capital=100_000)
+except DataQualityError as error:
+    print(str(error).split(". ")[0])
+
+loaded, report = bt.data.load_bars("EXAMPLE", "NSE", "D", "2026-06-01", "2026-07-31", data=bonus_bars, strict=False)
+gap = report.quality.price_gaps[0]
+print("gap:", gap.ex_date, gap.status, round(gap.ratio, 3), "|", gap.reading)
+
+# Declared: the run goes on, with a warning.
+bonus = [CorporateAction.bonus("2026-07-01", 1, 1)]
+declared = bt.backtest(InAndOut, data=bonus_bars, capital=100_000, corporate_actions=bonus)
+print(declared.warnings[0].split(". ")[0])
+print("trades:", len(declared.trades))
+
+# Holding across it is not available yet.
+try:
+    bt.backtest(Holder, data=bonus_bars, capital=100_000, corporate_actions=bonus)
+except NotImplementedError as error:
+    print(str(error).split(". ")[0])
+```
+
+<!-- output -->
+```text
+NSE:EXAMPLE D: data quality check failed: 1 suspected unadjusted split or bonus (2026-07-01: the previous close 1225.60 against the open 613.60 is a ratio of 1.997, near 2 shares for every 1 (a 1:1 bonus, or a split from face value 10 to 5 or 2 to 1), and the session closed at 614.60, keeping the new level)
+gap: 2026-07-01 suspected 1.997 | a 1:1 bonus, or a split from face value 10 to 5 or 2 to 1
+EXAMPLE: the bars are not adjusted for 1 declared corporate actions (2026-07-01: a bonus (2 shares for every 1); the previous close 1225.60 against the open 613.60 is a ratio of 1.997)
+trades: 1
+EXAMPLE: a position is held across 2026-07-01, the ex-date of a bonus (2 shares for every 1) that the bars are not adjusted for
 ```
 
 ## Short history

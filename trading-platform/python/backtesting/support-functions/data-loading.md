@@ -20,6 +20,7 @@
 | `base` | The interval to obtain and resample from, such as `base="1m"` for 15-minute bars built from 1-minute data |
 | `calendar` | A session calendar (the built-in one by default) |
 | `cache`, `cache_dir`, `refresh` | The local cache of server rows: on by default, its folder, and fetching a range again |
+| `corporate_actions` | Splits, bonuses and checked dates of a share, a list of `CorporateAction` (see [Splits and bonuses](../data.md#splits-and-bonuses)) |
 | `strict` | `True` (default) stops on a failed error-level quality check; `False` returns the bars with the report |
 
 The bars come back in the **canonical layout**: a plain index and the columns `ts_open`, `ts_close` (UTC nanoseconds), `open`, `high`, `low`, `close`, `volume` and `oi` (NaN when unknown). `bars.attrs` carries the symbol, exchange, interval and source. A canonical frame can be passed straight to `bt.backtest(data=...)`.

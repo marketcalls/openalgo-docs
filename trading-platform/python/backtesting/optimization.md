@@ -89,7 +89,7 @@ slow
 * Or declare the values on the class with `bt.param(default, values)`: `fast = bt.param(5, (3, 5, 8))`. Values named in the call replace the declared ones.
 * `params={"slow": 20}` fixes a parameter out of the grid.
 * Every combination of the values is run, in the order the class declares its parameters. A name that is neither a parameter nor a `bt.backtest` argument is an error.
-* Every other keyword is a `bt.backtest` argument (`data=`, `capital=`, `costs=`, `start=`, ...) and is the same for every combination; `capital=` is required, as for `bt.backtest`.
+* Every other keyword is a `bt.backtest` argument (`data=`, `capital=`, `costs=`, `start=`, ...) and is the same for every combination; `capital=` is required, as for `bt.backtest`. With `benchmark=`, its closes are read once and every combination is measured against the same benchmark, so `objective="information_ratio"` or `"alpha"` compares like with like.
 
 ## The objective
 

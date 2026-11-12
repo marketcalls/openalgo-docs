@@ -104,7 +104,9 @@ What the class declares:
 | `exchange` | `"NSE"`, `"BSE"`, `"NFO"`, `"BFO"`, `"MCX"`, `"CDS"` or `"BCD"` |
 | `interval` | The strategy bar: `"1m"`, `"3m"`, `"5m"`, `"15m"`, `"30m"`, `"1h"` (any whole number of minutes or hours) or `"D"` |
 | `product` | `"MIS"`, `"CNC"` or `"NRML"`; when left out, MIS for intraday intervals, CNC for daily equity and NRML for daily F&O |
-| `size` | The default sizer for orders without a quantity, such as `bt.size.percent(50)` (see [Costs, Slippage and Margin](costs-slippage-and-margin.md#sizing)) |
+| `size` | The default sizer for orders without a quantity, such as `bt.size.percent(50)`, or your own sizing function (see [Costs, Slippage and Margin](costs-slippage-and-margin.md#sizing)) |
+| `reinvest` | `True` (default) sizes from the current equity; `False` sizes from the starting capital (see [Reinvest and size caps](costs-slippage-and-margin.md#reinvest-and-size-caps)) |
+| `size_caps` | Caps on what any sizer gives, `bt.size.caps(position=, leverage=, risk=)` |
 | `leverage` | The default intraday leverage of every order (a number, 1 or more); `leverage=` on an order wins |
 | `max_adds`, `max_position`, `min_spacing`, `max_risk`, `allow_averaging_down` | Scale-in limits on adds (see [Orders and Risk](orders-and-risk.md#scale-in-limits)) |
 | `max_daily_loss`, `drawdown_halt`, `cooldown`, `entry_from`, `entry_until`, `square_off` | Risk and session settings; a class attribute wins over the `bt.backtest` argument of the same name (see [Orders and Risk](orders-and-risk.md)) |
@@ -387,7 +389,7 @@ A condition is any of:
 
 A view of another interval (`self.data["SBIN", "15m"]`) counts with its latest closed bar. Anything else, such as a plain `True`, a number or an indicator output that looks ahead, raises a `ConfigError` that tells you to use `on_bar`.
 
-The order arguments are `qty`, `size`, `lots`, `stop`, `target`, `targets`, `trail`, `breakeven`, `after_first_target`, `product`, `leverage` and `tag`; every entry is a market order. ATR distances (`bt.atr`, `bt.trail_atr`) and `bt.size.atr_risk` are not available in conditions yet. A condition strategy trades one symbol (not yet a futures underlying) and has no callbacks or timers (they would call Python during the run); `on_stop` still runs. A strategy uses `on_bar` or conditions, never both.
+The order arguments are `qty`, `size`, `lots`, `stop`, `target`, `targets`, `trail`, `breakeven`, `after_first_target`, `product`, `leverage` and `tag`; every entry is a market order. ATR distances and `bt.size.atr_risk` work as in `on_bar` (see [ATR stops and sizing in conditions](#atr-stops-and-sizing-in-conditions)). A condition strategy trades one symbol (not yet a futures underlying) and has no callbacks, timers or sizing functions (they would call Python during the run); `on_stop` still runs. A strategy uses `on_bar` or conditions, never both.
 
 <!-- continues -->
 ```python
@@ -422,6 +424,55 @@ for strategy in (EmaCrossRules, Breakout):
 ```text
 EmaCrossRules 9 trades, net -1071.59
 Breakout 12 trades, net 798.81
+```
+
+### ATR stops and sizing in conditions
+
+`bt.atr(...)` stop and target distances, `bt.trail_atr(...)` and `bt.size.atr_risk(...)` work in `entry_when` and `short_when`. Each entry takes the `openalgo.ta` ATR of the bar that decided it, so a condition strategy and the equivalent `on_bar` give the same fills. An entry decided before the ATR has a value (fewer bars than its period) stops the run with a message, so require the ATR in the condition, as below. The 50 percent position cap keeps the risk sizing within the capital (see [Reinvest and size caps](costs-slippage-and-margin.md#reinvest-and-size-caps)).
+
+<!-- continues -->
+```python
+class AtrRules(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "5m"
+    size_caps = bt.size.caps(position=bt.pct(50))
+
+    def init(self):
+        fast = self.I(ta.ema, self.close, 9)
+        slow = self.I(ta.ema, self.close, 21)
+        atr = self.I(ta.atr, self.high, self.low, self.close, 14)
+        self.entry_when(
+            fast.crossed_above(slow) & (atr > 0),
+            size=bt.size.atr_risk(0.5, 2),  # risk 0.5 percent of equity to a stop 2 ATR away
+            stop=bt.atr(2),
+            trail=bt.trail_atr(3),
+        )
+        self.exit_when(fast.crossed_below(slow))
+
+
+class AtrOnBar(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "5m"
+    size_caps = bt.size.caps(position=bt.pct(50))
+
+    def init(self):
+        self.fast = self.I(ta.ema, self.close, 9)
+        self.slow = self.I(ta.ema, self.close, 21)
+        self.atr = self.I(ta.atr, self.high, self.low, self.close, 14)
+
+    def on_bar(self, bar):
+        if self.position.is_flat and self.fast.crossed_above(self.slow) and self.atr[-1] > 0:
+            self.buy(size=bt.size.atr_risk(0.5, 2), stop=bt.atr(2), trail=bt.trail_atr(3))
+        elif self.position.is_long and self.fast.crossed_below(self.slow):
+            self.exit()
+
+
+rules = bt.backtest(AtrRules, data=sbin, capital=200_000)
+bars_run = bt.backtest(AtrOnBar, data=sbin, capital=200_000)
+print(len(rules.trades), "trades;", "same fills:", rules.fills.equals(bars_run.fills))
+```
+
+<!-- output -->
+```text
+11 trades; same fills: True
 ```
 
 ### From a function or from arrays

@@ -65,10 +65,11 @@ QUIET = {"capital": 500_000, "costs": None, "slippage": 0}
 | `self.sell(qty=None, ...)` | Opens a short, adds to it, or reduces a long |
 | `self.exit(symbol=None, fraction=1.0, qty=None)` | Closes the position, or a fraction of it, or `qty` units; does nothing when flat |
 | `self.reduce(qty=None, lots=None, fraction=None)` | Reduces the position by exactly one of units, lots or a fraction |
+| `self.target(qty=None, lots=None, value=None, percent=None, symbol=None)` | Trades to a target position: one order for the difference (see [Trading to a target position](#trading-to-a-target-position)) |
 | `self.cancel(order)` | Cancels a working order; returns its state afterwards |
 | `self.cancel_all(symbol=None)` | Cancels every working order, or those of one symbol |
 
-Orders are **market orders** (OpenAlgo `MARKET`, DAY validity) unless you give a price: `price=` makes a limit order and `trigger_price=` a stop order (see [Limit, stop and GTT orders](#limit-stop-and-gtt-orders)). `self.target(...)`, which trades to a target position size, is not available yet.
+Orders are **market orders** (OpenAlgo `MARKET`, DAY validity) unless you give a price: `price=` makes a limit order and `trigger_price=` a stop order (see [Limit, stop and GTT orders](#limit-stop-and-gtt-orders)).
 
 The arguments of `buy` and `sell`:
 
@@ -78,7 +79,7 @@ The arguments of `buy` and `sell`:
 | `price`, `trigger_price` | A limit price, a stop trigger, or both (below); none for a market order |
 | `validity` | `"day"` (default) or `"gtt"` (below) |
 | `lots` | Number of lots instead of `qty` (not both) |
-| `size` | A sizer such as `bt.size.percent(50)` (see [Sizing](costs-slippage-and-margin.md#sizing)) |
+| `size` | A sizer such as `bt.size.percent(50)`, or your own sizing function (see [Sizing](costs-slippage-and-margin.md#sizing)) |
 | `stop`, `target`, `targets`, `trail`, `breakeven`, `after_first_target` | The leg rules of the position the order opens (below) |
 | `product` | `"MIS"`, `"CNC"` or `"NRML"` for this order; the strategy's product otherwise |
 | `leverage` | Intraday (MIS) leverage asked for, up to 5 for cash equity (see [Margin](costs-slippage-and-margin.md#margin)); the class attribute `leverage` sets the default for every order |
@@ -88,7 +89,61 @@ The arguments of `buy` and `sell`:
 
 With no `qty`, `lots` or `size` (and no strategy `size`), the engine default applies: one lot for futures and options; for cash equity the whole equity (never more than the free cash, split equally across the strategy's symbols) less the order's estimated charges.
 
-`buy`, `sell`, `exit` and `reduce` return an **order handle**: `order.id` (`"o1"`), `order.status` (`"Submitted"`, `"Triggered"`, `"Filled"`, `"Canceled"`, `"Expired"`, `"Rejected"`), `order.filled_qty`, `order.avg_price` and `order.reject_code`. They return `None` when there was nothing to do (an exit while flat) or a sizer sized the order to zero (listed in `result.skipped`).
+`buy`, `sell`, `exit` and `reduce` return an **order handle**: `order.id` (`"o1"`), `order.status` (`"Submitted"`, `"Triggered"`, `"Filled"`, `"Canceled"`, `"Expired"`, `"Rejected"`), `order.filled_qty`, `order.avg_price` and `order.reject_code`. They return `None` when there was nothing to do (an exit while flat) or a sizer sized the order to zero or a size cap left no room (listed in `result.skipped`).
+
+### Trading to a target position
+
+`self.target(...)` says how large the position should be, and the engine works out the order. Give exactly one of:
+
+| Argument | Target position |
+|---|---|
+| `qty` | Units (negative is short, 0 is flat) |
+| `lots` | Lots, a whole number |
+| `value` | Rupees of position value, converted at the decision price |
+| `percent` | Percent of equity, converted at the decision price (of the starting capital when the strategy sets `reinvest = False`) |
+
+`value` and `percent` are rounded towards zero: to whole shares with `quantity_mode="venue"`, to whole lots for futures and options, and to fractional shares in the default fractional mode.
+
+* It sends **one market order** (DAY validity) for the difference between the target and the position the strategy will hold once its queued market orders fill, and returns its handle; it returns `None` when the position already is the target.
+* A smaller position on the same side only reduces. A target on the other side closes the position and opens the rest in the same order (two fills).
+* Resting limit, stop and GTT orders are left working and are not counted.
+* The order carries no stop or target of its own: an add keeps the position's leg rules, and the side a reversal opens has none. It uses the strategy's product, and its `leverage` when it opens or adds. Size caps do not apply: `target()` trades what you ask for.
+
+<!-- continues -->
+```python
+class ToTarget(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "15m"
+    # The target position decided at the close of each 15-minute bar, by bar number.
+    plan = {1: {"qty": 100}, 2: {"qty": 300}, 3: {"percent": 20}, 4: {"qty": -100}, 5: {"qty": 0}, 6: {"qty": 0}}
+
+    def on_bar(self, bar):
+        step = len(self.close)
+        if step in self.plan:
+            order = self.target(**self.plan[step])
+            print(f"{self.now:%H:%M}", self.plan[step], "order:", None if order is None else order.id)
+
+
+show(bt.backtest(ToTarget, data=rising, quantity_mode="venue", **QUIET))
+```
+
+<!-- output -->
+```text
+09:30 {'qty': 100} order: o1
+09:45 {'qty': 300} order: o2
+10:00 {'percent': 20} order: o3
+10:15 {'qty': -100} order: o4
+10:30 {'qty': 0} order: o5
+10:45 {'qty': 0} order: None
+                     time side  quantity_units  price_rupees reason target_index
+2026-10-05 09:30:00+05:30  BUY           100.0         502.3  entry         None
+2026-10-05 09:45:00+05:30  BUY           200.0         504.8    add         None
+2026-10-05 10:00:00+05:30 SELL           103.0         507.3 signal         None
+2026-10-05 10:15:00+05:30 SELL           197.0         509.8 signal         None
+2026-10-05 10:15:00+05:30 SELL           100.0         509.8  entry         None
+2026-10-05 10:30:00+05:30  BUY           100.0         509.1 signal         None
+```
+
+Reading it: 100 shares are bought, then 200 more to reach 300. At 10:00 the equity is Rs 501,000, and 20 percent of it at the decision price of 507.30 is 197 whole shares, so 103 are sold. A target of -100 sells 297 in one order: 197 close the long (`signal`) and 100 open the short (`entry`). A target of 0 buys the 100 back, and the second 0 sends nothing.
 
 ## Limit, stop and GTT orders
 

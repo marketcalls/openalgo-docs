@@ -14,6 +14,7 @@ A backtest replays your strategy on past price bars and shows what it would have
 * **The futures roll**: a futures strategy names an underlying, and its position rolls to the next contract the session before expiry, with daily mark to market.
 * **Session times and holidays** of NSE, BSE, NFO, BFO, MCX, CDS and BCD, including the dated intraday entry cut-off and square-off for MIS.
 * **Margin**: an order that needs more margin than your free cash is rejected, as a broker would.
+* **Splits and bonuses**: OpenAlgo history may not be adjusted for them, so the bars of NSE and BSE shares are checked for an overnight gap that looks like an unadjusted split or bonus. The run stops with the date and what to do, instead of trading on a fall in price that never happened (see [Data](data.md#splits-and-bonuses)).
 
 You write the strategy once as a small Python class. The engine runs it bar by bar, decides at each bar close and fills at the next bar's open, so a strategy can never trade on a price it could not have seen.
 
@@ -44,6 +45,7 @@ You can run a backtest with only a strategy, data and capital. Everything else h
 | Stops and targets | For an intraday strategy, tested on 1-minute bars when 1-minute data covers the whole run, otherwise on the strategy bars; daily bars for a daily strategy | `base=` |
 | Calendar | Built-in holiday lists for 2019 to 2026 and dated session hours | `calendar=` |
 | Futures | The current-month contract, rolled one session before expiry | `expiry` (class), `roll=` |
+| Benchmark | None: no alpha, beta or other benchmark figures | `benchmark=` |
 
 See [Orders and Risk](orders-and-risk.md) and [Costs, Slippage and Margin](costs-slippage-and-margin.md) for the details.
 
@@ -177,8 +179,11 @@ Result(SBIN)
   min_spacing: None
   max_risk: None
   allow_averaging_down: False
+  reinvest: True
+  size_caps: None
   base_rule: base D (a daily or longer strategy): stops are tested on the day's range and fill at the stop level, or at the open on a gap; combined and daily-loss exits fill at the day's close
   instruments: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
+  benchmark: None
   indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 5): truncation passed at 4 cuts, warm-up 32 bars
   gross P&L: 5417.25 (realized 5417.25)
   charges: 728.97; net P&L: 4688.28
@@ -191,7 +196,8 @@ A few lines worth knowing:
 * `indicator_checks` reports the look-ahead check every indicator passes before the run (see [Writing Strategies](writing-strategies.md#indicators-and-look-ahead-checks)).
 * `gross P&L` is before charges and includes any position still open at the end, marked at the last close. `charges` are what the contract notes charged at each session close, so `net P&L` is exactly the change in equity. The `Charges` figure printed earlier is the metric `total_costs`, the sum of the closed trades' charges before contract-note rounding. The two differ slightly because a contract note rounds STT and stamp duty to the rupee.
 * `entry_from`, `entry_until` and `square_off` apply to MIS runs and are stated as they applied over the whole run: one clock time, a rule such as "20 minutes before each session's close" (MCX), or dated periods when a default changed during the run (NSE cash on 3 August 2026). This daily CNC run has none.
-* `leverage` and the scale-in limits (`max_adds`, `max_position`, `min_spacing`, `max_risk`, `allow_averaging_down`) are listed even when unset, so you see that no limit applied.
+* `leverage` and the scale-in limits (`max_adds`, `max_position`, `min_spacing`, `max_risk`, `allow_averaging_down`) are listed even when unset, so you see that no limit applied. So are `reinvest` (whether sizes compound with the equity) and `size_caps` (see [Sizing](costs-slippage-and-margin.md#reinvest-and-size-caps)).
+* `benchmark` names what the run is compared with and where its closes came from; `None` means no benchmark figures (see [A benchmark](results-and-reports.md#a-benchmark)).
 * The last line is a warning you will see on every cash-equity backtest without `instrument=`: the engine used the generic lot 1 and tick 0.05.
 
 No setting is accepted and then ignored. Every class attribute and every `bt.backtest` argument either works, raises an error (`ConfigError` for a value that cannot be used, `NotImplementedError` for a feature not built yet), or, when it does nothing in this particular run, is named in `result.warnings` with the reason (for example `pyramiding` on a strategy with `on_bar`, `client=` together with `data=`, or intraday times on a CNC run).
@@ -201,11 +207,11 @@ No setting is accepted and then ignored. Every class attribute and every `bt.bac
 ## Where to go next
 
 * [Writing Strategies](writing-strategies.md): the strategy class, indicators, other timeframes, positions, timers, and condition strategies that run without a Python call per bar.
-* [Orders and Risk](orders-and-risk.md): orders, stops, targets, trailing stops, intraday times and the strategy risk rules.
-* [Costs, Slippage and Margin](costs-slippage-and-margin.md): what is charged and how to change it.
+* [Orders and Risk](orders-and-risk.md): orders, target positions, stops, targets, trailing stops, intraday times and the strategy risk rules.
+* [Costs, Slippage and Margin](costs-slippage-and-margin.md): what is charged and how to change it, margin, and sizing (your own sizing function, size caps).
 * [Futures](futures.md): futures strategies by underlying, the roll, mark to market and settlement.
-* [Data](data.md): OpenAlgo history, your own data, time zones and the cache.
-* [Results and Reports](results-and-reports.md): the tables, the performance figures, Monte Carlo, the HTML tearsheet in four modes and reruns; [Metric Definitions](metric-definitions.md) defines every figure.
+* [Data](data.md): OpenAlgo history, your own data, time zones, quality checks, splits and bonuses, and the cache.
+* [Results and Reports](results-and-reports.md): the tables, the performance figures, a benchmark, Monte Carlo, R-multiples, the HTML tearsheet in four modes and reruns; [Metric Definitions](metric-definitions.md) defines every figure.
 * [Optimization](optimization.md): parameter sweeps.
 * [Support Functions](support-functions/README.md): the calendar, cost calculator, reference data, resampling, data loading and metrics on their own.
 * [Examples](examples/README.md): four complete strategies you can run.
@@ -216,7 +222,6 @@ The following are part of the design but not built. Each raises `NotImplementedE
 
 * `bt.live`: trading a strategy through OpenAlgo in sandbox or live mode.
 * `fill="close"` (filling at the decision bar's close).
-* `self.target(...)`: trading to a target position size.
 * Walk-forward optimization (`bt.walk_forward`).
 * Several strategies in one run, pairs (`pair_long`, `pair_short`), portfolio rebalancing (`bt.rebalance`), and strategies declared on a `universe`.
 * Condition strategies on a futures underlying, and other intervals of a futures series (`self.data[underlying, "15m"]`).
@@ -224,3 +229,4 @@ The following are part of the design but not built. Each raises `NotImplementedE
 * `cooldown` and `max_hold` given as a time (such as `"30m"`); give them in bars.
 * One indicator over two symbols or two intervals, and open interest in strategy bars.
 * The margin of SENSEX and SENSEX50 futures and of short options.
+* Holding a position or a GTT order across a split or bonus that the bars are not adjusted for (declared with `corporate_actions=`); supply adjusted bars or run on other dates.
