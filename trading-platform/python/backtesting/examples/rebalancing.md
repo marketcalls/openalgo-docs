@@ -78,4 +78,4 @@ A rebalance trims and tops up holdings but never sells one out, so the run has n
 * Rebalance once a year: `self.every("year", self.rebalance_now)`.
 * Keep 5 percent in cash instead of 2: `self.rebalance({...}, cash_buffer=5)`.
 
-More: [Rebalance a Portfolio](../tutorial/10-portfolio-rebalancing.md), [Writing Strategies: several symbols](../writing-strategies.md#several-symbols).
+More: [Rebalance a Portfolio](../tutorial/10-portfolio-rebalancing.md), [Writing Strategies: several symbols](../writing-strategies.md#how-do-i-trade-several-stocks).

@@ -82,4 +82,4 @@ Half the pullbacks recovered, but the one of April 2022 did not: the stock kept 
 * Deeper pullbacks only: `bt.backtest(..., params={"buy_below": 30})`.
 * Another stock: `symbol = "TCS"`.
 
-More: [Orders and Risk](../orders-and-risk.md#stops-targets-and-scale-out), [Indicators: Momentum](../../indicators/momentum.md).
+More: [Orders and Risk](../orders-and-risk.md#how-do-i-add-a-stop-loss), [Indicators: Momentum](../../indicators/momentum.md).

@@ -163,7 +163,7 @@ Profit and drawdown grow together with the money at work. Choose the size by the
 * Whole shares instead of fractional ones: `bt.backtest(..., quantity_mode="venue")`.
 * Size every trade from the starting capital, so sizes do not grow or shrink with the results: add `reinvest = False` to the class.
 * Risk sized to the stock's daily moves: `size=bt.size.atr_risk(1, mult=2)` with `stop=bt.atr(2)`.
-* All the sizers and limits: [Sizing](../costs-slippage-and-margin.md#sizing).
+* All the sizers and limits: [Sizing](../costs-slippage-and-margin.md#how-do-i-choose-how-many-shares-to-buy).
 
 ## What you learned
 

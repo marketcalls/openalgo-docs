@@ -84,4 +84,4 @@ leg_sl       16
 * A target twice the range: add `target=2 * (self.range_high - self.range_low)` to `buy` and `sell`. A target closes the trade once the price has moved that far in your favour.
 * Another stock: `symbol = "RELIANCE"`.
 
-More: [Orders and Risk](../orders-and-risk.md#intraday-entry-window-and-square-off), [Data](../data.md#which-bars-stops-are-tested-on).
+More: [Orders and Risk](../orders-and-risk.md#when-is-an-intraday-position-closed), [Data](../data.md#which-bars-stops-are-tested-on).

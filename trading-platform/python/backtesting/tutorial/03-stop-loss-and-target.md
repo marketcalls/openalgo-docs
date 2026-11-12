@@ -159,7 +159,7 @@ These numbers are for SBIN over these six years. Another stock or another period
 * A distance in rupees instead of percent: `stop=20` (20 rupees below the buying price). In ATR, the average size of a day's move: `stop=bt.atr(2)`.
 * Move the stop up to the buying price after a 5 percent gain: `breakeven=bt.breakeven(bt.pct(5))`.
 * Sell half at the first target: `targets=[(bt.pct(10), 0.5)]`.
-* All the forms and how they are tested: [Stops, targets and scale-out](../orders-and-risk.md#stops-targets-and-scale-out) and [Trailing stops](../orders-and-risk.md#trailing-stops).
+* All the forms and how they are tested: [Stops, targets and scale-out](../orders-and-risk.md#how-do-i-add-a-stop-loss) and [Trailing stops](../orders-and-risk.md#how-do-i-add-a-trailing-stop).
 
 ## What you learned
 

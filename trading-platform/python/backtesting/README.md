@@ -111,7 +111,7 @@ The reference pages explain every option:
 
 ## Speed and repeatable results
 
-The calculations (fills, positions, charges, the ledger, the metrics) run in a compiled Rust core. On one core of a current desktop, a strategy with `on_bar` runs about 575,000 bars a second, and a [condition strategy](writing-strategies.md#condition-strategies) on 1,000,000 one-minute bars with about 9,300 round trips takes about 1.1 seconds (measured with `benchmark/backtest_speed.py` in the SDK repository). Your own `on_bar` code and indicators add their own time.
+The calculations (fills, positions, charges, the ledger, the metrics) run in a compiled Rust core. On one core of a current desktop, a strategy with `on_bar` runs about 575,000 bars a second, and a [condition strategy](writing-strategies.md#can-i-write-the-rules-as-conditions) on 1,000,000 one-minute bars with about 9,300 round trips takes about 1.1 seconds (measured with `benchmark/backtest_speed.py` in the SDK repository). Your own `on_bar` code and indicators add their own time.
 
 The same strategy on the same data and settings gives the same result every time. The equity curve and the trade table use exact arithmetic (prices in whole price units, the ledger in paise), so they are identical on every platform; a metric that uses logarithms or powers can differ in its last digits on another operating system, always within one part in a billion.
 

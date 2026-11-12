@@ -224,7 +224,7 @@ the close plotted displacement - 1 bars back: the value on bar t is the close of
 
 Two things a `True` does not say: a recursive indicator (EMA, RSI, ATR) is causal but needs warm-up bars before its values stop depending on where the series started, and a causal value on a bar is known when that bar closes, not before.
 
-The [backtesting engine](../backtesting/README.md) uses this registry: `self.I` refuses an indicator whose outputs all look ahead and raises an error the moment a strategy uses a look-ahead output, then checks every other indicator on the run's own data before the first bar (see [indicators and look-ahead checks](../backtesting/writing-strategies.md#indicators-and-look-ahead-checks)).
+The [backtesting engine](../backtesting/README.md) uses this registry: `self.I` refuses an indicator whose outputs all look ahead and raises an error the moment a strategy uses a look-ahead output, then checks every other indicator on the run's own data before the first bar (see [indicators and look-ahead checks](../backtesting/writing-strategies.md#why-was-my-indicator-refused)).
 
 ### Changes in SDK 2.1.0
 

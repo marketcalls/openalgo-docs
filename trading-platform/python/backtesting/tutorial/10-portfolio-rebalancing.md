@@ -82,6 +82,6 @@ RELIANCE            33.0       44068.2       24.53
 * Other weights: `self.rebalance({"SBIN": 40, "RELIANCE": 20, "INFY": 20, "ITC": 20})`. A stock you leave out is sold.
 * Rebalance once a year: `self.every("year", self.rebalance_now)`, or every month with `"month"`.
 * Keep 5 percent in cash instead of 2: `self.rebalance({...}, cash_buffer=5)`.
-* Strategies on several symbols in detail: [Writing Strategies](../writing-strategies.md#several-symbols).
+* Strategies on several symbols in detail: [Writing Strategies](../writing-strategies.md#how-do-i-trade-several-stocks).
 
 **Next lesson:** [Use Your Own Data](11-your-own-data.md)

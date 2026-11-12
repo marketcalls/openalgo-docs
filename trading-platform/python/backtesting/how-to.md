@@ -351,7 +351,7 @@ Trades       : 17 (29% won)
 ['charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2020-07-01 are backfilled for 6 fills, from 2019-03-20']
 ```
 
-`costs=None` runs with no charges at all; the result then warns that the profit is overstated. More: [Charges](costs-slippage-and-margin.md#charges).
+`costs=None` runs with no charges at all; the result then warns that the profit is overstated. More: [Charges](costs-slippage-and-margin.md#what-am-i-charged-on-each-trade).
 
 ## Rebalance a buy-and-hold portfolio?
 

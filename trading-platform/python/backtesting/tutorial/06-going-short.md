@@ -165,7 +165,7 @@ On 17 August SBIN first broke below its opening range, so the strategy sold 80 s
 
 * Flip with `sell` instead of `target`: while long 80 shares, `self.sell(qty=160, reverse=True)` sells the 80 and opens a short of 80. Without `reverse=True`, a sell larger than your long is rejected.
 * Shorts that are held overnight need futures: [Futures](../futures.md).
-* The reject codes and what each means: [Reject codes](../orders-and-risk.md#reject-codes).
+* The reject codes and what each means: [Reject codes](../orders-and-risk.md#why-was-my-order-rejected).
 
 ## What you learned
 

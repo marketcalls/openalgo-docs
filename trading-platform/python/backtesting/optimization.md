@@ -1,50 +1,63 @@
 # Optimization
 
-Every strategy has numbers someone chose, such as the 10 and 30 of a 10-day and 30-day EMA crossover. `bt.optimize` runs one strategy over a grid of parameter values and ranks the combinations, so you can see which values worked best in the past. Every combination is an ordinary backtest with the same charges, slippage and rules, so its row in the table is exactly what `bt.backtest` gives for those values.
-
-A **parameter** is a class attribute with a number (or text, or true/false) default, such as `fast = 10`. The **grid** is every combination of the values you list: 3 values of `fast` and 3 of `slow` make 9 backtests.
+`bt.optimize` runs one strategy many times, once for every combination of the parameter values you list, and ranks the results. Each combination is an ordinary backtest with the same charges, slippage and rules, so you see which values would have worked best in the past.
 
 ## A first sweep
 
-Save this as a file (for example `sweep.py`) and run it with `python sweep.py`. Put your own API key from the OpenAlgo dashboard in place of `OPENALGO_API_KEY`. The `if __name__ == "__main__":` line matters: the sweep starts worker processes, and each one imports your file (see [Worker processes](#worker-processes-and-windows)).
+A **parameter** is a setting of the strategy with a default, such as `fast = 20`. The strategy is the EMA crossover on SBIN daily bars: buy when the fast EMA (an average of closing prices that weighs recent days more) crosses above the slow EMA, sell when it crosses back below. The sweep tries three fast and three slow lengths: 3 x 3 = 9 backtests.
 
-The strategy is an EMA crossover on SBIN daily bars (an **EMA** is a moving average of closing prices that weighs recent days more): buy when the fast EMA crosses above the slow one, sell when it crosses back below. The sweep tries three fast and three slow lengths over January 2021 to 11 November 2026.
+Save the code as a file, for example `sweep.py`, and run it with `python sweep.py` (the next section says why). Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`.
 
 <!-- requires-server -->
 ```python
+# Imports: the backtest engine (bt), the OpenAlgo client (api) and the indicators (ta).
 import openalgo.backtest as bt
 from openalgo import api, ta
 
+# Connect to your OpenAlgo server: the price history comes from it.
 client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
-class EmaCross(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "D"
-    fast = 10  # parameters: the optimizer changes these
-    slow = 30
+# The strategy. A class bundles settings and functions; inside it, "self" is the strategy itself.
+class EmaCrossover(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "D"  # SBIN on NSE, daily bars
+    fast = 20  # parameters: the sweep changes these
+    slow = 50
 
+    # init runs once, before the first bar: the two EMAs of the closing prices.
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
+    # on_bar runs at the close of every bar: buy, sell or wait.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # wait until the slow EMA has enough days
+        if len(self.close) < self.slow:  # warm-up: wait until the slow EMA has enough days
             return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
-            self.buy()
+            self.buy()  # all the capital, at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
-            self.exit()
+            self.exit()  # sell everything held
 
 
-if __name__ == "__main__":  # needed: worker processes import this file
+# The sweep runs only when you run this file itself (see the next section).
+if __name__ == "__main__":
     sweep = bt.optimize(
-        EmaCross, client, start="2021-01-01", end="2026-11-11", capital=100_000,
-        fast=(5, 10, 20),   # the values to try for each parameter
+        EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+        fast=(5, 10, 20),  # the values to try for each parameter
         slow=(30, 50, 100),
-        workers=2,          # worker processes; leave it out to use every CPU core
+        workers=2,  # how many backtests run at once; leave it out to use every CPU core
     )
-    print(sweep.table.round(2).to_string(index=False))
+    print(sweep.table.round(2).to_string(index=False))  # one row per combination
     print("best:", sweep.best)
+
+    # The full backtest of the best values. "**" passes the dict as fast=..., slow=...
+    best = sweep.select(**sweep.best)
+    m = best.metrics  # a dict: the figures of the run, looked up by name
+    # f"..." fills in each {value}: ":,.2f" is rupees with commas, ":.2%" a percent.
+    print(f"Net profit   : Rs {m['net_profit']:,.2f}")
+    print(f"Return       : {m['total_return']:.2%}")
+    print(f"Max drawdown : {m['max_drawdown']:.2%}")
+    print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
 ```
 
 <!-- output -->
@@ -60,34 +73,43 @@ if __name__ == "__main__":  # needed: worker processes import this file
    20    50    53267.29          0.53         -0.30    0.46      11   53267.29
    20   100    26271.64          0.26         -0.27    0.31       9   26271.64
 best: {'fast': 5, 'slow': 30}
+Net profit   : Rs 99,261.99
+Return       : 99.26%
+Max drawdown : -25.52%
+Trades       : 28 (39% won)
 ```
 
-`sweep.table` has one row per combination; `max_drawdown` and `total_return` are fractions (-0.25 is 25 percent). `sweep.best` is the combination with the highest objective, net profit unless you choose another.
+Reading it:
 
-## The grid
+* `sweep.table` has one row per combination. `total_return` and `max_drawdown` are fractions: 0.53 is 53 percent. The **max drawdown** is the largest fall of the account from its highest value; the **Sharpe** ratio is the return per unit of day-to-day swings. `objective` is the figure the sweep ranks by, net profit by default.
+* `sweep.best` is the combination with the highest objective.
+* `sweep.select(...)` gives the full result of one combination, exactly what `bt.backtest` gives for those values, with its trades and report.
 
-* Name a parameter in the call with the values to try: `fast=(5, 10, 20)` or `fast=range(5, 30, 5)`.
-* Or declare the values on the class with `bt.param(default, values)`: `fast = bt.param(10, (5, 10, 20))`. Values named in the call replace the declared ones.
-* `params={"slow": 50}` fixes a parameter out of the grid.
-* Every combination of the values is run, in the order the class declares its parameters. A name that is neither a parameter nor a `bt.backtest` argument is an error.
-* Every other keyword is a `bt.backtest` argument (`start=`, `end=`, `capital=`, `costs=`, ...) and is the same for every combination; `capital=` is required, as for `bt.backtest`. With `benchmark=`, its closes are read once and every combination is measured against the same benchmark, so `objective="information_ratio"` or `"alpha"` compares like with like.
+## Why must a sweep run from a file?
 
-## The objective
+A sweep runs several backtests at once, each in a **worker process** (a separate copy of Python). Each worker reads your file to find the strategy class. `if __name__ == "__main__":` is true only in the copy you started, so the workers find the class without starting the sweep again.
 
-`objective=` decides what "best" means:
+* Run the sweep from a `.py` file. A class written in a notebook or typed at the Python prompt cannot be found by a worker; the sweep then stops with a `ConfigError` that tells you to move it into a file, or to pass `workers=1`.
+* `workers=1` runs every combination in your own process, one after another: slower, but it works anywhere, notebooks included. The table is the same whatever the number of workers.
 
-* The name of any [metric](metric-definitions.md): `"net_profit"` (the default), `"sharpe"`, `"sortino"`, `"calmar"`, `"cagr"`, `"total_return"`, `"profit_factor"`, `"expectancy"`, `"win_rate"` and so on.
-* Or a function that takes a `Result` and returns a number, passed as `objective=profit_per_drawdown`. Define it with `def` at the top level of your file, so worker processes can import it (a `lambda` cannot be imported).
+## How do I choose the values to try?
 
-`maximize=False` picks the lowest value instead, for a figure where lower is better such as `objective="ulcer_index"`. Drawdowns are negative numbers, so the shallowest drawdown is the highest `max_drawdown` and needs the default `maximize=True`.
+* Name each parameter with its values: `fast=(5, 10, 20)` (a tuple: values in round brackets), or `fast=range(5, 30, 5)` for 5, 10, 15, 20 and 25.
+* Every combination runs, so the count multiplies: 5 fast values and 4 slow values are 20 backtests.
+* `params={"slow": 50}` holds a parameter at one value while the others vary.
+* Every other keyword is a `bt.backtest` argument (`start=`, `end=`, `capital=`, `costs=` and so on) and is the same for every combination. `capital=` is required.
+* A name that is neither a parameter of the class nor a `bt.backtest` argument is an error, so a typing mistake cannot pass silently.
 
-The same grid ranked by the Sharpe ratio (return per unit of day-to-day swings) instead of net profit:
+## How do I rank by something other than net profit?
+
+Pass `objective=` with the name of any [metric](metric-definitions.md), such as `"sharpe"`, `"calmar"`, `"profit_factor"` or `"win_rate"`. The highest wins.
 
 <!-- continues -->
 <!-- requires-server -->
 ```python
 if __name__ == "__main__":
-    by_sharpe = bt.optimize(EmaCross, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+    # The same 9 combinations, ranked by the Sharpe ratio instead of net profit.
+    by_sharpe = bt.optimize(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
                             fast=(5, 10, 20), slow=(30, 50, 100), objective="sharpe", workers=2)
     print("best by Sharpe:", by_sharpe.best)
 ```
@@ -97,47 +119,17 @@ if __name__ == "__main__":
 best by Sharpe: {'fast': 5, 'slow': 30}
 ```
 
-On SBIN over these years the fastest pair also had the best Sharpe ratio, so the winner did not change.
+On SBIN over these years the same pair also had the best Sharpe ratio, so the winner did not change.
 
-Your own measure, net profit per rupee of the deepest fall, as a function defined at the top level of the file:
+## How do I see the results as a grid?
 
-<!-- continues -->
-<!-- requires-server -->
-```python
-def profit_per_drawdown(result):
-    """Net profit per rupee of the deepest fall in P&L."""
-    return result.metrics["net_profit"] / -result.metrics["max_drawdown_amount"]  # the amount is negative
-
-
-if __name__ == "__main__":
-    by_own_measure = bt.optimize(EmaCross, client, start="2021-01-01", end="2026-11-11", capital=100_000,
-                                 fast=(5, 10, 20), slow=(30, 50, 100), objective=profit_per_drawdown, workers=2)
-    print("best by profit per drawdown:", by_own_measure.best)
-```
-
-<!-- output -->
-```text
-best by profit per drawdown: {'fast': 5, 'slow': 30}
-```
-
-## OptimizeResult
-
-| Attribute | What it is |
-|---|---|
-| `.table` | One row per combination, in grid order: the parameter values, `net_profit`, `total_return`, `max_drawdown`, `sharpe`, `trades` and `objective` |
-| `.best` | The parameters of the combination with the highest objective (lowest with `maximize=False`). A tie goes to the first in grid order, and a NaN objective is never best |
-| `.select(**params)` | The full `Result` of one combination, run again in your process; bit for bit what the sweep computed |
-| `.heatmap(x, y)` | The objective with `x` values as columns and `y` values as rows; other parameters held at their best values |
-| `.objective` | The objective's name |
-| `.plan` | The line reported before the sweep started: combinations, processes and the time estimate |
-| `.path` | How each combination was evaluated |
-
-The first sweep's net profit as a grid, fast lengths across and slow lengths down:
+`sweep.heatmap("fast", "slow")` lays the objective out as a table: one column per fast value and one row per slow value.
 
 <!-- continues -->
 <!-- requires-server -->
 ```python
 if __name__ == "__main__":
+    # Net profit of each pair, rounded to the rupee: fast across, slow down.
     print(sweep.heatmap("fast", "slow").round(0))
 ```
 
@@ -150,61 +142,20 @@ slow
 100   25352.0  18377.0  26272.0
 ```
 
-Every pair made money over these years, and profit fell steadily as the averages got slower: a smooth picture in which neighbouring cells agree, rather than a lone peak.
+Every pair made money over these years, and the profit fell as the averages got slower. Neighbouring cells agree, which is a better sign than one lone high number surrounded by poor ones.
 
-The full backtest of the best combination, with its trades:
+## Should I trade the best values?
 
-<!-- continues -->
-<!-- requires-server -->
-```python
-if __name__ == "__main__":
-    best = sweep.select(**sweep.best)
-    print("net profit", round(best.metrics["net_profit"], 2), "in", best.metrics["trades"], "trades")
-    print(best.trades[["entry_time", "exit_time", "net_pnl_rupees"]].head(3).to_string(index=False, float_format="%.2f"))
-```
+Not without a further test. The best row is the best fit to the past, not a forecast, and with enough combinations one will look good by luck. Prefer values whose neighbours in the grid also did well, keep the number of parameters small, and check the chosen values on years the sweep did not see. The [lesson on finding better settings](tutorial/09-find-better-settings.md) and [Tuning a Strategy](examples/ema-crossover-optimization.md) do this step by step: they optimize on 2021 to 2024 and check the winner on 2025 and 2026. Walk-forward testing, which automates this, is [planned](walk-forward.md).
 
-<!-- output -->
-```text
-net profit 99261.99 in 28 trades
-               entry_time                 exit_time  net_pnl_rupees
-2021-05-07 09:15:00+05:30 2021-08-17 09:15:00+05:30        18497.59
-2021-09-03 09:15:00+05:30 2021-11-24 09:15:00+05:30        17358.54
-2021-12-15 09:15:00+05:30 2021-12-16 09:15:00+05:30         -830.13
-```
+## More options
 
-`select` returns the same `Result` that `bt.backtest` gives, so its trades, equity curve and `tearsheet()` are all there.
-
-## How a sweep runs
-
-1. The data is loaded and the settings resolved **once** for the whole sweep.
-2. The first combination runs in your process. It also runs the look-ahead checks of the indicators, once for the whole sweep (the checks do not depend on parameter values). Its duration gives the time estimate.
-3. Before the rest starts, the plan line (how many combinations, in how many processes, and the estimate) goes to `progress=` (a function taking one line of text, such as `print`) or, without one, to the `openalgo.backtest.optimize` logger at INFO level.
-4. The other combinations run in `workers` processes (the number of CPUs by default), or in your process with `workers=1`. The table is the same whatever the number of workers.
-
-The plan line of the first sweep, kept on the result:
-
-<!-- continues -->
-<!-- requires-server -->
-```python
-if __name__ == "__main__":
-    print(sweep.plan.split(". The first")[0])
-```
-
-<!-- output -->
-```text
-bt.optimize: 9 combinations of EmaCross on the event path (on_bar runs in Python for every strategy bar), in 2 worker processes
-```
-
-A strategy with `on_bar` makes one Python call per bar in every combination, which suits grids of hundreds to a few thousand combinations. A [condition strategy](writing-strategies.md#condition-strategies) runs without a Python call per bar and sweeps faster. The plan line suggests the condition form for grids above 1,000 combinations.
-
-## Worker processes and Windows
-
-Worker processes start the way Windows requires on every platform (a fresh Python that imports your code), so a sweep behaves the same on Windows, macOS and Linux. That has three consequences:
-
-* **Put the strategy in a file.** A worker imports the strategy class (and a custom objective function) from its module. A class defined in a notebook, in an interactive session or inside a function cannot be imported. The sweep then stops with a `ConfigError` that tells you to move it into a `.py` file, to install `cloudpickle` (used automatically when present), or to pass `workers=1`.
-* **Guard the script.** Run the sweep under `if __name__ == "__main__":`, or every worker would start the sweep again when it imports your file.
-* **Some settings keep the sweep in your process.** A run with its own `calendar=`, or with a cost preset object such as `costs=bt.costs.flat(20)` or a `bt.costs.CostModel`, cannot be sent to a worker; the sweep then runs every combination in your process and the plan line says why. Preset names such as `costs="zerodha"` work in workers.
-
-## A word on overfitting
-
-The best row of a grid is the best fit to the past, not a forecast. Prefer a region of the heatmap where neighbours agree, test the chosen values on a period the sweep did not see, and keep the number of parameters small. [Tuning a Strategy](examples/ema-crossover-optimization.md) does this step by step: it optimizes on 2021 to 2024 and checks the winner on 2025 and 2026. Walk-forward testing, which automates this, is [planned](walk-forward.md).
+* **Your own objective:** `objective=profit_per_drawdown`, a function that takes a result and returns a number, defined with `def` at the top level of the file (not a `lambda`).
+* **Lower is better:** `maximize=False` picks the lowest objective, for a figure such as `"ulcer_index"`.
+* **Values on the class:** `fast = bt.param(20, (5, 10, 20))`; values named in the call replace them.
+* **A benchmark:** with `benchmark=`, `objective="alpha"` or `"information_ratio"` ranks against it.
+* **The result:** `.table`, `.best`, `.select(**params)`, `.heatmap(x, y)`, `.objective`, `.plan` (the line reported before the sweep) and `.path`.
+* **Progress:** `progress=print` prints the plan line (combinations, processes, time estimate) before the sweep starts.
+* **Faster sweeps:** a [condition strategy](writing-strategies.md#can-i-write-the-rules-as-conditions) makes no Python call per bar and sweeps much faster.
+* **Notebooks:** with the `cloudpickle` package installed, a class defined in a notebook can go to the workers.
+* **Kept in your process:** your own `calendar=` or a cost object such as `bt.costs.flat(20)` cannot go to a worker, so the sweep runs in your process and the plan line says why.

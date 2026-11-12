@@ -79,4 +79,4 @@ Each trade put about Rs 10,000 to work, so the 15 signals lost only Rs 676 and t
 * Risk 1 percent of equity per trade, with a stop-loss 2 ATR (average true range, a typical day's move) below the entry: `size = bt.size.atr_risk(1, mult=2)` and `self.buy(stop=bt.atr(2))`. A volatile stock then gets fewer shares, a calm one more.
 * Size from the starting capital, so sizes do not grow or shrink with the results: add `reinvest = False` to the class.
 
-More: [Sizing](../costs-slippage-and-margin.md#sizing), every sizer and the caps.
+More: [Sizing](../costs-slippage-and-margin.md#how-do-i-choose-how-many-shares-to-buy), every sizer and the caps.

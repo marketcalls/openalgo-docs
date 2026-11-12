@@ -88,7 +88,7 @@ Trades       : 27 (41% won)
 ## More options
 
 * Let the engine enforce the morning window instead of the code: add `entry_until = "11:00"` to the class; an entry after it is rejected.
-* An earlier square-off: `bt.backtest(..., square_off="14:30")`. See [Intraday entry window and square-off](../orders-and-risk.md#intraday-entry-window-and-square-off).
+* An earlier square-off: `bt.backtest(..., square_off="14:30")`. See [Intraday entry window and square-off](../orders-and-risk.md#when-is-an-intraday-position-closed).
 * A target twice the size of the range: add `target=2 * (self.range_high - self.range_low)` to `self.buy(...)`.
 * Another stock: `symbol = "RELIANCE"`; 15-minute bars: `interval = "15m"`.
 * The full strategy, long and short: [Opening Range Breakout](../examples/opening-range-breakout.md).
