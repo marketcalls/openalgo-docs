@@ -1,61 +1,37 @@
 # Writing Strategies
 
-A strategy is a small Python class. You declare what it trades, register its indicators once in `init`, and decide what to do in `on_bar`, which the engine calls at the close of every bar. The same class is meant to run unchanged in `bt.live` once that is available.
+A strategy is a small Python class: a set of rules that says when to buy and when to sell. You write three things:
 
-The examples on this page use synthetic 1-minute bars so they run without a server. This first block builds them; the blocks after it continue from it.
+* **What it trades:** the symbol, the exchange and the bar size. A **bar** is one candle of the chart: the open, high, low and close prices (and the volume) of one period, such as one day or five minutes.
+* **`init`:** runs once at the start. You set up your indicators here.
+* **`on_bar`:** runs every time a bar closes. You look at the prices and indicators and decide to buy, sell or wait.
 
+The engine then replays the past bar by bar and trades your rules, as if you had run them live. The same class is meant to run unchanged in `bt.live` once that is available.
+
+Every example on this page runs on real history from your OpenAlgo server. Run this block first; the blocks after it continue from it. Put your own API key from the OpenAlgo dashboard in place of `OPENALGO_API_KEY`.
+
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
+import openalgo.backtest as bt   # the backtesting engine
+from openalgo import api, ta     # the OpenAlgo client and the indicator library
 
-import openalgo.backtest as bt
-from openalgo import ta
-
-
-def minute_bars(start, end, base_price, swing):
-    """Synthetic 1-minute bars for every NSE session from start to end."""
-    frames = []
-    sessions = bt.calendar.default_calendar().sessions("NSE", start, end)
-    for day, session in enumerate(sessions.itertuples()):
-        minute = np.arange(375)  # 09:15 to 15:29 IST
-        close = (base_price + day + swing * np.sin(minute / 25 + day)).round(1)
-        open_ = np.r_[close[0], close[:-1]]
-        opens_at = pd.Timestamp(session.open, tz="UTC").tz_convert("Asia/Kolkata")
-        frames.append(
-            pd.DataFrame(
-                {
-                    "open": open_,
-                    "high": np.maximum(open_, close) + 0.2,
-                    "low": np.minimum(open_, close) - 0.2,
-                    "close": close,
-                    "volume": 1_000,
-                },
-                index=opens_at + pd.to_timedelta(minute, unit="min"),
-            )
-        )
-    return pd.concat(frames)
-
-
-sbin = minute_bars("2026-10-05", "2026-10-09", 800, 4)
-print(len(sbin), sbin.index[0], sbin.index[-1])
-```
-
-<!-- output -->
-```text
-1875 2026-10-05 09:15:00+05:30 2026-10-09 15:29:00+05:30
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 ```
 
 ## The strategy class
 
+An EMA crossover on SBIN daily bars, with an RSI filter. An **EMA** (exponential moving average) is the average of recent closing prices, with more weight on the latest ones. The **RSI** (relative strength index) is a 0 to 100 gauge of how strongly the price has been rising; above 70 is often called overbought. The rules: buy when the 10-day EMA crosses above the 30-day EMA while the RSI is below 70, and sell when the 10-day EMA crosses back below. On daily bars of a stock the engine trades **CNC** (delivery: shares you hold overnight).
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 class EmaRsi(bt.Strategy):
     # What it trades: exactly one of symbol or symbols, plus exchange and interval.
-    symbol, exchange, interval = "SBIN", "NSE", "5m"
+    symbol, exchange, interval = "SBIN", "NSE", "D"
 
     # Parameters: any other class attribute with a number, bool or text default.
-    fast = 9
-    slow = 21
+    fast = 10
+    slow = 30
     rsi_limit = 70
 
     def init(self):
@@ -65,45 +41,44 @@ class EmaRsi(bt.Strategy):
         self.rsi = self.I(ta.rsi, self.close, 14)
 
     def on_bar(self, bar):
-        # Called at every 5-minute bar close. Orders fill at the next bar's open.
-        if self.position.is_flat:
+        # Called at every daily close. Orders fill at the next session's open.
+        if len(self.close) < self.slow:  # wait until the slow EMA has enough days
+            return
+        if self.position.is_flat:  # holding nothing
             if self.fast_ema.crossed_above(self.slow_ema) and self.rsi[-1] < self.rsi_limit:
-                self.buy(qty=50)
+                self.buy()  # no quantity: buy with all the capital
         elif self.fast_ema.crossed_below(self.slow_ema):
-            self.exit()
+            self.exit()  # sell everything held
 
 
-result = bt.backtest(EmaRsi, data=sbin, capital=200_000)
-trades = result.trades
-print(trades[["entry_time", "net_pnl_rupees", "exit_reason"]].round(2).to_string(index=False))
+# Replay SBIN from January 2021 to 11 November 2026 with Rs 1,00,000.
+result = bt.backtest(EmaRsi, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+trades = result.trades[["entry_time", "exit_time", "net_pnl_rupees", "exit_reason"]]
+print(trades.head(3).to_string(index=False, float_format="%.2f"))
+print(result.metrics["trades"], "trades, net profit", round(result.metrics["net_profit"], 2))
 ```
 
 <!-- output -->
 ```text
-               entry_time  net_pnl_rupees exit_reason
-2026-10-05 12:00:00+05:30         -182.49      signal
-2026-10-05 14:35:00+05:30           82.35   scheduler
-2026-10-06 11:35:00+05:30         -182.54      signal
-2026-10-06 14:10:00+05:30           57.32   scheduler
-2026-10-07 09:20:00+05:30         -272.66      signal
-2026-10-07 11:10:00+05:30         -182.60      signal
-2026-10-07 13:45:00+05:30         -112.63   scheduler
-2026-10-08 10:35:00+05:30         -102.62      signal
-2026-10-08 13:20:00+05:30         -152.65      signal
-2026-10-09 10:05:00+05:30          -62.65      signal
-2026-10-09 12:55:00+05:30         -152.71      signal
+               entry_time                 exit_time  net_pnl_rupees exit_reason
+2021-05-11 09:15:00+05:30 2021-08-20 09:15:00+05:30        15960.07      signal
+2021-09-07 09:15:00+05:30 2021-11-29 09:15:00+05:30        10124.68      signal
+2022-01-07 09:15:00+05:30 2022-02-24 09:15:00+05:30        -3775.97      signal
+22 trades, net profit 71003.34
 ```
+
+`[-1]` reads the latest value: `self.rsi[-1]` is the RSI at the bar that just closed. Each crossover was decided at a day's close and filled at the next day's open (09:15 IST). `result.trades` lists every round trip (a buy and the sell that closed it), and `result.metrics` holds the summary figures. The engine applied Indian charges, slippage and NSE holidays without being asked.
 
 What the class declares:
 
 | Attribute | Meaning |
 |---|---|
-| `symbol` | The one symbol it trades, in OpenAlgo format (`"SBIN"`, `"NIFTY27OCT26FUT"`) |
+| `symbol` | The one symbol it trades, in OpenAlgo format (`"SBIN"`, `"NIFTY23NOV26FUT"`) |
 | `symbols` | Several symbols on the same exchange, instead of `symbol` (see [Several symbols](#several-symbols)); on a futures exchange, underlyings such as `("HDFCBANK", "ICICIBANK")` |
 | `underlying`, `expiry` | A futures strategy: the underlying (`"NIFTY"` with `exchange = "NFO"`) instead of a contract, and the contract rank, `"current_month"` (default) or `"next_month"` (see [Futures](futures.md)) |
 | `exchange` | `"NSE"`, `"BSE"`, `"NFO"`, `"BFO"`, `"MCX"`, `"CDS"` or `"BCD"` |
 | `interval` | The strategy bar: `"1m"`, `"3m"`, `"5m"`, `"15m"`, `"30m"`, `"1h"` (any whole number of minutes or hours) or `"D"` |
-| `product` | `"MIS"`, `"CNC"` or `"NRML"`; when left out, MIS for intraday intervals, CNC for daily equity and NRML for daily F&O |
+| `product` | `"MIS"` (intraday: closed the same day), `"CNC"` (delivery: stocks held overnight) or `"NRML"` (futures and options held overnight); when left out, MIS for intraday intervals, CNC for daily equity and NRML for daily F&O |
 | `size` | The default sizer for orders without a quantity, such as `bt.size.percent(50)`, or your own sizing function (see [Costs, Slippage and Margin](costs-slippage-and-margin.md#sizing)) |
 | `reinvest` | `True` (default) sizes from the current equity; `False` sizes from the starting capital (see [Reinvest and size caps](costs-slippage-and-margin.md#reinvest-and-size-caps)) |
 | `size_caps` | Caps on what any sizer gives, `bt.size.caps(position=, leverage=, risk=)` |
@@ -117,18 +92,25 @@ Every other public class attribute with a number, bool or text value is a **para
 
 **No setting is ignored.** Every class attribute above and every `bt.backtest` argument either works, raises an error, or is named in `result.warnings` with the reason it did nothing in this run (such as `pyramiding` on an `on_bar` strategy, or `entry_until` on a CNC run). Two names are refused outright: a class attribute `state` raises `ConfigError` (`self.state` is the strategy's own dict, filled while the run goes), and `after_risk_exit="allow_reentry"` raises `NotImplementedError` (it would govern only the combined rules, which are not built yet). Every value the run used, defaults resolved, is in the Assumptions block (`result.assumptions`).
 
+The same class with a stricter RSI filter, for one run:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
-slower = bt.backtest(EmaRsi, data=sbin, capital=200_000, params={"fast": 5, "slow": 30})
-print(slower.manifest["strategy"]["parameters"])
+strict = bt.backtest(EmaRsi, client, start="2021-01-01", end="2026-11-11", capital=100_000, params={"rsi_limit": 60})
+print(strict.manifest["strategy"]["parameters"])
+print(strict.metrics["trades"], "trades, net profit", round(strict.metrics["net_profit"], 2))
 ```
 
 <!-- output -->
 ```text
-{'fast': 5, 'slow': 30, 'rsi_limit': 70}
+{'fast': 10, 'slow': 30, 'rsi_limit': 60}
+15 trades, net profit 22876.96
 ```
 
-To give a parameter the values an optimization should try, declare it with `bt.param(default, values)`, for example `fast = bt.param(9, (5, 9, 13))`. See [Optimization](optimization.md).
+With the RSI below 60 required at the crossover, the strategy skipped the crossovers that came after a strong run-up and made fewer trades.
+
+To give a parameter the values an optimization should try, declare it with `bt.param(default, values)`, for example `fast = bt.param(10, (5, 10, 15))`. See [Optimization](optimization.md).
 
 ## Hooks
 
@@ -148,29 +130,38 @@ The callbacks receive a plain dict. Every event carries `type`, `name`, `time` (
 
 `bar` is a read-only named tuple: `symbol`, `open`, `high`, `low`, `close`, `volume`, `ts_open` and `ts_close` (the open and close instants as UTC nanoseconds), plus `time` (the IST time the bar opened) and `close_time` (the IST time it closed).
 
+The crossover again, logging every fill as it happens and the final equity, for 2026:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 class Logged(EmaRsi):
     def on_fill(self, fill):
-        print(fill["time"].strftime("%d %b %H:%M"), fill["name"], fill["quantity_units"], fill["price_rupees"])
+        # A fill is an executed order. After it, self.position shows what you hold.
+        print(fill["time"].strftime("%d %b %Y"), "filled at", fill["price_rupees"], "holding", round(self.position.qty, 2))
 
     def on_stop(self):
         print("final equity", round(self.equity, 2))
 
 
-logged = bt.backtest(Logged, data=sbin, capital=200_000, end="2026-10-06")
+logged = bt.backtest(Logged, client, start="2026-01-01", end="2026-11-11", capital=100_000)
 ```
 
 <!-- output -->
 ```text
-05 Oct 12:00 Filled 50.0 801.3
-05 Oct 13:20 Filled 50.0 798.5
-05 Oct 14:35 Filled 50.0 801.0
-06 Oct 11:35 Filled 50.0 802.3
-06 Oct 12:55 Filled 50.0 799.5
-06 Oct 14:10 Filled 50.0 802.0
-final equity 199775.51
+22 Apr 2026 filled at 1110.25 holding 89.96
+06 May 2026 filled at 1071.75 holding 0.0
+07 May 2026 filled at 1106.25 holding 86.95
+11 May 2026 filled at 1006.75 holding 0.0
+18 Jun 2026 filled at 1028.15 holding 84.94
+29 Jul 2026 filled at 1019.75 holding 0.0
+04 Aug 2026 filled at 1047.85 holding 82.46
+03 Sep 2026 filled at 1028.65 holding 0.0
+06 Nov 2026 filled at 996.2 holding 84.94
+final equity 90139.78
 ```
+
+Each pair of lines is one trade: a buy (the holding goes up) and the sell that closed it (the holding is back to 0). The buy of 6 November was still open when the run ended. With no quantity, each buy put the whole equity to work, so the number of shares changed with the price and the results.
 
 ## Prices and series
 
@@ -190,7 +181,10 @@ For a strategy with one symbol, `self.open`, `self.high`, `self.low`, `self.clos
 
 The engine computes each indicator once over the whole run in the Rust core and reveals its values bar by bar, exactly like the prices: `self.ema[-1]` is the value at the latest closed bar. The series reach `ta` as pandas Series indexed by bar time, so anchored indicators such as the session VWAP restart at each session.
 
+Four indicators on SBIN 5-minute bars, read at the 11:00 close of 11 November 2026: a 20-bar EMA, the ATR (average true range: the average size of a bar's move), the MACD (the gap between a fast and a slow EMA) with its signal line, and the VWAP (the session's volume-weighted average price).
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 class Indicators(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "5m"
@@ -202,22 +196,20 @@ class Indicators(bt.Strategy):
         self.vwap = self.I(ta.vwap, self.high, self.low, self.close, self.volume)
 
     def on_bar(self, bar):
-        if self.now.strftime("%d %H:%M") == "05 10:45":
-            print("bars closed:", len(self.close))
-            print("ema", round(self.ema[-1], 2), "atr", round(self.atr[-1], 2))
-            print("macd", round(self.macd[-1], 3), "signal", round(self.signal[-1], 3))
+        if f"{self.now:%d %H:%M}" == "11 11:00":  # self.now: the time the bar closed (IST)
+            print("close", self.close[-1], "ema", round(self.ema[-1], 2), "atr", round(self.atr[-1], 2))
+            print("macd", round(self.macd[-1], 2), "signal", round(self.signal[-1], 2))
             print("vwap", round(self.vwap[-1], 2), "above vwap:", bool(self.close > self.vwap))
 
 
-bt.backtest(Indicators, data=sbin, capital=200_000, end="2026-10-05")
+bt.backtest(Indicators, client, start="2026-11-09", end="2026-11-11", capital=100_000)
 ```
 
 <!-- output -->
 ```text
-bars closed: 18
-ema 801.35 atr 0.94
-macd -0.367 signal 0.211
-vwap 802.1 above vwap: False
+close 1071.0 ema 1064.63 atr 3.07
+macd 6.15 signal 6.59
+vwap 1064.66 above vwap: True
 ```
 
 Before the first bar, every indicator is checked for look-ahead, once per strategy and data set:
@@ -226,31 +218,46 @@ Before the first bar, every indicator is checked for look-ahead, once per strate
 * **Truncation check.** The indicator is computed again on the data cut at several points; every value up to a cut must equal the value on the whole data. An indicator that reads later bars stops the run with a `ConfigError`.
 * **Window stability.** The engine finds how many bars of history reproduce the whole-series values within a relative tolerance of 1e-6. That warm-up is what a live run will need. Both checks are reported in the `indicator_checks` line of the Assumptions block.
 
+A strategy that asks for `ta.fractals`, whose last values depend on bars that have not closed yet, is refused before it runs:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 from openalgo.backtest.errors import ConfigError
 
 
 class PeeksAhead(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "5m"
+    symbol, exchange, interval = "SBIN", "NSE", "D"
 
     def init(self):
         self.up, self.down = self.I(ta.fractals, self.high, self.low)
 
 
 try:
-    bt.backtest(PeeksAhead, data=sbin, capital=200_000)
+    bt.backtest(PeeksAhead, client, start="2026-01-01", end="2026-11-11", capital=100_000)
 except ConfigError as error:
     print(str(error).split(" (")[0])
-
-print(result.assumptions["indicator_checks"])
 ```
 
 <!-- output -->
 ```text
 ta.fractals cannot be used in a strategy, it looks ahead
-window tolerance 1e-06 (relative); ema(SBIN.close, 9): truncation passed at 4 cuts, warm-up 64 bars; rsi(SBIN.close, 14): truncation passed at 4 cuts, warm-up 256 bars
 ```
+
+The checks the first run (`EmaRsi`) passed:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+print(result.assumptions["indicator_checks"])
+```
+
+<!-- output -->
+```text
+window tolerance 1e-06 (relative); ema(SBIN.close, 10): truncation passed at 4 cuts, warm-up 64 bars; rsi(SBIN.close, 14): truncation passed at 4 cuts, warm-up 256 bars
+```
+
+Both indicators passed the truncation check. The warm-up says how much history a live run needs: 64 daily bars before the 10-day EMA matches its value on the full history, and 256 for the RSI.
 
 ## Other timeframes
 
@@ -258,34 +265,45 @@ window tolerance 1e-06 (relative); ema(SBIN.close, 9): truncation passed at 4 cu
 
 Any interval that is a whole multiple of the run's base interval works, coarser or finer than the strategy interval. You can register an indicator on it too. You cannot mix two intervals in one expression or one indicator.
 
+A 5-minute entry that trades only with the 15-minute trend: buy when the 5-minute close crosses above its 9 EMA while the last 15-minute close is above the 20 EMA of 15-minute closes, and sell when the 15-minute trend turns down. On intraday bars the engine trades **MIS**: intraday positions, closed (squared off) before the session ends.
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 class TrendFilter(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "5m"
 
     def init(self):
         quarter_hour = self.data["SBIN", "15m"]
-        self.trend = self.I(ta.ema, quarter_hour.close, 4)  # an EMA of 15-minute closes
+        self.trend = self.I(ta.ema, quarter_hour.close, 20)  # an EMA of 15-minute closes
         self.fast = self.I(ta.ema, self.close, 9)
 
     def on_bar(self, bar):
-        if len(self.trend) < 4:
+        if len(self.trend) < 20:  # wait for twenty 15-minute bars
             return
         uptrend = self.data["SBIN", "15m"].close[-1] > self.trend[-1]
         if self.position.is_flat and uptrend and self.close.crossed_above(self.fast):
-            self.buy(qty=50)
+            self.buy(qty=100)
         elif self.position.is_long and not uptrend:
             self.exit()
 
 
-filtered = bt.backtest(TrendFilter, data=sbin, capital=200_000)
+filtered = bt.backtest(TrendFilter, client, start="2026-10-26", end="2026-11-11", capital=200_000)
+trades = filtered.trades[["entry_time", "exit_time", "net_pnl_rupees", "exit_reason"]]
+print(trades.head(3).to_string(index=False, float_format="%.2f"))
 print(len(filtered.trades), "trades")
 ```
 
 <!-- output -->
 ```text
-3 trades
+               entry_time                 exit_time  net_pnl_rupees exit_reason
+2026-10-27 09:25:00+05:30 2026-10-27 11:15:00+05:30         -146.22      signal
+2026-10-27 11:40:00+05:30 2026-10-27 11:45:00+05:30         -456.17      signal
+2026-10-28 13:00:00+05:30 2026-10-28 15:00:00+05:30           88.80   scheduler
+15 trades
 ```
+
+An exit reason of `signal` is the strategy's own `self.exit()`; `scheduler` is the intraday square-off at 15:00.
 
 ## Position and account
 
@@ -300,7 +318,10 @@ print(len(filtered.trades), "trades")
 | `self.now` | The current decision time in IST |
 | `self.state` | A dict for your own values; it starts empty each run (do not declare `state` as a class attribute: it is refused) |
 
+A strategy that buys 100 SBIN at its first 15-minute close of 11 November 2026 and prints what it holds one bar later:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 class Inspect(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "15m"
@@ -315,13 +336,13 @@ class Inspect(bt.Strategy):
             print(self.instrument())
 
 
-bt.backtest(Inspect, data=sbin, capital=200_000, end="2026-10-05")
+bt.backtest(Inspect, client, start="2026-11-11", end="2026-11-11", capital=200_000)
 ```
 
 <!-- output -->
 ```text
-2026-10-05 09:45:00+05:30 100.0 802.3 140.0
-equity 200110.99 free cash 119900.99
+2026-11-11 09:45:00+05:30 100.0 1059.25 660.0
+equity 200629.26 free cash 94729.26
 Instrument(symbol='SBIN', exchange='NSE', kind='equity', lot_size=1, tick_size=0.05, freeze_qty=None, multiplier=1.0, expiry=None, strike=None, option_type=None, underlying=None, settlement='delivery', last_trading_day=None, contract_date=None, generic=True)
 ```
 
@@ -334,7 +355,10 @@ Timers run your function at a clock time, independent of the strategy bars. Regi
 * `self.at("09:20", fn)` calls `fn()` at the first base-bar open at or after 09:20 IST in every session. Orders it places fill **at that same open**. A session with no bar at or after that time skips the call, and the result's warnings say in how many sessions that happened.
 * `self.every(period, fn)` with `"week"`, `"month"`, `"quarter"` or `"year"` (daily or longer strategies only) calls `fn()` for the close of the first session of each period; its orders fill at the next session's open.
 
+A time-based intraday trade: buy 100 SBIN at 09:20 every session and sell at 14:30.
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 class TimedEntry(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "15m"
@@ -350,17 +374,17 @@ class TimedEntry(bt.Strategy):
         self.exit()
 
 
-timed = bt.backtest(TimedEntry, data=sbin, capital=200_000)
-print(timed.fills[["time", "side", "price_rupees", "reason"]].head(4))
+timed = bt.backtest(TimedEntry, client, start="2026-11-02", end="2026-11-11", capital=200_000)
+print(timed.fills[["time", "side", "price_rupees", "reason"]].head(4).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-                       time  side  price_rupees  reason
-0 2026-10-05 09:20:00+05:30   BUY         800.8   entry
-1 2026-10-05 14:30:00+05:30  SELL         799.8  signal
-2 2026-10-06 09:20:00+05:30   BUY         804.9   entry
-3 2026-10-06 14:30:00+05:30  SELL         804.2  signal
+                     time side  price_rupees reason
+2026-11-02 09:20:00+05:30  BUY        976.45  entry
+2026-11-02 14:30:00+05:30 SELL        979.20 signal
+2026-11-03 09:20:00+05:30  BUY        992.05  entry
+2026-11-03 14:30:00+05:30 SELL        982.40 signal
 ```
 
 ## Condition strategies
@@ -391,88 +415,131 @@ A view of another interval (`self.data["SBIN", "15m"]`) counts with its latest c
 
 The order arguments are `qty`, `size`, `lots`, `stop`, `target`, `targets`, `trail`, `breakeven`, `after_first_target`, `product`, `leverage` and `tag`; every entry is a market order. ATR distances and `bt.size.atr_risk` work as in `on_bar` (see [ATR stops and sizing in conditions](#atr-stops-and-sizing-in-conditions)). A condition strategy trades one symbol (not yet a futures underlying) and has no callbacks, timers or sizing functions (they would call Python during the run); `on_stop` still runs. A strategy uses `on_bar` or conditions, never both.
 
+An intraday EMA crossover as conditions: buy 100 SBIN when the 9 EMA of 5-minute closes crosses above the 21 EMA between 09:30 and 14:30, with a 0.5 percent stop, and sell when it crosses back below:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 class EmaCrossRules(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "5m"
-    fast = 9
-    slow = 21
 
     def init(self):
-        fast = self.I(ta.ema, self.close, self.fast)
-        slow = self.I(ta.ema, self.close, self.slow)
+        fast = self.I(ta.ema, self.close, 9)
+        slow = self.I(ta.ema, self.close, 21)
         trading_hours = bt.time_between("09:30", "14:30")
-        self.entry_when(fast.crossed_above(slow) & trading_hours, qty=50, stop=bt.pct(0.5))
+        self.entry_when(fast.crossed_above(slow) & trading_hours, qty=100, stop=bt.pct(0.5))
         self.exit_when(fast.crossed_below(slow))
 
 
-class Breakout(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "5m"
-
-    def init(self):
-        # The close is above the highest high of the 12 bars before this one.
-        self.entry_when(self.close > self.high.shift(1).rolling_max(12), qty=50)
-        self.exit_when(self.close < self.low.shift(1).rolling_min(6))
-
-
-for strategy in (EmaCrossRules, Breakout):
-    run = bt.backtest(strategy, data=sbin, capital=200_000)
-    print(strategy.__name__, len(run.trades), "trades, net", round(run.metrics["net_profit"], 2))
+rules = bt.backtest(EmaCrossRules, client, start="2026-10-01", end="2026-11-11", capital=200_000)
+print(len(rules.trades), "trades, net profit", round(rules.metrics["net_profit"], 2))
+print(rules.trades["exit_reason"].value_counts().to_dict())
 ```
 
 <!-- output -->
 ```text
-EmaCrossRules 9 trades, net -1071.59
-Breakout 12 trades, net 798.81
+31 trades, net profit -2792.2
+{'signal': 13, 'scheduler': 11, 'leg_sl': 7}
+```
+
+The exit reasons: `signal` is the crossover down, `leg_sl` the stop and `scheduler` the intraday square-off.
+
+A channel breakout as conditions: buy when the daily close is above the highest high of the previous 20 sessions, and sell when it closes below the lowest low of the previous 10.
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class Breakout(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "D"
+
+    def init(self):
+        # shift(1): the 20 sessions before this one, so today's own high does not count.
+        self.entry_when(self.close > self.high.shift(1).rolling_max(20))
+        self.exit_when(self.close < self.low.shift(1).rolling_min(10))
+
+
+breakout = bt.backtest(Breakout, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+trades = breakout.trades[["entry_time", "exit_time", "net_pnl_rupees"]]
+print(trades.head(3).to_string(index=False, float_format="%.2f"))
+print(len(breakout.trades), "trades, net profit", round(breakout.metrics["net_profit"], 2))
+```
+
+<!-- output -->
+```text
+               entry_time                 exit_time  net_pnl_rupees
+2021-02-03 09:15:00+05:30 2021-03-08 09:15:00+05:30        16049.94
+2021-05-18 09:15:00+05:30 2021-06-21 09:15:00+05:30         4519.44
+2021-07-30 09:15:00+05:30 2021-08-18 09:15:00+05:30        -5610.14
+29 trades, net profit 22463.31
 ```
 
 ### ATR stops and sizing in conditions
 
 `bt.atr(...)` stop and target distances, `bt.trail_atr(...)` and `bt.size.atr_risk(...)` work in `entry_when` and `short_when`. Each entry takes the `openalgo.ta` ATR of the bar that decided it, so a condition strategy and the equivalent `on_bar` give the same fills. An entry decided before the ATR has a value (fewer bars than its period) stops the run with a message, so require the ATR in the condition, as below. The 50 percent position cap keeps the risk sizing within the capital (see [Reinvest and size caps](costs-slippage-and-margin.md#reinvest-and-size-caps)).
 
+The daily EMA crossover with ATR risk sizing, an ATR stop and an ATR trailing stop, as conditions:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 class AtrRules(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "5m"
+    symbol, exchange, interval = "SBIN", "NSE", "D"
     size_caps = bt.size.caps(position=bt.pct(50))
 
     def init(self):
-        fast = self.I(ta.ema, self.close, 9)
-        slow = self.I(ta.ema, self.close, 21)
+        fast = self.I(ta.ema, self.close, 10)
+        slow = self.I(ta.ema, self.close, 30)
         atr = self.I(ta.atr, self.high, self.low, self.close, 14)
         self.entry_when(
             fast.crossed_above(slow) & (atr > 0),
-            size=bt.size.atr_risk(0.5, 2),  # risk 0.5 percent of equity to a stop 2 ATR away
+            size=bt.size.atr_risk(1, 2),  # risk 1 percent of equity to a stop 2 ATR away
             stop=bt.atr(2),
             trail=bt.trail_atr(3),
         )
         self.exit_when(fast.crossed_below(slow))
 
 
-class AtrOnBar(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "5m"
-    size_caps = bt.size.caps(position=bt.pct(50))
-
-    def init(self):
-        self.fast = self.I(ta.ema, self.close, 9)
-        self.slow = self.I(ta.ema, self.close, 21)
-        self.atr = self.I(ta.atr, self.high, self.low, self.close, 14)
-
-    def on_bar(self, bar):
-        if self.position.is_flat and self.fast.crossed_above(self.slow) and self.atr[-1] > 0:
-            self.buy(size=bt.size.atr_risk(0.5, 2), stop=bt.atr(2), trail=bt.trail_atr(3))
-        elif self.position.is_long and self.fast.crossed_below(self.slow):
-            self.exit()
-
-
-rules = bt.backtest(AtrRules, data=sbin, capital=200_000)
-bars_run = bt.backtest(AtrOnBar, data=sbin, capital=200_000)
-print(len(rules.trades), "trades;", "same fills:", rules.fills.equals(bars_run.fills))
+atr_rules = bt.backtest(AtrRules, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+trades = atr_rules.trades[["entry_time", "entry_units", "entry_price_rupees", "exit_reason"]]
+print(trades.head(3).to_string(index=False, float_format="%.2f"))
 ```
 
 <!-- output -->
 ```text
-11 trades; same fills: True
+               entry_time  entry_units  entry_price_rupees exit_reason
+2021-02-02 09:15:00+05:30        40.82              315.10      leg_sl
+2021-05-11 09:15:00+05:30        41.98              356.95      leg_sl
+2021-09-07 09:15:00+05:30        55.90              431.15      leg_sl
+```
+
+The same rules written in `on_bar` give the same fills:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class AtrOnBar(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "D"
+    size_caps = bt.size.caps(position=bt.pct(50))
+
+    def init(self):
+        self.fast = self.I(ta.ema, self.close, 10)
+        self.slow = self.I(ta.ema, self.close, 30)
+        self.atr = self.I(ta.atr, self.high, self.low, self.close, 14)
+
+    def on_bar(self, bar):
+        if self.position.is_flat and self.fast.crossed_above(self.slow) and self.atr[-1] > 0:
+            self.buy(size=bt.size.atr_risk(1, 2), stop=bt.atr(2), trail=bt.trail_atr(3))
+        elif self.position.is_long and self.fast.crossed_below(self.slow):
+            self.exit()
+
+
+atr_on_bar = bt.backtest(AtrOnBar, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(len(atr_on_bar.trades), "trades; same fills:", atr_on_bar.fills.equals(atr_rules.fills))
+```
+
+<!-- output -->
+```text
+24 trades; same fills: True
 ```
 
 ### From a function or from arrays
@@ -481,58 +548,82 @@ print(len(rules.trades), "trades;", "same fills:", rules.fills.equals(bars_run.f
 
 `bt.from_arrays(entries, exits, symbol=..., exchange=..., interval=..., **order_args)` does the same from arrays you computed yourself, one value per strategy bar. Both also take `shorts=`, `covers=` (for `from_arrays`), `pyramiding=` and `product=`, and return a strategy class for `bt.backtest` or `bt.optimize`.
 
+The daily EMA crossover from a function of the bars:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 def ema_signals(bars):
-    fast, slow = ta.ema(bars.close, 9), ta.ema(bars.close, 21)
+    fast, slow = ta.ema(bars.close, 10), ta.ema(bars.close, 30)
     return ta.crossover(fast, slow), ta.crossunder(fast, slow)
 
 
-FromFunction = bt.from_signals(ema_signals, "SBIN", "NSE", "5m", qty=50)
-by_function = bt.backtest(FromFunction, data=sbin, capital=200_000)
-
-# The same signals as arrays, computed on the 5-minute bars of the run.
-five_minute, _ = bt.data.load_bars("SBIN", "NSE", "5m", "2026-10-05", "2026-10-09", data=sbin, base="1m")
-entries, exits = ema_signals(five_minute)
-FromArrays = bt.from_arrays(entries, exits, symbol="SBIN", exchange="NSE", interval="5m", qty=50)
-by_arrays = bt.backtest(FromArrays, data=sbin, capital=200_000)
-
-print(len(by_function.trades), "trades;", "same fills:", by_function.fills.equals(by_arrays.fills))
+FromFunction = bt.from_signals(ema_signals, "SBIN", "NSE", "D")
+by_function = bt.backtest(FromFunction, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(len(by_function.trades), "trades, net profit", round(by_function.metrics["net_profit"], 2))
 ```
 
 <!-- output -->
 ```text
-12 trades; same fills: True
+25 trades, net profit 100310.76
+```
+
+The same signals as arrays you compute yourself, on the daily bars from `client.history`:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+bars = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2021-01-01", end_date="2026-11-11")
+entries, exits = ema_signals(bars)  # one True or False per daily bar
+
+FromArrays = bt.from_arrays(entries, exits, symbol="SBIN", exchange="NSE", interval="D")
+by_arrays = bt.backtest(FromArrays, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(len(by_arrays.trades), "trades; same fills:", by_arrays.fills.equals(by_function.fills))
+```
+
+<!-- output -->
+```text
+25 trades; same fills: True
 ```
 
 ## Several symbols
 
-Declare `symbols` instead of `symbol` and pass a dict of DataFrames by symbol. `on_bar` then receives a dict of bars by symbol, and every order needs `symbol=`. The shortcuts `self.close` and `self.position` are for a single symbol; use `self.data[symbol].close` and `self.positions[symbol]`.
+Declare `symbols` instead of `symbol`. `on_bar` then receives a dict of bars by symbol, and every order needs `symbol=`. The shortcuts `self.close` and `self.position` are for a single symbol; use `self.data[symbol].close` and `self.positions[symbol]`.
+
+The daily EMA crossover on two banks at once, each traded on its own crossover. With no quantity, each buy takes an equal share of the equity:
 
 <!-- continues -->
+<!-- requires-server -->
 ```python
-class Leader(bt.Strategy):
-    symbols, exchange, interval = ("SBIN", "ICICIBANK"), "NSE", "15m"
+class TwoBanks(bt.Strategy):
+    symbols, exchange, interval = ("SBIN", "ICICIBANK"), "NSE", "D"
+
+    def init(self):
+        self.fast = {s: self.I(ta.ema, self.data[s].close, 10) for s in self.symbols}
+        self.slow = {s: self.I(ta.ema, self.data[s].close, 30) for s in self.symbols}
 
     def on_bar(self, bars):
-        sbin_up = bars["SBIN"].close > bars["SBIN"].open
-        icici_up = bars["ICICIBANK"].close > bars["ICICIBANK"].open
-        if sbin_up and icici_up and self.positions["SBIN"].is_flat:
-            self.buy(qty=50, symbol="SBIN")
-        elif not sbin_up and self.positions["SBIN"].is_long:
-            self.exit(symbol="SBIN")
+        if len(self.data["SBIN"].close) < 30:
+            return
+        for s in self.symbols:
+            if self.positions[s].is_flat and self.fast[s].crossed_above(self.slow[s]):
+                self.buy(symbol=s)
+            elif self.positions[s].is_long and self.fast[s].crossed_below(self.slow[s]):
+                self.exit(symbol=s)
 
 
-both = {"SBIN": sbin, "ICICIBANK": minute_bars("2026-10-05", "2026-10-09", 1400, 6)}
-leader = bt.backtest(Leader, data=both, capital=500_000)
-print(leader.fills.groupby("symbol").size())
+banks = bt.backtest(TwoBanks, client, start="2021-01-01", end="2026-11-11", capital=200_000)
+print(banks.trades.groupby("symbol")["net_pnl_rupees"].agg(["count", "sum"]).round(2))
 ```
 
 <!-- output -->
 ```text
+           count       sum
 symbol
-SBIN    24
-dtype: int64
+ICICIBANK     30   1918.34
+SBIN          23  63732.51
 ```
+
+`count` is the number of closed trades of each stock and `sum` their net profit in rupees.
 
 All symbols of one strategy trade on one exchange. Several strategies in one run, pairs and portfolios are not available yet.

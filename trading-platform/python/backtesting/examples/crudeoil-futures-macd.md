@@ -1,19 +1,28 @@
 # CRUDEOIL Futures: MACD Crossover
 
-MACD is the gap between a 12-bar and a 26-bar EMA, and its signal line is a 9-bar EMA of that gap. A crossover of the two shows momentum turning, and MACD above or below zero shows the trend. Commodity traders use it on MCX crude oil in the evening session, when the international market is most active. This version trades crossovers in the direction of the trend, long and short: futures can be sold short intraday (MIS) and overnight (NRML).
+MACD measures momentum. The MACD line is the gap between a 12-bar and a 26-bar EMA (an EMA, exponential moving average, is the average closing price of the last few bars, with the recent bars counting more). Its signal line is a 9-bar EMA of that gap. A crossover of the two lines shows momentum turning, and MACD above or below zero shows the trend. Commodity traders use it on MCX crude oil in the evening session, when the international market is most active.
+
+A futures contract is an agreement to buy or sell the commodity at a set date, its expiry. It trades in lots, a fixed number of units (100 barrels for CRUDEOIL), and it can be sold short (sold first and bought back later, to gain from a fall). So this version trades crossovers in the direction of the trend, long and short.
+
+The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the `client = ...` line.
 
 ## Rules
 
-* **Instrument:** CRUDEOIL futures on MCX (the November 2026 contract), 5-minute bars, MIS (intraday).
+* **Instrument:** CRUDEOIL futures on MCX, the November 2026 contract.
+* **Bars:** 5 minutes. A bar is one period of prices, here 5 minutes, with its open, high, low and close.
+* **Product:** MIS (intraday: every position is closed before the session ends).
 * **Indicator:** MACD (12, 26, 9) from `openalgo.ta`.
 * **Long:** buy one lot (100 barrels) when MACD crosses above its signal line while MACD is above zero.
 * **Short:** sell one lot short when MACD crosses below its signal line while MACD is below zero.
-* **Exit:** the opposite crossover, or the square-off 20 minutes before the session closes (MCX closes at 23:30 or 23:55, depending on the season).
+* **Exit:** the opposite crossover, or the square-off (the forced close of intraday positions) 20 minutes before the session closes. MCX closes at 23:30 or 23:55, depending on the season.
 * **Session:** new trades from 17:00, and none in the last 30 minutes.
 
 ## Code
 
-The example tests CRUDEOIL19NOV26FUT, the November 2026 contract, from 1 October to 11 November 2026. MCX contracts are not in the engine's reference tables yet, so the code reads the contract's terms from the master contract on your OpenAlgo server with `client.symbol` and passes them with `instrument=`. For this contract it returns lot size 100, tick size 1.0 and expiry 19-NOV-26. `underlying="CRUDEOIL"` tells the engine which commodity it is, so it can charge the non-agricultural commodity rates; without it the run stops with a `CostError`. The meaning of `lotsize` on MCX differs by broker: the engine needs units (100 for one CRUDEOIL lot), so if your server shows 1, write `lot_size=100`. Everything else is the engine's default: Zerodha charges, the default slippage and a margin of 20 percent of the contract value.
+The example tests CRUDEOIL19NOV26FUT, the November 2026 contract, from 1 October to 11 November 2026. MCX contracts are not in the engine's reference tables yet, so the engine needs the contract's terms from you. The first block reads them from the master contract on your OpenAlgo server with `client.symbol`, and builds an `Instrument` from them:
+
+* `underlying="CRUDEOIL"` tells the engine which commodity it is, so it can charge the non-agricultural commodity rates; without it the run stops with a `CostError`.
+* The meaning of `lotsize` on MCX differs by broker. The engine needs units (100 for one CRUDEOIL lot), so if your server shows 1, write `lot_size=100`.
 
 <!-- requires-server -->
 ```python
@@ -23,7 +32,7 @@ import openalgo.backtest as bt
 from openalgo import api, ta
 from openalgo.backtest.reference import Instrument
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 # The November 2026 contract and its terms from the master contract on your server.
 contract = "CRUDEOIL19NOV26FUT"
@@ -31,20 +40,35 @@ info = client.symbol(symbol=contract, exchange="MCX")["data"]
 crude = Instrument(
     symbol=contract, exchange="MCX", kind="future", underlying="CRUDEOIL",
     lot_size=info["lotsize"],  # units in one lot: 100 barrels
-    tick_size=info["tick_size"],  # Rs 1
+    tick_size=info["tick_size"],  # the smallest price step: Rs 1
     expiry=dt.datetime.strptime(info["expiry"], "%d-%b-%y").date(),  # "19-NOV-26"
 )
+print(f"lot size {crude.lot_size}, tick size {crude.tick_size}, expiry {crude.expiry}")
+```
 
+<!-- output -->
+```text
+lot size 100, tick size 1.0, expiry 2026-11-19
+```
 
+The strategy and its backtest, with the contract's terms passed as `instrument=crude`. Everything else is the engine's default: Zerodha charges, the default slippage (the small amount every fill loses to the market) and a margin of 20 percent of the contract value (the money the exchange blocks while a position is open).
+
+<!-- continues -->
+<!-- requires-server -->
+```python
 class CrudeOilMacd(bt.Strategy):
     symbol, exchange, interval = contract, "MCX", "5m"
     entry_from = "17:00"  # new trades in the evening session only
     longs, shorts = True, True  # trade both ways
 
     def init(self):
+        # Runs once, before the first bar: the MACD and signal lines (the histogram is not used).
         self.macd, self.signal, _ = self.I(ta.macd, self.close, 12, 26, 9)
 
     def on_bar(self, bar):
+        # Runs at the close of every 5-minute bar.
+        if len(self.close) < 35:  # wait for 26 + 9 bars of history
+            return
         if self.macd.crossed_above(self.signal):  # momentum turns up
             self.exit()  # close a short, if any
             if self.longs and self.macd[-1] > 0:  # and the trend is up: buy one lot
@@ -84,7 +108,9 @@ Max drawdown  -12.91%
 2026-10-06 21:00:00+05:30      long              8455.0             8571.0      signal        11405.98
 ```
 
-Most exits are `signal`, the opposite crossover; `scheduler` is the square-off at the end of the session. The strategy made money with a win rate of 37 percent because its average win was more than twice its average loss.
+* Most exits are `signal`, the opposite crossover; `scheduler` is the square-off at the end of the session.
+* The strategy made money with a win rate of 37 percent because its average win was more than twice its average loss.
+* The max drawdown is the largest fall of the account from its highest value.
 
 ## Try this
 

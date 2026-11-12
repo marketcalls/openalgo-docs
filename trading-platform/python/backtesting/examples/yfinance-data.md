@@ -6,13 +6,16 @@ yfinance is a separate package (`pip install yfinance`); the OpenAlgo SDK does n
 
 ## Rules
 
-* **Entry and exit:** buy when the 20-day EMA crosses above the 50-day, sell when it crosses back below.
+* **Entry and exit:** buy when the 20-day EMA (exponential moving average: the average close of the last 20 days, with the recent days counting more) crosses above the 50-day, sell when it crosses back below.
 * **Size:** all the capital (Rs 1,00,000 at the start).
-* **Product:** CNC (delivery), long only, on Yahoo's RELIANCE.NS daily bars from January 2021 to 11 November 2026.
+* **Product:** CNC (delivery: the shares are held overnight, for as long as the trade lasts), long only (it buys, and never sells short).
+* **Data:** Yahoo's RELIANCE.NS daily bars from January 2021 to 11 November 2026. A bar is one period of prices, here one trading day, with its open, high, low and close.
 
 ## The code
 
 The engine needs three things from your data: the columns `open`, `high`, `low`, `close` and `volume`, and a time index in IST (or any time zone it can convert). Yahoo's columns are capitalised and come with dividend and split columns, so step 2 keeps the five price columns and names them in lower case.
+
+First, download the bars and shape them:
 
 <!-- requires-network -->
 ```python
@@ -28,8 +31,22 @@ raw = yf.Ticker("RELIANCE.NS").history(start="2021-01-01", end="2026-11-12")
 bars = raw[["Open", "High", "Low", "Close", "Volume"]].rename(columns=str.lower)
 bars.index = bars.index.tz_convert("Asia/Kolkata")
 print(bars.head(3).round(2).to_string())
+```
 
+<!-- output -->
+```text
+                             open    high     low   close    volume
+Date
+2021-01-01 00:00:00+05:30  897.27  901.33  894.56  897.05  10015175
+2021-01-04 00:00:00+05:30  900.48  902.19  888.25  898.56  24513534
+2021-01-05 00:00:00+05:30  888.70  895.29  882.83  887.39  24123091
+```
 
+Then run the same EMA crossover as with OpenAlgo data, on the downloaded bars, with `data=bars` instead of the client. No server is needed.
+
+<!-- continues -->
+<!-- requires-network -->
+```python
 class EmaCrossover(bt.Strategy):
     symbol, exchange, interval = "RELIANCE", "NSE", "D"
     fast = 20
@@ -48,7 +65,6 @@ class EmaCrossover(bt.Strategy):
             self.exit()
 
 
-# 3. The same backtest as with OpenAlgo data, on the downloaded bars: no server needed.
 result = bt.backtest(EmaCrossover, data=bars, capital=100_000)
 
 m = result.metrics
@@ -62,11 +78,6 @@ print(trades.head().to_string(index=False, float_format="%.2f"))
 
 <!-- output -->
 ```text
-                             open    high     low   close    volume
-Date
-2021-01-01 00:00:00+05:30  897.27  901.33  894.56  897.05  10015175
-2021-01-04 00:00:00+05:30  900.48  902.19  888.25  898.56  24513534
-2021-01-05 00:00:00+05:30  888.70  895.29  882.83  887.39  24123091
 Net profit   : Rs -4,226.55
 Return       : -4.23%
 Max drawdown : -24.33%

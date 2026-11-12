@@ -1,74 +1,122 @@
 # Position Sizing
 
-The same entries and exits can make or lose very different amounts depending on how much you buy each time. This page runs the [EMA crossover](ema-crossover.md) on RELIANCE three times, with the same signals and three ways of sizing each entry, and compares the results.
+The same entries and exits can make or lose very different amounts depending on how much you buy each time. Deciding how much to buy is position sizing. This page runs the [EMA crossover](ema-crossover.md) on RELIANCE three times, with the same signals and three ways of sizing each entry, and compares the results. An EMA (exponential moving average) is the average closing price of the last few days, with the recent days counting more.
+
+The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the `client = ...` line.
 
 ## Rules
 
 * **Entry and exit:** as in the EMA crossover: buy when the 20-day EMA crosses above the 50-day, sell when it crosses back below.
 * **Size**, one of:
   * a fixed 50 shares every trade (`bt.size.qty(50)`);
-  * 10 percent of the current equity (`bt.size.percent(10)`);
-  * 1 percent of equity at risk, with a stop 2 ATR below the entry (`bt.size.atr_risk(1, mult=2)` with `stop=bt.atr(2)`): a volatile stock gets fewer shares, a calm one more.
-* **Product:** CNC (delivery), long only, on RELIANCE (NSE) daily bars from January 2021 to 11 November 2026, with Rs 1,00,000.
+  * 10 percent of the current equity, the cash plus the value of the shares held (`bt.size.percent(10)`);
+  * 1 percent of equity at risk, with a stop-loss 2 ATR below the entry (`bt.size.atr_risk(1, mult=2)` with `stop=bt.atr(2)`): a volatile stock gets fewer shares, a calm one more. A stop-loss is an exit that limits the loss of a trade, and the ATR (average true range) is how far the price moves in a typical day.
+* **Product:** CNC (delivery: the shares are held overnight), long only, on RELIANCE (NSE) daily bars (one bar per trading day) from January 2021 to 11 November 2026, with Rs 1,00,000.
 
 ## The code
+
+The first block is the EMA crossover with the strategy's `size` set to 50 shares: every `self.buy()` without a quantity takes the strategy's `size`.
 
 <!-- requires-server -->
 ```python
 import openalgo.backtest as bt
 from openalgo import api, ta
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
-
-# Three ways to size each entry. The risk sizer needs a stop, so it gets a 2 ATR stop.
-SIZERS = {
-    "50 shares": {"size": bt.size.qty(50)},
-    "10% of equity": {"size": bt.size.percent(10)},
-    "1% risk": {"size": bt.size.atr_risk(1, mult=2), "stop": bt.atr(2)},
-}
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
 class EmaCrossover(bt.Strategy):
-    symbol, exchange, interval = "RELIANCE", "NSE", "D"
+    symbol, exchange, interval = "RELIANCE", "NSE", "D"  # "D": daily bars
     fast = 20
     slow = 50
-    sizing = "50 shares"  # which entry of SIZERS to use
+    size = bt.size.qty(50)  # how much each buy() takes: 50 shares
 
     def init(self):
+        # Runs once, before the first bar: the two EMAs of the closing prices.
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
+
+    def on_bar(self, bar):
+        # Runs at the close of every bar, here once a day.
+        if len(self.close) < self.slow:  # wait until the slow EMA has enough days
+            return
+        if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
+            self.buy()
+        elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
+            self.exit()
+
+
+result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+
+m = result.metrics
+trades = result.trades
+print(f"Net profit Rs {m['net_profit']:,.2f}, max drawdown {m['max_drawdown']:.2%}, {m['trades']} trades")
+print(f"Average position Rs {(trades['entry_units'] * trades['entry_price_rupees']).mean():,.0f}")
+```
+
+<!-- output -->
+```text
+Net profit Rs -5,554.35, max drawdown -16.09%, 15 trades
+Average position Rs 64,271
+```
+
+The same strategy with 10 percent of the current equity in each trade. `class TenPercent(EmaCrossover)` makes a copy of the strategy in which only `size` changes.
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class TenPercent(EmaCrossover):
+    size = bt.size.percent(10)  # 10 percent of the current equity
+
+
+result = bt.backtest(TenPercent, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+
+m = result.metrics
+trades = result.trades
+print(f"Net profit Rs {m['net_profit']:,.2f}, max drawdown {m['max_drawdown']:.2%}, {m['trades']} trades")
+print(f"Average position Rs {(trades['entry_units'] * trades['entry_price_rupees']).mean():,.0f}")
+```
+
+<!-- output -->
+```text
+Net profit Rs -675.91, max drawdown -2.92%, 15 trades
+Average position Rs 10,021
+```
+
+The same strategy risking 1 percent of equity on each trade. The risk sizer needs to know where the stop is, so the buy also places a stop 2 ATR below the entry.
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+class OnePercentRisk(EmaCrossover):
+    size = bt.size.atr_risk(1, mult=2)  # lose 1 percent of equity if the stop 2 ATR away is hit
 
     def on_bar(self, bar):
         if len(self.close) < self.slow:
             return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
-            self.buy(**SIZERS[self.sizing])
+            self.buy(stop=bt.atr(2))  # the stop the sizer measures the risk to
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
             self.exit()
 
 
-print(f"{'Sizing':14} {'Net profit':>11} {'Max drawdown':>13} {'Trades':>7} {'Avg position':>13}")
-for name in SIZERS:
-    result = bt.backtest(
-        EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000, params={"sizing": name}
-    )
-    m = result.metrics
-    trades = result.trades
-    position_value = (trades["entry_units"] * trades["entry_price_rupees"]).mean()
-    print(f"{name:14} {m['net_profit']:11,.2f} {m['max_drawdown']:13.2%} {m['trades']:7} {position_value:13,.0f}")
+result = bt.backtest(OnePercentRisk, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+
+m = result.metrics
+trades = result.trades
+print(f"Net profit Rs {m['net_profit']:,.2f}, max drawdown {m['max_drawdown']:.2%}, {m['trades']} trades")
+print(f"Average position Rs {(trades['entry_units'] * trades['entry_price_rupees']).mean():,.0f}")
 ```
 
 <!-- output -->
 ```text
-Sizing          Net profit  Max drawdown  Trades  Avg position
-50 shares        -5,554.35       -16.09%      15        64,271
-10% of equity      -675.91        -2.92%      15        10,021
-1% risk          -4,371.88       -10.22%      15        25,500
+Net profit Rs -4,371.88, max drawdown -10.22%, 15 trades
+Average position Rs 25,500
 ```
 
-The signals were the same in all three runs, so the loss and the drawdown grew with the money at work: about Rs 64,000 a trade for 50 shares, Rs 10,000 for 10 percent of equity. Risk sizing put about Rs 25,000 into each trade, sized so that the stop 2 ATR away would cost about 1 percent of equity, which keeps the loss of a trade about the same whether the stock is calm or volatile.
+## Reading it
 
-`params={"sizing": name}` runs the same class with another value of its `sizing` attribute, so one class serves all three runs.
+The entries were the same in all three runs, so the loss and the drawdown (the largest fall of the account from its highest value) grew with the money at work: about Rs 64,000 a trade for 50 shares, Rs 10,000 for 10 percent of equity. Risk sizing put about Rs 25,500 into each trade, sized so that the stop 2 ATR away would cost about 1 percent of equity, which keeps the loss of a trade about the same whether the stock is calm or volatile.
 
 ## Try this
 

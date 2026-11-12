@@ -1,25 +1,31 @@
 # NIFTY Futures: Opening Range Breakout
 
-The opening range breakout marks the high and low of the first 15 minutes and trades the first close outside that range: a close above it is a buy, a close below it a short sale. Intraday traders use it on index futures, where the first minutes of the session often set the direction for the day. Futures can be sold short intraday (MIS) and overnight (NRML), so this strategy takes breakouts both ways.
+The opening range is the high and low of the first 15 minutes of the session. This strategy trades the first close outside that range: a close above it is a buy, a close below it a short sale (selling first and buying back later, to gain from a fall). Intraday traders use it on index futures, where the first minutes of the session often set the direction for the day.
+
+A futures contract is an agreement to buy or sell the index at a set date, its expiry. It trades in lots, a fixed number of units (65 for NIFTY), and it can be sold short, so this strategy takes breakouts both ways.
+
+The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the `client = ...` line.
 
 ## Rules
 
-* **Instrument:** NIFTY futures (the November 2026 contract), 5-minute bars, MIS (intraday).
+* **Instrument:** NIFTY futures, the November 2026 contract.
+* **Bars:** 5 minutes. A bar is one period of prices, here 5 minutes, with its open, high, low and close.
+* **Product:** MIS (intraday: every position is closed before the session ends).
 * **Opening range:** the high and low of the first three 5-minute bars, 09:15 to 09:30.
 * **Entry:** buy one lot (65 units) when a 5-minute bar closes above the range; sell one lot short when one closes below it. At most one trade a day.
-* **Stop and target:** the stop is one range width from the entry, the target two range widths.
-* **Exit:** the stop, the target or the 15:10 square-off, whichever comes first.
+* **Stop-loss and target:** the stop-loss (an exit that limits the loss) is one range width from the entry; the target (an exit that takes the profit) is two range widths.
+* **Exit:** the stop-loss, the target or the square-off (the forced close of intraday positions) at 15:10, whichever comes first.
 
 ## Code
 
-Your broker serves history only for contracts still trading, so the example tests NIFTY23NOV26FUT, the November 2026 contract, from 1 October 2026, when it was already the next-month contract and traded actively, to 11 November 2026. The engine applies its defaults without being told: Zerodha charges, the default slippage, the contract's lot and tick size, a margin of 20 percent of the contract value (one lot blocks about Rs 3 lakh, hence the Rs 5 lakh capital) and the MIS rules (no new entries after 15:00, square-off at 15:10).
+Your broker serves history only for contracts still trading, so the example tests NIFTY23NOV26FUT, the November 2026 contract, from 1 October 2026, when it was already the next-month contract and traded actively, to 11 November 2026. The engine applies its defaults without being told: Zerodha charges, the default slippage (the small amount every fill loses to the market), the contract's lot and tick size, a margin of 20 percent of the contract value (the money the exchange blocks while a position is open: about Rs 3 lakh for one lot, hence the Rs 5 lakh capital) and the MIS rules (no new entries after 15:00, square-off at 15:10).
 
 <!-- requires-server -->
 ```python
 import openalgo.backtest as bt
 from openalgo import api
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
 class NiftyOpeningRange(bt.Strategy):
@@ -27,16 +33,17 @@ class NiftyOpeningRange(bt.Strategy):
     longs, shorts = True, True  # trade breakouts both ways
 
     def init(self):
-        self.day = None
+        self.day = None  # the session the strategy is in
 
     def on_bar(self, bar):
+        # Runs at the close of every 5-minute bar.
         if bar.time.date() != self.day:  # the first bar of a new session
             self.day, self.bars_today, self.traded = bar.time.date(), 0, False
         self.bars_today += 1
         if self.bars_today == 3:  # three 5-minute bars: the range from 09:15 to 09:30
             self.range_high, self.range_low = max(self.high[-3:]), min(self.low[-3:])
         if self.bars_today <= 3 or self.traded or not self.position.is_flat:
-            return
+            return  # still inside the range, already traded today, or holding a position
         width = self.range_high - self.range_low
         if self.longs and bar.close > self.range_high:  # breakout above the range: buy
             self.buy(lots=1, stop=bt.points(width), target=bt.points(2 * width))
@@ -73,12 +80,15 @@ Max drawdown  -3.69%
 2026-10-08 09:45:00+05:30     short             22604.4            22432.9  leg_target        10269.83
 ```
 
-`leg_sl` and `leg_target` are the stop and the target, and `scheduler` is the 15:10 square-off. The charges come to about Rs 900 a round trip, most of it the 0.05 percent STT on the sell side.
+* `leg_sl` and `leg_target` are the stop-loss and the target, and `scheduler` is the 15:10 square-off.
+* `bt.points(width)` is a distance in points (rupees of price) from the entry price.
+* The charges come to about Rs 900 a round trip (a trade in and out), most of it the 0.05 percent STT (securities transaction tax) on the sell side.
+* The max drawdown is the largest fall of the account from its highest value.
 
 ## Try this
 
 * Long only: `longs, shorts = True, False`. Short only: `longs, shorts = False, True`.
-* Trail the stop: add `trail=bt.trail_points(width)` to the `self.buy` and `self.sell` lines.
+* Trail the stop (let it follow the price as the trade gains): add `trail=bt.trail_points(width)` to the `self.buy` and `self.sell` lines.
 * After 23 November 2026: the current contract and dates inside its life, for example `"NIFTY29DEC26FUT"` with `start="2026-11-01"` and `end` the last session before the day you run it.
 
 [Futures](../futures.md) explains how the engine handles contracts, and [Orders and Risk](../orders-and-risk.md) covers stops, targets and the square-off.

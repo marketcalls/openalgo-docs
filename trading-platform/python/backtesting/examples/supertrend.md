@@ -1,14 +1,17 @@
 # Supertrend
 
-Supertrend draws a line a set multiple of the ATR (average true range) below the price in an uptrend and above it in a downtrend, and flips when the price closes through it. Trend followers use it to stay in a move for as long as it lasts and to step out when it turns; the line works as a trailing stop that widens when the stock gets more volatile.
+Supertrend is a line drawn a set distance away from the price: below the price in an uptrend, above it in a downtrend. The distance is a multiple of the ATR (average true range: how far the price moves in a typical day). The line flips to the other side when the price closes through it. Trend followers use it to stay in a move for as long as it lasts and to step out when it turns; the line works like a trailing stop that widens when the stock gets more volatile.
+
+The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the `client = ...` line.
 
 ## Rules
 
 * **Entry:** buy when Supertrend (10-day ATR, multiplier 3) shows an uptrend.
 * **Exit:** sell when it turns to a downtrend.
-* **Stop:** none apart from the flip, which works as a trailing stop on the close.
+* **Stop-loss:** none apart from the flip. A stop-loss is an exit that limits the loss of a trade; here the flip of the line plays that part.
 * **Size:** all the capital (Rs 1,00,000 at the start).
-* **Product:** CNC (delivery), long only, on SBIN (NSE) daily bars from January 2021 to 11 November 2026.
+* **Product:** CNC (delivery: the shares are held overnight, for as long as the trade lasts), long only (it buys, and never sells short).
+* **Data:** SBIN (NSE) daily bars from January 2021 to 11 November 2026. A bar is one period of prices, here one trading day, with its open, high, low and close.
 
 ## The code
 
@@ -17,23 +20,27 @@ Supertrend draws a line a set multiple of the ATR (average true range) below the
 import openalgo.backtest as bt
 from openalgo import api, ta
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
 class SupertrendFollow(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "D"
+    symbol, exchange, interval = "SBIN", "NSE", "D"  # "D": daily bars
     period = 10  # days of ATR
     multiplier = 3
 
     def init(self):
+        # ta.supertrend returns two series: the line, and the direction (-1 up, 1 down).
         self.line, self.direction = self.I(ta.supertrend, self.high, self.low, self.close, self.period, self.multiplier)
 
     def on_bar(self, bar):
-        uptrend = self.direction[-1] < 0  # -1 means the price is above the Supertrend line
+        # Runs at the close of every bar, here once a day.
+        if len(self.close) < self.period:  # wait until the ATR has enough days
+            return
+        uptrend = self.direction[-1] < 0  # [-1] is the latest bar; -1 means price above the line
         if self.position.is_flat and uptrend:
-            self.buy()
+            self.buy()  # with all the capital, at the next day's open
         elif self.position.is_long and not uptrend:
-            self.exit()
+            self.exit()  # sell everything at the next day's open
 
 
 result = bt.backtest(SupertrendFollow, client, start="2021-01-01", end="2026-11-11", capital=100_000)
@@ -61,12 +68,16 @@ Trades       : 23 (48% won)
 2022-03-17 09:15:00+05:30 2022-05-05 09:15:00+05:30              499.10             484.90        -4179.46
 ```
 
-`ta.supertrend` returns two series: the line itself and the direction, -1 in an uptrend and 1 in a downtrend. The strategy holds SBIN while the direction is -1. Its winners are the long trends of 2021; the drawdown of about 30 percent is the price of staying in until the line is crossed.
+## Reading it
+
+* `self.position.is_flat` is true while the strategy holds nothing, and `is_long` while it holds shares. Each flip was decided at a session's close and filled at the next session's open (09:15 IST).
+* The strategy holds SBIN while the direction is -1. Its winners are the long trends of 2021.
+* The max drawdown, the largest fall of the account from its highest value, is about 30 percent: the price of staying in until the line is crossed.
 
 ## Try this
 
 * A tighter line that flips sooner: `bt.backtest(..., params={"period": 7, "multiplier": 2})`.
 * Another stock: `symbol = "TATASTEEL"`.
-* A stop loss 5 percent below the entry, in case the trend breaks with a gap: `self.buy(stop=bt.pct(5))`.
+* A stop-loss 5 percent below the entry, in case the trend breaks with a gap: `self.buy(stop=bt.pct(5))`.
 
 More: [Writing Strategies](../writing-strategies.md), [Indicators: Trend](../../indicators/trend.md).

@@ -81,18 +81,18 @@ A backtest on your own data needs no OpenAlgo server, no API key and no other pa
 
 ## Your first backtest in five minutes
 
-The example below loads six years of RELIANCE daily bars from your OpenAlgo server, defines an EMA crossover strategy and runs it with Rs 1,00,000. Replace `your_api_key` with the API key from your OpenAlgo dashboard. It is the first of the [examples](examples/ema-crossover.md), which explains the strategy and what to try next.
+The example below loads six years of SBIN daily bars from your OpenAlgo server, defines an EMA crossover strategy and runs it with Rs 1,00,000. Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`. It is the first of the [examples](examples/ema-crossover.md), which explains the strategy and what to try next.
 
 <!-- requires-server -->
 ```python
 import openalgo.backtest as bt
 from openalgo import api, ta
 
-client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
 class EmaCrossover(bt.Strategy):
-    symbol, exchange, interval = "RELIANCE", "NSE", "D"  # daily bars
+    symbol, exchange, interval = "SBIN", "NSE", "D"  # daily bars
     fast = 20  # days
     slow = 50
 
@@ -120,19 +120,19 @@ print(f"Charges      : Rs {m['total_costs']:,.2f}")
 
 <!-- output -->
 ```text
-Net profit   : Rs -7,614.84
-Return       : -7.61%
-Max drawdown : -24.59%
-Trades       : 15 (33% won)
-Charges      : Rs 3,535.47
+Net profit   : Rs 53,267.29
+Return       : 53.27%
+Max drawdown : -29.82%
+Trades       : 11 (36% won)
+Charges      : Rs 3,363.76
 ```
 
 What happened, in plain words:
 
 * The engine loaded the daily bars (from Historify when it holds the whole range, otherwise from your broker), checked them against the NSE calendar and cached them, so a second run makes no request.
 * `self.buy()` with no quantity bought as many shares as the capital allowed after estimated charges, at the open of the session after the crossover (plus 2 basis points of slippage).
-* The position is CNC (delivery), because the strategy is daily and RELIANCE is cash equity. Delivery charges, including the DP charge on each sell, were deducted.
-* No stop was set, so each trade ended on the opposite crossover. A position still open on 11 November 2026 is valued at that day's close: it counts in the net profit but not in the 15 closed trades.
+* The position is CNC (delivery), because the strategy is daily and SBIN is cash equity. Delivery charges, including the DP charge on each sell, were deducted.
+* No stop was set, so each trade ended on the opposite crossover. A position still open on 11 November 2026 is valued at that day's close: it counts in the net profit but not in the 11 closed trades.
 
 To run the same strategy without a server, pass your own bars with `data=` instead of the client (see [Data](data.md#your-own-data) and [Backtest on yfinance Data](examples/yfinance-data.md)).
 
@@ -148,7 +148,7 @@ print(result)
 
 <!-- output -->
 ```text
-Result(RELIANCE)
+Result(SBIN)
   base: D
   product: CNC
   entry_from: None
@@ -175,20 +175,20 @@ Result(RELIANCE)
   reinvest: True
   size_caps: None
   base_rule: base D (a daily or longer strategy): stops are tested on the day's range and fill at the stop level, or at the open on a gap; combined and daily-loss exits fill at the day's close
-  instruments: RELIANCE: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
+  instruments: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
   benchmark: None
-  indicator_checks: window tolerance 1e-06 (relative); ema(RELIANCE.close, 20): truncation passed at 4 cuts, warm-up 128 bars
-  gross P&L: -3968.78 (realized -5220.97)
-  charges: 3646.06; net P&L: -7614.84
-  warning: RELIANCE: generic cash-equity instrument assumed (lot 1, tick 0.05)
-  warning: charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2024-10-01 are unverified for 6 fills, from 2025-03-26
+  indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 20): truncation passed at 4 cuts, warm-up 128 bars
+  gross P&L: 56627.86 (realized 56627.86)
+  charges: 3360.57; net P&L: 53267.29
+  warning: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
+  warning: charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2024-10-01 are unverified for 4 fills, from 2024-11-05
 ```
 
 A few lines worth knowing:
 
 * `base_rule` says which bars stops are tested on and where fills happen. A daily strategy uses daily bars.
 * `indicator_checks` reports the look-ahead check every indicator passes before the run (see [Writing Strategies](writing-strategies.md#indicators-and-look-ahead-checks)).
-* `gross P&L` is before charges and includes any position still open at the end, marked at the last close (here the realized part is the closed trades, the rest is the open position). `charges` are what the contract notes charged at each session close, so `net P&L` is exactly the change in equity. The `Charges` figure printed earlier is the metric `total_costs`, the sum of the closed trades' charges before contract-note rounding. The two differ because a contract note rounds STT and stamp duty to the rupee, and because the open position's buy charges are in `charges` only.
+* `gross P&L` is before charges and includes any position still open at the end, marked at the last close (here every trade was closed by 11 November 2026, so all of it is realized). `charges` are what the contract notes charged at each session close, so `net P&L` is exactly the change in equity. The `Charges` figure printed earlier is the metric `total_costs`, the sum of the closed trades' charges before contract-note rounding. The two differ because a contract note rounds STT and stamp duty to the rupee, and because the open position's buy charges are in `charges` only.
 * `entry_from`, `entry_until` and `square_off` apply to MIS runs and are stated as they applied over the whole run: one clock time, a rule such as "20 minutes before each session's close" (MCX), or dated periods when a default changed during the run (NSE cash on 3 August 2026). This daily CNC run has none.
 * `leverage` and the scale-in limits (`max_adds`, `max_position`, `min_spacing`, `max_risk`, `allow_averaging_down`) are listed even when unset, so you see that no limit applied. So are `reinvest` (whether sizes compound with the equity) and `size_caps` (see [Sizing](costs-slippage-and-margin.md#reinvest-and-size-caps)).
 * `benchmark` names what the run is compared with and where its closes came from; `None` means no benchmark figures (see [A benchmark](results-and-reports.md#a-benchmark)).

@@ -1,45 +1,34 @@
 # Optimization
 
-`bt.optimize` runs one strategy over a grid of parameter values and ranks the combinations. Every combination is an ordinary backtest with the same charges, slippage and rules, so its row in the table is exactly what `bt.backtest` gives for those values.
+Every strategy has numbers someone chose, such as the 10 and 30 of a 10-day and 30-day EMA crossover. `bt.optimize` runs one strategy over a grid of parameter values and ranks the combinations, so you can see which values worked best in the past. Every combination is an ordinary backtest with the same charges, slippage and rules, so its row in the table is exactly what `bt.backtest` gives for those values.
+
+A **parameter** is a class attribute with a number (or text, or true/false) default, such as `fast = 10`. The **grid** is every combination of the values you list: 3 values of `fast` and 3 of `slow` make 9 backtests.
 
 ## A first sweep
 
-Save this as a file (for example `sweep.py`) and run it with `python sweep.py`. The `if __name__ == "__main__":` line matters: the sweep starts worker processes, and each one imports your file (see [Worker processes](#worker-processes-and-windows)).
+Save this as a file (for example `sweep.py`) and run it with `python sweep.py`. Put your own API key from the OpenAlgo dashboard in place of `OPENALGO_API_KEY`. The `if __name__ == "__main__":` line matters: the sweep starts worker processes, and each one imports your file (see [Worker processes](#worker-processes-and-windows)).
 
+The strategy is an EMA crossover on SBIN daily bars (an **EMA** is a moving average of closing prices that weighs recent days more): buy when the fast EMA crosses above the slow one, sell when it crosses back below. The sweep tries three fast and three slow lengths over January 2021 to 11 November 2026.
+
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
-
 import openalgo.backtest as bt
-from openalgo import ta
+from openalgo import api, ta
 
-sessions = bt.calendar.default_calendar().sessions("NSE", "2026-04-01", "2026-11-06")
-k = np.arange(len(sessions))
-close = (1000 + k + 60 * np.sin(k / 6) + 10 * np.sin(k / 1.3)).round(1)
-open_ = (close - 4 * np.sin(1.3 * k)).round(1)
-bars = pd.DataFrame(
-    {
-        "open": open_,
-        "high": np.maximum(open_, close) + 6,
-        "low": np.minimum(open_, close) - 6,
-        "close": close,
-        "volume": 50_000,
-    },
-    index=pd.DatetimeIndex(sessions["date"]).tz_localize("Asia/Kolkata"),
-)
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
 class EmaCross(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "D"
-    fast = 5
-    slow = 20
+    fast = 10  # parameters: the optimizer changes these
+    slow = 30
 
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
     def on_bar(self, bar):
-        if len(self.close) <= self.slow:
+        if len(self.close) < self.slow:  # wait until the slow EMA has enough days
             return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()
@@ -47,49 +36,41 @@ class EmaCross(bt.Strategy):
             self.exit()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # needed: worker processes import this file
     sweep = bt.optimize(
-        EmaCross,
-        data=bars,
-        capital=100_000,
-        fast=(3, 5, 8),
-        slow=(15, 20, 30),
-        workers=2,
+        EmaCross, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+        fast=(5, 10, 20),   # the values to try for each parameter
+        slow=(30, 50, 100),
+        workers=2,          # worker processes; leave it out to use every CPU core
     )
-    print(sweep.plan.split(". The first")[0])
-    print(sweep.table.round(4).to_string(index=False))
+    print(sweep.table.round(2).to_string(index=False))
     print("best:", sweep.best)
-    print(sweep.heatmap("fast", "slow").round(2))
 ```
 
 <!-- output -->
 ```text
-bt.optimize: 9 combinations of EmaCross on the event path (on_bar runs in Python for every strategy bar), in 2 worker processes
  fast  slow  net_profit  total_return  max_drawdown  sharpe  trades  objective
-    3    15  11917.4807        0.1192       -0.0569  2.2614       3 11917.4807
-    3    20   9776.3443        0.0978       -0.0666  1.8458       3  9776.3443
-    3    30   2233.4292        0.0223       -0.0773  0.4600       3  2233.4292
-    5    15   8894.3854        0.0889       -0.0638  1.7006       3  8894.3854
-    5    20   4688.2800        0.0469       -0.0720  0.9370       3  4688.2800
-    5    30    -60.6900       -0.0006       -0.0824  0.0327       3   -60.6900
-    8    15   3326.1000        0.0333       -0.0720  0.6789       3  3326.1000
-    8    20  -1222.9600       -0.0122       -0.0824 -0.1885       3 -1222.9600
-    8    30  -8095.1100       -0.0810       -0.1412 -1.5416       3 -8095.1100
-best: {'fast': 3, 'slow': 15}
-fast         3        5        8
-slow
-15    11917.48  8894.39  3326.10
-20     9776.34  4688.28 -1222.96
-30     2233.43   -60.69 -8095.11
+    5    30    99261.99          0.99         -0.26    0.72      28   99261.99
+    5    50    74666.79          0.75         -0.28    0.59      23   74666.79
+    5   100    25352.11          0.25         -0.29    0.30      17   25352.11
+   10    30    71912.03          0.72         -0.24    0.58      23   71912.03
+   10    50    58861.35          0.59         -0.27    0.50      19   58861.35
+   10   100    18377.18          0.18         -0.28    0.25      14   18377.18
+   20    30    54755.14          0.55         -0.26    0.48      17   54755.14
+   20    50    53267.29          0.53         -0.30    0.46      11   53267.29
+   20   100    26271.64          0.26         -0.27    0.31       9   26271.64
+best: {'fast': 5, 'slow': 30}
 ```
+
+`sweep.table` has one row per combination; `max_drawdown` and `total_return` are fractions (-0.25 is 25 percent). `sweep.best` is the combination with the highest objective, net profit unless you choose another.
 
 ## The grid
 
-* Name a parameter in the call with the values to try: `fast=(3, 5, 8)` or `fast=range(5, 30, 5)`.
-* Or declare the values on the class with `bt.param(default, values)`: `fast = bt.param(5, (3, 5, 8))`. Values named in the call replace the declared ones.
-* `params={"slow": 20}` fixes a parameter out of the grid.
+* Name a parameter in the call with the values to try: `fast=(5, 10, 20)` or `fast=range(5, 30, 5)`.
+* Or declare the values on the class with `bt.param(default, values)`: `fast = bt.param(10, (5, 10, 20))`. Values named in the call replace the declared ones.
+* `params={"slow": 50}` fixes a parameter out of the grid.
 * Every combination of the values is run, in the order the class declares its parameters. A name that is neither a parameter nor a `bt.backtest` argument is an error.
-* Every other keyword is a `bt.backtest` argument (`data=`, `capital=`, `costs=`, `start=`, ...) and is the same for every combination; `capital=` is required, as for `bt.backtest`. With `benchmark=`, its closes are read once and every combination is measured against the same benchmark, so `objective="information_ratio"` or `"alpha"` compares like with like.
+* Every other keyword is a `bt.backtest` argument (`start=`, `end=`, `capital=`, `costs=`, ...) and is the same for every combination; `capital=` is required, as for `bt.backtest`. With `benchmark=`, its closes are read once and every combination is measured against the same benchmark, so `objective="information_ratio"` or `"alpha"` compares like with like.
 
 ## The objective
 
@@ -98,14 +79,46 @@ slow
 * The name of any [metric](metric-definitions.md): `"net_profit"` (the default), `"sharpe"`, `"sortino"`, `"calmar"`, `"cagr"`, `"total_return"`, `"profit_factor"`, `"expectancy"`, `"win_rate"` and so on.
 * Or a function that takes a `Result` and returns a number, passed as `objective=profit_per_drawdown`. Define it with `def` at the top level of your file, so worker processes can import it (a `lambda` cannot be imported).
 
+`maximize=False` picks the lowest value instead, for a figure where lower is better such as `objective="ulcer_index"`. Drawdowns are negative numbers, so the shallowest drawdown is the highest `max_drawdown` and needs the default `maximize=True`.
+
+The same grid ranked by the Sharpe ratio (return per unit of day-to-day swings) instead of net profit:
+
 <!-- continues -->
+<!-- requires-server -->
+```python
+if __name__ == "__main__":
+    by_sharpe = bt.optimize(EmaCross, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+                            fast=(5, 10, 20), slow=(30, 50, 100), objective="sharpe", workers=2)
+    print("best by Sharpe:", by_sharpe.best)
+```
+
+<!-- output -->
+```text
+best by Sharpe: {'fast': 5, 'slow': 30}
+```
+
+On SBIN over these years the fastest pair also had the best Sharpe ratio, so the winner did not change.
+
+Your own measure, net profit per rupee of the deepest fall, as a function defined at the top level of the file:
+
+<!-- continues -->
+<!-- requires-server -->
 ```python
 def profit_per_drawdown(result):
     """Net profit per rupee of the deepest fall in P&L."""
     return result.metrics["net_profit"] / -result.metrics["max_drawdown_amount"]  # the amount is negative
+
+
+if __name__ == "__main__":
+    by_own_measure = bt.optimize(EmaCross, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+                                 fast=(5, 10, 20), slow=(30, 50, 100), objective=profit_per_drawdown, workers=2)
+    print("best by profit per drawdown:", by_own_measure.best)
 ```
 
-`maximize=False` picks the lowest value instead, for a figure where lower is better such as `objective="ulcer_index"`. Drawdowns are negative numbers, so the shallowest drawdown is the highest `max_drawdown` and needs the default `maximize=True`.
+<!-- output -->
+```text
+best by profit per drawdown: {'fast': 5, 'slow': 30}
+```
 
 ## OptimizeResult
 
@@ -119,27 +132,47 @@ def profit_per_drawdown(result):
 | `.plan` | The line reported before the sweep started: combinations, processes and the time estimate |
 | `.path` | How each combination was evaluated |
 
+The first sweep's net profit as a grid, fast lengths across and slow lengths down:
+
 <!-- continues -->
+<!-- requires-server -->
 ```python
 if __name__ == "__main__":
-    best = sweep.select(**sweep.best)
-    print("best net profit:", round(best.metrics["net_profit"], 2), "with", len(best.trades), "trades")
-
-    by_sharpe = bt.optimize(EmaCross, data=bars, capital=100_000, fast=(3, 5, 8), slow=(15, 20, 30),
-                            objective="sharpe", workers=2)
-    print("best by Sharpe:", by_sharpe.best)
-
-    by_own_measure = bt.optimize(EmaCross, data=bars, capital=100_000, fast=(3, 5, 8), slow=(15, 20, 30),
-                                 objective=profit_per_drawdown, workers=2)
-    print("best by profit per drawdown:", by_own_measure.best)
+    print(sweep.heatmap("fast", "slow").round(0))
 ```
 
 <!-- output -->
 ```text
-best net profit: 11917.48 with 3 trades
-best by Sharpe: {'fast': 3, 'slow': 15}
-best by profit per drawdown: {'fast': 3, 'slow': 15}
+fast       5        10       20
+slow
+30    99262.0  71912.0  54755.0
+50    74667.0  58861.0  53267.0
+100   25352.0  18377.0  26272.0
 ```
+
+Every pair made money over these years, and profit fell steadily as the averages got slower: a smooth picture in which neighbouring cells agree, rather than a lone peak.
+
+The full backtest of the best combination, with its trades:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+if __name__ == "__main__":
+    best = sweep.select(**sweep.best)
+    print("net profit", round(best.metrics["net_profit"], 2), "in", best.metrics["trades"], "trades")
+    print(best.trades[["entry_time", "exit_time", "net_pnl_rupees"]].head(3).to_string(index=False, float_format="%.2f"))
+```
+
+<!-- output -->
+```text
+net profit 99261.99 in 28 trades
+               entry_time                 exit_time  net_pnl_rupees
+2021-05-07 09:15:00+05:30 2021-08-17 09:15:00+05:30        18497.59
+2021-09-03 09:15:00+05:30 2021-11-24 09:15:00+05:30        17358.54
+2021-12-15 09:15:00+05:30 2021-12-16 09:15:00+05:30         -830.13
+```
+
+`select` returns the same `Result` that `bt.backtest` gives, so its trades, equity curve and `tearsheet()` are all there.
 
 ## How a sweep runs
 
@@ -147,6 +180,20 @@ best by profit per drawdown: {'fast': 3, 'slow': 15}
 2. The first combination runs in your process. It also runs the look-ahead checks of the indicators, once for the whole sweep (the checks do not depend on parameter values). Its duration gives the time estimate.
 3. Before the rest starts, the plan line (how many combinations, in how many processes, and the estimate) goes to `progress=` (a function taking one line of text, such as `print`) or, without one, to the `openalgo.backtest.optimize` logger at INFO level.
 4. The other combinations run in `workers` processes (the number of CPUs by default), or in your process with `workers=1`. The table is the same whatever the number of workers.
+
+The plan line of the first sweep, kept on the result:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+if __name__ == "__main__":
+    print(sweep.plan.split(". The first")[0])
+```
+
+<!-- output -->
+```text
+bt.optimize: 9 combinations of EmaCross on the event path (on_bar runs in Python for every strategy bar), in 2 worker processes
+```
 
 A strategy with `on_bar` makes one Python call per bar in every combination, which suits grids of hundreds to a few thousand combinations. A [condition strategy](writing-strategies.md#condition-strategies) runs without a Python call per bar and sweeps faster. The plan line suggests the condition form for grids above 1,000 combinations.
 
@@ -160,4 +207,4 @@ Worker processes start the way Windows requires on every platform (a fresh Pytho
 
 ## A word on overfitting
 
-The best row of a grid is the best fit to the past, not a forecast. In the sweep above the best pair sits at the edge of the grid (the fastest EMAs tried), and neighbouring values give very different results: a sign that the edge is fragile. Prefer a region of the heatmap where neighbours agree, test the chosen values on a period the sweep did not see, and keep the number of parameters small. Walk-forward testing, which automates this, is [planned](walk-forward.md).
+The best row of a grid is the best fit to the past, not a forecast. Prefer a region of the heatmap where neighbours agree, test the chosen values on a period the sweep did not see, and keep the number of parameters small. [Tuning a Strategy](examples/ema-crossover-optimization.md) does this step by step: it optimizes on 2021 to 2024 and checks the winner on 2025 and 2026. Walk-forward testing, which automates this, is [planned](walk-forward.md).
