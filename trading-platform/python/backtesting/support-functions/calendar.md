@@ -108,7 +108,7 @@ For a year the built-in files do not cover, add the holiday tables your OpenAlgo
 from openalgo import api
 from openalgo.backtest.calendar import Calendar
 
-client = api(api_key="your_api_key_here", host="http://127.0.0.1:5000")
+client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
 cal = Calendar.from_openalgo(client, years=[2027])
 print(cal.coverage("NSE", 2027))
 ```

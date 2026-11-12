@@ -1,129 +1,82 @@
-# EMA Crossover on Daily Bars
+# EMA Crossover
 
-A positional strategy on one stock: buy when the 5-day EMA crosses above the 20-day EMA, sell when it crosses back below. Daily bars, delivery (CNC), the whole capital in each trade, Zerodha charges and the default slippage.
+The moving average crossover is the classic first trend strategy. When a short average of closing prices rises above a longer one, the price has started to trend up; when it falls back below, the trend has faded. Swing traders use it on daily charts to ride moves that last weeks or months and to stay out of long falls.
 
-## The complete example
+## Rules
 
-The data step builds synthetic daily bars, one per NSE session from 1 April to 6 November 2026, so the example runs anywhere. The version that loads real bars from OpenAlgo is further down.
+* **Entry:** buy when the 20-day EMA crosses above the 50-day EMA.
+* **Exit:** sell when the 20-day EMA crosses back below the 50-day EMA.
+* **Stop:** none; the opposite crossover is the exit.
+* **Size:** all the capital (Rs 1,00,000 at the start), the engine default.
+* **Product:** CNC (delivery), long only, on RELIANCE (NSE) daily bars from January 2021 to 11 November 2026.
 
+A delivery (CNC) short is not allowed in the Indian cash market, and the engine rejects one (reject code `product_rule`). Short selling is intraday (MIS) only, as in the [opening range breakout](opening-range-breakout.md).
+
+## The code
+
+Replace `your_api_key` with the API key from your OpenAlgo dashboard.
+
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
-
 import openalgo.backtest as bt
-from openalgo import ta
+from openalgo import api, ta
 
-# Data: synthetic daily bars for every NSE session.
-sessions = bt.calendar.default_calendar().sessions("NSE", "2026-04-01", "2026-11-06")
-k = np.arange(len(sessions))
-close = (1000 + k + 60 * np.sin(k / 6) + 10 * np.sin(k / 1.3)).round(1)
-open_ = (close - 4 * np.sin(1.3 * k)).round(1)
-bars = pd.DataFrame(
-    {
-        "open": open_,
-        "high": np.maximum(open_, close) + 6,
-        "low": np.minimum(open_, close) - 6,
-        "close": close,
-        "volume": 50_000,
-    },
-    index=pd.DatetimeIndex(sessions["date"]).tz_localize("Asia/Kolkata"),
-)
+client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
 
 
-class EmaCross(bt.Strategy):
-    """Long while the fast EMA is above the slow EMA."""
-
-    symbol, exchange, interval = "SBIN", "NSE", "D"
-    fast = 5
-    slow = 20
+class EmaCrossover(bt.Strategy):
+    symbol, exchange, interval = "RELIANCE", "NSE", "D"  # daily bars
+    fast = 20  # days
+    slow = 50
 
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
     def on_bar(self, bar):
-        if len(self.close) <= self.slow:  # wait until the slow EMA has warmed up
+        if len(self.close) < self.slow:  # wait until the slow EMA has enough days
             return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
-            self.buy()  # the whole capital, less estimated charges
+            self.buy()  # with all the capital, at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
             self.exit()
 
 
-result = bt.backtest(EmaCross, data=bars, capital=100_000)
+result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
 m = result.metrics
-print(f"Net profit     Rs {m['net_profit']:,.2f}")
-print(f"Total return   {m['total_return']:.2%}   CAGR {m['cagr']:.2%}")
-print(f"Max drawdown   {m['max_drawdown']:.2%}")
-print(f"Sharpe         {m['sharpe']:.2f}")
-print(f"Trades         {m['trades']}, won {m['winning_trades']}, lost {m['losing_trades']}")
-print(f"Charges        Rs {m['total_costs']:,.2f}")
-print(result.trades[["entry_time", "exit_time", "entry_units", "net_pnl_rupees"]].round(2).to_string(index=False))
-
-result.tearsheet("ema_crossover.html")
+print(f"Net profit   : Rs {m['net_profit']:,.2f}")
+print(f"Return       : {m['total_return']:.2%}")
+print(f"Max drawdown : {m['max_drawdown']:.2%}")
+print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+trades = result.trades[["entry_time", "exit_time", "entry_price_rupees", "exit_price_rupees", "net_pnl_rupees"]]
+print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
 <!-- output -->
 ```text
-Net profit     Rs 4,688.28
-Total return   4.69%   CAGR 7.93%
-Max drawdown   -7.20%
-Sharpe         0.94
-Trades         3, won 2, lost 1
-Charges        Rs 728.20
-               entry_time                 exit_time  entry_units  net_pnl_rupees
-2026-05-26 09:15:00+05:30 2026-06-25 09:15:00+05:30        97.57         2793.84
-2026-07-22 09:15:00+05:30 2026-08-20 09:15:00+05:30        95.00        -1126.35
-2026-09-11 09:15:00+05:30 2026-10-15 09:15:00+05:30        93.32         3021.56
+Net profit   : Rs -7,614.84
+Return       : -7.61%
+Max drawdown : -24.59%
+Trades       : 15 (33% won)
+               entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
+2021-06-01 09:15:00+05:30 2021-07-29 09:15:00+05:30             1032.55             978.70        -5442.05
+2021-08-16 09:15:00+05:30 2021-12-01 09:15:00+05:30             1024.65            1159.35        12176.42
+2022-01-14 09:15:00+05:30 2022-01-31 09:15:00+05:30             1208.45            1124.65        -7638.45
+2022-03-23 09:15:00+05:30 2022-06-27 09:15:00+05:30             1202.70            1212.65          581.56
+2022-08-12 09:15:00+05:30 2022-09-22 09:15:00+05:30             1234.75            1184.55        -4281.15
 ```
 
-What to look at:
+Each crossover was decided at a session's close and filled at the next session's open (09:15 IST). The engine applied the defaults for Indian markets without being asked: Zerodha delivery charges at each trade date's rates, 2 basis points of slippage, and NSE session times and holidays. On RELIANCE over these six years the crossover lost money: one good trend (August to December 2021) did not pay for the many false starts.
 
-* **Fills at the next open.** Each crossover was decided at a session close and filled at the next session's open (09:15), plus 2 basis points of slippage.
-* **Quantity.** `self.buy()` with no quantity uses the whole equity less the estimated charges, so each trade's size changes with the equity (fractional shares by default; pass `quantity_mode="venue"` for whole shares).
-* **Charges.** Delivery has no Zerodha brokerage, but STT, stamp duty, exchange charges and the DP charge on each sell still cost about Rs 728 over three round trips.
-* **The tearsheet** `ema_crossover.html` has the equity curve, drawdown, monthly returns, the trade list and every assumption.
+Python may also print an `UnverifiedScheduleWarning`: some charge rates of the period are not yet verified against their source. The backtest is complete; `result.warnings` lists the fills it affects.
 
-## The same strategy as conditions
+## Try this
 
-The rules fit in two conditions, so the strategy can also be written without `on_bar`. It then runs entirely in the Rust core and gives exactly the same trades. `self.close.shift(self.slow) > 0` is true once `slow` bars have closed, which replaces the warm-up check.
+* Another stock: `symbol = "TCS"`.
+* Another period: `start="2023-01-01"`.
+* Faster averages, without editing the class: `bt.backtest(..., params={"fast": 10, "slow": 30})`.
+* A stop loss 5 percent below the entry: `self.buy(stop=bt.pct(5))`. On a CNC position the engine holds it as a GTT order, the way your broker would hold it overnight.
+* The full report in your browser: `result.tearsheet("ema_crossover.html")`.
 
-<!-- continues -->
-```python
-class EmaCrossRules(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "D"
-    fast = 5
-    slow = 20
-
-    def init(self):
-        fast = self.I(ta.ema, self.close, self.fast)
-        slow = self.I(ta.ema, self.close, self.slow)
-        warmed_up = self.close.shift(self.slow) > 0
-        self.entry_when(fast.crossed_above(slow) & warmed_up)
-        self.exit_when(fast.crossed_below(slow))
-
-
-rules = bt.backtest(EmaCrossRules, data=bars, capital=100_000)
-print("same fills:", rules.fills.equals(result.fills), "net profit", round(rules.metrics["net_profit"], 2))
-```
-
-<!-- output -->
-```text
-same fills: True net profit 4688.28
-```
-
-## With data from OpenAlgo
-
-Replace the data step with your OpenAlgo server. The engine loads SBIN's daily history (from Historify when it holds the whole range, otherwise from your broker), checks it against the NSE calendar and caches it.
-
-<!-- requires-server -->
-```python
-from openalgo import api
-
-client = api(api_key="your_api_key_here", host="http://127.0.0.1:5000")
-result = bt.backtest(EmaCross, client, start="2024-10-01", end="2026-10-30", capital=100_000)
-print(result)
-```
-
-`print(result)` starts with the Assumptions block; check its warnings first (a short history, unverified charge rates before April 2026). Real prices will give different figures from the synthetic ones above.
+More: [Writing Strategies](../writing-strategies.md), [Orders and Risk](../orders-and-risk.md), [Results and Reports](../results-and-reports.md).

@@ -1,46 +1,37 @@
-# Optimizing the EMA Crossover
+# Tuning a Strategy
 
-This example sweeps the two EMA lengths of the [EMA crossover](ema-crossover.md) on one period, picks the pair with the best Sharpe ratio, and then checks that pair on the months that followed, which the sweep never saw. It runs the combinations in two worker processes.
+Every strategy has numbers someone chose: the 20 and 50 of the [EMA crossover](ema-crossover.md) are two of them. `bt.optimize` backtests the strategy once for every combination of values you list and ranks them, so you can see which lengths worked best on RELIANCE in the past, and then check whether they keep working on later data.
 
-Save it as a file (for example `optimize_ema.py`) and run `python optimize_ema.py`: worker processes import the strategy from your file, and the `if __name__ == "__main__":` guard keeps them from starting the sweep again (see [Optimization](../optimization.md#worker-processes-and-windows)).
+## How it works
 
-## The complete example
+1. **Parameters are class attributes.** `fast = 20` and `slow = 50` in the class are the defaults; any number, text or true/false class attribute is a parameter the optimizer can change.
+2. **Give the values to try by name.** `bt.optimize(EmaCrossover, client, ..., fast=(10, 15, 20, 25), slow=(40, 50, 60))` runs all 12 pairs, each a full backtest with the same charges and rules as `bt.backtest`.
+3. **Read the result.** `opt.table` has one row per pair, `opt.best` is the winning pair, `opt.heatmap("fast", "slow")` lays the results out as a grid, and `opt.select(**opt.best)` gives the full backtest of the winner, with its trades.
+4. **Check it on data the optimizer never saw.** Optimize on January 2021 to December 2024, then backtest the best pair on January 2025 to November 2026 and compare it with the original 20/50.
 
+Save the code as a file (for example `tune_ema.py`) and run `python tune_ema.py`: the optimizer runs the pairs in worker processes, and each one imports your file.
+
+## The code
+
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
-
 import openalgo.backtest as bt
-from openalgo import ta
+from openalgo import api, ta
 
-# Data: synthetic daily bars for every NSE session from 1 April to 6 November 2026.
-sessions = bt.calendar.default_calendar().sessions("NSE", "2026-04-01", "2026-11-06")
-k = np.arange(len(sessions))
-close = (1000 + k + 60 * np.sin(k / 6) + 10 * np.sin(k / 1.3)).round(1)
-open_ = (close - 4 * np.sin(1.3 * k)).round(1)
-bars = pd.DataFrame(
-    {
-        "open": open_,
-        "high": np.maximum(open_, close) + 6,
-        "low": np.minimum(open_, close) - 6,
-        "close": close,
-        "volume": 50_000,
-    },
-    index=pd.DatetimeIndex(sessions["date"]).tz_localize("Asia/Kolkata"),
-)
+client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
 
 
-class EmaCross(bt.Strategy):
-    symbol, exchange, interval = "SBIN", "NSE", "D"
-    fast = bt.param(5, range(3, 11))  # the default and the values a sweep tries
-    slow = bt.param(20, (15, 20, 25, 30))
+class EmaCrossover(bt.Strategy):
+    symbol, exchange, interval = "RELIANCE", "NSE", "D"
+    fast = 20  # parameters: class attributes the optimizer can change
+    slow = 50
 
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
     def on_bar(self, bar):
-        if len(self.close) <= self.slow:
+        if len(self.close) < self.slow:
             return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()
@@ -48,76 +39,69 @@ class EmaCross(bt.Strategy):
             self.exit()
 
 
-if __name__ == "__main__":
-    # 1. Sweep the 8 x 4 grid declared with bt.param on April to July.
-    sweep = bt.optimize(
-        EmaCross,
-        data=bars,
-        capital=100_000,
-        start="2026-04-01",
-        end="2026-07-31",
-        objective="sharpe",
-        workers=2,
+if __name__ == "__main__":  # needed: the optimizer starts worker processes that import this file
+    # 1. Backtest every pair of lengths on January 2021 to December 2024.
+    opt = bt.optimize(
+        EmaCrossover, client, start="2021-01-01", end="2024-12-31", capital=100_000,
+        fast=(10, 15, 20, 25), slow=(40, 50, 60),
     )
-    table = sweep.table.sort_values("objective", ascending=False)
-    print(len(table), "combinations; the five best by Sharpe:")
-    print(table.head(5).round(3).to_string(index=False))
-    print("best:", sweep.best)
 
-    # 2. The Sharpe ratio over both lengths (other parameters at their best values).
-    print(sweep.heatmap("fast", "slow").round(2).to_string())
+    # 2. The five best pairs by net profit, and the winner.
+    top = opt.table.sort_values("objective", ascending=False).head(5)
+    print(top[["fast", "slow", "net_profit", "max_drawdown", "trades"]].round(2).to_string(index=False))
+    print("best:", opt.best)
 
-    # 3. The best pair on August to November, which the sweep did not see.
-    later = bt.backtest(EmaCross, data=bars, capital=100_000, start="2026-08-01", end="2026-11-06", params=sweep.best)
-    default = bt.backtest(EmaCross, data=bars, capital=100_000, start="2026-08-01", end="2026-11-06")
-    for name, run in (("best pair", later), ("defaults 5/20", default)):
-        m = run.metrics
-        print(f"{name:14} out of sample: net profit {m['net_profit']:9.2f}, closed trades {m['trades']}, open {m['open_trades']}")
+    # 3. Net profit of every pair: fast lengths across, slow lengths down.
+    print(opt.heatmap("fast", "slow").round(0))
+
+    # 4. The full backtest of the best pair, with its trade list.
+    best = opt.select(**opt.best)
+    print(best.trades[["entry_time", "exit_time", "net_pnl_rupees"]].head().to_string(index=False, float_format="%.2f"))
+
+    # 5. The check: the best pair and the original 20/50 on 2025-2026, which the optimizer never saw.
+    for params in (opt.best, {"fast": 20, "slow": 50}):
+        later = bt.backtest(EmaCrossover, client, start="2025-01-01", end="2026-11-11", capital=100_000, params=params)
+        print(f"{params} after 2024: net profit Rs {later.metrics['net_profit']:,.2f}")
 ```
 
 <!-- output -->
 ```text
-32 combinations; the five best by Sharpe:
- fast  slow  net_profit  total_return  max_drawdown  sharpe  trades  objective
-    3    15   11198.190         0.112        -0.050   4.010     1.0      4.010
-    3    20   11198.190         0.112        -0.050   4.010     1.0      4.010
-    4    15   11198.190         0.112        -0.050   4.010     1.0      4.010
-    5    15   10254.069         0.103        -0.050   3.708     1.0      3.708
-    4    20   10180.780         0.102        -0.051   3.676     1.0      3.676
-best: {'fast': 3, 'slow': 15}
-fast    3     4     5     6     7     8     9     10
+ fast  slow  net_profit  max_drawdown  trades
+   25    60     8537.40         -0.31       8
+   20    60     2747.97         -0.28      10
+   10    60     1482.35         -0.25      13
+   15    40     1208.63         -0.27      14
+   20    50      367.70         -0.24      11
+best: {'fast': 25, 'slow': 60}
+fast      10      15      20      25
 slow
-15    4.01  4.01  3.71  3.11  3.11  2.56  2.56  2.19
-20    4.01  3.68  3.11  2.56  2.56  2.19  1.24  1.24
-25    3.68  2.88  2.56  2.19  1.88  1.24  0.93  0.78
-30    2.88  2.88  2.19  1.88  0.93  0.93  0.78  0.30
-best pair      out of sample: net profit   4766.04, closed trades 1, open 1
-defaults 5/20  out of sample: net profit   1774.16, closed trades 1, open 0
+40     114.0  1209.0 -8985.0 -2658.0
+50   -1391.0 -2926.0   368.0 -5984.0
+60    1482.0 -2273.0  2748.0  8537.0
+               entry_time                 exit_time  net_pnl_rupees
+2021-06-02 09:15:00+05:30 2021-12-15 09:15:00+05:30        10212.27
+2022-01-14 09:15:00+05:30 2022-01-31 09:15:00+05:30        -7886.86
+2022-03-24 09:15:00+05:30 2022-07-04 09:15:00+05:30        -5619.20
+2022-08-17 09:15:00+05:30 2022-09-23 09:15:00+05:30        -6789.40
+2022-11-10 09:15:00+05:30 2023-01-12 09:15:00+05:30        -2508.56
+{'fast': 25, 'slow': 60} after 2024: net profit Rs 1,294.40
+{'fast': 20, 'slow': 50} after 2024: net profit Rs -7,213.11
 ```
 
-## Reading the result
+## Reading it
 
-* **The table** has one row per combination with the key figures, so you can sort and filter it like any DataFrame. `sweep.best` is the row with the highest objective; a tie goes to the first in grid order, which is why (3, 15) wins over (3, 20) and (4, 15) here.
-* **Count the trades.** On four months of these synthetic bars every combination closed a single trade, so the ranking says little. Real data over a longer period gives a table worth reading; a Sharpe ratio built on one trade is not evidence.
-* **The heatmap** shows whether the best pair sits in a stable region or on an isolated peak. Neighbouring cells with similar values are a better sign than one bright cell at the edge of the grid.
-* **The out-of-sample check** is the honest number. A pair chosen on one period often does worse on the next; when it does much worse, the sweep fitted noise. Note also that a run starting on 1 August spends its first `slow` sessions warming up the EMAs, so a short test window holds few trades.
-* `sweep.select(**sweep.best)` returns the full `Result` of the best combination (trades, equity, tearsheet), bit for bit what the sweep computed.
+* **The table** ranks by the objective, net profit unless you choose another. `max_drawdown` is a fraction: -0.31 is a fall of 31 percent from the peak. 25/60 made Rs 8,537 in 8 trades; the original 20/50 only Rs 368.
+* **The heatmap** shows every pair at once. Half the pairs lost money, and the best one sits in the corner of the grid next to a loss of Rs 5,984 (25/50): a lone peak at the edge is more likely luck than a real edge.
+* **The trade list** of the winner comes from `opt.select`, the same full `Result` that `bt.backtest` returns: its trades, equity curve and tearsheet.
 
-Walk-forward testing, which repeats this sweep-then-test cycle over many windows automatically, is [planned](../walk-forward.md).
+## Is the best pair really better?
 
-## With data from OpenAlgo
+The pair that did best on the past is the one that fitted the past best, and part of that fit is luck. So test it on later data the optimizer never saw. Here 25/60 made Rs 1,294 from January 2025 to November 2026 while the original 20/50 lost Rs 7,213: better, but far below its Rs 8,537 of the earlier years. Trust a choice only when it holds up on unseen dates and its neighbours on the heatmap did nearly as well.
 
-<!-- requires-server -->
-```python
-from openalgo import api
+## Try this
 
-if __name__ == "__main__":
-    client = api(api_key="your_api_key_here", host="http://127.0.0.1:5000")
-    sweep = bt.optimize(EmaCross, client, start="2024-10-01", end="2025-12-31", capital=100_000,
-                        objective="sharpe")
-    later = bt.backtest(EmaCross, client, start="2026-01-01", end="2026-10-30", capital=100_000,
-                        params=sweep.best)
-    print(sweep.best, later.metrics["sharpe"])
-```
+* Rank by return per unit of risk instead of profit: `bt.optimize(..., objective="sharpe")`.
+* A wider grid: `fast=range(5, 35, 5), slow=range(40, 110, 10)`.
+* Another stock: `symbol = "SBIN"`.
 
-The bars are loaded once for the whole sweep (and cached), and every worker reuses them.
+More: [Optimization](../optimization.md), the reference for grids, objectives and worker processes.

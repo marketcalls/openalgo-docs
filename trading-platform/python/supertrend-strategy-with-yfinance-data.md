@@ -1,137 +1,76 @@
-# Supertrend Strategy with yfinance data
+# Supertrend Backtest with yfinance Data
 
-Here is a coding snippet of python based supertrend strategy implementing using placesmartorder function.
+This page backtests a Supertrend trend-following strategy on SBIN with daily bars downloaded by yfinance, using the backtesting engine built into the OpenAlgo Python SDK. No OpenAlgo server or broker login is needed.
 
+yfinance is a separate package (`pip install yfinance`); the OpenAlgo SDK does not depend on it. Yahoo prices are adjusted for splits and bonuses by default (and, with yfinance's default `auto_adjust=True`, for dividends too).
+
+## Rules
+
+* **Entry:** buy when Supertrend (10-day ATR, multiplier 3) shows an uptrend.
+* **Exit:** sell when it turns to a downtrend.
+* **Size:** all the capital (Rs 1,00,000 at the start).
+* **Product:** CNC (delivery), long only, on Yahoo's SBIN.NS daily bars from January 2021 to 11 November 2026.
+
+## The code
+
+<!-- requires-network -->
 ```python
-
-
-#Coded by Rajandran R - www.marketcalls.in / www.openalgo.in
-
-from openalgo import api
 import yfinance as yf
-import pandas as pd
-import numpy as np
-import time
-import threading
-import os
+
+import openalgo.backtest as bt
+from openalgo import ta
+
+# Daily bars of SBIN from Yahoo Finance, shaped the way the engine reads them.
+raw = yf.Ticker("SBIN.NS").history(start="2021-01-01", end="2026-11-12")
+bars = raw[["Open", "High", "Low", "Close", "Volume"]].rename(columns=str.lower)
+bars.index = bars.index.tz_convert("Asia/Kolkata")
 
 
-# Get API key from openalgo portal
-api_key = 'your_openalgo_apikey'
+class SupertrendFollow(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "D"
+    period = 10  # days of ATR
+    multiplier = 3
 
-#set the StrategyName, broker code, Trading symbol, exchange, product and quantity
-strategy = "Supertrend Python"
-symbol = "RELIANCE"  #OpenAlgo Symbol
-exchange = "NSE"
-product="MIS"
-quantity = 1
+    def init(self):
+        self.line, self.direction = self.I(ta.supertrend, self.high, self.low, self.close, self.period, self.multiplier)
 
-#yfinance datafeed settings
-yfsymbol = "RELIANCE.NS" #Yahoo Finance Datafeed Symbol
-period = "1d"
-timeframe = "1m"
+    def on_bar(self, bar):
+        uptrend = self.direction[-1] < 0  # -1 means the price is above the Supertrend line
+        if self.position.is_flat and uptrend:
+            self.buy()
+        elif self.position.is_long and not uptrend:
+            self.exit()
 
-#supertrend indicator inputs
-atr_period = 5
-atr_multiplier = 1.0
 
-# Set the API Key 
-client = api(api_key=api_key, host='http://127.0.0.1:5000')
+result = bt.backtest(SupertrendFollow, data=bars, capital=100_000)
 
-def Supertrend(df, atr_period, multiplier):
-    high = df['High']
-    low = df['Low']
-    close = df['Close']
-    
-    # calculate ATR
-    price_diffs = [high - low, high - close.shift(), close.shift() - low]
-    true_range = pd.concat(price_diffs, axis=1)
-    true_range = true_range.abs().max(axis=1)
-    atr = true_range.ewm(alpha=1/atr_period, min_periods=atr_period).mean()
-    
-    hl2 = (high + low) / 2
-    final_upperband = upperband = hl2 + (multiplier * atr)
-    final_lowerband = lowerband = hl2 - (multiplier * atr)
-    
-    supertrend = [True] * len(df)
-    
-    for i in range(1, len(df.index)):
-        curr, prev = i, i-1
-        
-        if close.iloc[curr] > final_upperband.iloc[prev]:
-            supertrend[curr] = True
-        elif close.iloc[curr] < final_lowerband.iloc[prev]:
-            supertrend[curr] = False
-        else:
-            supertrend[curr] = supertrend[prev]
-            
-            if supertrend[curr] == True and final_lowerband.iloc[curr] < final_lowerband.iloc[prev]:
-                final_lowerband.iat[curr] = final_lowerband.iat[prev]
-            if supertrend[curr] == False and final_upperband.iloc[curr] > final_upperband.iloc[prev]:
-                final_upperband.iat[curr] = final_upperband.iat[prev]
-
-        if supertrend[curr] == True:
-            final_upperband.iat[curr] = np.nan
-        else:
-            final_lowerband.iat[curr] = np.nan
-    
-    return pd.DataFrame({
-        'Supertrend': supertrend,
-        'Final Lowerband': final_lowerband,
-        'Final Upperband': final_upperband
-    }, index=df.index)
-
-def supertrend_strategy():
-    stock = yf.Ticker(yfsymbol)
-    position = 0
-    
-    while True:
-        df = stock.history(period=period, interval=timeframe)
-        close = df['Close'].round(2)
-        supertrend = Supertrend(df, atr_period, atr_multiplier)
-        
-        is_uptrend = supertrend['Supertrend']
-        longentry = is_uptrend.iloc[-2] and not is_uptrend.iloc[-3]
-        shortentry = is_uptrend.iloc[-3] and not is_uptrend.iloc[-2]
-
-        if longentry and position <= 0:
-            position = quantity
-            response = client.placesmartorder(
-                        strategy=strategy,
-                        symbol=symbol,
-                        action="BUY",
-                        exchange=exchange,
-                        price_type="MARKET",
-                        product=product,
-                        quantity=quantity,
-                        position_size=position
-                        )
-            print("Buy Order Response:", response)
-
-        elif shortentry and position >= 0:
-            position = quantity * -1
-            response = client.placesmartorder(
-                        strategy=strategy,
-                        symbol=symbol,
-                        action="SELL",
-                        exchange=exchange,
-                        price_type="MARKET",
-                        product=product,
-                        quantity=quantity,
-                        position_size=position
-                        )
-            print("Sell Order Response:", response)
-
-        print("Position:", position)
-        print("LTP:", close.iloc[-1])
-        print("Supertrend:", supertrend['Supertrend'].iloc[-2])
-        print("LowerBand:", supertrend['Final Lowerband'].iloc[-2].round(2))
-        print("UpperBand:", supertrend['Final Upperband'].iloc[-2].round(2))
-        print("longentry:", longentry)
-        print("shortentry:", shortentry)
-
-        time.sleep(15)
-
-t = threading.Thread(target=supertrend_strategy)
-t.start()
+m = result.metrics
+print(f"Net profit   : Rs {m['net_profit']:,.2f}")
+print(f"Return       : {m['total_return']:.2%}")
+print(f"Max drawdown : {m['max_drawdown']:.2%}")
+print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+trades = result.trades[["entry_time", "exit_time", "entry_price_rupees", "exit_price_rupees", "net_pnl_rupees"]]
+print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
+
+<!-- output -->
+```text
+Net profit   : Rs 54,549.78
+Return       : 54.55%
+Max drawdown : -28.46%
+Trades       : 23 (48% won)
+               entry_time                 exit_time  entry_price_rupees  exit_price_rupees  net_pnl_rupees
+2021-02-02 09:15:00+05:30 2021-03-18 09:15:00+05:30              285.60             336.65        17596.43
+2021-05-14 09:15:00+05:30 2021-08-20 09:15:00+05:30              335.45             379.50        15130.07
+2021-09-16 09:15:00+05:30 2021-11-29 09:15:00+05:30              407.05             429.80         7090.02
+2022-01-06 09:15:00+05:30 2022-02-25 09:15:00+05:30              446.25             438.95        -2609.36
+2022-03-17 09:15:00+05:30 2022-05-05 09:15:00+05:30              456.60             443.55        -4234.17
+```
+
+The trades are the same as in the [Supertrend example on OpenAlgo data](backtesting/examples/supertrend.md), but the return is higher: Yahoo takes the dividends out of past prices, so a holding's dividends show up as price gains. The engine applied delivery charges, slippage and the NSE calendar as usual.
+
+## Next steps
+
+* The shaping step and other symbols: [Backtest on yfinance Data](backtesting/examples/yfinance-data.md).
+* More strategies on real data: [Examples](backtesting/examples/README.md).
+* Trading the same class through OpenAlgo is planned (`bt.live`); until then, place live orders with the [Python SDK order functions](README.md).

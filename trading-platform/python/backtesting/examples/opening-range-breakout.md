@@ -1,130 +1,81 @@
 # Opening Range Breakout
 
-An intraday strategy: mark the high and low of the first 15 minutes, buy when a 5-minute bar closes above that range, sell short when one closes below it. Each trade has a stop one range-width away and a target two range-widths away, and anything still open is squared off at the exchange default. At most one trade per day.
+The opening range is the high and low of the first minutes of the session. A break above it often starts the day's move up, and a break below it the move down. Intraday traders take the first break, in either direction, with the stop at the other side of the range, and are out before the close.
 
-The run is MIS (intraday), on 1-minute data, so the stop and target are tested on every minute and the square-off happens at the dated NSE default: for October 2026, entries stop at 14:50 and positions are squared off at 15:00.
+## Rules
 
-## The complete example
+* **Range:** the high and low of the first 15 minutes (09:15 to 09:30 IST, three 5-minute bars).
+* **Entry:** buy when a 5-minute bar closes above the range high; sell short when one closes below the range low. One trade a day.
+* **Stop:** at the other side of the range.
+* **Exit:** the stop, or the engine's square-off at 15:00.
+* **Size:** all the capital (Rs 1,00,000), no leverage.
+* **Product:** MIS (intraday), long and short, on SBIN (NSE) 5-minute bars from 1 August to 11 November 2026.
 
-The data step builds synthetic 1-minute bars for every NSE session in October 2026: days that trend up, days that trend down, all with a swing. The version that loads real bars from OpenAlgo is further down.
+## The code
 
+<!-- requires-server -->
 ```python
-import numpy as np
-import pandas as pd
-
 import openalgo.backtest as bt
+from openalgo import api
 
-# Data: synthetic 1-minute bars, 09:15 to 15:29 IST, for every NSE session in October 2026.
-frames = []
-sessions = bt.calendar.default_calendar().sessions("NSE", "2026-10-01", "2026-10-30")
-for day, session in enumerate(sessions.itertuples()):
-    minute = np.arange(375)
-    trend = (-1) ** day * (2 + day % 3) * np.minimum(minute, 200) / 100
-    swing = 1.5 * np.sin(minute / 9 + day)
-    close = (500 + day + trend + swing).round(1)
-    open_ = np.r_[close[0] - 0.4, close[:-1]]
-    opens_at = pd.Timestamp(session.open, tz="UTC").tz_convert("Asia/Kolkata")
-    frames.append(
-        pd.DataFrame(
-            {
-                "open": open_,
-                "high": np.maximum(open_, close) + 0.3,
-                "low": np.minimum(open_, close) - 0.3,
-                "close": close,
-                "volume": 1_000,
-            },
-            index=opens_at + pd.to_timedelta(minute, unit="min"),
-        )
-    )
-bars = pd.concat(frames)
+client = api(api_key="your_api_key", host="http://127.0.0.1:5000")
 
 
 class OpeningRangeBreakout(bt.Strategy):
-    symbol, exchange, interval = "RELIANCE", "NSE", "5m"
-    range_bars = 3  # three 5-minute bars: 09:15 to 09:30
-    quantity = 100
+    symbol, exchange, interval = "SBIN", "NSE", "5m"  # 5-minute bars: MIS by default
+    longs = True  # buy a breakout above the range
+    shorts = True  # sell short a breakdown below the range
 
     def init(self):
-        self.day = None
+        self.traded_today = True  # no trade until the first opening range is known
 
     def on_bar(self, bar):
-        if bar.time.date() != self.day:  # the first bar of a new session
-            self.day, self.bars_today, self.traded = bar.time.date(), 0, False
-        self.bars_today += 1
-        if self.bars_today == self.range_bars:
-            self.range_high = max(self.high[-self.range_bars:])
-            self.range_low = min(self.low[-self.range_bars:])
-            return
-        if self.bars_today < self.range_bars or self.traded or not self.position.is_flat:
-            return
-        width = self.range_high - self.range_low
-        exits = {"stop": bt.points(width), "target": bt.points(2 * width)}
-        if bar.close > self.range_high:
-            self.buy(qty=self.quantity, **exits)
-            self.traded = True
-        elif bar.close < self.range_low:
-            self.sell(qty=self.quantity, **exits)
-            self.traded = True
+        clock = bar.time.strftime("%H:%M")  # the IST time this 5-minute bar opened
+        if clock == "09:25":  # the third bar closes at 09:30: the range is complete
+            self.range_high = max(self.high[-3:])
+            self.range_low = min(self.low[-3:])
+            self.traded_today = False
+        elif clock > "09:25" and self.position.is_flat and not self.traded_today:
+            if self.longs and bar.close > self.range_high:
+                self.buy(stop=bar.close - self.range_low)  # stop near the range low
+                self.traded_today = True
+            elif self.shorts and bar.close < self.range_low:
+                self.sell(stop=self.range_high - bar.close)  # stop near the range high
+                self.traded_today = True
 
 
-result = bt.backtest(OpeningRangeBreakout, data=bars, capital=500_000)
+result = bt.backtest(OpeningRangeBreakout, client, start="2026-08-01", end="2026-11-11", capital=100_000)
 
-a = result.assumptions
-print("product", a["product"], "| entries until", a["entry_until"], "| square-off", a["square_off"])
 m = result.metrics
-print(f"Net profit     Rs {m['net_profit']:,.2f} after Rs {m['total_costs']:,.2f} of charges")
-print(f"Trades         {m['trades']}, win rate {m['win_rate']:.0%}, profit factor {m['profit_factor']:.2f}")
-print(f"Average win    Rs {m['average_win']:,.2f}   average loss Rs {m['average_loss']:,.2f}")
-print(f"Max drawdown   {m['max_drawdown']:.2%}")
-print(result.trades["exit_reason"].value_counts().to_string())
-print(result.trades[["entry_time", "direction", "entry_price_rupees", "exit_price_rupees", "exit_reason"]].head(4).to_string(index=False))
+print(f"Net profit   : Rs {m['net_profit']:,.2f}")
+print(f"Return       : {m['total_return']:.2%}")
+print(f"Max drawdown : {m['max_drawdown']:.2%}")
+print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+trades = result.trades[["entry_time", "direction", "entry_price_rupees", "exit_price_rupees", "exit_reason"]]
+print(trades.head().to_string(index=False, float_format="%.2f"))
 ```
 
 <!-- output -->
 ```text
-product MIS | entries until 14:50 | square-off 15:00
-Net profit     Rs 438.33 after Rs 1,083.21 of charges
-Trades         20, win rate 65%, profit factor 1.25
-Average win    Rs 173.45   average loss Rs -257.58
-Max drawdown   -0.18%
-exit_reason
-leg_target    7
-leg_sl        7
-scheduler     6
+Net profit   : Rs -5,207.41
+Return       : -5.21%
+Max drawdown : -10.79%
+Trades       : 62 (45% won)
                entry_time direction  entry_price_rupees  exit_price_rupees exit_reason
-2026-10-01 10:20:00+05:30      long              502.55             504.55   scheduler
-2026-10-05 09:35:00+05:30     short              500.35             497.25  leg_target
-2026-10-06 09:35:00+05:30     short              501.35             503.50      leg_sl
-2026-10-07 10:00:00+05:30      long              503.75             501.00      leg_sl
+2026-08-03 09:40:00+05:30      long             1040.45            1037.05   scheduler
+2026-08-04 13:00:00+05:30     short             1033.25            1035.15   scheduler
+2026-08-05 09:35:00+05:30      long             1047.55            1052.15   scheduler
+2026-08-06 09:40:00+05:30      long             1063.85            1085.65   scheduler
+2026-08-07 09:35:00+05:30      long             1087.15            1098.05   scheduler
 ```
 
-What to look at:
+The stop is a distance in rupees from the entry, so the code passes the gap between the breakout close and the other side of the range. `exit_reason` says how each trade ended: `leg_sl` is the stop and `scheduler` the engine's 15:00 square-off. The engine applied the NSE intraday defaults by itself: no new entries after 14:50 (a later breakout order is rejected with the reject code `entry_window`, and `result.warnings` says how many were), everything squared off at 15:00, intraday charges and slippage. With 1-minute history available for the whole run, it tested the stops on 1-minute bars, so a stop is hit at the minute it is reached.
 
-* **Exit reasons.** `leg_target` and `leg_sl` are the engine-held target and stop; `scheduler` is the 15:00 square-off of trades that reached neither.
-* **Entry times.** A breakout decided at the 09:30 close (the bar from 09:30 to 09:35) fills at the 09:35 open of the 1-minute data.
-* **Charges.** Intraday equity pays Zerodha's 0.03 percent or Rs 20 per order, STT on the sell side and the other charges: about Rs 54 per round trip here, which takes most of the gross profit. Try `costs=None` to see how much a cost-free backtest would have overstated it.
+## Try this
 
-## Variations
+* Long only: `bt.backtest(..., params={"shorts": False})`.
+* Short only: `bt.backtest(..., params={"longs": False})`.
+* A target twice the range: add `target=2 * (self.range_high - self.range_low)` to `buy` and `sell`.
+* Another stock: `symbol = "RELIANCE"`.
 
-* Change the defaults: `bt.backtest(..., entry_until="13:00", square_off="14:30")`, or set them as class attributes.
-* Add a daily loss limit: `max_daily_loss=2_000` closes everything and blocks entries for the rest of the day once the day's loss reaches Rs 2,000.
-* Trail the stop once the trade works: `trail=bt.trail_points(width)` with the stop.
-* Size by risk instead of a fixed quantity: `size=bt.size.fixed_risk(0.5)` with the stop risks 0.5 percent of equity per trade.
-
-## With data from OpenAlgo
-
-Use your server's 1-minute history for the base bars; the engine builds the 5-minute strategy bars from it. Broker history for 1-minute bars is usually short, so download a longer range into Historify first and use `source="db"` for it.
-
-<!-- requires-server -->
-```python
-from openalgo import api
-
-client = api(api_key="your_api_key_here", host="http://127.0.0.1:5000")
-result = bt.backtest(
-    OpeningRangeBreakout, client, start="2026-08-03", end="2026-10-30", capital=500_000, source="db"
-)
-print(result.assumptions["base_rule"])
-print(result.warnings)
-```
-
-Check `base_rule` in the Assumptions: it says whether 1-minute data covered the whole run (stops tested on 1-minute ranges) or the engine fell back to 5-minute bars.
+More: [Orders and Risk](../orders-and-risk.md#intraday-entry-window-and-square-off), [Data](../data.md#which-bars-stops-are-tested-on).
