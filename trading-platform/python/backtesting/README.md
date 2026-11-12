@@ -1,7 +1,7 @@
 # Backtesting
 
 {% hint style="warning" %}
-**Preview.** The backtesting engine (`openalgo.backtest`) is available in the next release of the OpenAlgo Python SDK. It is an unreleased preview: names and arguments may still change before the backtest beta. The pages in this section describe the engine as it is built today.
+**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. The pages in this section describe the engine as released in SDK 2.1.0.
 {% endhint %}
 
 ## What it does for you
@@ -65,7 +65,7 @@ Adding trades adds time in proportion (about 17 microseconds per round trip), an
 
 ## Install
 
-The engine ships inside the `openalgo` package; nothing else is needed. It needs Python 3.12 or newer.
+The engine ships inside the `openalgo` package from SDK 2.1.0; nothing else is needed. It needs Python 3.12 or newer.
 
 ```bash
 pip install -U openalgo

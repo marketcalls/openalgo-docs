@@ -420,7 +420,7 @@ print(peak_periods[['close', 'EMA_20', 'DEMA_20', 'TEMA_20']].tail())
 ```
 
 {% hint style="info" %}
-**From the next SDK release, a NaN bar affects only itself.** A NaN in the input makes only that bar of DEMA and TEMA NaN; the averages carry their state across it, as the EMA does. In SDK 2.0.5 a NaN could make more bars NaN, and `ta.tema` dropped NaN bars before its third average, so its values after a gap depended on later bars (a look-ahead). Series without NaN give the same values as before.
+**From SDK 2.1.0, a NaN bar affects only itself.** A NaN in the input makes only that bar of DEMA and TEMA NaN; the averages carry their state across it, as the EMA does. In SDK 2.0.5 a NaN could make more bars NaN, and `ta.tema` dropped NaN bars before its third average, so its values after a gap depended on later bars (a look-ahead). Series without NaN give the same values as before.
 {% endhint %}
 
 On a series with one missing value, without a server:

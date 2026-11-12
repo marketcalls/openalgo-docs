@@ -108,7 +108,7 @@ Traditional pivot points calculate support and resistance levels based on previo
 
 ```python
 pivot, r1, s1, r2, s2, r3, s3 = ta.pivot_points(high, low, close)
-pivot, r1, s1, r2, s2, r3, s3 = ta.pivot_points(high, low, close, anchor="D")  # from the next SDK release
+pivot, r1, s1, r2, s2, r3, s3 = ta.pivot_points(high, low, close, anchor="D")  # from SDK 2.1.0
 ```
 
 #### Parameters
@@ -116,8 +116,8 @@ pivot, r1, s1, r2, s2, r3, s3 = ta.pivot_points(high, low, close, anchor="D")  #
 * **high** _(array-like)_: High prices
 * **low** _(array-like)_: Low prices
 * **close** _(array-like)_: Closing prices
-* **anchor** _(str or None, default=None)_: From the next SDK release. `None` applies the formula to each bar's own high, low and close: the levels on a bar are the levels for the **next** bar, known only once that bar has closed. `"D"` (or `"Session"`), `"Week"`, `"Month"` and the other anchors of `ta.vwap` return, on every bar, the levels of the **previous completed period**, so an intraday bar carries yesterday's levels. The bars of the first period are NaN. An anchor needs bar times; without them it raises `ValueError`.
-* **timestamps** _(array-like, optional)_: From the next SDK release. Bar times, one per bar, for NumPy arrays and lists, which carry none.
+* **anchor** _(str or None, default=None)_: From SDK 2.1.0. `None` applies the formula to each bar's own high, low and close: the levels on a bar are the levels for the **next** bar, known only once that bar has closed. `"D"` (or `"Session"`), `"Week"`, `"Month"` and the other anchors of `ta.vwap` return, on every bar, the levels of the **previous completed period**, so an intraday bar carries yesterday's levels. The bars of the first period are NaN. An anchor needs bar times; without them it raises `ValueError`.
+* **timestamps** _(array-like, optional)_: From SDK 2.1.0. Bar times, one per bar, for NumPy arrays and lists, which carry none.
 
 #### Returns
 
@@ -190,13 +190,13 @@ from day 1's high, low and close: 804.97
 
 ### Parabolic SAR
 
-Parabolic SAR provides trailing stop levels. By default `ta.psar` returns the stop levels only; from the next SDK release `return_trend=True` also returns the trend.
+Parabolic SAR provides trailing stop levels. By default `ta.psar` returns the stop levels only; from SDK 2.1.0 `return_trend=True` also returns the trend.
 
 #### Usage
 
 ```python
 sar_values = ta.psar(high, low, acceleration=0.02, maximum=0.2)
-sar_values, trend = ta.psar(high, low, return_trend=True)  # from the next SDK release
+sar_values, trend = ta.psar(high, low, return_trend=True)  # from SDK 2.1.0
 ```
 
 #### Parameters
@@ -205,14 +205,14 @@ sar_values, trend = ta.psar(high, low, return_trend=True)  # from the next SDK r
 * **low** _(array-like)_: Low prices
 * **acceleration** _(float, default=0.02)_: Acceleration factor: its starting value and its step
 * **maximum** _(float, default=0.2)_: Maximum acceleration factor
-* **return\_trend** _(bool, default=False)_: From the next SDK release. True returns `(sar, trend)`
+* **return\_trend** _(bool, default=False)_: From SDK 2.1.0. True returns `(sar, trend)`
 
 #### Returns
 
 * **array**: SAR stop levels in the same format as input. With `return_trend=True`, a tuple `(sar, trend)`, where trend is `+1` while long (SAR below price) and `-1` while short. The first bar always starts long. Without `return_trend` (and in SDK 2.0.5), derive the direction by comparing price with the SAR: price above SAR is an uptrend, price below SAR is a downtrend.
 
 {% hint style="info" %}
-**From the next SDK release, some SAR values change.** On an outside bar that reverses the trend, the new stop starts at that bar's extreme and is clamped to the two previous bars (SDK 2.0.5 started from the previous extreme point and did not clamp), and a bar that only touches the stop no longer reverses. Values differ from such a bar until the next reversal; ordinary bars are unchanged. A bar with a NaN high or low is NaN and the calculation carries on after it (2.0.5 stayed NaN to the end of the series). There is no switch for the 2.0.5 values.
+**From SDK 2.1.0, some SAR values change.** On an outside bar that reverses the trend, the new stop starts at that bar's extreme and is clamped to the two previous bars (SDK 2.0.5 started from the previous extreme point and did not clamp), and a bar that only touches the stop no longer reverses. Values differ from such a bar until the next reversal; ordinary bars are unchanged. A bar with a NaN high or low is NaN and the calculation carries on after it (2.0.5 stayed NaN to the end of the series). There is no switch for the 2.0.5 values.
 {% endhint %}
 
 #### Example

@@ -2,7 +2,7 @@
 
 ## OpenAlgo Technical Indicators Library
 
-OpenAlgo Technical Indicators is a high-performance Python library designed for comprehensive technical analysis with a focus on speed, accuracy, and ease of use. It exposes 128 indicators and helper functions across all major categories through a single `ta` object (127 in SDK 2.0.5; the next release adds `ta.rvi_volatility`).
+OpenAlgo Technical Indicators is a high-performance Python library designed for comprehensive technical analysis with a focus on speed, accuracy, and ease of use. It exposes 128 indicators and helper functions across all major categories through a single `ta` object (127 in SDK 2.0.5; SDK 2.1.0 adds `ta.rvi_volatility`).
 
 The indicator math runs in a compiled Rust core (`openalgo._oaindicators`) reached through `openalgo.indicators`. There is no JIT warm-up and no first-call compilation pause: the first call is as fast as the thousandth. `numba` and `llvmlite` are no longer dependencies; `openalgo.numba_shim` only survives so that legacy `from openalgo.numba_shim import jit` imports keep working, and its decorators are no-ops.
 
@@ -31,7 +31,7 @@ print(sorted(names)[:6])
 ['accelerator_oscillator', 'adl', 'adx', 'adxr', 'alligator', 'alma']
 ```
 
-The count is 128 from the next SDK release and 127 in SDK 2.0.5.
+The count is 128 from SDK 2.1.0 and 127 in SDK 2.0.5.
 
 ### List of Supported Indicators
 
@@ -93,7 +93,7 @@ The count is 128 from the next SDK release and 127 in SDK 2.0.5.
 * **HistoricalVolatility** - Historical Volatility
 * **UlcerIndex** - Ulcer Index
 * **STARC** - STARC Bands
-* **RVI Volatility** - Relative Volatility Index (`ta.rvi_volatility`, from the next SDK release)
+* **RVI Volatility** - Relative Volatility Index (`ta.rvi_volatility`, from SDK 2.1.0)
 
 ### Volume Indicators
 
@@ -128,7 +128,7 @@ The count is 128 from the next SDK release and 127 in SDK 2.0.5.
 * **DPO** - Detrended Price Oscillator
 * **AROONOSC** - Aroon Oscillator
 * **StochRSI** - Stochastic RSI
-* **RVI** - Relative Vigor Index (`ta.rvi`). The Relative Volatility Index is a separate function, `ta.rvi_volatility`, from the next SDK release
+* **RVI** - Relative Vigor Index (`ta.rvi`). The Relative Volatility Index is a separate function, `ta.rvi_volatility`, from SDK 2.1.0
 * **CHO** - Chaikin Oscillator
 * **CHOP** - Choppiness Index
 * **KST** - Know Sure Thing
@@ -192,7 +192,7 @@ The count is 128 from the next SDK release and 127 in SDK 2.0.5.
 
 An indicator output is **causal** when its value on a bar uses only that bar and the bars before it. A causal value never changes once its bar has closed, so it can be used as a signal on that bar. A few outputs are drawn on a bar but decided by later bars: fine on a chart, wrong in a backtest, because a strategy reading them on that bar is reading the future.
 
-From the next SDK release, `openalgo.indicators.causality` says which outputs those are, with one row for every `ta` function:
+From SDK 2.1.0, `openalgo.indicators.causality` says which outputs those are, with one row for every `ta` function:
 
 | Function | Returns |
 |---|---|
@@ -226,9 +226,9 @@ Two things a `True` does not say: a recursive indicator (EMA, RSI, ATR) is causa
 
 The [backtesting engine](../backtesting/README.md) uses this registry: `self.I` refuses an indicator whose outputs all look ahead and raises an error the moment a strategy uses a look-ahead output, then checks every other indicator on the run's own data before the first bar (see [indicators and look-ahead checks](../backtesting/writing-strategies.md#indicators-and-look-ahead-checks)).
 
-### Changes in the next SDK release
+### Changes in SDK 2.1.0
 
-The next release of the SDK changes some results. Series without NaN values give the same values as SDK 2.0.5 except where noted.
+SDK 2.1.0 changes some results. Series without NaN values give the same values as SDK 2.0.5 except where noted.
 
 **Results that change on clean data**
 

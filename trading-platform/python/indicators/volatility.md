@@ -257,7 +257,7 @@ print(df[['close', 'NATR', 'NATR_21']].tail())
 `ta.rvi` is the Relative Vigor Index. It compares the close-open range with the high-low range to gauge the conviction behind a move, and returns the RVI line together with its signal line.
 
 {% hint style="warning" %}
-`ta.rvi` needs four price series (open, high, low, close) and returns a tuple. It is not the Relative Volatility Index: from the next SDK release that is `ta.rvi_volatility` (below), which takes one price series. In SDK 2.0.5 the Relative Volatility Index is not exposed on the `ta` object.
+`ta.rvi` needs four price series (open, high, low, close) and returns a tuple. It is not the Relative Volatility Index: from SDK 2.1.0 that is `ta.rvi_volatility` (below), which takes one price series. In SDK 2.0.5 the Relative Volatility Index is not exposed on the `ta` object.
 {% endhint %}
 
 #### Usage
@@ -297,7 +297,7 @@ print(df[['close', 'RVI', 'RVI_Signal', 'RVI_Custom']].tail())
 
 ### Relative Volatility Index (RVI Volatility)
 
-`ta.rvi_volatility` is the Relative Volatility Index of Donald Dorsey (1993), available from the next SDK release. It works like the RSI, but on volatility instead of price changes: it measures the share of recent volatility that fell on rising bars. Values run from 0 to 100; above 50 means more of the volatility came on up bars.
+`ta.rvi_volatility` is the Relative Volatility Index of Donald Dorsey (1993), available from SDK 2.1.0. It works like the RSI, but on volatility instead of price changes: it measures the share of recent volatility that fell on rising bars. Values run from 0 to 100; above 50 means more of the volatility came on up bars.
 
 How it is calculated: the rolling standard deviation of the price over `stdev_period` bars counts on the up side on a bar that closes above the bar before, and on the down side on a bar that closes below it. U and D are those two sides smoothed with **Wilder's smoothing over `rsi_period` bars** (the average the RSI uses, not an EMA), and RVI = 100 x U / (U + D). It is 50 when there is no volatility on either side.
 
@@ -318,7 +318,7 @@ rvi_vol = ta.rvi_volatility(close, stdev_period=10, rsi_period=14)
 * **array**: Values from 0 to 100 in the same format as input. The first value is at bar `stdev_period + rsi_period - 2` (counting from 0); a bar is NaN while a NaN is in its deviation window or on the bar before it.
 
 {% hint style="info" %}
-**From the next SDK release**, the `RVI` class in `openalgo.indicators.volatility`, which `ta.rvi_volatility` uses, computes the published Relative Volatility Index. In SDK 2.0.5 that class took an RSI of the standard deviation, so nearly every value changes. `ta.rvi` (the Relative Vigor Index) is not affected.
+**From SDK 2.1.0**, the `RVI` class in `openalgo.indicators.volatility`, which `ta.rvi_volatility` uses, computes the published Relative Volatility Index. In SDK 2.0.5 that class took an RSI of the standard deviation, so nearly every value changes. `ta.rvi` (the Relative Vigor Index) is not affected.
 {% endhint %}
 
 #### Example
@@ -637,7 +637,7 @@ ui_result = ta.ulcerindex(data, length=14, smooth_length=14, signal_length=52,
 * **array** or **tuple**: Ulcer Index values (and signal if return\_signal=True)
 
 {% hint style="info" %}
-From the next SDK release, a bar where rounding left the average of squared drawdowns a hair below zero reads 0 (no drawdown). SDK 2.0.5 returned NaN there.
+From SDK 2.1.0, a bar where rounding left the average of squared drawdowns a hair below zero reads 0 (no drawdown). SDK 2.0.5 returned NaN there.
 {% endhint %}
 
 #### Example

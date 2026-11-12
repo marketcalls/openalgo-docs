@@ -3,7 +3,7 @@
 Every figure in `result.metrics`, in `metrics.analyse(...).metrics` and on the HTML tearsheet, with its key, its label, its unit and its definition. The tables below are `openalgo.backtest.metrics.DEFINITIONS`, grouped as in `openalgo.backtest.metrics.GROUPS`. The engine and the reports take their labels and definitions from the same table, so this page and a report always agree. Every figure is computed in the Rust core.
 
 {% hint style="warning" %}
-**Preview.** These figures are part of the backtesting engine, available in the next SDK release; the interface may change before the backtest beta.
+**Preview.** These figures are part of the backtesting engine, new in SDK 2.1.0; the interface may change in later releases.
 {% endhint %}
 
 How to read the units:

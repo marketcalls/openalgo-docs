@@ -141,9 +141,9 @@ vwap = ta.vwap(high, low, close, volume, source="hlc3", anchor="Session")
 * **pandas.Series** for pandas input, a NumPy array otherwise: VWAP values. A bar whose price or volume is NaN is NaN, and so is every bar of a period until it has some volume.
 
 {% hint style="info" %}
-**From the next SDK release, `anchor` is honoured.** In SDK 2.0.5 the anchor was ignored and the VWAP ran from the first bar of the input. It now restarts every anchor period (every session by default) whenever the bar times are known: a pandas Series whose index holds dates or times, or `timestamps=`. Plain arrays without `timestamps=` are one period, as before. To keep the 2.0.5 result on Series input, pass `anchor=None`.
+**From SDK 2.1.0, `anchor` is honoured.** In SDK 2.0.5 the anchor was ignored and the VWAP ran from the first bar of the input. It now restarts every anchor period (every session by default) whenever the bar times are known: a pandas Series whose index holds dates or times, or `timestamps=`. Plain arrays without `timestamps=` are one period, as before. To keep the 2.0.5 result on Series input, pass `anchor=None`.
 
-Also from the next release: on daily, weekly or monthly bars the default `"Session"` makes every bar its own period, so the VWAP equals the bar's own typical price and a warning says so (pass `anchor=None` or a longer anchor there); an unknown anchor raises `ValueError`; a period that starts with zero volume is NaN until volume arrives (2.0.5 raised `RuntimeError`); and a NaN bar no longer leaves the rest of the series NaN.
+Also from SDK 2.1.0: on daily, weekly or monthly bars the default `"Session"` makes every bar its own period, so the VWAP equals the bar's own typical price and a warning says so (pass `anchor=None` or a longer anchor there); an unknown anchor raises `ValueError`; a period that starts with zero volume is NaN until volume arrives (2.0.5 raised `RuntimeError`); and a NaN bar no longer leaves the rest of the series NaN.
 {% endhint %}
 
 #### Example
