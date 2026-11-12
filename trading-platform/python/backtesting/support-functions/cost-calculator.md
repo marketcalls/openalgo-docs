@@ -188,7 +188,7 @@ IN-2022-12-01 2022-12-01 to 2023-03-31 verified through 2023-03-31
 IN-2023-04-01 2023-04-01 to 2023-10-31 verified through 2023-10-31
 IN-2023-11-01 2023-11-01 to 2024-05-12 verified through 2024-05-12
 IN-2024-05-13 2024-05-13 to 2024-09-30 verified through 2024-09-30
-IN-2024-10-01 2024-10-01 to 2026-03-31 verified through None
+IN-2024-10-01 2024-10-01 to 2026-03-31 verified through 2026-03-31
 IN-2026-04-01 2026-04-01 to None verified through 2026-11-12
 ```
 

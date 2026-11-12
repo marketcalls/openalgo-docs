@@ -572,7 +572,6 @@ for text in long_run.warnings:
 <!-- output -->
 ```text
 SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
-charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2024-10-01 are unverified for 14 fills, from 2024-10-18
 ```
 
 Python warnings appear as well: `UnverifiedScheduleWarning` for unverified cost rates, `ReferenceDataWarning` when a reference row is unverified or used after the date it was last checked, and `CalendarWarning` for a year without a holiday list.
