@@ -282,6 +282,7 @@
     * [Hybrid](trading-platform/python/indicators/hybrid.md)
     * [Utility](trading-platform/python/indicators/utility.md)
   * [Backtesting](trading-platform/python/backtesting/README.md)
+    * [How do I ...?](trading-platform/python/backtesting/how-to.md)
     * [Writing Strategies](trading-platform/python/backtesting/writing-strategies.md)
     * [Orders and Risk](trading-platform/python/backtesting/orders-and-risk.md)
     * [Costs, Slippage and Margin](trading-platform/python/backtesting/costs-slippage-and-margin.md)
