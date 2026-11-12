@@ -191,7 +191,7 @@ A few lines worth knowing:
 * [Orders and Risk](orders-and-risk.md): orders, stops, targets, trailing stops, intraday times and the strategy risk rules.
 * [Costs, Slippage and Margin](costs-slippage-and-margin.md): what is charged and how to change it.
 * [Data](data.md): OpenAlgo history, your own data, time zones and the cache.
-* [Results and Reports](results-and-reports.md): the tables, every metric, the HTML tearsheet and reruns.
+* [Results and Reports](results-and-reports.md): the tables, the performance figures, Monte Carlo, the HTML tearsheet in four modes and reruns; [Metric Definitions](metric-definitions.md) defines every figure.
 * [Optimization](optimization.md): parameter sweeps.
 * [Support Functions](support-functions/README.md): the calendar, cost calculator, reference data, resampling, data loading and metrics on their own.
 * [Examples](examples/README.md): four complete strategies you can run.

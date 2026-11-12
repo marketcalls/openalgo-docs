@@ -95,17 +95,17 @@ slow
 
 `objective=` decides what "best" means:
 
-* The name of any [metric](results-and-reports.md#every-metric): `"net_profit"` (the default), `"sharpe"`, `"sortino"`, `"calmar"`, `"cagr"`, `"total_return"`, `"profit_factor"`, `"expectancy"`, `"win_rate"` and so on.
+* The name of any [metric](metric-definitions.md): `"net_profit"` (the default), `"sharpe"`, `"sortino"`, `"calmar"`, `"cagr"`, `"total_return"`, `"profit_factor"`, `"expectancy"`, `"win_rate"` and so on.
 * Or a function that takes a `Result` and returns a number, passed as `objective=profit_per_drawdown`. Define it with `def` at the top level of your file, so worker processes can import it (a `lambda` cannot be imported).
 
 <!-- continues -->
 ```python
 def profit_per_drawdown(result):
     """Net profit per rupee of the deepest fall in P&L."""
-    return result.metrics["net_profit"] / result.metrics["max_drawdown_amount"]
+    return result.metrics["net_profit"] / -result.metrics["max_drawdown_amount"]  # the amount is negative
 ```
 
-`maximize=False` picks the lowest value instead (for example `objective="max_drawdown_amount"`).
+`maximize=False` picks the lowest value instead, for a figure where lower is better such as `objective="ulcer_index"`. Drawdowns are negative numbers, so the shallowest drawdown is the highest `max_drawdown` and needs the default `maximize=True`.
 
 ## OptimizeResult
 

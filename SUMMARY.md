@@ -287,6 +287,7 @@
     * [Costs, Slippage and Margin](trading-platform/python/backtesting/costs-slippage-and-margin.md)
     * [Data](trading-platform/python/backtesting/data.md)
     * [Results and Reports](trading-platform/python/backtesting/results-and-reports.md)
+    * [Metric Definitions](trading-platform/python/backtesting/metric-definitions.md)
     * [Optimization](trading-platform/python/backtesting/optimization.md)
     * [Walk-Forward](trading-platform/python/backtesting/walk-forward.md)
     * [Support Functions](trading-platform/python/backtesting/support-functions/README.md)

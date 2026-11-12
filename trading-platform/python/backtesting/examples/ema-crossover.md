@@ -67,7 +67,7 @@ result.tearsheet("ema_crossover.html")
 <!-- output -->
 ```text
 Net profit     Rs 4,688.28
-Total return   4.69%   CAGR 7.94%
+Total return   4.69%   CAGR 7.93%
 Max drawdown   -7.20%
 Sharpe         0.94
 Trades         3, won 2, lost 1
