@@ -18,16 +18,18 @@ Sahi signs you in with an API key and secret, not an OAuth login. There is no re
 
 2. Click **Create API key**. Complete two-factor verification if asked.
 3. Enter a **Name** you will recognise later, for example `OpenAlgo`.
-4. Choose the **Access**: pick **Full access** (orders and market data). A **Market data** key cannot place orders.
+4. Choose the **Access**: pick **Full access** (orders and market data) and key type **TOTP**. A **Market data** key cannot place orders.
 
-<figure><img src="../../.gitbook/assets/sahi4.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/sahi133.png" alt=""><figcaption></figcaption></figure>
+
+<figure><img src="../../.gitbook/assets/sahi134.png" alt=""><figcaption></figcaption></figure>
 
 5. Click **Create API key**.
 6. Copy the **API key** (starts with `pk_`) and the **API secret** (starts with `sahi_sk_`). The secret is shown only once.
 7. Tick **I have saved my credentials** and click **Done**.
 
 {% hint style="warning" %}
-**Register your static IP before placing orders.**  In the API Dashboard click **Add static IP**, enter it as the **Primary IP address** and save. Sahi refuses orders from any other IP. The slot stays locked for 7 days after you set it, and one IP can belong to only one Sahi account. Market data works without a registered IP.
+**Register your static IP before placing orders.** In the API Dashboard click **Add static IP**, enter it as the **Primary IP address** and save. Sahi refuses orders from any other IP. The slot stays locked for 7 days after you set it, and one IP can belong to only one Sahi account. Market data works without a registered IP.
 {% endhint %}
 
 {% hint style="info" %}
