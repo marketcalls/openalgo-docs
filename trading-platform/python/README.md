@@ -9,7 +9,7 @@ pip install openalgo
 
 ### Version and order-result contracts
 
-`pip install openalgo` installs SDK 2.1.0, the release these pages describe; it needs Python 3.12 or newer. To upgrade an existing install, use `pip install --upgrade openalgo`. The SDK and platform versions are independent: the platform currently pins `openalgo==2.0.5` in its `pyproject.toml`, and anything marked "from SDK 2.1.0" on these pages needs 2.1.0.
+`pip install openalgo` installs SDK 2.1.1, the release these pages describe; it needs Python 3.12 or newer. To upgrade an existing install, use `pip install --upgrade openalgo`. The SDK and platform versions are independent: the platform currently pins `openalgo==2.0.5` in its `pyproject.toml`, and anything marked "from SDK 2.1.0" on these pages needs 2.1.0.
 
 Prices, quantities, expiries and lot sizes below are illustrative. Resolve the actual contract's `lotsize`, `tick_size` and applicable `freeze_qty` with `client.symbol(...)` or `client.search(...)` before trading. On regular order methods the SDK parameter is `price_type`; the REST field it sends is `pricetype`.
 

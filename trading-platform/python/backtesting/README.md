@@ -1,11 +1,7 @@
 # Backtesting
 
 {% hint style="warning" %}
-**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. The pages in this section describe the engine as released in SDK 2.1.0.
-{% endhint %}
-
-{% hint style="info" %}
-**The examples use SDK 2.1.1, which is being released.** With 2.1.0, a backtest that starts before 1 October 2024 stops with a charges error, and `self.rebalance`, `result.to_csv` and `result.to_excel` are not there yet. Upgrade with `pip install --upgrade openalgo` once 2.1.1 is out.
+**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. The pages in this section describe the engine as released in SDK 2.1.1.
 {% endhint %}
 
 ## What is a backtest?
