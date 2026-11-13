@@ -209,7 +209,7 @@ Result(SBIN)
   instruments: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
   benchmark: NIFTY on NSE_INDEX: 1454 daily closes from the broker (zerodha, source='api'), 2020-12-31 to 2026-11-11
   indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 20): truncation passed at 4 cuts, warm-up 256 bars; ema(SBIN.close, 50): truncation passed at 4 cuts, warm-up 512 bars
-  warm_up: automatic: no decision before start, nor before every self.I indicator has closed its warm-up of bars (its window-stability length on the engine's reference bars, the same for any data and in live trading; bars before start count); ema(SBIN.close, 50) needs 512 D bars of SBIN; history before start: SBIN 512 strategy bars from 2018-12-10 to 2020-12-31 (asked from 2018-10-28); ready at start
+  warm_up: automatic: no decision before start, nor before every self.I indicator has closed its warm-up of bars (its window-stability length on the engine's reference bars, the same for any data and in live trading; bars before start count); ema(SBIN.close, 50) needs 512 D bars of SBIN; history before start: SBIN 512 strategy bars from 2018-12-10 to 2020-12-31 (asked from 2018-06-17); ready at start
   gross P&L: 57264.00 (realized 57264.00)
   charges: 3322.91; net P&L: 53941.09
   warning: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
