@@ -54,22 +54,19 @@ class OpeningRangeBreakout(bt.Strategy):
 # Run the backtest from 1 August to 11 November 2026 with Rs 1,00,000.
 result = bt.backtest(OpeningRangeBreakout, client, start="2026-08-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 
 # How the trades ended: the number of trades for each exit reason.
-print(result.trades["exit_reason"].value_counts().to_string())
+# trade_list() is the table of closed trades, one row each.
+print(result.trade_list()["exit_reason"].value_counts().to_string())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -5,207.41
-Return       : -5.21%
-Max drawdown : -10.79%
+Net profit   : Rs -5,161.10
+Return       : -5.16%
+Max drawdown : -10.58%
 Trades       : 62 (45% won)
 exit_reason
 scheduler    46

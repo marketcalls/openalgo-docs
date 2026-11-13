@@ -18,16 +18,6 @@ from openalgo import api, ta
 client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
-# A function ("def") is a named piece of code you can run again: print_summary(result).
-def print_summary(result):
-    m = result.metrics  # a dict: the figures of the run, looked up by name
-    # f"..." fills in each {value}: ":,.2f" is rupees with commas, ":.2%" a percent.
-    print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-    print(f"Return       : {m['total_return']:.2%}")
-    print(f"Max drawdown : {m['max_drawdown']:.2%}")
-    print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
-
-
 # The strategy. A class bundles settings and functions; inside it, "self" is the strategy itself.
 class EmaCrossover(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "D"  # SBIN on NSE, daily bars
@@ -42,8 +32,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day): buy, sell or wait.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: wait until the slow EMA has 50 days
-            return
         # crossed_above: the fast EMA was below the slow one a bar ago, and is above it now.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # no quantity: all the capital, at the next day's open
@@ -53,18 +41,18 @@ class EmaCrossover(bt.Strategy):
 
 # Run it on SBIN from 1 January 2021 to 11 November 2026 with Rs 1,00,000.
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-print_summary(result)
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
 
-The engine replayed almost six years of SBIN, one day at a time, and traded the rules as if you had run them live. It applied Indian charges, slippage (the small amount every fill loses to the market) and NSE holidays without being asked. The **max drawdown** is the largest fall of the account from its highest value. The [first lesson](tutorial/01-first-backtest.md) walks through this strategy line by line.
+The engine replayed almost six years of SBIN, one day at a time, and traded the rules as if you had run them live. It applied Indian charges, slippage (the small amount every fill loses to the market) and NSE holidays without being asked, and it loaded SBIN's bars from before 2021 so that both EMAs were ready on the first day. The **max drawdown** is the largest fall of the account from its highest value. The [first lesson](tutorial/01-first-backtest.md) walks through this strategy line by line.
 
 ## What does each part do?
 
@@ -74,7 +62,7 @@ The engine replayed almost six years of SBIN, one day at a time, and traded the 
 | `symbol, exchange, interval` | What it trades and the bar size: `"D"` (daily), `"1h"`, `"15m"`, `"5m"`, `"1m"` |
 | `fast = 20`, `slow = 50` | **Parameters**: numbers you can change for a run without editing the class |
 | `def init(self):` | Runs once before the first bar. Set up indicators here with `self.I` |
-| `self.I(ta.ema, self.close, 20)` | An indicator from the [openalgo.ta library](../indicators/README.md); any other function is refused |
+| `self.I(ta.ema, self.close, 20)` | An indicator from the [openalgo.ta library](../indicators/README.md), ready from the first bar of the run; any other function is refused |
 | `def on_bar(self, bar):` | Runs at the close of every bar. Decide to buy, sell or wait |
 | `self.position.is_flat`, `is_long`, `is_short` | True when holding nothing, holding shares, or short |
 | `self.buy()`, `self.sell()`, `self.exit()` | Place an order; it fills at the next bar's open. See [Orders and Risk](orders-and-risk.md) |
@@ -84,14 +72,15 @@ The engine picks the product from the bar size: **CNC** for daily bars of a stoc
 ## How do I read prices and indicator values?
 
 * `self.close[-1]` is the close of the bar that just closed and `self.close[-2]` the one before. `[-1]` means "the last one". The same works for `self.open`, `self.high`, `self.low`, `self.volume` and every indicator.
-* `len(self.close)` is the number of bars closed so far. That is what the warm-up line checks.
+* `len(self.close)` is the number of bars closed so far, the bars loaded before `start` included.
+* Every `self.I` indicator is ready when `on_bar` first runs. The engine measures how many bars each one needs to settle, loads that history before `start` (up to 2,048 bars) and makes no decision before `start` or before every indicator is ready. So `on_bar` needs no warm-up line that returns while too few bars have closed. When the data has too few bars before `start`, the strategy waits inside the run and a warning says how long; see [History before the start date](data.md#history-before-the-start-date).
 * `a.crossed_above(b)` is true only on the bar where `a` moves from below `b` to above it; `a.crossed_below(b)` is the opposite. `b` can be a number, as in `self.rsi.crossed_above(30)`.
 * `bar` in `on_bar(self, bar)` is the bar that just closed: `bar.close` is the same as `self.close[-1]`.
 * You never see a bar that has not closed yet, so a strategy cannot peek into the future.
 
 ## How do I add a filter, such as RSI?
 
-The **RSI** (relative strength index) is a 0 to 100 gauge of how strongly the price has been rising; above 70 is often called overbought. This version buys on the crossover only while the RSI is below 70, so it skips crossovers that come after a sharp run-up. It continues the first block (it needs `bt`, `ta`, `client` and `print_summary`).
+The **RSI** (relative strength index) is a 0 to 100 gauge of how strongly the price has been rising; above 70 is often called overbought. This version buys on the crossover only while the RSI is below 70, so it skips crossovers that come after a sharp run-up. It continues the first block (it needs `bt`, `ta` and `client`).
 
 <!-- continues -->
 <!-- requires-server -->
@@ -110,8 +99,6 @@ class EmaRsi(bt.Strategy):
 
     # Buy on the crossover only while the RSI is below the limit; sell on the cross down.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up
-            return
         crossed_up = self.fast_ema.crossed_above(self.slow_ema)
         if self.position.is_flat and crossed_up and self.rsi[-1] < self.rsi_limit:  # all three true
             self.buy()
@@ -119,19 +106,20 @@ class EmaRsi(bt.Strategy):
             self.exit()
 
 
-# Run it over the same years and print the four numbers.
-print_summary(bt.backtest(EmaRsi, client, start="2021-01-01", end="2026-11-11", capital=100_000))
+# Run it over the same years and print its summary.
+filtered = bt.backtest(EmaRsi, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(filtered.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 17,046.03
-Return       : 17.05%
-Max drawdown : -30.94%
+Net profit   : Rs 18,269.21
+Return       : 18.27%
+Max drawdown : -30.22%
 Trades       : 10 (30% won)
 ```
 
-A filter takes fewer trades. Whether it helps depends on the stock and the years: compare the four numbers with and without it.
+A filter takes fewer trades. Whether it helps depends on the stock and the years: compare the summaries with and without it.
 
 ## How do I use an indicator with several lines, such as MACD?
 
@@ -150,27 +138,32 @@ class MacdCrossover(bt.Strategy):
 
     # Buy when the MACD crosses above the signal line, sell when it crosses below.
     def on_bar(self, bar):
-        if len(self.close) < 35:  # warm-up: 26 days for the slow EMA plus 9 for the signal
-            return
         if self.position.is_flat and self.macd.crossed_above(self.signal):
             self.buy()
         elif self.position.is_long and self.macd.crossed_below(self.signal):
             self.exit()
 
 
-# Run it over the same years and print the four numbers.
-print_summary(bt.backtest(MacdCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000))
+# Run it over the same years and print its summary.
+macd = bt.backtest(MacdCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(macd.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 76,868.88
-Return       : 76.87%
-Max drawdown : -32.98%
-Trades       : 50 (44% won)
+Net profit   : Rs 84,832.99
+Return       : 84.83%
+Max drawdown : -32.32%
+Trades       : 52 (42% won), 1 still open
 ```
 
-The MACD turns sooner than the 20-day and 50-day EMAs, so it traded far more often.
+The MACD turns sooner than the 20-day and 50-day EMAs, so it traded far more often: 52 closed trades against 11. "1 still open" is a position bought at the last crossover and still held on 11 November 2026. Python also prints a warning at the end of this run:
+
+```text
+RejectedOrdersWarning: 1 of 106 orders was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+```
+
+A buy with no quantity is sized at the close it was decided on, with 2 percent of the cash kept back. The buy decided on 1 December 2023 met an open 2.8 percent higher on the next trading day, so it needed more than the cash and was refused; the strategy bought again at a later crossover. A smaller size, such as `self.buy(size=bt.size.percent(95))`, leaves more room for such a gap.
 
 ## How do I try other values without editing the class?
 
@@ -182,15 +175,15 @@ Pass `params=` to `bt.backtest`. Here the 10-day and 30-day EMAs replace the 20 
 # The same strategy with fast=10 and slow=30, for this run only.
 faster = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
                      params={"fast": 10, "slow": 30})  # a dict: parameter name and its value
-print_summary(faster)
+print(faster.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 71,912.31
-Return       : 71.91%
-Max drawdown : -23.65%
-Trades       : 23 (39% won)
+Net profit   : Rs 69,968.22
+Return       : 69.97%
+Max drawdown : -23.24%
+Trades       : 23 (39% won), 1 still open
 ```
 
 A name the class does not have is an error, so a typing mistake cannot pass silently. To try many values at once and rank them, see [Optimization](optimization.md).
@@ -207,19 +200,20 @@ class Intraday(EmaCrossover):
     interval = "15m"  # 15-minute bars: 20 and 50 bars instead of days
 
 
-# Run it on a recent stretch of minute bars (August to 11 November 2026) and print the four numbers.
-print_summary(bt.backtest(Intraday, client, start="2026-08-01", end="2026-11-11", capital=100_000))
+# Run it on a recent stretch of minute bars (August to 11 November 2026) and print its summary.
+intraday = bt.backtest(Intraday, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+print(intraday.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -1,128.76
-Return       : -1.13%
-Max drawdown : -3.82%
-Trades       : 9 (56% won)
+Net profit   : Rs -1,469.38
+Return       : -1.47%
+Max drawdown : -3.74%
+Trades       : 8 (38% won)
 ```
 
-Over these three months it lost a little after charges, and most trades ended at the 15:00 square-off rather than on a crossover. The [intraday lesson](tutorial/05-intraday.md) explains MIS and the square-off with an opening range breakout on 5-minute bars.
+Over these three months it lost a little after charges, and most trades ended at the 15:00 square-off rather than on a crossover. Three buys came after the 14:50 cut-off and were refused, so Python also prints a `RejectedOrdersWarning` (see [Why was my order rejected?](orders-and-risk.md#why-was-my-order-rejected)). The [intraday lesson](tutorial/05-intraday.md) explains MIS and the square-off with an opening range breakout on 5-minute bars.
 
 ## How do I trade several stocks?
 
@@ -240,8 +234,6 @@ class TwoBanks(bt.Strategy):
 
     # bars: the bars that just closed, one per stock.
     def on_bar(self, bars):
-        if len(self.data["SBIN"].close) < self.slow:  # warm-up
-            return
         for s in self.symbols:  # the same rules for each stock
             if self.positions[s].is_flat and self.fast_ema[s].crossed_above(self.slow_ema[s]):
                 self.buy(symbol=s)
@@ -249,23 +241,24 @@ class TwoBanks(bt.Strategy):
                 self.exit(symbol=s)
 
 
-# Run it with Rs 2,00,000 and print the four numbers for the whole strategy.
+# Run it with Rs 2,00,000 and print the summary of the whole strategy.
 banks = bt.backtest(TwoBanks, client, start="2021-01-01", end="2026-11-11", capital=200_000)
-print_summary(banks)
-# Closed trades and net profit in rupees, per stock.
-print(banks.trades.groupby("symbol")["net_pnl_rupees"].agg(["count", "sum"]).round(2))
+print(banks.summary())
+# Closed trades and their net profit in rupees, per stock: trade_list() is the table of
+# closed trades, and groupby("symbol") counts and adds them up stock by stock.
+print(banks.trade_list().groupby("symbol")["net_pnl"].agg(["count", "sum"]).round(2))
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 99,950.72
-Return       : 49.98%
-Max drawdown : -32.50%
-Trades       : 23 (43% won)
+Net profit   : Rs 95,424.76
+Return       : 47.71%
+Max drawdown : -31.93%
+Trades       : 23 (43% won), 1 still open
            count       sum
 symbol
-ICICIBANK     12  25538.32
-SBIN          11  57104.77
+ICICIBANK     12  22256.45
+SBIN          11  56537.44
 ```
 
 All the symbols of one strategy trade on one exchange.
@@ -290,19 +283,20 @@ class EmaRules(bt.Strategy):
         self.exit_when(fast_ema.crossed_below(slow_ema))  # sell at the next open when true
 
 
-# Run it over the same years and print the four numbers.
-print_summary(bt.backtest(EmaRules, client, start="2021-01-01", end="2026-11-11", capital=100_000))
+# Run it over the same years and print its summary.
+rules = bt.backtest(EmaRules, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(rules.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 79,818.10
-Return       : 79.82%
-Max drawdown : -29.82%
-Trades       : 12 (42% won)
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
+Trades       : 11 (36% won)
 ```
 
-A condition strategy has no warm-up line, so it also took a crossover in the first days of January 2021, while the EMAs were still settling. That is why it made one trade more than `EmaCrossover`.
+The result is the same as `EmaCrossover`'s, trade for trade: conditions wait for the indicators' warm-up just as `on_bar` does, and then buy and sell on the same days.
 
 * Combine conditions with `&` (and), `|` (or) and `~` (not), not with the Python words `and`, `or`, `not`.
 * A condition is a level, not an event: `entry_when(fast_ema > slow_ema)` enters again after every exit while the fast EMA is above. Use `crossed_above` to enter only on the bar of the cross.

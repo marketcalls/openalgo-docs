@@ -28,8 +28,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar: it decides whether to buy or sell
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # wait until there are 50 days of prices for the slow EMA
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):  # no shares, fast EMA just rose above slow
             self.buy()  # buy with all the capital at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):  # holding, fast EMA just fell below slow
@@ -39,19 +37,15 @@ class EmaCrossover(bt.Strategy):
 # Run the backtest on SBIN's daily bars from your OpenAlgo server
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. An f-string (f"...") fills the values in {} into the text.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
 
@@ -70,13 +64,14 @@ performance = metrics.analyse(
     opening_wealth=100_000,  # the capital at the start
     opening_time=result.metrics["start"],  # when the run started
 )
+# result.metrics holds every figure of the run by name. f"..." fills in each {value}; ":.2f" writes 2 decimals.
 print(f"Sharpe in the backtest   : {result.metrics['sharpe']:.2f}")
 print(f"Sharpe above 6.5 percent : {performance.metrics['sharpe']:.2f}")
 ```
 
 <!-- output -->
 ```text
-Sharpe in the backtest   : 0.46
+Sharpe in the backtest   : 0.47
 Sharpe above 6.5 percent : 0.15
 ```
 
@@ -97,12 +92,12 @@ print(worst[["start", "trough", "end", "depth", "days"]].round(4).to_string())
 ```text
                          start                    trough                       end   depth      days
 rank
-1    2026-02-23 15:30:00+05:30 2026-09-08 15:30:00+05:30                       NaT -0.2982  261.0000
-2    2021-11-04 19:15:00+05:30 2022-07-15 15:30:00+05:30 2024-04-29 15:30:00+05:30 -0.2866  906.8438
-3    2024-06-03 15:30:00+05:30 2025-04-09 15:30:00+05:30 2025-10-27 15:30:00+05:30 -0.1874  511.0000
+1    2026-02-23 15:30:00+05:30 2026-09-08 15:30:00+05:30                       NaT -0.2935  261.0000
+2    2021-11-04 19:15:00+05:30 2022-07-15 15:30:00+05:30 2024-04-25 15:30:00+05:30 -0.2806  902.8438
+3    2024-06-03 15:30:00+05:30 2025-04-09 15:30:00+05:30 2025-10-27 15:30:00+05:30 -0.1840  511.0000
 ```
 
-`start` is the peak, `trough` the lowest point, `end` the day the account was back at the peak (`NaT`, no time, while it has not recovered), `depth` the fall as a fraction and `days` the calendar days it lasted. The deepest, 29.82 percent, is the max drawdown of the summary and has not recovered yet. The second peaked at 19:15 on 4 November 2021, the close of that year's Diwali Muhurat trading session.
+`start` is the peak, `trough` the lowest point, `end` the day the account was back at the peak (`NaT`, no time, while it has not recovered), `depth` the fall as a fraction and `days` the calendar days it lasted. The deepest, 29.35 percent, is the max drawdown of the summary and has not recovered yet. The second peaked at 19:15 on 4 November 2021, the close of that year's Diwali Muhurat trading session.
 
 ## Horizon summary
 
@@ -119,12 +114,12 @@ print(performance.horizons[["sessions", "total_return", "max_drawdown"]].round(4
              sessions  total_return  max_drawdown
 horizon
 1M                 22        0.0000        0.0000
-3M                 63       -0.0586       -0.0734
-6M                127       -0.0502       -0.0854
-1Y                248       -0.0961       -0.2982
-3Y                744        0.3987       -0.2982
-5Y               1240        0.0928       -0.2982
-Since start      1453        0.5327       -0.2982
+3M                 63       -0.0574       -0.0719
+6M                127       -0.0491       -0.0837
+1Y                248       -0.0952       -0.2935
+3Y                744        0.3866       -0.2935
+5Y               1240        0.0910       -0.2935
+Since start      1453        0.5394       -0.2935
 ```
 
 ## Losing streaks
@@ -166,12 +161,12 @@ print(vs_nifty.performance.benchmark_comparison("year").round(4).to_string())
 ```text
       strategy  benchmark  excess   beat
 year
-2021    0.2562     0.2412  0.0150   True
-2022    0.0620     0.0433  0.0187   True
-2023   -0.1367     0.2003 -0.3370  False
-2024    0.1917     0.0880  0.1036   True
-2025    0.2729     0.1051  0.1678   True
-2026   -0.1227    -0.0335 -0.0892  False
+2021    0.2674     0.2412  0.0262   True
+2022    0.0634     0.0433  0.0201   True
+2023   -0.1350     0.2003 -0.3353  False
+2024    0.1883     0.0880  0.1002   True
+2025    0.2645     0.1051  0.1594   True
+2026   -0.1212    -0.0335 -0.0877  False
 ```
 
 `excess` is the strategy's return minus NIFTY's, and `beat` is True in the years the strategy did better. The lesson [Compare with NIFTY](../tutorial/08-compare-with-nifty.md) explains the benchmark figures.
@@ -192,13 +187,13 @@ print("fell 30% or more:", study.bust_probability, "| gained 25% or more:", stud
 ```text
             final_return  max_drawdown
 percentile
-0.05             -0.3291       -0.5558
-0.50              0.6258       -0.3319
-0.95              2.4745       -0.2086
-fell 30% or more: 0.637 | gained 25% or more: 0.7
+0.05             -0.3129       -0.5489
+0.50              0.6283       -0.3264
+0.95              2.4096       -0.2029
+fell 30% or more: 0.609 | gained 25% or more: 0.711
 ```
 
-Read the 0.05 row as a bad case: one path in twenty did no better than that. Here 63.7 percent of the reshuffled paths fell 30 percent or more at some point, against the real run's 29.82 percent: the order of the days helped this run.
+Read the 0.05 row as a bad case: one path in twenty did no better than that. Here 60.9 percent of the reshuffled paths fell 30 percent or more at some point, against the real run's 29.35 percent: the order of the days helped this run.
 
 ## Several strategies
 
@@ -227,16 +222,16 @@ print(f"Together : {both.metrics['total_return']:.2%}")
 
 <!-- output -->
 ```text
-SBIN     : 53.27%
-RELIANCE : -7.61%
-Together : 22.83%
+SBIN     : 53.94%
+RELIANCE : -9.34%
+Together : 22.30%
 ```
 
-On the combined Rs 2,00,000 the pair made 22.83 percent: about the average of SBIN's gain and RELIANCE's loss.
+On the combined Rs 2,00,000 the pair made 22.30 percent: about the average of SBIN's gain and RELIANCE's loss.
 
 ## Reports
 
-`report.tearsheet` writes the same HTML report a backtest makes, for any analysis. Here, the analysis with the 6.5 percent risk-free rate:
+`report.tearsheet` writes the same HTML dashboard a backtest makes (see [The HTML tearsheet](../results-and-reports.md#the-html-tearsheet)), for any analysis. Here, the analysis with the 6.5 percent risk-free rate:
 
 <!-- requires-server -->
 <!-- continues -->

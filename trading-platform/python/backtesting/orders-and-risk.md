@@ -18,16 +18,6 @@ from openalgo import api, ta
 client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
-# A function ("def") is a named piece of code you can run again: print_summary(result).
-def print_summary(result):
-    m = result.metrics  # a dict: the figures of the run, looked up by name
-    # f"..." fills in each {value}: ":,.2f" is rupees with commas, ":.2%" a percent.
-    print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-    print(f"Return       : {m['total_return']:.2%}")
-    print(f"Max drawdown : {m['max_drawdown']:.2%}")
-    print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
-
-
 # The strategy. A class bundles settings and functions; inside it, "self" is the strategy itself.
 class EmaCrossover(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "D"  # SBIN on NSE, daily bars
@@ -41,8 +31,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar: buy, sell or wait.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: wait until the slow EMA has 50 days
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.enter()  # the buy, in its own function below
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
@@ -55,14 +43,14 @@ class EmaCrossover(bt.Strategy):
 
 # Run it on SBIN from 1 January 2021 to 11 November 2026 with Rs 1,00,000.
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-print_summary(result)
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
 
@@ -70,7 +58,7 @@ The **max drawdown** is the largest fall of the account from its highest value.
 
 ## How do I buy and sell?
 
-* `self.buy()` buys; `self.sell()` sells. With no quantity, a buy uses all the capital (less the estimated charges). Give a quantity with `qty=`, always in shares (units), never lots. For futures, `lots=1` buys one lot.
+* `self.buy()` buys; `self.sell()` sells. With no quantity, a buy of a stock uses all the free cash, less the estimated charges and a 2 percent buffer, in whole shares; a futures or options buy takes one lot. Give a quantity with `qty=`, always in shares (units), never lots. For futures, `lots=2` buys two lots.
 * These are **market orders**: decided at the close of a bar and filled at the open of the next bar, plus slippage (the small amount every fill loses to the market).
 * `self.sell()` while holding shares reduces them. A sell with nothing held opens a **short** (see [Can I sell short?](#can-i-sell-short)).
 
@@ -85,15 +73,16 @@ class BuyFifty(EmaCrossover):
         self.buy(qty=50)  # 50 shares
 
 
-# Run it over the same years and print the four numbers.
-print_summary(bt.backtest(BuyFifty, client, start="2021-01-01", end="2026-11-11", capital=100_000))
+# Run it over the same years and print its summary.
+fifty = bt.backtest(BuyFifty, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(fifty.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 12,294.11
-Return       : 12.29%
-Max drawdown : -14.62%
+Net profit   : Rs 12,591.62
+Return       : 12.59%
+Max drawdown : -14.59%
 Trades       : 11 (36% won)
 ```
 
@@ -113,23 +102,22 @@ Exiting sooner: sell when the close falls below the 50-day EMA, without waiting 
 # The same entry, with a faster exit rule.
 class ExitBelowEma(EmaCrossover):
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.enter()
         elif self.position.is_long and self.close[-1] < self.slow_ema[-1]:  # [-1]: the latest value
             self.exit()
 
 
-# Run it over the same years and print the four numbers.
-print_summary(bt.backtest(ExitBelowEma, client, start="2021-01-01", end="2026-11-11", capital=100_000))
+# Run it over the same years and print its summary.
+sooner = bt.backtest(ExitBelowEma, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(sooner.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 5,410.46
-Return       : 5.41%
-Max drawdown : -20.96%
+Net profit   : Rs 6,837.93
+Return       : 6.84%
+Max drawdown : -20.63%
 Trades       : 11 (18% won)
 ```
 
@@ -154,22 +142,22 @@ class WithStop(EmaCrossover):
         self.buy(stop=bt.pct(5))
 
 
-# Run it, print the four numbers, and count how the trades ended.
+# Run it, print its summary, and count how the trades ended.
 stopped = bt.backtest(WithStop, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-print_summary(stopped)
-print(stopped.trades["exit_reason"].value_counts().to_dict())  # how many trades ended each way
+print(stopped.summary())
+print(stopped.trade_list()["exit_reason"].value_counts().to_dict())  # how many trades ended each way
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 22,537.18
-Return       : 22.54%
-Max drawdown : -28.97%
+Net profit   : Rs 24,010.20
+Return       : 24.01%
+Max drawdown : -28.48%
 Trades       : 11 (27% won)
 {'leg_sl': 7, 'signal': 4}
 ```
 
-`leg_sl` is a trade closed by its stop, `signal` one closed by the strategy's own `self.exit()`. The stop limited the losing trades but also closed some that would have recovered: test a stop on your stock and compare the four numbers.
+`leg_sl` is a trade closed by its stop, `signal` one closed by the strategy's own `self.exit()`. The stop limited the losing trades but also closed some that would have recovered: test a stop on your stock and compare the summaries.
 
 On CNC positions (and NRML, futures held overnight) the stop is held as a **GTT** (good till triggered) order: one your broker keeps across days until the price reaches it. On MIS (intraday) positions the engine holds the stop itself.
 
@@ -186,17 +174,17 @@ class StopAndTarget(EmaCrossover):
         self.buy(stop=bt.pct(5), target=bt.pct(20))
 
 
-# Run it, print the four numbers, and count how the trades ended.
+# Run it, print its summary, and count how the trades ended.
 booked = bt.backtest(StopAndTarget, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-print_summary(booked)
-print(booked.trades["exit_reason"].value_counts().to_dict())
+print(booked.summary())
+print(booked.trade_list()["exit_reason"].value_counts().to_dict())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 16,577.22
-Return       : 16.58%
-Max drawdown : -22.24%
+Net profit   : Rs 16,196.09
+Return       : 16.20%
+Max drawdown : -21.81%
 Trades       : 11 (27% won)
 {'leg_sl': 7, 'leg_target': 3, 'signal': 1}
 ```
@@ -216,17 +204,17 @@ class Trailing(EmaCrossover):
         self.buy(trail=bt.trail_pct(10))
 
 
-# Run it, print the four numbers, and count how the trades ended.
+# Run it, print its summary, and count how the trades ended.
 trailed = bt.backtest(Trailing, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-print_summary(trailed)
-print(trailed.trades["exit_reason"].value_counts().to_dict())
+print(trailed.summary())
+print(trailed.trade_list()["exit_reason"].value_counts().to_dict())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 22,961.95
-Return       : 22.96%
-Max drawdown : -23.61%
+Net profit   : Rs 24,525.35
+Return       : 24.53%
+Max drawdown : -22.95%
 Trades       : 11 (36% won)
 {'signal': 7, 'leg_sl': 4}
 ```
@@ -269,17 +257,17 @@ class Intraday(EmaCrossover):
 
 # Run it on a recent stretch of 15-minute bars and count how the trades ended.
 intraday = bt.backtest(Intraday, client, start="2026-08-01", end="2026-11-11", capital=100_000)
-print_summary(intraday)
-print(intraday.trades["exit_reason"].value_counts().to_dict())
+print(intraday.summary())
+print(intraday.trade_list()["exit_reason"].value_counts().to_dict())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -1,128.76
-Return       : -1.13%
-Max drawdown : -3.82%
-Trades       : 9 (56% won)
-{'scheduler': 8, 'signal': 1}
+Net profit   : Rs -1,469.38
+Return       : -1.47%
+Max drawdown : -3.74%
+Trades       : 8 (38% won)
+{'scheduler': 7, 'signal': 1}
 ```
 
 `scheduler` is the square-off at 15:00. The [intraday lesson](tutorial/05-intraday.md) explains intraday trading step by step.
@@ -298,17 +286,17 @@ class Guarded(Intraday):
 
 # Run it over the same months and count how the trades ended.
 guarded = bt.backtest(Guarded, client, start="2026-08-01", end="2026-11-11", capital=100_000)
-print_summary(guarded)
-print(guarded.trades["exit_reason"].value_counts().to_dict())
+print(guarded.summary())
+print(guarded.trade_list()["exit_reason"].value_counts().to_dict())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -2,084.46
-Return       : -2.08%
-Max drawdown : -2.94%
-Trades       : 9 (44% won)
-{'scheduler': 5, 'daily_loss_limit': 4}
+Net profit   : Rs -3,038.31
+Return       : -3.04%
+Max drawdown : -3.04%
+Trades       : 8 (25% won)
+{'daily_loss_limit': 5, 'scheduler': 3}
 ```
 
 `daily_loss_limit` is a trade closed by the limit. Here the result was worse than without it: a loss limit caps a bad day, it does not pick better trades. The day's loss counts the trades closed that session plus the open position's loss.
@@ -317,7 +305,7 @@ Trades       : 9 (44% won)
 
 A **short** sells first and buys back later, to gain from a fall. Use `self.sell()` to open it and `self.exit()` to buy it back, or `self.target(qty=-50)` to be short 50 shares in one call.
 
-* A stock can be shorted only intraday (MIS). On daily bars (CNC) a sell that would open a short is rejected with `product_rule`, as the Indian cash market does not allow an overnight short.
+* A stock can be shorted only intraday (MIS). On daily bars (CNC) a sell that would open a short is rejected with `product_rule`, as the Indian cash market does not allow an overnight short, and the run ends with a warning such as `RejectedOrdersWarning: 3 of 3 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.`
 * To hold a short overnight, trade [futures](futures.md).
 
 The [lesson Go Short](tutorial/06-going-short.md) shorts an intraday breakdown and flips between long and short.
@@ -342,7 +330,15 @@ print(orders[orders["status"] == "Rejected"][["time", "side", "reject_code"]].to
 2026-10-28 15:00:00+05:30  BUY entry_window
 ```
 
-These crossovers came at 15:00 or later, after the 14:50 cut-off, so the buys were refused. The codes you will meet most:
+These crossovers came at 15:00 or later, after the 14:50 cut-off, so the buys were refused. You do not have to look for them: a run in which any order was rejected ends with one warning that Python prints under your output. The intraday run printed:
+
+```text
+RejectedOrdersWarning: 3 of 12 orders were rejected because orders after the MIS entry cut-off (entry_until) are rejected, and so are entries before entry_from (reject_code 'entry_window'). See result.warnings.
+```
+
+It names the most common reason; `result.warnings` has a line for each reason, with when the first such order was decided and what to do. The warning comes once per run, not once per order, and the result is complete. To hide it, `warnings.simplefilter("ignore", RejectedOrdersWarning)` after `import warnings` and `from openalgo.backtest.errors import RejectedOrdersWarning`.
+
+The codes you will meet most:
 
 | Code | Why |
 |---|---|
@@ -354,7 +350,7 @@ These crossovers came at 15:00 or later, after the 14:50 cut-off, so the buys we
 
 ## What do the exit reasons mean?
 
-Every closed trade has an `exit_reason` in `result.trades` (and every fill a `reason` in `result.fills`):
+Every closed trade has an `exit_reason` in `result.trade_list()` (and every fill a `reason` in `result.fills`):
 
 | Reason | Meaning |
 |---|---|

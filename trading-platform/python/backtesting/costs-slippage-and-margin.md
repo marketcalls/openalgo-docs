@@ -4,7 +4,7 @@ Every backtest pays Indian charges and slippage on each trade, and checks that y
 
 ## The strategy this page uses
 
-An EMA crossover on SBIN: buy when the 20-day EMA (an average of closing prices that weighs recent days more) crosses above the 50-day EMA, sell when it crosses back below. It runs on **daily bars** (one bar, or candle, per day) and trades **CNC** (delivery: shares held overnight). Besides the usual four numbers it prints the total charges paid.
+An EMA crossover on SBIN: buy when the 20-day EMA (an average of closing prices that weighs recent days more) crosses above the 50-day EMA, sell when it crosses back below. It runs on **daily bars** (one bar, or candle, per day) and trades **CNC** (delivery: shares held overnight). Besides the usual summary (net profit, return, max drawdown and trades) it prints the total charges paid.
 
 Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`. Run this block first: the other blocks on this page continue from it.
 
@@ -20,13 +20,10 @@ client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 # A function ("def") is a named piece of code you can run again: print_summary(result).
 def print_summary(result):
-    m = result.metrics  # a dict: the figures of the run, looked up by name
-    # f"..." fills in each {value}: ":,.2f" is rupees with commas, ":.2%" a percent.
-    print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-    print(f"Return       : {m['total_return']:.2%}")
-    print(f"Max drawdown : {m['max_drawdown']:.2%}")
-    print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
-    print(f"Charges      : Rs {m['total_costs']:,.2f}")  # all charges of all fills
+    print(result.summary())  # net profit, return, drawdown and trades
+    # result.metrics holds every figure of the run by name. f"..." fills in the {value},
+    # and ":,.2f" writes it with commas and 2 decimals.
+    print(f"Charges      : Rs {result.metrics['total_costs']:,.2f}")  # all charges of all fills
 
 
 # The strategy. A class bundles settings and functions; inside it, "self" is the strategy itself.
@@ -42,8 +39,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar: buy, sell or wait.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: wait until the slow EMA has 50 days
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # no quantity: all the capital, at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
@@ -57,11 +52,11 @@ print_summary(result)
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
-Charges      : Rs 3,363.62
+Charges      : Rs 3,321.65
 ```
 
 The net profit is after every charge. The **max drawdown** is the largest fall of the account from its highest value.
@@ -88,11 +83,11 @@ print(result.costs[columns].head(2).round(2).to_string(index=False))
 <!-- output -->
 ```text
 side  price_rupees  brokerage    stt  exchange_txn  sebi_fee  stamp_duty  gst  dp_charge  total
- BUY        362.90        0.0  99.88          3.45      0.10       14.98 0.62       0.00 119.03
-SELL        456.95        0.0 125.77          4.34      0.13        0.00 0.78      15.34 146.35
+ BUY        356.95        0.0  96.38          3.33      0.10       14.46 0.60       0.00 114.85
+SELL        456.95        0.0 123.38          4.26      0.12        0.00 0.77      15.34 143.86
 ```
 
-Reading the buy: about 275 shares at 362.90 is an order of Rs 99,881. Delivery brokerage is zero. STT is 0.1 percent of the value (Rs 99.88), stamp duty 0.015 percent (Rs 14.98), and the exchange charge, SEBI fee and GST add about Rs 4. The sell pays STT again, no stamp duty, and the DP charge of Rs 15.34. Every rate is the one in force on the trade's date.
+Reading the buy: 270 shares at 356.95 is an order of Rs 96,377. Delivery brokerage is zero. STT is 0.1 percent of the value (Rs 96.38), stamp duty 0.015 percent (Rs 14.46), and the exchange charge, SEBI fee and GST add about Rs 4. The sell pays STT again, no stamp duty, and the DP charge of Rs 15.34. Every rate is the one in force on the trade's date.
 
 ## How do I use my own broker's brokerage?
 
@@ -117,11 +112,11 @@ print_summary(flat)
 
 <!-- output -->
 ```text
-Net profit   : Rs 52,636.37
-Return       : 52.64%
-Max drawdown : -29.87%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
-Charges      : Rs 3,875.24
+Charges      : Rs 3,836.09
 ```
 
 Twenty-two orders at Rs 20 each (Rs 440), plus the GST on them, raised the charges and lowered the profit. To price one trade without a backtest, use the [cost calculator](support-functions/cost-calculator.md).
@@ -150,14 +145,14 @@ print_summary(no_slippage)
 
 <!-- output -->
 ```text
-Net profit   : Rs 54,108.83
-Return       : 54.11%
-Max drawdown : -29.73%
+Net profit   : Rs 54,954.60
+Return       : 54.95%
+Max drawdown : -29.24%
 Trades       : 11 (36% won)
-Charges      : Rs 3,373.11
+Charges      : Rs 3,330.54
 ```
 
-Over 22 fills, the default slippage cost about Rs 840 of profit. Keep it on: real fills are never exactly at the open.
+Over 22 fills, the default slippage cost about Rs 1,000 of profit. Keep it on: real fills are never exactly at the open.
 
 ## How much money does a trade block?
 
@@ -180,8 +175,6 @@ class TooBig(EmaCrossover):
     interval = "15m"
 
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy(qty=200)  # add leverage=5 to block only a fifth of the value
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
@@ -197,36 +190,46 @@ print(orders[["time", "side", "quantity_units", "status", "reject_code"]].to_str
 <!-- output -->
 ```text
                      time side  quantity_units   status reject_code
-2026-11-05 09:45:00+05:30  BUY           200.0 Rejected      margin
+2026-11-05 09:30:00+05:30  BUY           200.0 Rejected      margin
 ```
 
-The buy needed about Rs 2,00,000 of margin, twice the free cash, so it was rejected. With `self.buy(qty=200, leverage=5)` it would block a fifth of that and fill.
+The buy needed about Rs 2,00,000 of margin, twice the free cash, so it was rejected. With `self.buy(qty=200, leverage=5)` it would block a fifth of that and fill. Python also prints one warning at the end of the run:
 
-## Why does a backtest hold a fraction of a share?
+```text
+RejectedOrdersWarning: 1 of 1 order was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+```
 
-By default a cash-equity backtest may hold fractions of a share, so the result does not depend on the share price: the first buy above was 275.23 shares. For whole shares, as your broker trades them, pass `quantity_mode="venue"`; the engine then also keeps 2 percent of the cash aside as a buffer.
+## Whole shares or part shares?
+
+A backtest buys **whole shares** by default, as your broker does (and whole lots of futures and options). A buy with no quantity is sized at the close it was decided on, and 2 percent of the cash is kept back as a buffer, so a higher open the next morning does not leave the order short of money.
+
+For research you can let it hold **part shares** with `quantity_mode="fractional"`. A buy with no quantity then invests all the capital at the price it fills at, so the result does not depend on the share price. Your broker cannot do this, so keep whole shares for a result you want to trade.
 
 <!-- continues -->
 <!-- requires-server -->
 ```python
-# The same strategy in whole shares.
-whole = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
-                    quantity_mode="venue")
-print_summary(whole)
-print("first buy:", whole.trades["entry_units"].iloc[0], "shares")  # iloc[0]: the first row
+# The same strategy with part shares allowed.
+part = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+                   quantity_mode="fractional")
+print_summary(part)
+
+# The first buy of each run. trade_list() is the table of closed trades; iloc[0] is its first row.
+print("first buy, whole shares:", result.trade_list()["quantity"].iloc[0])
+print("first buy, part shares :", round(part.trade_list()["quantity"].iloc[0], 2))  # 2 decimals
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 52,025.85
-Return       : 52.03%
-Max drawdown : -29.33%
+Net profit   : Rs 55,819.69
+Return       : 55.82%
+Max drawdown : -29.82%
 Trades       : 11 (36% won)
-Charges      : Rs 3,281.99
-first buy: 268.0 shares
+Charges      : Rs 3,414.87
+first buy, whole shares: 270.0
+first buy, part shares : 279.82
 ```
 
-The first buy was 268 whole shares instead of 275.23. The buffer and the whole shares left a little cash unused, so the profit is slightly lower.
+With part shares the first buy was 279.82 shares, all the capital at the next day's open, against 270 whole shares. No cash stayed in a buffer or in the part of a share left over, so the profit is a little higher, and the drawdown a little deeper. The difference is small here; on a stock priced in thousands of rupees, or with a small capital, whole shares matter more.
 
 ## How do I choose how many shares to buy?
 
@@ -259,7 +262,7 @@ SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
 charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 used for 2021-01-01 were never verified against their source, so the charges may be off. Until 2021-03-31 NSE charged EQ-series shares outside the NIFTY 50 and NIFTY Next 50 Rs 2.75 per lakh (NSE/FA/46225) and the shares of those two indices this standard rate. The engine does not know an index's members, so the row is unverified.
 ```
 
-Here there is one: no lot or tick size was given for SBIN, so the engine used the usual ones for a stock, lot 1 and tick 0.05. Fills charged at rates not yet checked against their source, and orders the engine rejected, are listed here too.
+Here there are two. The first: no lot or tick size was given for SBIN, so the engine used the usual ones for a stock, lot 1 and tick 0.05. The second: the delivery charges of January to March 2021 are not verified, because until 31 March 2021 NSE charged shares outside the NIFTY 50 and NIFTY Next 50 a lower rate and the engine does not know which shares were in those indices. SBIN is a NIFTY 50 share, so its charges are right; Python also prints this one as an `UnverifiedScheduleWarning`. Orders the engine rejected are listed here too, one line per reason, and Python prints a `RejectedOrdersWarning` for them at the end of the run.
 
 ## More options
 
@@ -270,6 +273,7 @@ Here there is one: no lot or tick size was given for SBIN, so the engine used th
 * **Same-day delivery trades:** a CNC buy and sell of one stock on the same day is charged as intraday, with no DP charge.
 * **Slippage by class:** `bt.slippage.defaults()` lists every row and its source; `slippage={"INDEX_FUT": bt.ticks(2)}` replaces one row.
 * **Leverage rules:** MIS cash equity only, up to 5; on CNC or above 5 it is a `ConfigError`. The class attribute `leverage` sets it for every order.
+* **Rounding:** every sizer, an order with no quantity, `self.target(...)` and `self.rebalance(...)` round down to whole shares, and derivatives to whole lots. With `quantity_mode="fractional"` cash equity keeps part shares; futures and options stay in whole lots.
 * **More sizers:** `bt.size.qty(n)`, `bt.size.atr_risk(1, 2)` (risk 1 percent to a stop 2 ATRs away), or your own function `size(ctx, order)` that returns units.
 * **Size caps:** `size_caps = bt.size.caps(position=bt.pct(20))` caps any sizer; a sizer beyond the margin is rejected, not cut down.
 * **Reinvest:** `reinvest = False` sizes from the starting capital instead of the current equity.

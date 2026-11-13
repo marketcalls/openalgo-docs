@@ -9,11 +9,11 @@ yfinance is a separate package (`pip install yfinance`); the OpenAlgo SDK does n
 * **Entry and exit:** buy when the 20-day EMA (exponential moving average) crosses above the 50-day, sell when it crosses back below.
 * **Size:** all the capital, Rs 1,00,000 at the start.
 * **Product:** CNC (delivery: the shares are held overnight, for as long as the trade lasts), long only.
-* **Data:** RELIANCE.NS daily bars from yfinance, 1 January 2021 to 11 November 2026. A bar is one period of prices, here one trading day.
+* **Data:** RELIANCE.NS daily bars from yfinance, traded from 1 January 2021 to 11 November 2026. The bars from 2018 to 2020 are downloaded too: the engine works out the EMAs over them, so they are ready on the first day. A bar is one period of prices, here one trading day.
 
 ## The code
 
-The engine needs the columns `open`, `high`, `low`, `close` and `volume`, and times that carry their time zone. yfinance's columns are capitalised and come with extra dividend and split columns, so the code keeps the five price columns and names them in lower case.
+The engine needs the columns `open`, `high`, `low`, `close` and `volume`, and the dates of the bars. yfinance's columns are capitalised and come with extra dividend and split columns, so the code keeps the five price columns and names them in lower case.
 
 <!-- requires-network -->
 ```python
@@ -23,8 +23,9 @@ import yfinance as yf
 import openalgo.backtest as bt
 from openalgo import ta
 
-# Download RELIANCE's daily bars (yfinance leaves out the end date, hence the 12th).
-raw = yf.Ticker("RELIANCE.NS").history(start="2021-01-01", end="2026-11-12")
+# Download RELIANCE's daily bars from 2018, so the EMAs have earlier history to warm up
+# on before the backtest starts in 2021 (yfinance leaves out the end date, hence the 12th).
+raw = yf.Ticker("RELIANCE.NS").history(start="2018-01-01", end="2026-11-12")
 
 # Keep the five columns the engine reads, in lower case, with Indian (IST) times.
 bars = raw[["Open", "High", "Low", "Close", "Volume"]].rename(columns=str.lower)
@@ -45,8 +46,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day): decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: the slow EMA needs 50 days first
-            return
         # crossed_above: the fast EMA was below the slow one a day ago, and is above it now.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # buy with all the capital at the next day's open
@@ -55,25 +54,22 @@ class EmaCrossover(bt.Strategy):
 
 
 # Run the backtest on the downloaded bars: data= instead of an OpenAlgo client.
-result = bt.backtest(EmaCrossover, data=bars, capital=100_000)
+# The bars before start only warm up the EMAs; trading begins on 1 January 2021.
+result = bt.backtest(EmaCrossover, data=bars, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -4,226.38
-Return       : -4.23%
-Max drawdown : -24.33%
-Trades       : 15 (33% won)
+Net profit   : Rs -6,404.73
+Return       : -6.40%
+Max drawdown : -23.71%
+Trades       : 16 (31% won), 1 still open
 ```
 
-The run takes its dates from the data. On OpenAlgo's history the same strategy also made 15 trades but lost Rs 7,615: yfinance takes the dividends out of past prices, so its prices are a little lower and the results differ. The engine still applied the Indian defaults to the downloaded bars: delivery charges, slippage and the NSE calendar. The max drawdown is the largest fall of the account from its highest value.
+Without the bars before 2021 the strategy would wait inside the run until its EMAs were ready, and a warning would say so: that is why the download starts in 2018. On OpenAlgo's history the same strategy also made 16 closed trades but lost Rs 9,345: yfinance takes the dividends out of past prices, so its prices are a little lower and the results differ. "1 still open" is the position bought at the last crossover and still held on 11 November 2026. The engine still applied the Indian defaults to the downloaded bars: delivery charges, slippage and the NSE calendar. The max drawdown is the largest fall of the account from its highest value.
 
 ## Try this
 
