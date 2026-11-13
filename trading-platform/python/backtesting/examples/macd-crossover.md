@@ -60,6 +60,14 @@ Trades       : 52 (35% won), 1 still open
 
 MACD crosses often on daily bars: 52 closed trades in under six years, and only about one in three won. A few long trends paid for the many small losses, which is how most trend strategies make money. "1 still open" is the position bought on 7 October 2026 and still held on 11 November 2026: it counts in the net profit at that day's close, but not among the closed trades. The max drawdown is the largest fall of the account from its highest value.
 
+Python also prints a warning at the end of this run:
+
+```text
+OrdersNotPlacedWarning: 1 of 106 orders was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+```
+
+A buy with no quantity is sized at the close it was decided on, with 2 percent of the cash kept back. The buy decided on 7 April 2026 met an open 5.2 percent higher the next day (Rs 1,310.00 after a close of Rs 1,245.50), so it needed more than the cash and was refused; the strategy bought again at a later crossover.
+
 ## Try this
 
 * Only crosses above the zero line (momentum and trend together): add `and self.macd[-1] > 0` to the entry condition. `[-1]` is the latest value.

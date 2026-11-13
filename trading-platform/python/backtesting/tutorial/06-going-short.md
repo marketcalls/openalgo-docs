@@ -106,7 +106,7 @@ Trades       : no closed trades
 There were no trades at all. Python also prints a warning on the screen when such a run ends, after your file's name and line number:
 
 ```text
-RejectedOrdersWarning: 12 of 12 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.
+OrdersNotPlacedWarning: 12 of 12 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.
 ```
 
 Every sell was refused, because you cannot sell shares in delivery that you do not own. A refused order does not stop the backtest, so read the warnings whenever a run trades less than you expect. To short a stock, do what the warning says: trade it intraday as MIS, on intraday bars as in the first block of this lesson, or trade futures, which can stay short overnight ([lesson 7](07-futures.md)).
@@ -169,7 +169,7 @@ On 17 August SBIN first broke below its opening range, so the strategy sold 80 s
 ## What you learned
 
 * `self.sell()` with no position opens a short; a short gains when the price falls.
-* In Indian cash markets a stock can be shorted only intraday (MIS). A delivery (CNC) short is rejected: a `RejectedOrdersWarning` on the screen and `result.warnings` say so.
+* In Indian cash markets a stock can be shorted only intraday (MIS). A delivery (CNC) short is rejected: an `OrdersNotPlacedWarning` on the screen and `result.warnings` say so.
 * `self.target(qty=...)` sets the position you want, long (positive) or short (negative), and flips in one order.
 
 ## Next lesson

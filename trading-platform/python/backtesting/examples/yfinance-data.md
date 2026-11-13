@@ -69,7 +69,7 @@ Max drawdown : -23.71%
 Trades       : 16 (31% won), 1 still open
 ```
 
-Without the bars before 2021 the strategy would wait inside the run until its EMAs were ready, and a warning would say so: that is why the download starts in 2018. On OpenAlgo's history the same strategy also made 16 closed trades but lost Rs 9,345: yfinance takes the dividends out of past prices, so its prices are a little lower and the results differ. "1 still open" is the position bought at the last crossover and still held on 11 November 2026. The engine still applied the Indian defaults to the downloaded bars: delivery charges, slippage and the NSE calendar. The max drawdown is the largest fall of the account from its highest value.
+Without the bars before 2021 the strategy would wait inside the run until its EMAs were ready, and Python would print a `WarmUpWarning` that says so: that is why the download starts in 2018. On OpenAlgo's history the same strategy also made 16 closed trades but lost Rs 9,345: yfinance takes the dividends out of past prices, so its prices are a little lower and the results differ. "1 still open" is the position bought at the last crossover and still held on 11 November 2026. The engine still applied the Indian defaults to the downloaded bars: delivery charges, slippage and the NSE calendar. The max drawdown is the largest fall of the account from its highest value.
 
 ## Try this
 

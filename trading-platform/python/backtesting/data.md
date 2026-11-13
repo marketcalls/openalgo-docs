@@ -129,7 +129,7 @@ Leave out `start` and `end` and the run covers all the bars you pass. The lesson
 
 ## History before the start date
 
-An indicator needs earlier bars before its value can be trusted: a 50-day EMA worked out on ten days of prices is not yet a 50-day average. So for every indicator made with `self.I` the engine measures its **warm-up**, the number of bars after which more history no longer changes its value (512 bars for the 50-day EMA). It then loads the bars before `start` from the run's own source (your OpenAlgo server, or the bars of `data=` before `start`), up to 2,048 of them, and works out the indicators over them. The strategy makes no decision before `start`, nor before every indicator has closed its warm-up. Equity, trades and charges begin at `start`.
+An indicator needs earlier bars before its value can be trusted: a 50-day EMA worked out on ten days of prices is not yet a 50-day average. So for every indicator made with `self.I` the engine knows its **warm-up**, the number of bars after which more history no longer changes its value. It measures it on its own reference bars, never on your data, so the same indicator needs the same bars on any share and at any bar size: 512 bars for a 50-bar EMA, daily or 15-minute. It then loads the bars before `start` that each indicator needs, in that indicator's own bar size, from the run's own source (your OpenAlgo server, or the bars of `data=` before `start`), and works out the indicators over them. The strategy makes no decision before `start`, nor before every indicator has closed its warm-up. Equity, trades and charges begin at `start`.
 
 When the source has fewer bars before `start` (your own data begins on the start date, or the share was listed recently), the strategy waits inside the run until its indicators are ready, deciding nothing, and a warning says how long it waited. Here the bars begin on 1 January 2021:
 
@@ -140,7 +140,6 @@ When the source has fewer bars before `start` (your own data begins on the start
 recent = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2021-01-01", end_date="2026-11-11")
 late = bt.backtest(EmaCrossover, data=recent, start="2021-01-01", end="2026-11-11", capital=100_000)
 print(late.summary())  # net profit, return, drawdown and trades
-print(late.warnings[0])  # the first warning: how long the strategy waited
 ```
 
 <!-- output -->
@@ -149,10 +148,15 @@ Net profit   : Rs 30,738.50
 Return       : 30.74%
 Max drawdown : -29.38%
 Trades       : 7 (29% won)
-The strategy waited 511 strategy bars inside the run for its indicators, to 2023-01-23 15:30 IST: SBIN D needs 512 bars (ema(SBIN.close, 50)) and 0 bars closed before 2021-01-01. Load data from earlier than 2021-01-01 to trade from it.
 ```
 
-With no bars before 2021, the 50-day EMA needed 512 bars of the run itself, so the strategy decided nothing until 23 January 2023 and closed 7 trades instead of 11. Load data from earlier than `start`, as `sbin` does, to trade from the first day.
+Python prints the warning on the screen when the run ends, after the file name and line number:
+
+```text
+WarmUpWarning: The strategy waited inside the run for its indicators to warm up and made its first decision at 2023-01-23 15:30 IST (SBIN waited 511 strategy bars): signals before then were not taken. See result.warnings for why.
+```
+
+With no bars before 2021, the 50-day EMA needed 512 bars of the run itself, so the strategy decided nothing until 23 January 2023 and closed 7 trades instead of 11. `result.warnings` has the details: what each indicator needs, how many bars closed before `start`, and that the bars given begin on 1 January 2021. Load data from earlier than `start`, as `sbin` does, to trade from the first day.
 
 The Assumptions of every run state the rule, what each series needed, the history loaded and when the strategy first decided, in `result.assumptions["warm_up"]`:
 
@@ -164,10 +168,10 @@ print(result.assumptions["warm_up"])  # the warm-up of the first run on this pag
 
 <!-- output -->
 ```text
-automatic: no decision before start, nor before every self.I indicator has closed its warm-up of bars (the window-stability length; bars before start count); SBIN D needs 512 bars (ema(SBIN.close, 50)); history before start: SBIN 742 strategy bars from 2018-01-01 to 2020-12-31 (all the source has since 2012-05-14); ready at start
+automatic: no decision before start, nor before every self.I indicator has closed its warm-up of bars (its window-stability length on the engine's reference bars, the same for any data and in live trading; bars before start count); ema(SBIN.close, 50) needs 512 D bars of SBIN; history before start: SBIN 512 strategy bars from 2018-12-10 to 2020-12-31 (asked from 2018-10-28); ready at start
 ```
 
-The engine asked for SBIN's bars back to 14 May 2012 (enough days for 2,048 bars). Your OpenAlgo server had them from 1 January 2018: 742 bars, more than the 512 the slow EMA needs, so the strategy was ready on the start date.
+The slow EMA needs 512 daily bars. The engine asked your OpenAlgo server for SBIN's bars from 28 October 2018, a few weeks more than 512 trading days, to allow for holidays, and kept the last 512 of them, from 10 December 2018 to 31 December 2020. So the strategy was ready on the start date.
 
 A strategy's own warm-up line at the top of `on_bar`, one that returns while too few bars have closed, still works, but it is no longer needed.
 
@@ -265,6 +269,8 @@ print(earlier.warnings[1])  # the second warning (the first is the wait for the 
 ```text
 Short history: 2020-07-01 to 2026-11-11 was requested but the supplied data returned 2021-01-01 to 2026-11-11, 1453 of 1582 sessions. The supplied data does not cover the rest of the requested range.
 ```
+
+These bars have no history before 2021 either, so Python also prints the same `WarmUpWarning` as for the run above.
 
 ## Splits and bonuses
 

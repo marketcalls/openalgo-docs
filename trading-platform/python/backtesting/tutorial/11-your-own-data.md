@@ -97,10 +97,9 @@ If your bars begin on the day the backtest starts, there are no earlier days for
 # Keep only the bars from 1 January 2021: no earlier days for the EMAs.
 late_bars = bars.loc["2021-01-01":]
 
-# Run on them, then print the summary and the warning that says why it traded so little.
+# Run on them and print the summary.
 late = bt.backtest(EmaCrossover, data=late_bars, capital=100_000)
 print(late.summary())   # net profit, return, drawdown and trades
-print(late.warnings[0])  # the first warning: how long the strategy waited, and why
 ```
 
 <!-- output -->
@@ -109,10 +108,15 @@ Net profit   : Rs 30,738.50
 Return       : 30.74%
 Max drawdown : -29.38%
 Trades       : 7 (29% won)
-The strategy waited 511 strategy bars inside the run for its indicators, to 2023-01-23 15:30 IST: SBIN D needs 512 bars (ema(SBIN.close, 50)) and 0 bars closed before 2021-01-01. Load data from earlier than 2021-01-01 to trade from it.
 ```
 
-The strategy waited two years, until January 2023, for its 50-day EMA, and made only 7 trades instead of 11. This warning is not printed on the screen by itself: print `result.warnings` whenever a strategy trades later than you expect. The fix is the one this lesson started with: fetch the bars from an earlier date and pass `start=`.
+Python also prints a warning on the screen when this run ends, after your file's name and line number:
+
+```text
+WarmUpWarning: The strategy waited inside the run for its indicators to warm up and made its first decision at 2023-01-23 15:30 IST (SBIN waited 511 strategy bars): signals before then were not taken. See result.warnings for why.
+```
+
+The strategy waited two years, until January 2023, for its 50-day EMA, and made only 7 trades instead of 11. `result.warnings` has the details: the 50-day EMA needs 512 daily bars, and the bars you gave begin on 1 January 2021. The fix is the one this lesson started with: fetch the bars from an earlier date and pass `start=`.
 
 ## What you learned
 

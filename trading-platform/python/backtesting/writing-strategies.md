@@ -73,7 +73,7 @@ The engine picks the product from the bar size: **CNC** for daily bars of a stoc
 
 * `self.close[-1]` is the close of the bar that just closed and `self.close[-2]` the one before. `[-1]` means "the last one". The same works for `self.open`, `self.high`, `self.low`, `self.volume` and every indicator.
 * `len(self.close)` is the number of bars closed so far, the bars loaded before `start` included.
-* Every `self.I` indicator is ready when `on_bar` first runs. The engine measures how many bars each one needs to settle, loads that history before `start` (up to 2,048 bars) and makes no decision before `start` or before every indicator is ready. So `on_bar` needs no warm-up line that returns while too few bars have closed. When the data has too few bars before `start`, the strategy waits inside the run and a warning says how long; see [History before the start date](data.md#history-before-the-start-date).
+* Every `self.I` indicator is ready when `on_bar` first runs. The engine knows how many bars each one needs to settle (the same on any data: 512 bars for a 50-bar EMA, daily or 15-minute), loads that history before `start` and makes no decision before `start` or before every indicator is ready. So `on_bar` needs no warm-up line that returns while too few bars have closed. When the data has too few bars before `start`, the strategy waits inside the run and a warning says how long; see [History before the start date](data.md#history-before-the-start-date).
 * `a.crossed_above(b)` is true only on the bar where `a` moves from below `b` to above it; `a.crossed_below(b)` is the opposite. `b` can be a number, as in `self.rsi.crossed_above(30)`.
 * `bar` in `on_bar(self, bar)` is the bar that just closed: `bar.close` is the same as `self.close[-1]`.
 * You never see a bar that has not closed yet, so a strategy cannot peek into the future.
@@ -160,7 +160,7 @@ Trades       : 52 (42% won), 1 still open
 The MACD turns sooner than the 20-day and 50-day EMAs, so it traded far more often: 52 closed trades against 11. "1 still open" is a position bought at the last crossover and still held on 11 November 2026. Python also prints a warning at the end of this run:
 
 ```text
-RejectedOrdersWarning: 1 of 106 orders was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+OrdersNotPlacedWarning: 1 of 106 orders was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
 ```
 
 A buy with no quantity is sized at the close it was decided on, with 2 percent of the cash kept back. The buy decided on 1 December 2023 met an open 2.8 percent higher on the next trading day, so it needed more than the cash and was refused; the strategy bought again at a later crossover. A smaller size, such as `self.buy(size=bt.size.percent(95))`, leaves more room for such a gap.
@@ -213,7 +213,7 @@ Max drawdown : -3.74%
 Trades       : 8 (38% won)
 ```
 
-Over these three months it lost a little after charges, and most trades ended at the 15:00 square-off rather than on a crossover. Three buys came after the 14:50 cut-off and were refused, so Python also prints a `RejectedOrdersWarning` (see [Why was my order rejected?](orders-and-risk.md#why-was-my-order-rejected)). The [intraday lesson](tutorial/05-intraday.md) explains MIS and the square-off with an opening range breakout on 5-minute bars.
+Over these three months it lost a little after charges, and most trades ended at the 15:00 square-off rather than on a crossover. Three buys came after the 14:50 cut-off for new intraday positions and were not placed. That is what the cut-off is for, so Python prints no warning about them; `result.warnings` counts them (see [Why was my order rejected?](orders-and-risk.md#why-was-my-order-rejected)). The [intraday lesson](tutorial/05-intraday.md) explains MIS and the square-off with an opening range breakout on 5-minute bars.
 
 ## How do I trade several stocks?
 

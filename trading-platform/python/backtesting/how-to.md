@@ -84,7 +84,7 @@ Return per year (CAGR): 7.64%
 # The closed trades as a table; pick the columns to show, then print the first three trades
 trades = result.trade_list()
 columns = ["entry_time", "exit_time", "quantity", "entry_price", "exit_price", "net_pnl"]
-print(trades[columns].head(3).round(2).to_string())  # head(3): the first three rows
+print(trades[columns].head(3).round({"net_pnl": 2}).to_string())  # head(3): the first three rows
 ```
 
 <!-- output -->
@@ -244,7 +244,7 @@ For short only, use `self.sell(qty=50)` to enter and `self.exit()` to buy back. 
 
 ## Why do I see a warning about rejected orders?
 
-When the engine refuses orders, the run goes on without them, and at the end Python prints one `RejectedOrdersWarning` that counts them and gives the most common reason. A short on daily bars is the usual cause, because a delivery (CNC) short is not allowed:
+When the engine refuses or skips orders you did not plan for, the run goes on without them, and at the end Python prints one `OrdersNotPlacedWarning` that counts them and gives the most common reason. A short on daily bars is the usual cause, because a delivery (CNC) short is not allowed:
 
 <!-- requires-server -->
 <!-- continues -->
@@ -272,10 +272,10 @@ Trades       : no closed trades
 On the screen, after the file name and line number:
 
 ```text
-RejectedOrdersWarning: 12 of 12 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.
+OrdersNotPlacedWarning: 12 of 12 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.
 ```
 
-`result.warnings` has the full line with what to do: short a stock intraday (MIS), or trade futures. Lesson: [Go Short](tutorial/06-going-short.md); every reject code: [Orders and Risk](orders-and-risk.md#why-was-my-order-rejected).
+`result.warnings` has the full line with what to do: short a stock intraday (MIS), or trade futures. Orders kept out by a rule you set, such as the 14:50 cut-off for new intraday positions, give no such warning: `result.warnings` only counts them. Lesson: [Go Short](tutorial/06-going-short.md); every reject code: [Orders and Risk](orders-and-risk.md#why-was-my-order-rejected).
 
 ## Make a tearsheet?
 
@@ -396,7 +396,7 @@ The same bars give the same result. Lesson: [Use Your Own Data](tutorial/11-your
 
 ## Why does my strategy not trade in its first months?
 
-An indicator needs earlier bars before its value settles: about two years of days for a 50-day EMA. When the engine fetches the bars itself, it loads that history before `start`. When your own bars begin on `start`, or a stock has just listed, there is no earlier history, so the strategy waits inside the run, without trading, until its indicators are ready. The warning that says so is in `result.warnings`, not on the screen:
+An indicator needs earlier bars before its value settles: about two years of days for a 50-day EMA. When the engine fetches the bars itself, it loads that history before `start`. When your own bars begin on `start`, or a stock has just listed, there is no earlier history, so the strategy waits inside the run, without trading, until its indicators are ready:
 
 <!-- requires-server -->
 <!-- continues -->
@@ -404,15 +404,24 @@ An indicator needs earlier bars before its value settles: about two years of day
 # Own bars that begin on the first day of the test: no earlier days for the EMAs
 late_bars = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2021-01-01", end_date="2026-11-11")
 late = bt.backtest(EmaCrossover, data=late_bars, capital=100_000)
-print(late.warnings[0])  # how long the strategy waited, and why
+print(late.summary())
 ```
 
 <!-- output -->
 ```text
-The strategy waited 511 strategy bars inside the run for its indicators, to 2023-01-23 15:30 IST: SBIN D needs 512 bars (ema(SBIN.close, 50)) and 0 bars closed before 2021-01-01. Load data from earlier than 2021-01-01 to trade from it.
+Net profit   : Rs 30,738.50
+Return       : 30.74%
+Max drawdown : -29.38%
+Trades       : 7 (29% won)
 ```
 
-The fix: fetch the bars from an earlier date and pass `start=`, as in the answer above. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md).
+Python says so on the screen when the run ends, after the file name and line number:
+
+```text
+WarmUpWarning: The strategy waited inside the run for its indicators to warm up and made its first decision at 2023-01-23 15:30 IST (SBIN waited 511 strategy bars): signals before then were not taken. See result.warnings for why.
+```
+
+`result.warnings` has the details: the 50-day EMA needs 512 daily bars, and the bars given begin on 1 January 2021. The fix: fetch the bars from an earlier date and pass `start=`, as in the answer above. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md).
 
 ## Backtest older years?
 
@@ -436,6 +445,8 @@ Max drawdown : -29.34%
 Trades       : 15 (33% won)
 ['charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2020-07-01 are backfilled for 2 fills, from 2020-02-25']
 ```
+
+A broker keeps only a limited history. Here it served SBIN's daily bars from 1 January 2018: 245 days before the start, where the 50-day EMA needs 512. So the strategy waited inside the run until 30 January 2020, and Python also printed a `WarmUpWarning` that says so. Bars you download into Historify, used with `source="db"`, can reach further back.
 
 `costs=None` runs with no charges at all; the result then warns that the profit is overstated. More: [Charges](costs-slippage-and-margin.md#what-am-i-charged-on-each-trade).
 

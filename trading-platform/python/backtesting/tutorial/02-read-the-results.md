@@ -186,6 +186,7 @@ Result(SBIN)
   square_off: None
   fill: next_open
   quantity_mode: venue
+  sizing: whole shares and whole lots; an order with no quantity is sized at the decision close and keeps 2 percent of its budget in cash for the move to the next open (the engine's cash buffer, the same in live trading), then takes off its estimated charges; bt.size sizers and target() keep no buffer, and rebalance keeps its own cash_buffer
   costs: zerodha (contract-note rounding)
   slippage: default table
   capital: 100000.0
@@ -208,7 +209,7 @@ Result(SBIN)
   instruments: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
   benchmark: NIFTY on NSE_INDEX: 1454 daily closes from the broker (zerodha, source='api'), 2020-12-31 to 2026-11-11
   indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 20): truncation passed at 4 cuts, warm-up 128 bars; ema(SBIN.close, 50): truncation passed at 4 cuts, warm-up 512 bars
-  warm_up: automatic: no decision before start, nor before every self.I indicator has closed its warm-up of bars (the window-stability length; bars before start count); SBIN D needs 512 bars (ema(SBIN.close, 50)); history before start: SBIN 742 strategy bars from 2018-01-01 to 2020-12-31 (all the source has since 2012-05-14); ready at start
+  warm_up: automatic: no decision before start, nor before every self.I indicator has closed its warm-up of bars (its window-stability length on the engine's reference bars, the same for any data and in live trading; bars before start count); ema(SBIN.close, 50) needs 512 D bars of SBIN; history before start: SBIN 512 strategy bars from 2018-12-10 to 2020-12-31 (asked from 2018-10-28); ready at start
   gross P&L: 57264.00 (realized 57264.00)
   charges: 3322.91; net P&L: 53941.09
   warning: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
@@ -217,9 +218,9 @@ Result(SBIN)
 
 A few lines worth knowing:
 
-* `product: CNC` and `fill: next_open` are the first two defaults above, and `quantity_mode: venue` is the whole-shares rule. `costs` and `slippage` name the charges and the slippage used.
+* `product: CNC` and `fill: next_open` are the first two defaults above, `quantity_mode: venue` is the whole-shares rule, and `sizing` says how a buy with no quantity is sized, with the 2 percent kept in cash. `costs` and `slippage` name the charges and the slippage used.
 * `benchmark` says where NIFTY's daily closes came from.
-* `warm_up` says how many earlier days the engine loaded before 1 January 2021, and `ready at start` that both EMAs were ready on the first day.
+* `warm_up` says that the 50-day EMA needs 512 daily bars, which earlier days the engine loaded for it (from 10 December 2018 to 31 December 2020), and `ready at start` that both EMAs were ready on the first day.
 * `gross P&L` is the profit before charges, `charges` is what the charges came to, and `net P&L` is what was left: the net profit.
 * Read the `warning:` lines at the end after every run. Here the first says the engine assumed SBIN trades in single shares with a price step (tick) of 0.05 rupees, and the second is the note about early-2021 charges from [lesson 1](01-first-backtest.md). An order the engine refused would be listed here too.
 * The other lines are settings this lesson does not use; `None` means not set.

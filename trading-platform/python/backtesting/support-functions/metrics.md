@@ -85,7 +85,7 @@ A **drawdown** is a fall of the account from its highest value so far, lasting u
 <!-- continues -->
 ```python
 worst = performance.drawdown_details(3)  # the three deepest drawdowns, deepest first
-print(worst[["start", "trough", "end", "depth", "days"]].round(4).to_string())
+print(worst[["start", "trough", "end", "depth", "days"]].round({"depth": 4, "days": 4}).to_string())  # round the numbers only
 ```
 
 <!-- output -->

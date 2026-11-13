@@ -64,13 +64,20 @@ Charges      : Rs 41,771.73
 
 The trend flipped often over these sessions: 42 trades, 43 percent won. Before charges the strategy made about Rs 29,800, and the charges of about Rs 1,000 a round trip (a trade in and out) turned that into a loss. The max drawdown is the largest fall of the account from its highest value.
 
-Python also prints a warning after the run:
+After the 15:10 square-off has closed the position, the strategy asks again for a lot on each of the session's last bars, and now and then a flip comes after 15:00. Both come after the 15:00 cut-off for new intraday positions, so the engine does not place them, as a broker would not. That is what the cut-off is for, so Python prints no warning about them; `result.warnings` counts them. This block continues the one above:
 
-```text
-RejectedOrdersWarning: 86 of 128 orders were rejected because orders after the MIS entry cut-off (entry_until) are rejected, and so are entries before entry_from (reject_code 'entry_window'). See result.warnings.
+<!-- continues -->
+<!-- requires-server -->
+```python
+print(result.warnings[0])  # the first note of the run: the orders the cut-off kept out
 ```
 
-These are the flips the strategy asked for at 15:00 or later, after the cut-off for new intraday positions. The engine refused them, as a broker would, and the 15:10 square-off closed the position. The run is complete.
+<!-- output -->
+```text
+86 of 128 orders were outside the MIS entry window, each session's open to 15:00 (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-10-01 15:15 IST
+```
+
+The run is complete.
 
 ## Try this
 

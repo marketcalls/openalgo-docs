@@ -196,12 +196,14 @@ print(orders[["time", "side", "quantity_units", "status", "reject_code"]].to_str
 The buy needed about Rs 2,00,000 of margin, twice the free cash, so it was rejected. With `self.buy(qty=200, leverage=5)` it would block a fifth of that and fill. Python also prints one warning at the end of the run:
 
 ```text
-RejectedOrdersWarning: 1 of 1 order was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+OrdersNotPlacedWarning: 1 of 1 order was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
 ```
 
 ## Whole shares or part shares?
 
 A backtest buys **whole shares** by default, as your broker does (and whole lots of futures and options). A buy with no quantity is sized at the close it was decided on, and 2 percent of the cash is kept back as a buffer, so a higher open the next morning does not leave the order short of money.
+
+A share that costs more than the money for the order cannot be bought in whole shares at all. That order is skipped (listed in `result.skipped`), and Python prints a warning at the end of the run, such as `OrdersNotPlacedWarning: 1 order was skipped because the sized quantity was less than one share or, for a derivative, one lot (skip reason 'rounded_to_zero'). See result.warnings.` Give the strategy more capital, or trade a cheaper share.
 
 For research you can let it hold **part shares** with `quantity_mode="fractional"`. A buy with no quantity then invests all the capital at the price it fills at, so the result does not depend on the share price. Your broker cannot do this, so keep whole shares for a result you want to trade.
 
@@ -262,7 +264,7 @@ SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
 charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 used for 2021-01-01 were never verified against their source, so the charges may be off. Until 2021-03-31 NSE charged EQ-series shares outside the NIFTY 50 and NIFTY Next 50 Rs 2.75 per lakh (NSE/FA/46225) and the shares of those two indices this standard rate. The engine does not know an index's members, so the row is unverified.
 ```
 
-Here there are two. The first: no lot or tick size was given for SBIN, so the engine used the usual ones for a stock, lot 1 and tick 0.05. The second: the delivery charges of January to March 2021 are not verified, because until 31 March 2021 NSE charged shares outside the NIFTY 50 and NIFTY Next 50 a lower rate and the engine does not know which shares were in those indices. SBIN is a NIFTY 50 share, so its charges are right; Python also prints this one as an `UnverifiedScheduleWarning`. Orders the engine rejected are listed here too, one line per reason, and Python prints a `RejectedOrdersWarning` for them at the end of the run.
+Here there are two. The first: no lot or tick size was given for SBIN, so the engine used the usual ones for a stock, lot 1 and tick 0.05. The second: the delivery charges of January to March 2021 are not verified, because until 31 March 2021 NSE charged shares outside the NIFTY 50 and NIFTY Next 50 a lower rate and the engine does not know which shares were in those indices. SBIN is a NIFTY 50 share, so its charges are right; Python also prints this one as an `UnverifiedScheduleWarning`. Orders the engine rejected or skipped are listed here too, one line per reason, and Python prints an `OrdersNotPlacedWarning` for them at the end of the run, unless a rule you set (such as the entry window or the daily loss limit) kept them out.
 
 ## More options
 
@@ -277,4 +279,4 @@ Here there are two. The first: no lot or tick size was given for SBIN, so the en
 * **More sizers:** `bt.size.qty(n)`, `bt.size.atr_risk(1, 2)` (risk 1 percent to a stop 2 ATRs away), or your own function `size(ctx, order)` that returns units.
 * **Size caps:** `size_caps = bt.size.caps(position=bt.pct(20))` caps any sizer; a sizer beyond the margin is rejected, not cut down.
 * **Reinvest:** `reinvest = False` sizes from the starting capital instead of the current equity.
-* **Skipped orders:** an order sized to zero, or left no room by a cap, is listed in `result.skipped`.
+* **Skipped orders:** an order sized to zero, or left no room by a cap, is listed in `result.skipped`; one sized to zero also gives the `OrdersNotPlacedWarning`, one stopped by a cap you set does not.

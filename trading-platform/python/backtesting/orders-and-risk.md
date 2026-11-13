@@ -305,7 +305,7 @@ Trades       : 8 (25% won)
 
 A **short** sells first and buys back later, to gain from a fall. Use `self.sell()` to open it and `self.exit()` to buy it back, or `self.target(qty=-50)` to be short 50 shares in one call.
 
-* A stock can be shorted only intraday (MIS). On daily bars (CNC) a sell that would open a short is rejected with `product_rule`, as the Indian cash market does not allow an overnight short, and the run ends with a warning such as `RejectedOrdersWarning: 3 of 3 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.`
+* A stock can be shorted only intraday (MIS). On daily bars (CNC) a sell that would open a short is rejected with `product_rule`, as the Indian cash market does not allow an overnight short, and the run ends with a warning such as `OrdersNotPlacedWarning: 3 of 3 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.`
 * To hold a short overnight, trade [futures](futures.md).
 
 The [lesson Go Short](tutorial/06-going-short.md) shorts an intraday breakdown and flips between long and short.
@@ -330,13 +330,27 @@ print(orders[orders["status"] == "Rejected"][["time", "side", "reject_code"]].to
 2026-10-28 15:00:00+05:30  BUY entry_window
 ```
 
-These crossovers came at 15:00 or later, after the 14:50 cut-off, so the buys were refused. You do not have to look for them: a run in which any order was rejected ends with one warning that Python prints under your output. The intraday run printed:
+These crossovers came at 15:00 or later, after the 14:50 cut-off, so the buys were not placed. That is what the cut-off is for, so Python prints no warning about them. `result.warnings` counts them:
 
-```text
-RejectedOrdersWarning: 3 of 12 orders were rejected because orders after the MIS entry cut-off (entry_until) are rejected, and so are entries before entry_from (reject_code 'entry_window'). See result.warnings.
+<!-- continues -->
+<!-- requires-server -->
+```python
+# The note in result.warnings about the buys the cut-off kept out
+print([line for line in intraday.warnings if "entry window" in line][0])
 ```
 
-It names the most common reason; `result.warnings` has a line for each reason, with when the first such order was decided and what to do. The warning comes once per run, not once per order, and the result is complete. To hide it, `warnings.simplefilter("ignore", RejectedOrdersWarning)` after `import warnings` and `from openalgo.backtest.errors import RejectedOrdersWarning`.
+<!-- output -->
+```text
+3 of 12 orders were outside the MIS entry window, each session's open to 14:50 (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-08-25 15:15 IST
+```
+
+The same holds for every rule you set yourself: the entry window (`entry_from`, `entry_until`), the daily loss limit, `cooldown`, `max_positions`, a drawdown halt and size caps. An order refused or skipped for any other reason, such as not enough cash, a delivery short or a share that costs more than the money for the order, is one you did not plan for. You do not have to look for those: the run then ends with one `OrdersNotPlacedWarning` that Python prints under your output, for example:
+
+```text
+OrdersNotPlacedWarning: 1 of 106 orders was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+```
+
+It names the most common reason; `result.warnings` has a line for each reason, with when the first such order was decided and what to do. The warning comes once per run, not once per order, and the result is complete. To hide it, `warnings.simplefilter("ignore", OrdersNotPlacedWarning)` after `import warnings` and `from openalgo.backtest.errors import OrdersNotPlacedWarning`.
 
 The codes you will meet most:
 

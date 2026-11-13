@@ -253,8 +253,8 @@ This run has two. The first says SBIN was traded with the usual terms of a share
 
 Other warnings you may meet:
 
-* A run in which the engine refused orders ends with one `RejectedOrdersWarning`, printed by Python, with how many and the most common reason, for example `3 of 3 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.` `result.warnings` then has a line for each reason, with what to do. See [Why was my order rejected?](orders-and-risk.md#why-was-my-order-rejected)
-* A strategy that had to wait inside the run for its indicators, because the data had too few bars before `start`, gets a warning that says how many bars it waited and to load earlier data (see [History before the start date](data.md#history-before-the-start-date)).
+* A run in which the engine refused or skipped orders you did not plan for ends with one `OrdersNotPlacedWarning`, printed by Python, with how many and the most common reason, for example `3 of 3 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.` `result.warnings` then has a line for each reason, with what to do. Orders kept out by a rule you set (the entry window, the daily loss limit, a cooldown) are only counted in `result.warnings`. See [Why was my order rejected?](orders-and-risk.md#why-was-my-order-rejected)
+* A strategy that had to wait inside the run for its indicators, because the data had too few bars before `start`, ends with a `WarmUpWarning`, printed by Python, that says when it first decided; `result.warnings` says how many bars it waited and why (see [History before the start date](data.md#history-before-the-start-date)).
 
 `print(result)` shows the warnings together with every setting the run used, among them the `warm_up` line: what each indicator needed, the history loaded before `start` and when the strategy first decided.
 
