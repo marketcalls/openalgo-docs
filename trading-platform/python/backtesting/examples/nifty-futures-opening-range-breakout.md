@@ -30,7 +30,7 @@ class NiftyOpeningRange(bt.Strategy):
     symbol, exchange, interval = "NIFTY23NOV26FUT", "NFO", "5m"  # the November contract, 5-minute bars
     longs, shorts = True, True  # trade breakouts both ways
 
-    # init runs once, before the first bar.
+    # init runs before the first bar.
     def init(self):
         self.day = None  # the session the strategy is in
 

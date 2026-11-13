@@ -29,7 +29,7 @@ client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 class BankNiftySupertrend(bt.Strategy):
     symbol, exchange, interval = "BANKNIFTY23NOV26FUT", "NFO", "15m"  # the November contract, 15-minute bars
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         # ta.supertrend gives the line and its direction; "_" drops the direction, unused here.
@@ -64,7 +64,7 @@ Charges      : Rs 41,771.73
 
 The trend flipped often over these sessions: 42 trades, 43 percent won. Before charges the strategy made about Rs 29,800, and the charges of about Rs 1,000 a round trip (a trade in and out) turned that into a loss. The max drawdown is the largest fall of the account from its highest value.
 
-After the 15:10 square-off has closed the position, the strategy asks again for a lot on each of the session's last bars, and now and then a flip comes after 15:00. Both come after the 15:00 cut-off for new intraday positions, so the engine does not place them, as a broker would not. That is what the cut-off is for, so Python prints no warning about them; `result.warnings` counts them. This block continues the one above:
+NFO trades until 15:40 from 3 August 2026, so each session ends with bars that close at 15:15, 15:30 and 15:40. After the 15:10 square-off has closed the position, the strategy asks again for a lot on each of those last bars, and now and then a flip comes after 15:00. Both come after the 15:00 cut-off for new intraday positions, so the engine does not place them, as a broker would not. That is what the cut-off is for, so Python prints no warning about them; `result.warnings` counts them. This block continues the one above:
 
 <!-- continues -->
 <!-- requires-server -->
@@ -76,8 +76,6 @@ print(result.warnings[0])  # the first note of the run: the orders the cut-off k
 ```text
 86 of 128 orders were outside the MIS entry window, each session's open to 15:00 (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-10-01 15:15 IST
 ```
-
-The run is complete.
 
 ## Try this
 

@@ -30,7 +30,7 @@ class SupertrendFollow(bt.Strategy):
     period = 10  # days of ATR
     multiplier = 3  # the line's distance in ATRs
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         # ta.supertrend gives the line and its direction (-1 uptrend, 1 downtrend).

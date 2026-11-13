@@ -30,7 +30,7 @@ class RsiPullback(bt.Strategy):
     buy_below = 40  # an RSI this low is a pullback
     sell_above = 60  # an RSI this high has recovered
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         self.rsi = self.I(ta.rsi, self.close, 14)

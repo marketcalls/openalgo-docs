@@ -31,7 +31,7 @@ class CrudeOilMacd(bt.Strategy):
     entry_from = "17:00"  # new trades in the evening session only
     longs, shorts = True, True  # trade both ways
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         # ta.macd gives three lines: MACD, signal and histogram; "_" drops the histogram.
@@ -66,7 +66,7 @@ Trades       : 70 (37% won)
 
 The strategy made money with only 37 percent of its trades winning, because its average win, Rs 6,163, was more than twice its average loss, Rs 2,860 (`result.metrics['average_win']` and `result.metrics['average_loss']`). The engine took the contract's lot (100 barrels), tick size (Rs 1) and expiry from its reference tables, and charged the commodity rates. The max drawdown is the largest fall of the account from its highest value.
 
-Python also prints two `ReferenceDataWarning` lines after the run. They say that the MCX contract terms in the engine's tables are not yet confirmed against the exchange circular; the lot and tick size match the master contract on your OpenAlgo server.
+Python also prints two `ReferenceDataWarning` lines after the run. They say that the MCX contract terms in the engine's tables are not yet confirmed against the exchange circular and were last checked on 31 March 2026; the lot and tick size match the master contract on your OpenAlgo server.
 
 The crossovers before 17:00, which `entry_from` keeps out, and the ones after the cut-off for new intraday positions near the close were not placed. That is what the entry window is for, so Python prints no warning about them; `result.warnings` counts them. This block continues the one above:
 
@@ -80,8 +80,6 @@ print(result.warnings[0])  # the first note of the run: the orders the entry win
 ```text
 81 of 219 orders were outside the MIS entry window, 17:00 to 30 minutes before each session's close (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-10-05 09:05 IST
 ```
-
-The backtest is complete.
 
 ## Try this
 

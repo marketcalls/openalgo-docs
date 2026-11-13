@@ -24,7 +24,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar: set up the indicators.
+    # init runs before the first bar: set up the indicators.
     def init(self):
         # self.I adds an indicator; each bar sees only the values known at that bar.
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
@@ -61,13 +61,15 @@ The engine replayed almost six years of SBIN, one day at a time, and traded the 
 | `class EmaCrossover(bt.Strategy):` | Starts the strategy. `bt.Strategy` gives it everything the engine needs |
 | `symbol, exchange, interval` | What it trades and the bar size: `"D"` (daily), `"1h"`, `"15m"`, `"5m"`, `"1m"` |
 | `fast = 20`, `slow = 50` | **Parameters**: numbers you can change for a run without editing the class |
-| `def init(self):` | Runs once before the first bar. Set up indicators here with `self.I` |
+| `def init(self):` | Runs before the first bar. Set up indicators here, and only here, with `self.I` |
 | `self.I(ta.ema, self.close, 20)` | An indicator from the [openalgo.ta library](../indicators/README.md), ready from the first bar of the run; any other function is refused |
 | `def on_bar(self, bar):` | Runs at the close of every bar. Decide to buy, sell or wait |
 | `self.position.is_flat`, `is_long`, `is_short` | True when holding nothing, holding shares, or short |
 | `self.buy()`, `self.sell()`, `self.exit()` | Place an order; it fills at the next bar's open. See [Orders and Risk](orders-and-risk.md) |
 
 The engine picks the product from the bar size: **CNC** for daily bars of a stock, **MIS** (intraday, closed the same day) for minute bars, and **NRML** (futures held overnight) for daily futures. Set `product = "MIS"` in the class to choose it yourself.
+
+`init` runs twice, and that is normal. First the engine runs it on its own reference bars (a long series of made-up prices it keeps for this one job), before it loads any data, to learn how many earlier bars each indicator needs. Then it runs `init` again on SBIN's bars, with that history loaded. So keep `init` for setting up indicators: anything else in it, such as a `print`, also happens twice. `self.I` works only in `init`: called in `on_bar`, it stops the run with an `IndicatorOutsideInitError` that says to set up every indicator in `init` and read it in `on_bar`.
 
 ## How do I read prices and indicator values?
 

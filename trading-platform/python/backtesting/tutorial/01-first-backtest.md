@@ -36,7 +36,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar. (def starts a method: steps that belong to the class.)
+    # init runs before the first bar. (def starts a method: steps that belong to the class.)
     def init(self):
         # self.I(...) makes an indicator line that the strategy can read at every bar.
         self.fast_ema = self.I(ta.ema, self.close, self.fast)  # 20-day EMA of the closes
@@ -86,7 +86,7 @@ Python also prints a warning, after your file's name and line number: `Unverifie
 **init.**
 
 * `def init(self):` defines a method: a function, or set of steps, that belongs to the class. `self` is the strategy itself, so `self.close` means "this strategy's closing prices".
-* The engine calls `init` once, before the first bar.
+* The engine calls `init` before the first bar, to set up the indicators.
 * `self.I(ta.ema, self.close, self.fast)` makes the 20-day EMA of the closing prices. `self.I` hands the indicator to the engine, which checks that it never uses a future price, and gives you its value at each bar.
 
 **on_bar.**
@@ -113,7 +113,7 @@ Python also prints a warning, after your file's name and line number: `Unverifie
 
 ## What you learned
 
-* A strategy is a class with `init` (set up the indicators once) and `on_bar` (decide at every bar).
+* A strategy is a class with `init` (set up the indicators) and `on_bar` (decide at every bar).
 * `bt.backtest` runs it on real past prices from your OpenAlgo server, with charges and slippage applied.
 * `print(result.summary())` prints the net profit, return, max drawdown and trade count.
 

@@ -30,7 +30,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar. (def starts a method: steps that belong to the class.)
+    # init runs before the first bar. (def starts a method: steps that belong to the class.)
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)  # self.I: an indicator read at every bar
         self.slow_ema = self.I(ta.ema, self.close, self.slow)

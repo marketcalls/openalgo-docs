@@ -22,7 +22,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar. (def starts a method: steps that belong to the class.)
+    # init runs before the first bar. (def starts a method: steps that belong to the class.)
     def init(self):
         # self.I(...) makes an indicator line that the strategy can read at every bar.
         self.fast_ema = self.I(ta.ema, self.close, self.fast)  # 20-day EMA of the closes
@@ -208,7 +208,7 @@ Result(SBIN)
   base_rule: base D (a daily or longer strategy): stops are tested on the day's range and fill at the stop level, or at the open on a gap; combined and daily-loss exits fill at the day's close
   instruments: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05, no freeze quantity, NSE equity costs); pass instrument= for its own terms
   benchmark: NIFTY on NSE_INDEX: 1454 daily closes from the broker (zerodha, source='api'), 2020-12-31 to 2026-11-11
-  indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 20): truncation passed at 4 cuts, warm-up 128 bars; ema(SBIN.close, 50): truncation passed at 4 cuts, warm-up 512 bars
+  indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 20): truncation passed at 4 cuts, warm-up 256 bars; ema(SBIN.close, 50): truncation passed at 4 cuts, warm-up 512 bars
   warm_up: automatic: no decision before start, nor before every self.I indicator has closed its warm-up of bars (its window-stability length on the engine's reference bars, the same for any data and in live trading; bars before start count); ema(SBIN.close, 50) needs 512 D bars of SBIN; history before start: SBIN 512 strategy bars from 2018-12-10 to 2020-12-31 (asked from 2018-10-28); ready at start
   gross P&L: 57264.00 (realized 57264.00)
   charges: 3322.91; net P&L: 53941.09

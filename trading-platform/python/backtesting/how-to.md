@@ -28,7 +28,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar: it sets up the two EMAs
+    # init runs before the first bar: it sets up the two EMAs
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)  # self.I keeps the indicator up to date bar by bar
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
@@ -423,6 +423,10 @@ WarmUpWarning: The strategy waited inside the run for its indicators to warm up 
 
 `result.warnings` has the details: the 50-day EMA needs 512 daily bars, and the bars given begin on 1 January 2021. The fix: fetch the bars from an earlier date and pass `start=`, as in the answer above. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md).
 
+## Why does `init` run twice?
+
+To learn the warm-up. Before it loads any data, the engine runs `init` on its own reference bars (made-up prices it keeps for this one job) to find how many earlier bars each indicator needs; then it runs `init` again on your bars, with that history loaded. So keep `init` for setting up indicators with `self.I`: a `print` in it shows twice. `self.I` works only in `init`; called in `on_bar`, it stops the run with an `IndicatorOutsideInitError`. More: [Writing Strategies](writing-strategies.md#what-does-each-part-do).
+
 ## Backtest older years?
 
 Charges are built in from 1 July 2020, and a run that starts earlier stops with a `CostError`. `costs=bt.costs.CostModel(backfill=True)` charges older fills at the oldest rates the engine has, and a warning counts them:
@@ -439,14 +443,14 @@ print([text for text in older.warnings if "backfilled" in text])  # the warning 
 
 <!-- output -->
 ```text
-Net profit   : Rs 1,09,723.84
-Return       : 109.72%
-Max drawdown : -29.34%
-Trades       : 15 (33% won)
-['charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2020-07-01 are backfilled for 2 fills, from 2020-02-25']
+Net profit   : Rs 1,04,087.35
+Return       : 104.09%
+Max drawdown : -35.12%
+Trades       : 17 (29% won)
+['charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2020-07-01 are backfilled for 6 fills, from 2019-03-19']
 ```
 
-A broker keeps only a limited history. Here it served SBIN's daily bars from 1 January 2018: 245 days before the start, where the 50-day EMA needs 512. So the strategy waited inside the run until 30 January 2020, and Python also printed a `WarmUpWarning` that says so. Bars you download into Historify, used with `source="db"`, can reach further back.
+The 50-day EMA needs 512 daily bars before the start, and here the broker served them: the engine loaded SBIN's bars from 5 December 2016 to 31 December 2018, so the strategy was ready on 1 January 2019 and first bought on 19 March 2019. Its 6 fills before 1 July 2020 were charged at the oldest built-in rates, and Python also prints an `UnverifiedScheduleWarning` that says those charges may be off. A broker keeps only a limited history: when it has too few bars before the start, the strategy waits inside the run and a `WarmUpWarning` says so. Bars you download into Historify, used with `source="db"`, can reach further back.
 
 `costs=None` runs with no charges at all; the result then warns that the profit is overstated. More: [Charges](costs-slippage-and-margin.md#what-am-i-charged-on-each-trade).
 

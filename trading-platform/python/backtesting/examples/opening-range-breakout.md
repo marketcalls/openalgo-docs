@@ -31,7 +31,7 @@ class OpeningRangeBreakout(bt.Strategy):
     longs = True  # buy a break above the range
     shorts = True  # sell short a break below the range
 
-    # init runs once, before the first bar.
+    # init runs before the first bar.
     def init(self):
         self.traded_today = True  # no trade until the first range is known
 

@@ -32,7 +32,7 @@ class NiftyFuturesEma(bt.Strategy):
     fast = 20  # bars in the fast EMA
     slow = 50  # bars in the slow EMA
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)

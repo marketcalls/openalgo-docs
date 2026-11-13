@@ -28,7 +28,7 @@ client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 class GoldenCross(bt.Strategy):
     symbol, exchange, interval = "HDFCBANK", "NSE", "D"  # HDFCBANK on NSE, daily bars
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         self.sma50 = self.I(ta.sma, self.close, 50)

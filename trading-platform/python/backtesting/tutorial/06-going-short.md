@@ -24,7 +24,7 @@ client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 class OpeningRangeBreakdown(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "5m"  # 5-minute bars: the engine trades MIS
 
-    # init runs once, before the first bar. (def starts a method: steps that belong to the class.)
+    # init runs before the first bar. (def starts a method: steps that belong to the class.)
     def init(self):
         self.traded_today = True  # no trade until the first opening range is known
 

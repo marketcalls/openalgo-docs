@@ -28,7 +28,7 @@ class EqualWeight(bt.Strategy):
     symbols = ("SBIN", "RELIANCE", "INFY", "ITC")  # several stocks: "symbols", not "symbol"
     exchange, interval = "NSE", "D"  # NSE, daily bars
 
-    # init runs once, before the first bar: call rebalance_now on the first
+    # init runs before the first bar: call rebalance_now on the first
     # trading day of every quarter.
     def init(self):
         self.every("quarter", self.rebalance_now)

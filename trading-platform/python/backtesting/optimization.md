@@ -24,7 +24,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # parameters: the sweep changes these
     slow = 50
 
-    # init runs once, before the first bar: the two EMAs of the closing prices.
+    # init runs before the first bar: the two EMAs of the closing prices.
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
@@ -58,10 +58,10 @@ if __name__ == "__main__":
  fast  slow  net_profit  total_return  max_drawdown  sharpe  trades  objective
     5    30    98375.98          0.98         -0.25    0.72      28   98375.98
     5    50    65851.70          0.66         -0.28    0.55      25   65851.70
-    5   100    26659.69          0.27         -0.29    0.32      16   26659.69
+    5   100    25437.38          0.25         -0.29    0.30      17   25437.38
    10    30    69968.22          0.70         -0.23    0.57      23   69968.22
    10    50    55576.39          0.56         -0.26    0.49      19   55576.39
-   10   100    24249.02          0.24         -0.28    0.30      13   24249.02
+   10   100    18630.46          0.19         -0.28    0.25      14   18630.46
    20    30    53972.84          0.54         -0.25    0.48      17   53972.84
    20    50    53941.09          0.54         -0.29    0.47      11   53941.09
    20   100    25892.34          0.26         -0.26    0.31       9   25892.34
@@ -132,7 +132,7 @@ fast       5        10       20
 slow
 30    98376.0  69968.0  53973.0
 50    65852.0  55576.0  53941.0
-100   26660.0  24249.0  25892.0
+100   25437.0  18630.0  25892.0
 ```
 
 Every pair made money over these years, and the profit mostly fell as the averages got slower. Neighbouring cells agree, which is a better sign than one lone high number surrounded by poor ones.

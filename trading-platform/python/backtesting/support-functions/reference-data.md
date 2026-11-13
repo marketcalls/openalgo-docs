@@ -143,7 +143,7 @@ client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 class CallBreakout(bt.Strategy):
     symbol, exchange, interval = "NIFTY23NOV2625300CE", "NFO", "5m"  # 5-minute bars: intraday (MIS)
 
-    # init runs once, before the first bar
+    # init runs before the first bar
     def init(self):
         self.traded = False  # one trade only
 
