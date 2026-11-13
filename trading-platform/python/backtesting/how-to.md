@@ -35,36 +35,68 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar: it decides whether to buy or sell
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # wait until there are 50 days of prices for the slow EMA
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):  # no shares, fast EMA just rose above slow
             self.buy()  # buy with all the capital at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):  # holding, fast EMA just fell below slow
             self.exit()  # sell all the shares at the next day's open
 
 
-# A function (def) is a named piece of code you can call again. This one prints
-# the summary of any result. An f-string (f"...") fills the values in {} into the text.
-def summary(result):
-    m = result.metrics
-    print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-    print(f"Return       : {m['total_return']:.2%}")
-    print(f"Max drawdown : {m['max_drawdown']:.2%}")
-    print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
-
-
 # Run the backtest on SBIN's daily bars from 2021 to 11 November 2026, with Rs 1,00,000
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-summary(result)
+print(result.summary())   # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
+
+The engine loads SBIN's daily bars from before 1 January 2021 by itself, so both EMAs are ready on the first day: the strategy needs no waiting code.
+
+## Print a short summary?
+
+`print(result.summary())` prints the net profit, the return, the max drawdown (the largest fall of the account from its highest value) and the trades with the share that made money. A run with `benchmark="NIFTY"` adds a line with NIFTY's return, and a run with no closed trade says `no closed trades`. For one figure in your own code, look it up by name in `result.metrics`:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# result.metrics holds every figure by name; f"..." fills the value into the text, :.2% as a percent
+print(f"Return per year (CAGR): {result.metrics['cagr']:.2%}")
+```
+
+<!-- output -->
+```text
+Return per year (CAGR): 7.64%
+```
+
+`print(result)` prints the long version: every setting the run used and its warnings. Lesson: [Read the Results](tutorial/02-read-the-results.md); every figure: [Metric Definitions](metric-definitions.md).
+
+## Get the trade list as a table?
+
+`result.trade_list()` gives the closed trades as a pandas table, one row per trade, with times in Indian time (IST), the quantity in shares and the money in rupees:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# The closed trades as a table; pick the columns to show, then print the first three trades
+trades = result.trade_list()
+columns = ["entry_time", "exit_time", "quantity", "entry_price", "exit_price", "net_pnl"]
+print(trades[columns].head(3).round(2).to_string())  # head(3): the first three rows
+```
+
+<!-- output -->
+```text
+                     entry_time                 exit_time  quantity  entry_price  exit_price   net_pnl
+trade
+1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30     270.0       356.95      456.95  26741.28
+2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30     246.0       503.15      460.20 -10846.48
+3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30     222.0       507.15      470.90  -8305.91
+```
+
+Each trade was decided at a day's close and filled at the next day's open, 09:15. The table also has `direction`, `product`, `gross_pnl`, `charges`, `return_pct`, `bars_held`, `days_held` and `exit_reason`. `result.trade_list().to_csv("trades.csv")` saves it for a spreadsheet. Lesson: [Read the Results](tutorial/02-read-the-results.md).
 
 ## Stop-loss, target and trailing stop?
 
@@ -76,8 +108,6 @@ A **stop-loss** closes a trade when the price moves a set distance against you, 
 # A new class that takes everything from EmaCrossover and changes only on_bar
 class EmaWithStop(EmaCrossover):
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # the same warm-up
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy(stop=bt.pct(5), target=bt.pct(10))  # stop 5 percent below the buy price, target 10 percent above
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
@@ -86,15 +116,15 @@ class EmaWithStop(EmaCrossover):
 
 # Run it, then print the summary and how the trades closed
 stopped = bt.backtest(EmaWithStop, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-summary(stopped)
-print(stopped.trades["exit_reason"].value_counts().to_dict())  # how many trades closed each way
+print(stopped.summary())
+print(stopped.trade_list()["exit_reason"].value_counts().to_dict())  # how many trades closed each way
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -10,238.63
-Return       : -10.24%
-Max drawdown : -23.85%
+Net profit   : Rs -10,002.82
+Return       : -10.00%
+Max drawdown : -23.38%
 Trades       : 11 (27% won)
 {'leg_sl': 7, 'leg_target': 3, 'signal': 1}
 ```
@@ -103,7 +133,7 @@ Trades       : 11 (27% won)
 
 ## Position sizing?
 
-Position sizing decides how much each trade buys. With no quantity, `self.buy()` invests all the capital. Set `size` once on the class to change it for every buy:
+Position sizing decides how much each trade buys. With no quantity, `self.buy()` buys as many whole shares as 98 percent of the capital pays for (2 percent stays in cash, in case the next open is higher). Set `size` once on the class to change it for every buy:
 
 <!-- requires-server -->
 <!-- continues -->
@@ -115,18 +145,38 @@ class HalfCapital(EmaCrossover):
 
 # Run it and print the summary
 half = bt.backtest(HalfCapital, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-summary(half)
+print(half.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 27,236.50
-Return       : 27.24%
-Max drawdown : -17.62%
+Net profit   : Rs 28,200.50
+Return       : 28.20%
+Max drawdown : -17.50%
 Trades       : 11 (36% won)
 ```
 
 Other ways: `self.buy(qty=100)` for 100 shares, `size = bt.size.value(50_000)` for Rs 50,000 a trade, and `size = bt.size.fixed_risk(1)` with a stop-loss to risk 1 percent of the account per trade. Lesson: [How Much to Buy](tutorial/04-how-much-to-buy.md).
+
+## Buy part shares?
+
+The engine buys whole shares by default, the way your broker trades them: a size that works out to 182.6 shares buys 182. For research, `quantity_mode="fractional"` buys the exact part shares instead, with all the capital at the fill price, so the result does not depend on the share price:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# The same backtest in part shares, then the shares of its first three trades
+part = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+                   quantity_mode="fractional")
+print(part.trade_list()["quantity"].head(3).round(2).tolist())
+```
+
+<!-- output -->
+```text
+[279.82, 253.53, 229.51]
+```
+
+The first trade bought 279.82 part shares, where the whole-share run bought 270. Your broker cannot fill part shares, so keep the default for a result you mean to trade. Lesson: [How Much to Buy](tutorial/04-how-much-to-buy.md).
 
 ## Trade intraday?
 
@@ -142,17 +192,17 @@ class IntradayEma(EmaCrossover):
 
 # Run it from August 2026, then print the summary and how the trades closed
 intraday = bt.backtest(IntradayEma, client, start="2026-08-01", end="2026-11-11", capital=100_000)
-summary(intraday)
-print(intraday.trades["exit_reason"].value_counts().to_dict())  # "scheduler": closed by the square-off
+print(intraday.summary())
+print(intraday.trade_list()["exit_reason"].value_counts().to_dict())  # "scheduler": closed by the square-off
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -1,128.76
-Return       : -1.13%
-Max drawdown : -3.82%
-Trades       : 9 (56% won)
-{'scheduler': 8, 'signal': 1}
+Net profit   : Rs -1,469.38
+Return       : -1.47%
+Max drawdown : -3.74%
+Trades       : 8 (38% won)
+{'scheduler': 7, 'signal': 1}
 ```
 
 Lesson: [Trade Intraday](tutorial/05-intraday.md).
@@ -169,8 +219,6 @@ class LongAndShort(EmaCrossover):
     interval = "15m"  # intraday: shorts are allowed
 
     def on_bar(self, bar):
-        if len(self.close) < self.slow:
-            return
         if self.fast_ema.crossed_above(self.slow_ema):
             self.target(qty=50)  # be long 50 shares (buys back a short first, in the same order)
         elif self.fast_ema.crossed_below(self.slow_ema):
@@ -179,42 +227,55 @@ class LongAndShort(EmaCrossover):
 
 # Run it, then print the summary and the count of long and short trades
 both = bt.backtest(LongAndShort, client, start="2026-08-01", end="2026-11-11", capital=100_000)
-summary(both)
-print(both.trades["direction"].value_counts().to_dict())  # long and short trades
+print(both.summary())
+print(both.trade_list()["direction"].value_counts().to_dict())  # long and short trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -859.89
-Return       : -0.86%
+Net profit   : Rs -1,043.80
+Return       : -1.04%
 Max drawdown : -2.25%
-Trades       : 20 (50% won)
-{'short': 11, 'long': 9}
+Trades       : 19 (42% won)
+{'short': 11, 'long': 8}
 ```
 
 For short only, use `self.sell(qty=50)` to enter and `self.exit()` to buy back. Lesson: [Go Short](tutorial/06-going-short.md).
 
-## Get the trade list?
+## Why do I see a warning about rejected orders?
 
-`result.trades` has one row per closed trade, with times in Indian time (IST):
+When the engine refuses orders, the run goes on without them, and at the end Python prints one `RejectedOrdersWarning` that counts them and gives the most common reason. A short on daily bars is the usual cause, because a delivery (CNC) short is not allowed:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-# The columns to show, as a list of names, then the first three trades
-columns = ["entry_time", "exit_time", "entry_units", "entry_price_rupees", "exit_price_rupees", "net_pnl_rupees"]
-print(result.trades[columns].head(3).round(2).to_string(index=False))  # head(3): the first three rows
+# Sell short on daily bars: CNC, so every sell is refused
+class DeliveryShort(EmaCrossover):
+    def on_bar(self, bar):
+        if self.position.is_flat and self.fast_ema.crossed_below(self.slow_ema):
+            self.sell()
+
+
+# Run it and print the summary: no trades
+shorts = bt.backtest(DeliveryShort, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(shorts.summary())
 ```
 
 <!-- output -->
 ```text
-               entry_time                 exit_time  entry_units  entry_price_rupees  exit_price_rupees  net_pnl_rupees
-2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30       275.23              362.90             456.95        25619.96
-2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30       249.37              503.15             460.20       -10994.80
-2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30       225.75              507.15             470.90        -8445.89
+Net profit   : Rs 0.00
+Return       : 0.00%
+Max drawdown : 0.00%
+Trades       : no closed trades
 ```
 
-Each trade was decided at a day's close and filled at the next day's open, 09:15. `result.trades.to_csv("trades.csv", index=False)` saves the list for a spreadsheet. Lesson: [Read the Results](tutorial/02-read-the-results.md).
+On the screen, after the file name and line number:
+
+```text
+RejectedOrdersWarning: 12 of 12 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.
+```
+
+`result.warnings` has the full line with what to do: short a stock intraday (MIS), or trade futures. Lesson: [Go Short](tutorial/06-going-short.md); every reject code: [Orders and Risk](orders-and-risk.md#why-was-my-order-rejected).
 
 ## Make a tearsheet?
 
@@ -231,7 +292,7 @@ print(result.tearsheet("sbin_ema.html"))  # writes the report and prints its fil
 sbin_ema.html
 ```
 
-`mode="basic"` gives a shorter report. Lesson: [Read the Results](tutorial/02-read-the-results.md); every part of the report: [Results and Reports](results-and-reports.md#the-html-tearsheet).
+The page has a bar of section links and a light and dark switch at the top, then the sections Overview, Performance, Risk, Monthly, Distribution, Metrics, Trades and Notes. Look first at the cumulative return chart, the worst drawdowns and the trade list. `mode="basic"` gives a shorter report. Lesson: [Read the Results](tutorial/02-read-the-results.md); every part of the report: [Results and Reports](results-and-reports.md#the-html-tearsheet).
 
 ## Use NIFTY as the benchmark?
 
@@ -243,14 +304,19 @@ A benchmark is what you compare the strategy with: would simply holding NIFTY 50
 # The same backtest, compared with NIFTY 50
 vs_nifty = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000, benchmark="NIFTY")
 
-# The strategy's return, NIFTY's return over the same days, and beta
-m = vs_nifty.metrics
-print(f"Strategy {m['total_return']:.2%} | NIFTY {m['benchmark_total_return']:.2%} | beta {m['beta']:.2f}")
+# The summary ends with NIFTY's return; then beta, from result.metrics (:.2f: two decimals)
+print(vs_nifty.summary())
+print(f"Beta         : {vs_nifty.metrics['beta']:.2f}")
 ```
 
 <!-- output -->
 ```text
-Strategy 53.27% | NIFTY 80.63% | beta 0.72
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
+Trades       : 11 (36% won)
+Benchmark    : 80.63% return (NIFTY)
+Beta         : 0.71
 ```
 
 Beta says how strongly the strategy moved with the index (1 is in step with it). For SENSEX pass `benchmark=("SENSEX", "BSE_INDEX")`. Lesson: [Compare with NIFTY](tutorial/08-compare-with-nifty.md).
@@ -270,15 +336,15 @@ class NiftyFutures(EmaCrossover):
 
 # Run it inside the contract's life, with Rs 5,00,000
 futures = bt.backtest(NiftyFutures, client, start="2026-10-01", end="2026-11-11", capital=500_000)
-summary(futures)
+print(futures.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 156,617.14
-Return       : 31.32%
-Max drawdown : -5.50%
-Trades       : 3 (33% won)
+Net profit   : Rs 1,50,448.96
+Return       : 30.09%
+Max drawdown : -5.57%
+Trades       : 4 (25% won), 1 still open
 ```
 
 NIFTY23NOV26FUT expires on 23 November 2026, and your broker serves a contract's history only while it trades: after that, use the current contract and recent dates. Lesson: [Trade Futures](tutorial/07-futures.md).
@@ -305,28 +371,48 @@ Do not trust the single best pair: among many, one looks good by luck. Check it 
 
 ## Use my own data?
 
-Pass a DataFrame of bars with `data=` instead of the client. Here the bars come from `client.history`; `tz="Asia/Kolkata"` says their dates are Indian time:
+Pass a DataFrame of bars with `data=` instead of the client. Here the bars come from `client.history`. Fetch them from earlier than the day the test starts, so the EMAs are ready on it, and say where the test starts with `start=`. Daily bars need nothing more; intraday bars also need `tz="Asia/Kolkata"`, to say their times are Indian time:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-# Fetch SBIN's daily bars yourself: a pandas DataFrame, one row per day
-sbin = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2021-01-01", end_date="2026-11-11")
+# Fetch SBIN's daily bars yourself, from 2018: a pandas DataFrame, one row per day
+sbin = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2018-01-01", end_date="2026-11-11")
 
-# Run the strategy on those bars instead of letting the engine fetch them
-own = bt.backtest(EmaCrossover, data=sbin, tz="Asia/Kolkata", capital=100_000)
-summary(own)
+# Run the strategy on those bars from 1 January 2021; the earlier bars get the EMAs ready
+own = bt.backtest(EmaCrossover, data=sbin, start="2021-01-01", capital=100_000)
+print(own.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
 
 The same bars give the same result. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md); more on columns and time zones: [Data](data.md#your-own-data).
+
+## Why does my strategy not trade in its first months?
+
+An indicator needs earlier bars before its value settles: about two years of days for a 50-day EMA. When the engine fetches the bars itself, it loads that history before `start`. When your own bars begin on `start`, or a stock has just listed, there is no earlier history, so the strategy waits inside the run, without trading, until its indicators are ready. The warning that says so is in `result.warnings`, not on the screen:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# Own bars that begin on the first day of the test: no earlier days for the EMAs
+late_bars = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2021-01-01", end_date="2026-11-11")
+late = bt.backtest(EmaCrossover, data=late_bars, capital=100_000)
+print(late.warnings[0])  # how long the strategy waited, and why
+```
+
+<!-- output -->
+```text
+The strategy waited 511 strategy bars inside the run for its indicators, to 2023-01-23 15:30 IST: SBIN D needs 512 bars (ema(SBIN.close, 50)) and 0 bars closed before 2021-01-01. Load data from earlier than 2021-01-01 to trade from it.
+```
+
+The fix: fetch the bars from an earlier date and pass `start=`, as in the answer above. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md).
 
 ## Backtest older years?
 
@@ -338,20 +424,38 @@ Charges are built in from 1 July 2020, and a run that starts earlier stops with 
 # From 2019, charging fills before 1 July 2020 at the oldest built-in rates
 older = bt.backtest(EmaCrossover, client, start="2019-01-01", end="2026-11-11", capital=100_000,
                     costs=bt.costs.CostModel(backfill=True))
-summary(older)
+print(older.summary())
 print([text for text in older.warnings if "backfilled" in text])  # the warning about older fills
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 106,083.69
-Return       : 106.08%
-Max drawdown : -35.52%
-Trades       : 17 (29% won)
-['charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2020-07-01 are backfilled for 6 fills, from 2019-03-20']
+Net profit   : Rs 1,09,723.84
+Return       : 109.72%
+Max drawdown : -29.34%
+Trades       : 15 (33% won)
+['charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2020-07-01 are backfilled for 2 fills, from 2020-02-25']
 ```
 
 `costs=None` runs with no charges at all; the result then warns that the profit is overstated. More: [Charges](costs-slippage-and-margin.md#what-am-i-charged-on-each-trade).
+
+## What does the warning about unverified charges mean?
+
+A daily run on NSE shares that starts in early 2021 prints an `UnverifiedScheduleWarning`: the charge rates in force until 31 March 2021 are marked as not verified. In those months NSE charged shares outside the NIFTY 50 and NIFTY Next 50 a lower transaction charge, and the engine does not know which shares belong to those indices. `result.warnings` has the full text:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# The full text of the warning about the early-2021 charges
+print([text for text in result.warnings if "never verified" in text][0])
+```
+
+<!-- output -->
+```text
+charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 used for 2021-01-01 were never verified against their source, so the charges may be off. Until 2021-03-31 NSE charged EQ-series shares outside the NIFTY 50 and NIFTY Next 50 Rs 2.75 per lakh (NSE/FA/46225) and the shares of those two indices this standard rate. The engine does not know an index's members, so the row is unverified.
+```
+
+For a NIFTY 50 or NIFTY Next 50 share, such as SBIN, the charges are right. For another share the transaction charge of fills before 1 April 2021 is a little too high. More: [Charges](costs-slippage-and-margin.md#what-am-i-charged-on-each-trade).
 
 ## Rebalance a buy-and-hold portfolio?
 
@@ -376,21 +480,24 @@ class EqualWeight(bt.Strategy):
             self.rebalance({s: 25 for s in self.symbols})  # a dict: each stock with 25 percent of the account
 
 
-# Run it, then print the profit and how many orders the rebalances sent
+# Run it, then print the summary and how many orders the rebalances sent
 portfolio = bt.backtest(EqualWeight, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-print(f"Net profit   : Rs {portfolio.metrics['net_profit']:,.2f}")
+print(portfolio.summary())
 print("rebalance orders:", len(portfolio.orders))
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 10,511.20
-rebalance orders: 96
+Net profit   : Rs 11,055.12
+Return       : 11.06%
+Max drawdown : -33.98%
+Trades       : no closed trades (4 still open)
+rebalance orders: 69
 ```
 
-A rebalance trims and tops up holdings but never closes one, so the run has no closed trades: read `result.orders` and `result.final_positions`. Lesson: [Rebalance a Portfolio](tutorial/10-portfolio-rebalancing.md).
+A rebalance trims and tops up holdings but never closes one, so the run has no closed trades (the summary counts the holdings still open): read `result.orders` and `result.final_positions`. Lesson: [Rebalance a Portfolio](tutorial/10-portfolio-rebalancing.md).
 
-## Export everything to Excel or CSV?
+## Export everything to a spreadsheet or CSV?
 
 `result.to_csv("results")` writes every table of the run as a CSV file into the folder `results`:
 

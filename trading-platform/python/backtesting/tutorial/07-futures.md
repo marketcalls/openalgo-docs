@@ -40,8 +40,6 @@ class NiftyFuturesEma(bt.Strategy):
 
     # on_bar runs at the close of every 15-minute bar: decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: the slow EMA needs 50 bars first
-            return
         # crossed_above: the fast EMA was below the slow one a bar ago, and is above it now.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy(lots=1)  # one lot: 65 units of NIFTY futures
@@ -52,35 +50,33 @@ class NiftyFuturesEma(bt.Strategy):
 # Run the backtest with Rs 5,00,000, enough for the margin of one lot.
 result = bt.backtest(NiftyFuturesEma, client, start="2026-10-01", end="2026-11-11", capital=500_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())   # net profit, return, drawdown and trades
 
 # Every trade: when it opened and closed, how many units, and its profit after charges.
-trades = result.trades[["entry_time", "exit_time", "entry_units", "net_pnl_rupees"]]
-print(trades.to_string(index=False, float_format="%.2f"))
+trades = result.trade_list()[["entry_time", "exit_time", "quantity", "net_pnl"]]
+print(trades.to_string(float_format="%.2f"))
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 31,722.48
-Return       : 6.34%
+Net profit   : Rs 33,888.62
+Return       : 6.78%
 Max drawdown : -1.54%
-Trades       : 4 (100% won)
-               entry_time                 exit_time  entry_units  net_pnl_rupees
-2026-10-09 13:15:00+05:30 2026-10-09 15:10:00+05:30        65.00          762.54
-2026-10-13 10:30:00+05:30 2026-10-13 15:10:00+05:30        65.00        10343.47
-2026-10-26 13:15:00+05:30 2026-10-26 15:10:00+05:30        65.00         6249.03
-2026-10-29 09:30:00+05:30 2026-10-29 15:10:00+05:30        65.00        14368.12
+Trades       : 5 (100% won)
+                     entry_time                 exit_time  quantity  net_pnl
+trade
+1     2026-10-06 10:15:00+05:30 2026-10-06 15:10:00+05:30     65.00  2166.95
+2     2026-10-09 13:15:00+05:30 2026-10-09 15:10:00+05:30     65.00   762.54
+3     2026-10-13 10:30:00+05:30 2026-10-13 15:10:00+05:30     65.00 10343.47
+4     2026-10-26 13:15:00+05:30 2026-10-26 15:10:00+05:30     65.00  6249.03
+5     2026-10-29 09:30:00+05:30 2026-10-29 15:10:00+05:30     65.00 14368.12
 ```
 
 * Every trade was one lot, 65 units, and every one was closed at 15:10 by the engine's square-off.
 * A trade's profit is the points the price moved times 65. On 29 October NIFTY futures rose 234.80 points after the entry: 234.80 x 65 = Rs 15,262 before charges, Rs 14,368.12 after them.
 * The max drawdown (the largest fall of the account from its highest value) was only 1.54 percent, because every trade made money.
-* Four trades in six weeks are far too few to judge a strategy. The point of this lesson is how futures work, not this result.
+* Five trades in six weeks are far too few to judge a strategy. The point of this lesson is how futures work, not this result.
 
 ## Margin
 
@@ -90,6 +86,7 @@ The engine blocks **20 percent of the contract value** as margin for every futur
 <!-- requires-server -->
 ```python
 # The most margin the run above blocked, with the default of 20 percent.
+# f"..." fills in each {value}; :,.2f writes it with commas and two decimals.
 print(f"Margin, default    : Rs {result.equity['margin_rupees'].max():,.2f}")
 
 # The same backtest with your broker's margin for one lot, here Rs 2,00,000.
@@ -101,12 +98,12 @@ print(f"Net profit         : Rs {own.metrics['net_profit']:,.2f}")  # the same a
 
 <!-- output -->
 ```text
-Margin, default    : Rs 296,595.00
+Margin, default    : Rs 296,790.00
 Margin, your figure: Rs 200,000.00
-Net profit         : Rs 31,722.48
+Net profit         : Rs 33,888.62
 ```
 
-The default blocked about Rs 2.97 lakh: 20 percent of one lot at about 22,815 (0.20 x 65 x 22,815). With your broker's figure it blocked Rs 2 lakh instead, and the net profit did not change: margin is money set aside while a position is open, not a cost. It matters when your capital is small: an order that needs more margin than your free cash is rejected, as your broker would reject it.
+The default blocked about Rs 2.97 lakh: 20 percent of one lot at about 22,830 (0.20 x 65 x 22,830). With your broker's figure it blocked Rs 2 lakh instead, and the net profit did not change: margin is money set aside while a position is open, not a cost. It matters when your capital is small: an order that needs more margin than your free cash is rejected, as your broker would reject it.
 
 ## What you learned
 

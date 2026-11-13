@@ -44,25 +44,21 @@ class OpeningRangeBreakdown(bt.Strategy):
 # Run the backtest on SBIN 5-minute bars, 1 August to 11 November 2026, with Rs 1,00,000.
 result = bt.backtest(OpeningRangeBreakdown, client, start="2026-08-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. f"..." is an f-string: the values in braces are filled in.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())   # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 380.76
-Return       : 0.38%
-Max drawdown : -3.67%
+Net profit   : Rs 336.53
+Return       : 0.34%
+Max drawdown : -3.58%
 Trades       : 23 (57% won)
 ```
 
 * `self.sell()` while holding nothing opens a short. The engine squares it off at 15:00 by buying the shares back.
 * For a short, the stop-loss is above the selling price: the trade loses when the price rises.
-* The short side made a small profit, Rs 380.76 from 23 trades, over the same three months in which the long side of lesson 5 lost Rs 4,648.41.
+* The short side made a small profit, Rs 336.53 from 23 trades, over the same three months in which the long side of lesson 5 lost Rs 4,572.32.
 
 ## What happens to a delivery short
 
@@ -88,25 +84,32 @@ class ShortInDelivery(bt.Strategy):
 
     # At the close of every day: sell short when the fast EMA crosses below the slow EMA.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: wait until there are 50 days for the slow EMA
-            return
         if self.position.is_flat and self.fast_ema.crossed_below(self.slow_ema):
             self.sell()  # a delivery short: the engine refuses it
 
 
-# Run it, then print the number of trades and the engine's first warning.
+# Run it, then print the summary and the first line of result.warnings.
 result = bt.backtest(ShortInDelivery, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-print("Trades:", result.metrics["trades"])
-print(result.warnings[0])
+print(result.summary())   # net profit, return, drawdown and trades
+print(result.warnings[0])  # the engine's first warning: why the orders were refused
 ```
 
 <!-- output -->
 ```text
-Trades: 0
-12 of 12 orders were rejected with reject_code 'product_rule' (result.orders), the first decided at 2021-04-16 15:30 IST: a delivery (CNC) short is not allowed in Indian cash markets; short a stock intraday with MIS, or trade futures
+Net profit   : Rs 0.00
+Return       : 0.00%
+Max drawdown : 0.00%
+Trades       : no closed trades
+12 of 12 orders were rejected with reject_code 'product_rule' (result.orders), the first decided at 2021-04-19 15:30 IST: a delivery (CNC) short is not allowed in Indian cash markets; short a stock intraday with MIS, or trade futures
 ```
 
-Every sell was rejected, so there were no trades, and the warning says why and what to do instead. A refused order does not stop the backtest: always read `result.warnings` when a run trades less than you expect.
+There were no trades at all. Python also prints a warning on the screen when such a run ends, after your file's name and line number:
+
+```text
+RejectedOrdersWarning: 12 of 12 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.
+```
+
+Every sell was refused, because you cannot sell shares in delivery that you do not own. A refused order does not stop the backtest, so read the warnings whenever a run trades less than you expect. To short a stock, do what the warning says: trade it intraday as MIS, on intraday bars as in the first block of this lesson, or trade futures, which can stay short overnight ([lesson 7](07-futures.md)).
 
 ## Flip between long and short
 
@@ -136,11 +139,7 @@ class LongOrShort(bt.Strategy):
 
 # Run it and print the summary.
 result = bt.backtest(LongOrShort, client, start="2026-08-01", end="2026-11-11", capital=100_000)
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+print(result.summary())   # net profit, return, drawdown and trades
 # The fills of 17 August 2026, a day the strategy flipped from short to long.
 fills = result.fills[["time", "side", "quantity_units", "price_rupees", "reason"]]
 print(fills[fills["time"].dt.strftime("%Y-%m-%d") == "2026-08-17"].to_string(index=False))
@@ -170,7 +169,7 @@ On 17 August SBIN first broke below its opening range, so the strategy sold 80 s
 ## What you learned
 
 * `self.sell()` with no position opens a short; a short gains when the price falls.
-* In Indian cash markets a stock can be shorted only intraday (MIS). A delivery (CNC) short is rejected, and `result.warnings` says so.
+* In Indian cash markets a stock can be shorted only intraday (MIS). A delivery (CNC) short is rejected: a `RejectedOrdersWarning` on the screen and `result.warnings` say so.
 * `self.target(qty=...)` sets the position you want, long (positive) or short (negative), and flips in one order.
 
 ## Next lesson

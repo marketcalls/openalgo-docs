@@ -1,7 +1,7 @@
 # Backtesting
 
 {% hint style="warning" %}
-**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. The pages in this section describe the engine as released in SDK 2.1.1.
+**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.2.0, which is being released now. With 2.1.1 the figures differ slightly, and `result.summary()` and `result.trade_list()` are not there yet.
 {% endhint %}
 
 ## What is a backtest?
@@ -48,8 +48,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day) and decides what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: wait until there are 50 days for the slow EMA
-            return
         # Buy when holding nothing (is_flat) and the fast EMA crosses above the slow EMA.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # with all the capital, at the next day's open
@@ -61,19 +59,15 @@ class EmaCrossover(bt.Strategy):
 # Run the backtest: 1 January 2021 to 11 November 2026, starting with Rs 1,00,000.
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. f"..." is an f-string: the values in braces are filled in.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())   # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
 
@@ -81,9 +75,9 @@ Trades       : 11 (36% won)
 
 ## What the four numbers mean
 
-* **Net profit:** the strategy turned Rs 1,00,000 into Rs 1,53,267.48, after every charge (brokerage, STT, stamp duty, GST and the rest).
+* **Net profit:** the strategy turned Rs 1,00,000 into Rs 1,53,941.09, after every charge (brokerage, STT, stamp duty, GST and the rest).
 * **Return:** that profit as a percent of the starting capital.
-* **Max drawdown:** the largest fall of the account from its highest value to a later low. At its worst, the account was 29.82 percent below its best value so far.
+* **Max drawdown:** the largest fall of the account from its highest value to a later low. At its worst, the account was 29.35 percent below its best value so far.
 * **Trades:** 11 round trips (a buy and the sell that closed it), of which 36 percent, 4 trades, made money. A few long rises paid for the many small losses.
 
 [Lesson 2](tutorial/02-read-the-results.md) shows every trade, the full HTML report, and what the engine assumed for you (the product, fills, charges, slippage and sessions).
