@@ -142,7 +142,7 @@ The first bar's stamp is its close, 09:30 IST; with `label="close"` the engine s
 * `load_bars(symbol, exchange, interval, start, end, *, source="auto", client=None, data=None, ...)` returns a `BarsResult` that unpacks as `bars, meta`. `start` and `end` are IST dates, both included: a bar is returned when it opens on or after `start` and closes on or before `end`.
 * `source`: `"auto"` (Historify when it covers the whole range, else the broker; never a mix), `"db"` (Historify) or `"api"` (the broker). `meta.auto_probe` says how `"auto"` decided.
 * `data`: a DataFrame, a dict of columns, NumPy arrays, or a CSV, Parquet or Feather path, instead of `client`.
-* `tz`: the time zone of times without one (`"Asia/Kolkata"` or `"UTC"`); there is no default. Epoch numbers (with `unit=`) are UTC and need none.
+* `tz`: the time zone of intraday times without one (`"Asia/Kolkata"` or `"UTC"`); there is no default. Daily and longer bars whose times are all midnight need none: they are read as IST session dates, as `client.history` gives them. Epoch numbers (with `unit=`) are UTC and need none.
 * `columns`, `label` (`"open"`, the default and the OpenAlgo convention, or `"close"`), `unit` and `timestamp_format` read other layouts.
 * `base`: the interval to fetch and build from, such as `interval="15m", base="1m"` for 15-minute bars built from 1-minute data (see [Resampling](resampling.md)).
 * `calendar`, `now` (bars not closed by then, such as today's forming candle, are dropped), `broker` (sizes each history request), `provider_options` (`chunk_days`, `pacing`, `max_retries`), `corporate_actions` (see [Splits and bonuses](../data.md#splits-and-bonuses)) and `strict`.

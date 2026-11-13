@@ -39,16 +39,13 @@ class EqualWeight(bt.Strategy):
         self.rebalance({"RELIANCE": 25, "HDFCBANK": 25, "INFY": 25, "TCS": 25})
 
 
-# Run the backtest in whole shares ("venue"), with NIFTY as the yardstick.
+# Run the backtest with NIFTY as the yardstick. The engine buys whole shares.
 result = bt.backtest(EqualWeight, client, start="2021-01-01", end="2026-11-11", capital=100_000,
-                     quantity_mode="venue", benchmark="NIFTY")
+                     benchmark="NIFTY")
 
-# Print the summary. m is a dict too; f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%} (NIFTY {m['benchmark_total_return']:.2%})")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Orders       : {len(result.orders)}")
+# Print the summary (with NIFTY's return), then the number of orders sent.
+print(result.summary())  # net profit, return, drawdown, trades and NIFTY
+print("Orders       :", len(result.orders))  # len counts the rows of the orders table
 
 # What the portfolio holds at the end, and each stock's percent of it.
 end = result.final_positions[["symbol", "quantity_units", "value_rupees", "weight_pct"]]
@@ -58,8 +55,10 @@ print(end.round(2).to_string(index=False))
 <!-- output -->
 ```text
 Net profit   : Rs 11,055.12
-Return       : 11.06% (NIFTY 80.63%)
+Return       : 11.06%
 Max drawdown : -33.98%
+Trades       : no closed trades (4 still open)
+Benchmark    : 80.63% return (NIFTY)
 Orders       : 69
   symbol  quantity_units  value_rupees  weight_pct
 HDFCBANK            33.0       26617.8       23.97
@@ -70,7 +69,7 @@ RELIANCE            20.0       26708.0       24.05
 
 Four stocks that went mostly sideways: the portfolio made 11.06 percent while NIFTY gained 80.63 percent, and it fell 34 percent from its peak on the way (the max drawdown: the largest fall from the highest value). Rebalancing cannot turn a weak basket into a strong one; it only keeps each stock near its share. The 69 orders are the quarterly trims and top-ups (a change smaller than one share sends no order), and at the end each stock is near 24.5 percent: 25 percent of the 98 percent invested.
 
-A rebalance trims and tops up holdings but never sells one out, so the run has no closed trades: read `result.orders` (every rebalance order is tagged `rebalance`) and `result.final_positions` instead of `result.trades`.
+A rebalance trims and tops up holdings but never sells one out, so the summary says `no closed trades (4 still open)`: the four holdings, valued at the last close. Read `result.orders` (every rebalance order is tagged `rebalance`) and `result.final_positions` instead of the trade list.
 
 ## Try this
 

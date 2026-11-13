@@ -37,8 +37,6 @@ class BankNiftySupertrend(bt.Strategy):
 
     # on_bar runs at the close of every 15-minute bar: decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < 10:  # warm-up: the ATR needs 10 bars first
-            return
         # self.target(lots=...) trades to that position, whatever is held now.
         if bar.close > self.supertrend[-1]:  # above the line ([-1] is the latest value)
             self.target(lots=1)  # hold one lot long; a short is bought back first
@@ -49,25 +47,30 @@ class BankNiftySupertrend(bt.Strategy):
 # Run the backtest from 1 October to 11 November 2026 with Rs 5,00,000.
 result = bt.backtest(BankNiftySupertrend, client, start="2026-10-01", end="2026-11-11", capital=500_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
-print(f"Charges      : Rs {m['total_costs']:,.2f}")  # all charges paid
+# Print the summary, then the charges. result.metrics holds every figure of the run by name;
+# f"..." fills in the {value}, and ":,.2f" writes it with commas and 2 decimals.
+print(result.summary())  # net profit, return, drawdown and trades
+print(f"Charges      : Rs {result.metrics['total_costs']:,.2f}")  # all charges paid
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -6,313.46
-Return       : -1.26%
-Max drawdown : -18.58%
+Net profit   : Rs -11,939.33
+Return       : -2.39%
+Max drawdown : -18.78%
 Trades       : 42 (43% won)
-Charges      : Rs 41,774.67
+Charges      : Rs 41,771.73
 ```
 
-The trend flipped often over these sessions: 42 trades, 43 percent won. Before charges the strategy made about Rs 35,500, and the charges of about Rs 1,000 a round trip (a trade in and out) turned that into a loss. The max drawdown is the largest fall of the account from its highest value.
+The trend flipped often over these sessions: 42 trades, 43 percent won. Before charges the strategy made about Rs 29,800, and the charges of about Rs 1,000 a round trip (a trade in and out) turned that into a loss. The max drawdown is the largest fall of the account from its highest value.
+
+Python also prints a warning after the run:
+
+```text
+RejectedOrdersWarning: 86 of 128 orders were rejected because orders after the MIS entry cut-off (entry_until) are rejected, and so are entries before entry_from (reject_code 'entry_window'). See result.warnings.
+```
+
+These are the flips the strategy asked for at 15:00 or later, after the cut-off for new intraday positions. The engine refused them, as a broker would, and the 15:10 square-off closed the position. The run is complete.
 
 ## Try this
 

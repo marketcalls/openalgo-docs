@@ -29,8 +29,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar: it decides whether to buy or sell
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # wait until there are 50 days of prices for the slow EMA
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):  # no shares, fast EMA just rose above slow
             self.buy()  # buy with all the capital at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):  # holding, fast EMA just fell below slow
@@ -40,25 +38,22 @@ class EmaCrossover(bt.Strategy):
 # Run the backtest: the engine fetches SBIN's daily bars from your OpenAlgo server
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. An f-string (f"...") fills the values in {} into the text.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
 
 What happened to the data:
 
 * The engine asked your OpenAlgo server for SBIN's daily bars from 1 January 2021 to 11 November 2026.
+* It also asked for the bars before 1 January 2021, so that both EMAs were ready on the start date (see [History before the start date](#history-before-the-start-date)). Those bars only warm up the indicators: the strategy decided nothing before 1 January 2021.
 * It checked every bar against the NSE holiday calendar and looked for impossible prices.
 * It saved a copy on your disk, so the next run of the same dates makes no request and starts at once.
 
@@ -99,53 +94,118 @@ With a client, the engine reads the bars from your OpenAlgo server. `source=` on
 
 ## Your own data
 
-When you already hold the bars in a DataFrame, pass it with `data=` instead of the client. This block, and every block after it on this page, continues the ones before. It fetches SBIN's daily bars with `client.history` and runs the same `EmaCrossover` on them. The result is the same, because the bars are the same:
+When you already hold the bars in a DataFrame, pass it with `data=` instead of the client. This block, and every block after it on this page, continues the ones before. It fetches SBIN's daily bars with `client.history`, from 2018 so that the EMAs have earlier history to warm up on, and runs the same `EmaCrossover` on them from 1 January 2021:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-# Fetch the bars yourself: a DataFrame with one row per day
-sbin = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2021-01-01", end_date="2026-11-11")
+# Fetch the bars yourself: SBIN's daily bars from 2018, a DataFrame with one row per day
+sbin = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2018-01-01", end_date="2026-11-11")
 
-# Run the strategy on those bars. tz= says the dates are Indian time (IST).
-own = bt.backtest(EmaCrossover, data=sbin, tz="Asia/Kolkata", capital=100_000)
+# Run the strategy on those bars. The bars before start only warm up the EMAs.
+own = bt.backtest(EmaCrossover, data=sbin, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary
-m = own.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(own.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
+
+The result is the same as the run with the client, because the bars are the same, the history before 2021 included.
 
 The engine needs three things from your DataFrame:
 
 1. **The columns** `open`, `high`, `low`, `close` and `volume`, in any letter case (`Close` works too).
 2. **The time**, as the index or as a column named `timestamp`, `datetime`, `date`, `time` or `ts`.
-3. **The time zone**, with `tz=`, when the times do not carry one (see the next section).
+3. **The time zone of intraday bars**, with `tz=`, when their times do not carry one (see [When do I pass tz=?](#when-do-i-pass-tz)). Daily bars need none.
 
 Leave out `start` and `end` and the run covers all the bars you pass. The lesson [Use Your Own Data](tutorial/11-your-own-data.md) goes further.
 
-## Why it asks for `tz=`
+## History before the start date
 
-The dates from `client.history` carry no time zone, and neither do most spreadsheets. The engine does not guess one: a wrong guess would move every bar by 5 hours 30 minutes, the gap between Indian time and UTC. Without `tz=` the run stops and says what to pass:
+An indicator needs earlier bars before its value can be trusted: a 50-day EMA worked out on ten days of prices is not yet a 50-day average. So for every indicator made with `self.I` the engine measures its **warm-up**, the number of bars after which more history no longer changes its value (512 bars for the 50-day EMA). It then loads the bars before `start` from the run's own source (your OpenAlgo server, or the bars of `data=` before `start`), up to 2,048 of them, and works out the indicators over them. The strategy makes no decision before `start`, nor before every indicator has closed its warm-up. Equity, trades and charges begin at `start`.
+
+When the source has fewer bars before `start` (your own data begins on the start date, or the share was listed recently), the strategy waits inside the run until its indicators are ready, deciding nothing, and a warning says how long it waited. Here the bars begin on 1 January 2021:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# SBIN's daily bars from 1 January 2021 only: no history before the start date
+recent = client.history(symbol="SBIN", exchange="NSE", interval="D", start_date="2021-01-01", end_date="2026-11-11")
+late = bt.backtest(EmaCrossover, data=recent, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(late.summary())  # net profit, return, drawdown and trades
+print(late.warnings[0])  # the first warning: how long the strategy waited
+```
+
+<!-- output -->
+```text
+Net profit   : Rs 30,738.50
+Return       : 30.74%
+Max drawdown : -29.38%
+Trades       : 7 (29% won)
+The strategy waited 511 strategy bars inside the run for its indicators, to 2023-01-23 15:30 IST: SBIN D needs 512 bars (ema(SBIN.close, 50)) and 0 bars closed before 2021-01-01. Load data from earlier than 2021-01-01 to trade from it.
+```
+
+With no bars before 2021, the 50-day EMA needed 512 bars of the run itself, so the strategy decided nothing until 23 January 2023 and closed 7 trades instead of 11. Load data from earlier than `start`, as `sbin` does, to trade from the first day.
+
+The Assumptions of every run state the rule, what each series needed, the history loaded and when the strategy first decided, in `result.assumptions["warm_up"]`:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+print(result.assumptions["warm_up"])  # the warm-up of the first run on this page
+```
+
+<!-- output -->
+```text
+automatic: no decision before start, nor before every self.I indicator has closed its warm-up of bars (the window-stability length; bars before start count); SBIN D needs 512 bars (ema(SBIN.close, 50)); history before start: SBIN 742 strategy bars from 2018-01-01 to 2020-12-31 (all the source has since 2012-05-14); ready at start
+```
+
+The engine asked for SBIN's bars back to 14 May 2012 (enough days for 2,048 bars). Your OpenAlgo server had them from 1 January 2018: 742 bars, more than the 512 the slow EMA needs, so the strategy was ready on the start date.
+
+A strategy's own warm-up line at the top of `on_bar`, one that returns while too few bars have closed, still works, but it is no longer needed.
+
+## When do I pass `tz=`?
+
+**Daily bars need no time zone.** `client.history` stamps each daily bar with its date at midnight, without a time zone, and the engine reads such dates as Indian (IST) session dates. The Assumptions say so:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+print(own.assumptions["timestamps"])  # how the dates of the bars were read
+```
+
+<!-- output -->
+```text
+SBIN: naive midnight timestamps read as IST session dates (daily bars need no tz=)
+```
+
+**Intraday bars** carry a clock time, and there the engine does not guess: a wrong guess would move every bar by 5 hours 30 minutes, the gap between Indian time and UTC. The intraday bars of `client.history` come with the Indian time zone attached, so they need nothing. Times without a zone, as most spreadsheets hold them, stop the run with a message that says what to pass. This block removes the zone from SBIN's 15-minute bars of October 2026 to show it:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
 from openalgo.backtest.errors import ConfigError
 
+# SBIN's 15-minute bars of October 2026, with the time zone removed as in a spreadsheet
+bars15 = client.history(symbol="SBIN", exchange="NSE", interval="15m", start_date="2026-10-01", end_date="2026-10-30")
+sheet15 = bars15.tz_localize(None)  # the same clock times, without "+05:30"
+
+
+# The same strategy on 15-minute bars: a copy of EmaCrossover with another interval
+class Intraday(EmaCrossover):
+    interval = "15m"
+
+
 # try runs the backtest; except catches the error, so we can print its message
 try:
-    bt.backtest(EmaCrossover, data=sbin, capital=100_000)  # no tz=
+    bt.backtest(Intraday, data=sheet15, capital=100_000)  # no tz=
 except ConfigError as error:
     print(error)
 ```
@@ -155,7 +215,7 @@ except ConfigError as error:
 the timestamps of the supplied data carry no time zone. Pass tz= (for example tz='Asia/Kolkata' for IST clock times, tz='UTC' for UTC): there is no default, because a wrong guess shifts every bar by 5 hours 30 minutes.
 ```
 
-Pass `tz="Asia/Kolkata"` for Indian clock times, as in the block before.
+Pass `tz="Asia/Kolkata"` for Indian clock times: `bt.backtest(Intraday, data=sheet15, tz="Asia/Kolkata", capital=100_000)`.
 
 ## Columns with other names
 
@@ -168,15 +228,18 @@ A spreadsheet often has the date as a column and capitalised names (`Date`, `Ope
 sheet = sbin.rename(columns=str.title).reset_index(names="Date")
 print(sheet.columns.tolist())  # the column names, as a list
 
-# Run on it: the same trades, so the same net profit
-same = bt.backtest(EmaCrossover, data=sheet, tz="Asia/Kolkata", capital=100_000)
-print(f"Net profit   : Rs {same.metrics['net_profit']:,.2f}")
+# Run on it: the same bars, so the same trades and the same summary
+same = bt.backtest(EmaCrossover, data=sheet, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(same.summary())
 ```
 
 <!-- output -->
 ```text
 ['Date', 'Close', 'High', 'Low', 'Oi', 'Open', 'Volume']
-Net profit   : Rs 53,267.48
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
+Trades       : 11 (36% won)
 ```
 
 For names the engine cannot match (such as `o`, `h`, `l`, `c`) or bars stamped at their close, load them first with [`load_bars`](support-functions/data-loading.md).
@@ -188,14 +251,14 @@ For names the engine cannot match (such as `o`, `h`, `l`, `c`) or bars stamped a
 * **Futures and options:** your broker serves a contract's history only while it trades. Historify keeps expired contracts you downloaded.
 * **Charges** are built in from 1 July 2020. See [Backtest older years](how-to.md#backtest-older-years) to go further back.
 
-When the source returns less than you asked for, the run goes on with what it has and its first warning says so. Here the run asks for bars from 1 July 2020, but `sbin` starts on 1 January 2021:
+When the source returns less than you asked for, the run goes on with what it has and a warning says so. Here the run asks for bars from 1 July 2020, but `recent` starts on 1 January 2021:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
 # Ask for more than the bars hold: from 1 July 2020
-earlier = bt.backtest(EmaCrossover, data=sbin, tz="Asia/Kolkata", capital=100_000, start="2020-07-01", end="2026-11-11")
-print(earlier.warnings[0])  # the first warning
+earlier = bt.backtest(EmaCrossover, data=recent, start="2020-07-01", end="2026-11-11", capital=100_000)
+print(earlier.warnings[1])  # the second warning (the first is the wait for the EMAs)
 ```
 
 <!-- output -->
@@ -233,6 +296,8 @@ Bars from your OpenAlgo server are saved on your disk, so a second run of the sa
 * The bar still forming when you run (today's candle) is dropped. `bt.backtest(now=...)` fixes "now" to make a run on today's data repeatable.
 * `start` and `end` are IST dates, both included; a date and time bounds the run to part of a session. A run ends at the earliest of `end`, the close of the last bar and the present, with a warning that names the end it used.
 * Each timestamp is the moment the bar **opens** (the OpenAlgo convention); a daily bar is stamped with its date.
+* Daily and longer bars (D, W, M, Q, Y) whose times are all midnight with no time zone are read as IST session dates, in an index, a timestamp column or CSV dates. Intraday times without a zone need `tz=`, and so do daily times stamped at a time of day.
+* The history before `start` comes from the same source as the run's bars, never a mix; a futures series built from `underlying` loads none, because its contracts and rolls begin at `start`, so its strategy waits inside the run. `result.manifest["arguments"]["warm_up"]` records the warm-up a run used.
 * Times 5 hours 30 minutes off (IST read as UTC, or the reverse) stop the run with a `TimestampError`; bars before the open, after the close or on a closed day are dropped and counted.
 * What stops a load (`DataQualityError`): a price that is missing, zero or negative, a high below the open or close (or a low above them), and a suspected unadjusted split or bonus. Duplicates and missing bars are warnings. See [Data Loading](support-functions/data-loading.md) for the quality report and `strict=False`.
 * A split or bonus is suspected when an overnight gap is within 5 percent of a usual factor (from a 1:3 bonus up to a 10-for-1 split), lies beyond the widest daily price band and still holds at that day's close. Smaller bonuses (1:4, 1:5, 1:10) are not detected; indices and derivatives are not checked.
