@@ -14,7 +14,7 @@ The 49 tools declared in the shared registry are grouped below. Example symbols/
 
 * **Default strategy tag**: `python mcp`. Every MCP-triggered order is tagged so you can filter MCP activity in OpenAlgo logs and the Analyzer. Override by saying _"use strategy 'my scalper'"_ in the prompt.
 * **Product type defaults**: `MIS` for equity. Use `NRML` for F\&O carry; `CNC` for delivery.
-* **Exchange codes**: `NSE`, `BSE`, `NFO`, `BFO`, `CDS`, `BCD`, `MCX`, `NCDEX` + `NSE_INDEX` / `BSE_INDEX` for index values.
+* **Exchange codes**: `NSE`, `BSE`, `NFO`, `BFO`, `CDS`, `BCD`, `MCX`, `NCDEX` + `NSE_INDEX` / `BSE_INDEX` for index values. An index is quoted on its index exchange (SENSEX on `BSE_INDEX`, NIFTY on `NSE_INDEX`), never on `NSE` or `BSE`, and SENSEX, BANKEX and SENSEX50 options and futures trade on `BFO`.
 * **Toolsets**: every tool belongs to exactly one of `orders`, `account`, `marketdata`, `research`, or `utility`. Those five names are the only values `OPENALGO_MCP_TOOLSETS` accepts. The section headings below group tools by task, which does not always match the toolset: `close_all_positions` and `analyzer_toggle` are in `orders`, `calculate_margin` and `analyzer_status` are in `account`, and the calendar and instrument tools are in `marketdata`.
 * **Lot size**: ask the assistant to resolve the exact contract using `get_option_symbol`, `get_option_chain` or `get_symbol_info`, then check `quantity = lots × lotsize` and the applicable freeze limit before sending. A prompt is not a guarantee the assistant performs that lookup.
 
@@ -239,10 +239,16 @@ Only executed fills.
 
 LTP, bid, ask, OHLC, volume for one symbol.
 
+| Param      | Required | Notes |
+| ---------- | -------- | ----- |
+| `symbol`   | Yes      | OpenAlgo symbol |
+| `exchange` | No       | When left out, an index uses its own index exchange: `SENSEX`, `BANKEX` and `SENSEX50` use `BSE_INDEX`, and `NIFTY`, `BANKNIFTY` and the other NSE indices use `NSE_INDEX`. Any other symbol uses `NSE`. Pass it for BSE-listed stocks and for futures and options contracts. |
+
 **Prompts:**
 
 * _"Get the latest quote for RELIANCE"_
 * _"What's NIFTY trading at right now?"_
+* _"Where is SENSEX trading?"_
 
 ***
 
@@ -348,7 +354,16 @@ Put-call parity synthetic future price, useful for illiquid futures or weekly ex
 
 All tradeable expiries for an underlying.
 
-**Prompt:** _"List all NIFTY options expiries available on NFO"_
+| Param             | Required | Notes |
+| ----------------- | -------- | ----- |
+| `symbol`          | Yes      | Underlying, e.g. `NIFTY`, `SENSEX` |
+| `exchange`        | No       | `NFO`, `BFO`, `MCX` or `CDS`. When left out, `SENSEX`, `BANKEX` and `SENSEX50` use `BFO` and any other underlying uses `NFO`. Pass `MCX` or `CDS` for commodity and currency underlyings. |
+| `instrument_type` | No       | `options` (default) or `futures` |
+
+**Prompts:**
+
+* _"List all NIFTY options expiries available on NFO"_
+* _"What are the next SENSEX weekly expiries?"_
 
 ***
 
