@@ -168,7 +168,7 @@ print(result.assumptions["warm_up"])  # the warm-up of the first run on this pag
 
 <!-- output -->
 ```text
-automatic: no decision before start, nor before every self.I indicator has closed its warm-up of bars (its window-stability length on the engine's reference bars, the same for any data and in live trading; bars before start count); ema(SBIN.close, 50) needs 512 D bars of SBIN; history before start: SBIN 512 strategy bars from 2018-12-10 to 2020-12-31 (asked from 2018-06-17); ready at start
+automatic: no decision before start, nor for a symbol before every self.I indicator of it has closed its warm-up of bars (its window-stability length on the engine's reference bars, the same for any data and in live trading; bars before start count); ema(SBIN.close, 50) needs 512 D bars of SBIN; history before start: SBIN 512 strategy bars from 2018-12-10 to 2020-12-31 (asked from 2018-06-17); ready at start
 ```
 
 The slow EMA needs 512 daily bars. The engine asked your OpenAlgo server for SBIN's bars from 28 October 2018, a few weeks more than 512 trading days, to allow for holidays, and kept the last 512 of them, from 10 December 2018 to 31 December 2020. So the strategy was ready on the start date.
