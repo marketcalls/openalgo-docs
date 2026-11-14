@@ -32,7 +32,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
@@ -40,8 +40,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day): decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: the slow EMA needs enough days first
-            return
         # crossed_above: the fast EMA was below the slow one a day ago, and is above it now.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # buy with all the capital at the next day's open
@@ -66,15 +64,15 @@ if __name__ == "__main__":
 <!-- output -->
 ```text
  fast  slow  net_profit  trades
-   15    40    50315.18      11
-   10    60    45902.60      12
-   15    60    43846.13       8
-   15    50    41352.69      11
-   20    40    41057.93      10
+   15    40    47365.98      11
+   10    60    46770.50      12
+   15    60    45099.67       8
+   15    50    44830.46      11
+   10    40    42564.76      14
 Best: {'fast': 15, 'slow': 40}
 ```
 
-On 2021 to 2024 the pair 15 and 40 made the most, Rs 50,315. The 20 and 50 of the first lesson made Rs 37,248 on the same years and did not reach the top five.
+On 2021 to 2024 the pair 15 and 40 made the most, Rs 47,366. The 20 and 50 of the first lesson made Rs 38,522 on the same years and did not reach the top five.
 
 ## The heatmap
 
@@ -92,12 +90,12 @@ if __name__ == "__main__":
 ```text
 fast       10       15       20       25
 slow
-40    36014.0  50315.0  41058.0  27569.0
-50    37386.0  41353.0  37249.0  30563.0
-60    45903.0  43846.0  37909.0   9861.0
+40    42565.0  47366.0  40035.0  33978.0
+50    34701.0  44830.0  38522.0  29568.0
+60    46770.0  45100.0   7146.0   9593.0
 ```
 
-Every pair made money on these years, and the cells next to the winner (Rs 36,013, Rs 41,058 and Rs 41,352) did well too. That is a good sign. A lone best cell surrounded by losses would be a warning: more likely luck than a real edge.
+Every pair made money on these years, and the cells next to the winner (Rs 42,565, Rs 40,035 and Rs 44,830) did well too. That is a good sign. A lone best cell surrounded by losses would be a warning: more likely luck than a real edge.
 
 ## Check it on later dates
 
@@ -112,17 +110,18 @@ if __name__ == "__main__":
                         params=opt.best)
     # The original 20 and 50 on the same dates.
     original = bt.backtest(EmaCrossover, client, start="2025-01-01", end="2026-11-11", capital=100_000)
+    # The net profit of each run, from result.metrics; f"..." fills in each {value}.
     print(f"Best pair, 2025-26 : Rs {later.metrics['net_profit']:,.2f}")
     print(f"20 and 50, 2025-26 : Rs {original.metrics['net_profit']:,.2f}")
 ```
 
 <!-- output -->
 ```text
-Best pair, 2025-26 : Rs 16,459.97
-20 and 50, 2025-26 : Rs 12,197.47
+Best pair, 2025-26 : Rs 15,917.73
+20 and 50, 2025-26 : Rs 11,369.47
 ```
 
-The winner held up: on the new dates it made Rs 16,460 against Rs 12,197 for the original. But its lead shrank from Rs 13,067 on 2021 to 2024 to Rs 4,262 on 2025 and 2026. That is the usual picture: part of the best result was the past fitting itself, and only the later dates show how much of the edge was real.
+The winner held up: on the new dates it made Rs 15,918 against Rs 11,369 for the original. But its lead shrank from Rs 8,844 on 2021 to 2024 to Rs 4,548 on 2025 and 2026. That is the usual picture: part of the best result was the past fitting itself, and only the later dates show how much of the edge was real.
 
 ## Do not fool yourself
 

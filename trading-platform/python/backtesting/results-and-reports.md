@@ -20,15 +20,13 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar: it sets up the two EMAs
+    # init runs before the first bar: it sets up the two EMAs
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)  # self.I keeps the indicator up to date bar by bar
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
     # on_bar runs at the close of every bar: it decides whether to buy or sell
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # wait until there are 50 days of prices for the slow EMA
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):  # no shares, fast EMA just rose above slow
             self.buy()  # buy with all the capital at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):  # holding, fast EMA just fell below slow
@@ -38,19 +36,15 @@ class EmaCrossover(bt.Strategy):
 # Run the backtest on SBIN's daily bars from your OpenAlgo server
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. An f-string (f"...") fills the values in {} into the text.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
 
@@ -58,39 +52,46 @@ What the four lines mean:
 
 * **Net profit** is what the account gained, after all charges (brokerage, taxes and exchange fees).
 * **Return** is the net profit as a share of the starting capital.
-* **Max drawdown** is the largest fall of the account from its highest value so far: at its worst, the account was 29.82 percent below its peak.
-* **Trades** counts the closed trades (a buy and the sell that closed it) and the share of them that made money.
+* **Max drawdown** is the largest fall of the account from its highest value so far: at its worst, the account was 29.35 percent below its peak.
+* **Trades** counts the closed trades (a buy and the sell that closed it) and the share of them that made money. A position still open at the end is counted beside them ("2 still open"), and a run with no closed trade says "no closed trades".
+
+`result.summary()` writes these lines as text. A run with `benchmark=` adds a fifth line with the benchmark's return (see [A benchmark](#a-benchmark)). `print(result)` prints something else: every setting the run used, its warnings and its P&L.
 
 ## The tables
 
-Every list the run produced is a table you can print, filter or save. The one you will read most is `result.trades`, one row per closed trade. The first five trades:
+Every list the run produced is a table (a pandas DataFrame) you can print, filter or save. The one you will read most is `result.trade_list()`, one row per closed trade, numbered from 1. The first five trades:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-# The columns to show, as a list of names
-columns = ["entry_time", "exit_time", "entry_units", "entry_price_rupees", "exit_price_rupees", "net_pnl_rupees", "exit_reason"]
+# The closed trades, and the columns to show as a list of names
+trades = result.trade_list()
+columns = ["entry_time", "exit_time", "quantity", "entry_price", "exit_price", "net_pnl", "return_pct", "exit_reason"]
 
-# head() keeps the first five rows; to_string prints them without the row numbers
-print(result.trades[columns].head().to_string(index=False, float_format="%.2f"))
+# head() keeps the first five rows; float_format prints 2 decimals
+print(trades[columns].head().to_string(float_format="%.2f"))
 ```
 
 <!-- output -->
 ```text
-               entry_time                 exit_time  entry_units  entry_price_rupees  exit_price_rupees  net_pnl_rupees exit_reason
-2021-05-12 09:15:00+05:30 2021-12-21 09:15:00+05:30       275.23              362.90             456.95        25619.96      signal
-2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30       249.37              503.15             460.20       -10994.80      signal
-2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30       225.75              507.15             470.90        -8445.89      signal
-2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30       217.39              487.85             535.85        10171.59      signal
-2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30       204.62              567.95             565.60         -755.02      signal
+                     entry_time                 exit_time  quantity  entry_price  exit_price   net_pnl  return_pct exit_reason
+trade
+1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30    270.00       356.95      456.95  26741.28       27.75      signal
+2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30    246.00       503.15      460.20 -10846.48       -8.76      signal
+3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30    222.00       507.15      470.90  -8305.91       -7.38      signal
+4     2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30    217.00       487.85      535.85  10153.35        9.59      signal
+5     2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30    204.00       567.95      565.60   -752.78       -0.65      signal
 ```
 
 How to read a row:
 
-* `entry_time` and `exit_time` are Indian time (IST). Each trade was decided at a day's close and filled at the next day's open, 09:15.
-* `entry_units` is the number of shares. It has decimals because `self.buy()` with no quantity invests all the capital; see [How Much to Buy](tutorial/04-how-much-to-buy.md) for whole shares.
-* `net_pnl_rupees` is the trade's profit or loss (P&L) after its charges.
+* `trade` is the trade's number. `entry_time` and `exit_time` are Indian time (IST): each trade was decided at a day's close and filled at the next day's open, 09:15.
+* `quantity` is the number of shares, always whole shares unless the run asked for part shares (see [Whole shares or part shares?](costs-slippage-and-margin.md#whole-shares-or-part-shares)). It is never lots.
+* `entry_price` and `exit_price` are the prices the trade was bought and sold at, in rupees, slippage included.
+* `net_pnl` is the trade's profit or loss (P&L) in rupees after its charges, and `return_pct` that profit as a percent of the money put in (entry price x quantity): 10.0 is ten percent.
 * `exit_reason` says why the trade closed: `signal` is the strategy's own `self.exit()`. A stop-loss shows `leg_sl` and a target `leg_target` (see [Stop-Loss and Target](tutorial/03-stop-loss-and-target.md)).
+
+The trade list has more columns: `symbol`, `direction` (`long` or `short`), `product` (CNC, MIS or NRML), `gross_pnl` (before charges), `charges`, `bars_held` (bars from the entry to the exit; sessions on daily bars), `days_held` (calendar days) and `r_multiple` (the net P&L in units of the risk to the stop-loss, empty without a stop). The tearsheet's trade table shows the same rows.
 
 Other tables: `result.orders` (every order, rejected ones with a `reject_code` that says why), `result.fills` (every executed order and its price) and `result.final_positions` (what was still held at the end).
 
@@ -109,12 +110,12 @@ print(f"Last    : Rs {equity.iloc[-1]:,.2f} on {equity.index[-1].date()}")  # il
 
 <!-- output -->
 ```text
-Highest : Rs 218,391.39 on 2026-02-23
-Lowest  : Rs 99,206.52 on 2021-05-14
-Last    : Rs 153,267.48 on 2026-11-11
+Highest : Rs 217,898.05 on 2026-02-23
+Lowest  : Rs 100,000.00 on 2021-01-01
+Last    : Rs 153,941.09 on 2026-11-11
 ```
 
-The account peaked at Rs 2,18,391.39 in February 2026 and ended at Rs 1,53,267.48: that fall of 29.82 percent from the peak is the max drawdown of the summary. The last trade closed on 8 September 2026, so the account then held only cash and its value stopped moving.
+The account never fell below the starting Rs 1,00,000. It peaked at Rs 2,17,898.05 in February 2026 and ended at Rs 1,53,941.09: that fall of 29.35 percent from the peak is the max drawdown of the summary. The last trade closed on 8 September 2026, so the account then held only cash and its value stopped moving.
 
 ## Performance figures
 
@@ -133,14 +134,14 @@ print(f"Charges      : Rs {m['total_costs']:,.2f}")  # all charges of the closed
 
 <!-- output -->
 ```text
-CAGR         : 7.56%
-Sharpe ratio : 0.46
+CAGR         : 7.64%
+Sharpe ratio : 0.47
 Exposure     : 66%
-Profit factor: 1.92
-Charges      : Rs 3,363.62
+Profit factor: 1.95
+Charges      : Rs 3,321.65
 ```
 
-Returns, rates and drawdowns are stored as fractions (0.0756 is 7.56 percent); the `:.2%` in the f-string prints them as percents. [Metric Definitions](metric-definitions.md) explains every figure.
+Returns, rates and drawdowns are stored as fractions (0.0764 is 7.64 percent); the `:.2%` in the f-string prints them as percents. [Metric Definitions](metric-definitions.md) explains every figure.
 
 ## Year by year
 
@@ -156,17 +157,17 @@ for year, value in result.performance.yearly_returns.items():
 
 <!-- output -->
 ```text
-2021  25.62%
-2022   6.20%
-2023 -13.67%
-2024  19.17%
-2025  27.29%
-2026 -12.27%
+2021  26.74%
+2022   6.34%
+2023 -13.50%
+2024  18.83%
+2025  26.45%
+2026 -12.12%
 ```
 
 ## The HTML tearsheet
 
-A **tearsheet** is the full report of a backtest on one HTML page: the figures, the equity curve, the drawdowns, the monthly returns, the trade list and every setting the run used. `result.tearsheet(path)` writes it and returns the file name; open the file in your browser. It needs no internet connection.
+A **tearsheet** is the full report of a backtest on one HTML page, laid out as a dashboard. `result.tearsheet(path)` writes it and returns the file name; open the file in your browser. Everything is inside the one file, so it opens without an internet connection and you can send it to someone as it is.
 
 <!-- requires-server -->
 <!-- continues -->
@@ -179,7 +180,33 @@ print(result.tearsheet("sbin_ema_crossover.html"))  # writes the report next to 
 sbin_ema_crossover.html
 ```
 
-`mode="basic"` writes a shorter report.
+<figure><img src="../../../.gitbook/assets/backtest-tearsheet-sbin-ema-dashboard.png" alt="The top of the tearsheet of the SBIN EMA 20/50 crossover: the header with section links, Export PDF and the light and dark switch, the headline tiles of the Overview and the cumulative return chart"><figcaption><p>The top of the tearsheet for the SBIN EMA 20/50 crossover, in the light theme</p></figcaption></figure>
+
+At the top, a header links to each section and has an **Export PDF** button (your browser's print) and a switch between a light and a dark page. Below it come numbered sections:
+
+| Section | What it shows |
+|---|---|
+| Overview | The headline figures as tiles: cumulative return, CAGR, Sharpe, max drawdown, volatility and more |
+| Performance | The cumulative return (with the benchmark's line when the run has one), the rolling Sharpe ratio, volatility and win rate, CAGR, max drawdown and Sharpe over the last month, year and longer, and the returns of the latest periods |
+| Risk | The drawdown chart, the risk figures, the ten worst drawdowns and the losing streaks of days; with a benchmark, beta, alpha and the rolling beta |
+| Monthly | The monthly and weekly returns as coloured grids (heatmaps), and each year's return against the benchmark |
+| Distribution | How the daily returns spread: a histogram and a box plot |
+| Metrics | Every figure in one table you can sort, with the benchmark's beside it |
+| Trades | The trade figures, the trade list of `result.trade_list()` (sort it by any column, page by page), the charges by component and the R-multiples of trades opened with a stop-loss |
+| Notes | How the figures were worked out, every setting the run used and every warning |
+
+What to look at first: the Overview tiles for the return and the max drawdown, the cumulative return chart in Performance (did the account grow steadily, or in one lucky stretch?), the drawdown chart in Risk (how deep and how long were the bad patches?), the trade list in Trades, and the warnings at the end of Notes. Under a tile, a second figure is the benchmark's, measured the same way, when the run has a benchmark. Hover over a chart to read its values.
+
+`mode=` writes a part of the same page:
+
+| `mode=` | What the page holds |
+|---|---|
+| `"full"` (the default) | Every section |
+| `"basic"` | The Overview, the cumulative return and period returns, the drawdown chart and the worst drawdowns, the monthly heatmap and the yearly returns, the trades and charges, and the Notes |
+| `"metrics"` | Every figure with its value and definition, and the settings the run used |
+| `"charts"` | Every chart and nothing else |
+
+`log_scale=True` draws the cumulative return on a log scale, which reads better on long runs.
 
 ## A benchmark
 
@@ -198,12 +225,12 @@ print(f"Beta            : {m['beta']:.2f}")  # how strongly the strategy moved w
 
 <!-- output -->
 ```text
-Strategy return : 53.27%
+Strategy return : 53.94%
 NIFTY return    : 80.63%
-Beta            : 0.72
+Beta            : 0.71
 ```
 
-Over these years the crossover made less than simply holding NIFTY 50. A beta of 0.72 means that on an average day it moved about 0.7 percent for each 1 percent move of NIFTY. The lesson [Compare with NIFTY](tutorial/08-compare-with-nifty.md) explains alpha, beta and the NIFTY line on the tearsheet.
+Over these years the crossover made less than simply holding NIFTY 50. A beta of 0.71 means that on an average day it moved about 0.7 percent for each 1 percent move of NIFTY. The lesson [Compare with NIFTY](tutorial/08-compare-with-nifty.md) explains alpha, beta and the NIFTY line on the tearsheet.
 
 ## Warnings
 
@@ -222,7 +249,14 @@ SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
 charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 used for 2021-01-01 were never verified against their source, so the charges may be off. Until 2021-03-31 NSE charged EQ-series shares outside the NIFTY 50 and NIFTY Next 50 Rs 2.75 per lakh (NSE/FA/46225) and the shares of those two indices this standard rate. The engine does not know an index's members, so the row is unverified.
 ```
 
-This run has one: SBIN was traded with the usual terms of a share, a lot of 1 share and a tick (the smallest price step) of 5 paise. You will see it on every share you backtest; it needs no action. Orders the engine rejected (for not enough cash, or outside the intraday hours) are listed here too. `print(result)` shows the warnings together with every setting the run used.
+This run has two. The first says SBIN was traded with the usual terms of a share, a lot of 1 share and a tick (the smallest price step) of 5 paise; you will see it on every share you backtest, and it needs no action. The second says the delivery charges of January to March 2021 are not verified: until 31 March 2021 NSE charged shares outside the NIFTY 50 and NIFTY Next 50 a lower rate, and the engine does not know which shares were in those indices. SBIN is a NIFTY 50 share, so its charges are right. Python also prints this one, as an `UnverifiedScheduleWarning`, when the run ends.
+
+Other warnings you may meet:
+
+* A run in which the engine refused or skipped orders you did not plan for ends with one `OrdersNotPlacedWarning`, printed by Python, with how many and the most common reason, for example `3 of 3 orders were rejected because a delivery (CNC) short is not allowed in Indian cash markets (reject_code 'product_rule'). See result.warnings.` `result.warnings` then has a line for each reason, with what to do. Orders kept out by a rule you set (the entry window, the daily loss limit, a cooldown) are only counted in `result.warnings`. See [Why was my order rejected?](orders-and-risk.md#why-was-my-order-rejected)
+* A strategy that had to wait inside the run for its indicators, because the data had too few bars before `start`, ends with a `WarmUpWarning`, printed by Python, that says when it first decided; `result.warnings` says how many bars it waited and why (see [History before the start date](data.md#history-before-the-start-date)).
+
+`print(result)` shows the warnings together with every setting the run used, among them the `warm_up` line: what each indicator needed, the history loaded before `start` and when the strategy first decided.
 
 ## Saving to Excel or CSV
 
@@ -250,19 +284,15 @@ print([path.name for path in paths])  # the file names
 <!-- continues -->
 ```python
 faster = result.rerun(fast=10, slow=30)  # 10-day and 30-day EMAs instead of 20 and 50
-m = faster.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+print(faster.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 71,912.31
-Return       : 71.91%
-Max drawdown : -23.65%
-Trades       : 23 (39% won)
+Net profit   : Rs 69,968.22
+Return       : 69.97%
+Max drawdown : -23.24%
+Trades       : 23 (39% won), 1 still open
 ```
 
 To try many numbers at once and rank them, see [Find Better Settings](tutorial/09-find-better-settings.md).
@@ -282,21 +312,21 @@ print(study.percentiles.loc[[0.05, 0.5, 0.95], ["final_return", "max_drawdown"]]
 ```text
             final_return  max_drawdown
 percentile
-0.05             -0.3291       -0.5558
-0.50              0.6258       -0.3319
-0.95              2.4745       -0.2086
+0.05             -0.3129       -0.5489
+0.50              0.6283       -0.3264
+0.95              2.4096       -0.2029
 ```
 
-The figures are fractions (0.6258 is 62.58 percent). Read it like this: the real run made 53.27 percent. With its days reshuffled, the middle (50th percentile) return was 62.58 percent and the middle drawdown 33.19 percent, but one path in twenty lost 32.91 percent or more. Results this spread out need a long test before you trust them.
+The figures are fractions (0.6283 is 62.83 percent). Read it like this: the real run made 53.94 percent. With its days reshuffled, the middle (50th percentile) return was 62.83 percent and the middle drawdown 32.64 percent, but one path in twenty lost 31.29 percent or more. Results this spread out need a long test before you trust them. The tearsheet does not draw this study; call `result.monte_carlo()` for it.
 
 ## More options
 
-* **Every table:** `result.fills`, `orders`, `trades`, `positions` (each change of a position), `equity`, `returns`, `events` and `risk_events`, `final_positions`, `stale_marks`, `costs` (each fill's charges, item by item), `contract_notes`, `skipped` (orders sized to zero), `settlements` and `rolls` (futures), `r_summary`, `gross_pnl` and `to_dataframes()`. Times are IST; columns ending in `_ts` are the same instants in UTC nanoseconds; prices are rupees; quantities are units, never lots.
+* **Every table:** `result.trade_list()` (the closed trades as a trader reads them), `result.trades` (the same trades in the engine's own columns: `entry_units`, `net_pnl_rupees`, `initial_risk_rupees` and more), `fills`, `orders`, `positions` (each change of a position), `equity`, `returns`, `events` and `risk_events`, `final_positions`, `stale_marks`, `costs` (each fill's charges, item by item), `contract_notes`, `skipped` (orders sized to zero), `settlements` and `rolls` (futures), `r_summary`, `gross_pnl` and `to_dataframes()`. Times are IST; columns ending in `_ts` are the same instants in UTC nanoseconds; prices are rupees; quantities are units, never lots.
 * **Every figure, with its definition:** `result.metrics_table()` returns a table with the group, label, value, unit and definition of each figure.
 * **The series behind the figures:** `result.performance` has `drawdown`, `drawdown_details(top=5)`, `monthly_returns`, `rolling`, `horizons` (the last 1, 3 and 6 months, 1, 3 and 5 years), `losing_streaks`, `cost_breakdown` and, with a benchmark, `benchmark_comparison("year")`. See [Metrics](support-functions/metrics.md).
 * **How the figures are measured:** from your capital and the open of the first bar; drawdowns are zero or negative; returns are per trading session, annualised with the real number of NSE sessions in each year (not a fixed 252); CAGR uses 365.25 calendar days a year and is not given for runs shorter than 28 days; net figures are after every charge; trade figures count closed trades only; the risk-free rate is 0 (pass one to [`metrics.analyse`](support-functions/metrics.md)); a figure the data cannot define is NaN.
 * **Other benchmarks:** `benchmark=("SENSEX", "BSE_INDEX")`, or a pandas Series of your own closes. A day without a benchmark close stays missing; it is never filled from a neighbouring day.
-* **Tearsheet modes:** `mode="full"` (default), `"basic"`, `"metrics"` (every figure with its definition) or `"charts"`; `log_scale=True` for long runs; without a path it returns the HTML as text. `openalgo.backtest.report.tearsheet(performance, path)` renders figures you computed yourself.
+* **The tearsheet:** without a path, `result.tearsheet()` returns the HTML as text. It reads in full with scripts turned off in the browser (the theme switch, sorting and paging then do nothing). `openalgo.backtest.report.tearsheet(performance, path)` renders figures you computed yourself.
 * **Monte Carlo options:** `resample="trades"` reshuffles the closed trades instead of the days; `bust=-0.30` and `goal=0.25` add the share of paths that fell 30 percent or gained 25 percent. See [Metrics](support-functions/metrics.md#monte-carlo).
 * **R-multiples:** for trades opened with a stop-loss, `result.trades` has `initial_risk_rupees` (what the stop would have lost) and `r_multiple` (the trade's net P&L in units of that risk), and `result.r_summary` sums them up.
 * **Where a run ends:** at the earliest of `end`, the close of the last bar in the data and the present; a warning names the end used. A position still open is reported open, valued at the last close. `bt.backtest(now="2026-11-11 12:00")` fixes the present, to replay a day as it stood at noon.

@@ -31,7 +31,7 @@ class CrudeOilMacd(bt.Strategy):
     entry_from = "17:00"  # new trades in the evening session only
     longs, shorts = True, True  # trade both ways
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         # ta.macd gives three lines: MACD, signal and histogram; "_" drops the histogram.
@@ -39,8 +39,6 @@ class CrudeOilMacd(bt.Strategy):
 
     # on_bar runs at the close of every 5-minute bar: decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < 35:  # warm-up: MACD needs 26 + 9 bars first
-            return
         if self.macd.crossed_above(self.signal):  # momentum turns up
             self.exit()  # close a short, if any
             if self.longs and self.macd[-1] > 0:  # and the trend is up ([-1] is the latest value)
@@ -54,12 +52,8 @@ class CrudeOilMacd(bt.Strategy):
 # Run the backtest from 1 October to 11 November 2026 with Rs 3,00,000.
 result = bt.backtest(CrudeOilMacd, client, start="2026-10-01", end="2026-11-11", capital=300_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
@@ -70,9 +64,22 @@ Max drawdown : -12.91%
 Trades       : 70 (37% won)
 ```
 
-The strategy made money with only 37 percent of its trades winning, because its average win, Rs 6,163, was more than twice its average loss, Rs 2,860 (`m['average_win']` and `m['average_loss']`). The engine took the contract's lot (100 barrels), tick size (Rs 1) and expiry from its reference tables, and charged the commodity rates. The max drawdown is the largest fall of the account from its highest value.
+The strategy made money with only 37 percent of its trades winning, because its average win, Rs 6,163, was more than twice its average loss, Rs 2,860 (`result.metrics['average_win']` and `result.metrics['average_loss']`). The engine took the contract's lot (100 barrels), tick size (Rs 1) and expiry from its reference tables, and charged the commodity rates. The max drawdown is the largest fall of the account from its highest value.
 
-Python also prints two `ReferenceDataWarning` lines: the MCX contract terms in the engine's tables are not yet confirmed against the exchange circular. The backtest is complete, and the lot and tick size match the master contract on your OpenAlgo server.
+Python also prints two `ReferenceDataWarning` lines after the run. They say that the MCX contract terms in the engine's tables are not yet confirmed against the exchange circular and were last checked on 31 March 2026; the lot and tick size match the master contract on your OpenAlgo server.
+
+The crossovers before 17:00, which `entry_from` keeps out, and the ones after the cut-off for new intraday positions near the close were not placed. That is what the entry window is for, so Python prints no warning about them; `result.warnings` counts them. This block continues the one above:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+print(result.warnings[0])  # the first note of the run: the orders the entry window kept out
+```
+
+<!-- output -->
+```text
+81 of 219 orders were outside the MIS entry window, 17:00 to 30 minutes before each session's close (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-10-05 09:05 IST
+```
 
 ## Try this
 

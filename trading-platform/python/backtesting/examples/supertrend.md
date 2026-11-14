@@ -30,7 +30,7 @@ class SupertrendFollow(bt.Strategy):
     period = 10  # days of ATR
     multiplier = 3  # the line's distance in ATRs
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         # ta.supertrend gives the line and its direction (-1 uptrend, 1 downtrend).
@@ -40,8 +40,6 @@ class SupertrendFollow(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day): decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.period:  # warm-up: the ATR needs 10 days first
-            return
         uptrend = self.direction[-1] < 0  # [-1] is the latest value; -1 means an uptrend
         if self.position.is_flat and uptrend:
             self.buy()  # buy with all the capital at the next day's open
@@ -52,23 +50,19 @@ class SupertrendFollow(bt.Strategy):
 # Run the backtest from 1 January 2021 to 11 November 2026 with Rs 1,00,000.
 result = bt.backtest(SupertrendFollow, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 45,036.29
-Return       : 45.04%
-Max drawdown : -30.26%
-Trades       : 23 (48% won)
+Net profit   : Rs 43,285.99
+Return       : 43.29%
+Max drawdown : -29.73%
+Trades       : 24 (46% won), 1 still open
 ```
 
-Nearly half the trades won, and the long trends of 2021 paid the most. The max drawdown, the largest fall of the account from its highest value, is about 30 percent: the price of staying in until the line is crossed.
+Nearly half the trades won, and the long trends of 2021 paid the most. One position, bought on 6 November 2026 when the trend turned up again, was still held on 11 November 2026: it counts in the net profit at that day's close, but not among the closed trades. The max drawdown, the largest fall of the account from its highest value, is about 30 percent: the price of staying in until the line is crossed.
 
 ## Try this
 

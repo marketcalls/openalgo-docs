@@ -26,7 +26,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
@@ -34,8 +34,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day): decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: the slow EMA needs 50 days first
-            return
         # crossed_above: the fast EMA was below the slow one a day ago, and is above it now.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # buy with all the capital at the next day's open
@@ -47,38 +45,35 @@ class EmaCrossover(bt.Strategy):
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
                      benchmark="NIFTY")
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary: with a benchmark, its last line is NIFTY's return.
+print(result.summary())   # net profit, return, drawdown, trades and NIFTY's return
 
-# And the strategy next to NIFTY.
-print(f"NIFTY return : {m['benchmark_total_return']:.2%}")
+# Beta and alpha, from result.metrics: every figure of the run, looked up by name.
+# f"..." fills in each {value}; :.2f writes two decimals and :.2% a percent.
+m = result.metrics
 print(f"Beta         : {m['beta']:.2f}")
 print(f"Alpha        : {m['alpha']:.2%} a year")
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
-NIFTY return : 80.63%
-Beta         : 0.72
-Alpha        : 1.38% a year
+Benchmark    : 80.63% return (NIFTY)
+Beta         : 0.71
+Alpha        : 1.55% a year
 ```
 
 ## What the numbers mean
 
 * **Max drawdown** is the largest fall of the account from its highest value.
-* **NIFTY return** is what you would have made by simply holding NIFTY over the same dates.
+* **Benchmark** is what you would have made by simply holding NIFTY over the same dates.
 * **Beta** says how much the strategy moves with NIFTY. A beta of 1 moves one for one with the index; a beta of 0.5 moves about half as much. It is measured on daily returns.
 * **Alpha** is the return per year that the strategy earned beyond what its link to NIFTY (its beta) explains. Positive is better than the index for the risk taken, negative is worse.
 
-Here the strategy made 53.27 percent while simply holding NIFTY made 80.63 percent: over these six years the index did better. A beta of 0.72 means the strategy moved about 0.72 percent for each 1 percent move of NIFTY, because it holds a single stock and sits in cash between trades. The alpha of 1.38 percent a year says that, for the share of NIFTY's ups and downs it took, it did a little better than the index. Less profit in total, then, but not a worse strategy for the risk it carried.
+Here the strategy made 53.94 percent while simply holding NIFTY made 80.63 percent: over these six years the index did better. A beta of 0.71 means the strategy moved about 0.71 percent for each 1 percent move of NIFTY, because it holds a single stock and sits in cash between trades. The alpha of 1.55 percent a year says that, for the share of NIFTY's ups and downs it took, it did a little better than the index. Less profit in total, then, but not a worse strategy for the risk it carried.
 
 ## What you learned
 

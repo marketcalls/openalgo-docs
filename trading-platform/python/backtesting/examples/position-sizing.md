@@ -30,7 +30,7 @@ class EmaCrossover(bt.Strategy):
     slow = 50  # days in the slow EMA
     size = bt.size.percent(10)  # every buy() takes 10 percent of the current equity
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
@@ -38,8 +38,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day): decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: the slow EMA needs 50 days first
-            return
         # crossed_above: the fast EMA was below the slow one a day ago, and is above it now.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # buy the size above at the next day's open
@@ -50,28 +48,25 @@ class EmaCrossover(bt.Strategy):
 # Run the backtest from 1 January 2021 to 11 November 2026 with Rs 1,00,000.
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 
-# The average money put into a trade: units bought x entry price.
-trades = result.trades
-print(f"Average trade: Rs {(trades['entry_units'] * trades['entry_price_rupees']).mean():,.0f}")
+# The average money put into a trade: shares bought x entry price, over the closed trades.
+# f"..." fills in the {value}; ":,.0f" writes it with commas and no decimals.
+trades = result.trade_list()
+print(f"Average trade: Rs {(trades['quantity'] * trades['entry_price']).mean():,.0f}")
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -675.91
-Return       : -0.68%
-Max drawdown : -2.92%
-Trades       : 15 (33% won)
-Average trade: Rs 10,021
+Net profit   : Rs -844.47
+Return       : -0.84%
+Max drawdown : -2.77%
+Trades       : 16 (31% won), 1 still open
+Average trade: Rs 9,301
 ```
 
-Each trade put about Rs 10,000 to work, so the 15 signals lost only Rs 676 and the account never fell more than 2.92 percent from its highest value (the max drawdown). With all the capital in every trade, about Rs 99,000 each, the same signals lost Rs 7,615 with a drawdown of 24.59 percent. Smaller positions mean smaller losses and smaller gains: sizing decides how much a strategy's ups and downs can hurt you.
+Each trade put about Rs 9,300 to work: 10 percent of the equity, rounded down to whole shares of a stock that cost over Rs 1,000 a share. So the 16 closed trades lost only Rs 844, and the account never fell more than 2.77 percent from its highest value (the max drawdown). With all the capital in every trade, the same signals lost Rs 9,345 with a drawdown of 23.82 percent. "1 still open" is the position bought at the last crossover and still held on 11 November 2026. Smaller positions mean smaller losses and smaller gains: sizing decides how much a strategy's ups and downs can hurt you.
 
 ## Try this
 

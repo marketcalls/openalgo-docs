@@ -8,7 +8,7 @@ In this lesson you add an exit to every trade of the [EMA crossover](01-first-ba
 
 The distance is written `bt.pct(3)`: 3 percent of your buying price.
 
-Without any of them, lesson 1 made Rs 53,267.48 (53.27 percent), with a max drawdown of -29.82 percent, from 11 trades.
+Without any of them, lesson 1 made Rs 53,941.09 (53.94 percent), with a max drawdown of -29.35 percent, from 11 trades.
 
 ## A stop-loss
 
@@ -30,15 +30,13 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar. (def starts a method: steps that belong to the class.)
+    # init runs before the first bar. (def starts a method: steps that belong to the class.)
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)  # self.I: an indicator read at every bar
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
     # on_bar runs at the close of every day and decides what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: wait until there are 50 days for the slow EMA
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy(stop=bt.pct(3))  # buy, with a stop-loss 3 percent below the buying price
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
@@ -48,23 +46,19 @@ class EmaCrossover(bt.Strategy):
 # Run the backtest over the same dates and capital as lesson 1.
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. f"..." is an f-string: the values in braces are filled in.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())   # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 39,430.64
-Return       : 39.43%
-Max drawdown : -23.57%
+Net profit   : Rs 40,561.33
+Return       : 40.56%
+Max drawdown : -23.17%
 Trades       : 11 (27% won)
 ```
 
-**What changed:** the stop closed 7 of the 11 trades before the EMAs crossed back, so the worst fall of the account was smaller (-23.57 percent against -29.82), but it also sold some trades that recovered later, and the profit fell.
+**What changed:** the stop closed 7 of the 11 trades before the EMAs crossed back, so the worst fall of the account was smaller (-23.17 percent against -29.35), but it also sold some trades that recovered later, and the profit fell.
 
 The stop is checked every day, from the day you buy. On a CNC (delivery) position the engine holds it as a **GTT order** (good till triggered: an order your broker keeps open across days until its price is reached), the way your broker would hold it overnight.
 
@@ -78,8 +72,6 @@ The next block continues from the one above: add it below it in the same file. `
 # A copy of EmaCrossover with a new on_bar: a target instead of the stop.
 class WithTarget(EmaCrossover):
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up, as before
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy(target=bt.pct(20))  # buy, and sell once the price is 20 percent higher
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
@@ -88,18 +80,14 @@ class WithTarget(EmaCrossover):
 
 # Run it and print the summary.
 result = bt.backtest(WithTarget, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+print(result.summary())   # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 34,098.52
-Return       : 34.10%
-Max drawdown : -22.74%
+Net profit   : Rs 32,913.22
+Return       : 32.91%
+Max drawdown : -22.28%
 Trades       : 11 (36% won)
 ```
 
@@ -115,8 +103,6 @@ A trailing stop of 15 percent: once the price has risen 15 percent above your bu
 # A copy of EmaCrossover with a new on_bar: a trailing stop.
 class WithTrailingStop(EmaCrossover):
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up, as before
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy(trail=bt.trail_pct(15))  # buy, with a stop that follows the price 15 percent below
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
@@ -125,18 +111,14 @@ class WithTrailingStop(EmaCrossover):
 
 # Run it and print the summary.
 result = bt.backtest(WithTrailingStop, client, start="2021-01-01", end="2026-11-11", capital=100_000)
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+print(result.summary())   # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 63,367.77
-Return       : 63.37%
-Max drawdown : -25.17%
+Net profit   : Rs 64,544.99
+Return       : 64.54%
+Max drawdown : -24.44%
 Trades       : 11 (36% won)
 ```
 
@@ -146,10 +128,10 @@ Trades       : 11 (36% won)
 
 | Exit added to `self.buy()` | Net profit | Return | Max drawdown | Trades won |
 |---|---|---|---|---|
-| None (lesson 1) | Rs 53,267.48 | 53.27% | -29.82% | 36% |
-| `stop=bt.pct(3)` | Rs 39,430.64 | 39.43% | -23.57% | 27% |
-| `target=bt.pct(20)` | Rs 34,098.52 | 34.10% | -22.74% | 36% |
-| `trail=bt.trail_pct(15)` | Rs 63,367.77 | 63.37% | -25.17% | 36% |
+| None (lesson 1) | Rs 53,941.09 | 53.94% | -29.35% | 36% |
+| `stop=bt.pct(3)` | Rs 40,561.33 | 40.56% | -23.17% | 27% |
+| `target=bt.pct(20)` | Rs 32,913.22 | 32.91% | -22.28% | 36% |
+| `trail=bt.trail_pct(15)` | Rs 64,544.99 | 64.54% | -24.44% | 36% |
 
 These numbers are for SBIN over these six years. Another stock or another period can rank the exits differently, so do not pick a setting only because it did best here; [Find Better Settings](09-find-better-settings.md) shows how to test that properly.
 

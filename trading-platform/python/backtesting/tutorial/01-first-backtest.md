@@ -36,7 +36,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar. (def starts a method: steps that belong to the class.)
+    # init runs before the first bar. (def starts a method: steps that belong to the class.)
     def init(self):
         # self.I(...) makes an indicator line that the strategy can read at every bar.
         self.fast_ema = self.I(ta.ema, self.close, self.fast)  # 20-day EMA of the closes
@@ -44,8 +44,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day) and decides what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: wait until there are 50 days for the slow EMA
-            return
         # Buy when holding nothing (is_flat) and the fast EMA crosses above the slow EMA.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # with all the capital, at the next day's open
@@ -57,21 +55,21 @@ class EmaCrossover(bt.Strategy):
 # Run the backtest: 1 January 2021 to 11 November 2026, starting with Rs 1,00,000.
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. f"..." is an f-string: the values in braces are filled in.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())   # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
+
+{% hint style="info" %}
+Python also prints a warning, after your file's name and line number: `UnverifiedScheduleWarning: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 were never verified against their source, so the charges may be off`. It is a note, not an error. Until 31 March 2021 NSE charged shares outside the NIFTY 50 and NIFTY Next 50 a lower transaction charge, and the engine does not know which shares belong to those indices. SBIN is a NIFTY 50 share, so its charges are right.
+{% endhint %}
 
 ## Line by line
 
@@ -88,36 +86,36 @@ Trades       : 11 (36% won)
 **init.**
 
 * `def init(self):` defines a method: a function, or set of steps, that belongs to the class. `self` is the strategy itself, so `self.close` means "this strategy's closing prices".
-* The engine calls `init` once, before the first bar.
+* The engine calls `init` before the first bar, to set up the indicators.
 * `self.I(ta.ema, self.close, self.fast)` makes the 20-day EMA of the closing prices. `self.I` hands the indicator to the engine, which checks that it never uses a future price, and gives you its value at each bar.
 
 **on_bar.**
 
 * The engine calls `on_bar` at the close of every bar, here once a day. At that moment the strategy sees only the prices up to that day, as you would in real trading.
-* `if len(self.close) < self.slow: return` is the warm-up. `len(self.close)` is the number of days seen so far; the 50-day EMA needs 50 days, so until then `return` leaves `on_bar` without doing anything.
 * `self.position.is_flat` is true while you hold no shares, and `self.position.is_long` while you hold some.
 * `self.fast_ema.crossed_above(self.slow_ema)` is true on the day the fast EMA moves from below the slow EMA to above it. `crossed_below` is the opposite.
-* `self.buy()` buys at the next day's open. With no quantity given, it uses all the capital, less the charges.
+* `self.buy()` buys at the next day's open. With no quantity given, it buys as many whole shares as 98 percent of the capital pays for at today's close, after the charges. The 2 percent kept in cash covers a higher price at the next open.
 * `self.exit()` sells everything at the next day's open.
 
 **Running and printing.**
 
 * `bt.backtest(...)` runs the strategy over the dates with Rs 1,00,000 (`100_000` is Python's way of writing 100000 with a separator) and returns the result.
-* `result.metrics` holds the performance figures by name, such as `m['net_profit']`.
-* In an f-string, `:,.2f` writes a number with commas and two decimals, and `:.2%` writes a fraction as a percent (0.5327 becomes 53.27%).
+* `result.summary()` writes the four main figures as short text, and `print` shows it.
+
+**The averages are ready on the first day.** An EMA is worked out from the closes before it, so it needs a long run of earlier days before its value can be trusted. The engine takes care of that: it loads SBIN's daily bars from before 1 January 2021 by itself, works out both EMAs over them, and lets the strategy decide from the first day of the test. You write no waiting code. The profit, the drawdown and the trades still count from 1 January 2021 only.
 
 ## What happened
 
-* The strategy turned Rs 1,00,000 into Rs 1,53,267.48: a net profit of Rs 53,267.48, or 53.27 percent, after all charges.
+* The strategy turned Rs 1,00,000 into Rs 1,53,941.09: a net profit of Rs 53,941.09, or 53.94 percent, after all charges.
 * Every buy and sell was decided at a day's close and filled at the next day's open, 09:15. A backtest never trades at a price it could not have seen.
 * The engine took Indian charges (brokerage, STT, exchange charges, stamp duty, GST and the rest) and slippage off every trade. **Slippage** is the small amount every fill loses to the market: you rarely get exactly the price you see.
 * Only 4 of the 11 trades made money, but a few long rises paid for the many small losses. The next lesson shows each trade.
 
 ## What you learned
 
-* A strategy is a class with `init` (set up the indicators once) and `on_bar` (decide at every bar).
+* A strategy is a class with `init` (set up the indicators) and `on_bar` (decide at every bar).
 * `bt.backtest` runs it on real past prices from your OpenAlgo server, with charges and slippage applied.
-* `result.metrics` gives the net profit, return, max drawdown and trade count.
+* `print(result.summary())` prints the net profit, return, max drawdown and trade count.
 
 ## Next lesson
 

@@ -30,7 +30,7 @@ class NiftyOpeningRange(bt.Strategy):
     symbol, exchange, interval = "NIFTY23NOV26FUT", "NFO", "5m"  # the November contract, 5-minute bars
     longs, shorts = True, True  # trade breakouts both ways
 
-    # init runs once, before the first bar.
+    # init runs before the first bar.
     def init(self):
         self.day = None  # the session the strategy is in
 
@@ -56,15 +56,11 @@ class NiftyOpeningRange(bt.Strategy):
 # Run the backtest from 1 October to 11 November 2026 with Rs 5,00,000.
 result = bt.backtest(NiftyOpeningRange, client, start="2026-10-01", end="2026-11-11", capital=500_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 
-# The first three trades and how each ended.
-trades = result.trades[["entry_time", "direction", "exit_reason", "net_pnl_rupees"]]
+# The first three trades and how each ended. trade_list() is the table of closed trades.
+trades = result.trade_list()[["entry_time", "direction", "exit_reason", "net_pnl"]]
 print(trades.head(3).to_string(index=False, float_format="%.2f"))
 ```
 
@@ -74,10 +70,10 @@ Net profit   : Rs 76,864.15
 Return       : 15.37%
 Max drawdown : -3.69%
 Trades       : 27 (63% won)
-               entry_time direction exit_reason  net_pnl_rupees
-2026-10-01 10:05:00+05:30      long      leg_sl        -5959.21
-2026-10-05 09:35:00+05:30      long      leg_sl        -5634.33
-2026-10-06 09:35:00+05:30      long  leg_target         4968.64
+               entry_time direction exit_reason  net_pnl
+2026-10-01 10:05:00+05:30      long      leg_sl -5959.21
+2026-10-05 09:35:00+05:30      long      leg_sl -5634.33
+2026-10-06 09:35:00+05:30      long  leg_target  4968.64
 ```
 
 `leg_sl` is the stop-loss, `leg_target` the target and `scheduler` the 15:10 square-off. The charges come to about Rs 900 a round trip (a trade in and out), most of it the 0.05 percent STT (securities transaction tax) on the sell side. The max drawdown is the largest fall of the account from its highest value.

@@ -24,15 +24,13 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar: it sets up the two EMAs
+    # init runs before the first bar: it sets up the two EMAs
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)  # self.I keeps the indicator up to date bar by bar
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
     # on_bar runs at the close of every bar: it decides whether to buy or sell
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # wait until there are 50 days of prices for the slow EMA
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):  # no shares, fast EMA just rose above slow
             self.buy()  # buy with all the capital at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):  # holding, fast EMA just fell below slow
@@ -42,19 +40,15 @@ class EmaCrossover(bt.Strategy):
 # Run the backtest on SBIN's daily bars from your OpenAlgo server
 result = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. An f-string (f"...") fills the values in {} into the text.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,267.48
-Return       : 53.27%
-Max drawdown : -29.82%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 ```
 
@@ -71,10 +65,10 @@ print(table.loc[["cagr", "sharpe", "max_drawdown", "profit_factor"], ["label", "
 ```text
                           label     value      unit
 key
-cagr                       CAGR  0.075594  fraction
-sharpe             Sharpe ratio  0.460374     ratio
-max_drawdown   Maximum drawdown -0.298198  fraction
-profit_factor     Profit factor  1.921857     ratio
+cagr                       CAGR  0.076399  fraction
+sharpe             Sharpe ratio  0.469393     ratio
+max_drawdown   Maximum drawdown -0.293518  fraction
+profit_factor     Profit factor  1.945661     ratio
 ```
 
 How to read the units:
@@ -83,7 +77,7 @@ How to read the units:
 |---|---|
 | fraction | 0.01 is one percent: returns, rates, drawdowns and shares. `f"{value:.2%}"` prints a fraction as a percent |
 | rupees | Indian rupees |
-| ratio | A plain number, such as 1.92 |
+| ratio | A plain number, such as 1.95 |
 | count | A whole number |
 | days | Calendar days, which can have a fraction |
 | seconds | Seconds |
@@ -94,7 +88,7 @@ How to read the units:
 
 A few rules hold for every figure:
 
-* **Drawdowns are zero or negative.** A drawdown is a fall of the account from its highest value so far: `max_drawdown` of -0.2982 is a fall of 29.82 percent, and `max_drawdown_amount` of -500 is a fall of Rs 500.
+* **Drawdowns are zero or negative.** A drawdown is a fall of the account from its highest value so far: `max_drawdown` of -0.2935 is a fall of 29.35 percent, and `max_drawdown_amount` of -500 is a fall of Rs 500.
 * **NaN** means the data cannot give the figure, for example a Sharpe ratio with no ups and downs to measure.
 * The **Benchmark** group appears only when the run has a benchmark, such as `benchmark="NIFTY"`.
 * Figures are measured from your capital, per trading session, after all charges. [Results and Reports](results-and-reports.md#more-options) has the details.

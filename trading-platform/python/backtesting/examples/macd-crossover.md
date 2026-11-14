@@ -28,7 +28,7 @@ client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 class MacdCrossover(bt.Strategy):
     symbol, exchange, interval = "ICICIBANK", "NSE", "D"  # ICICIBANK on NSE, daily bars
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         # ta.macd gives three lines: MACD, signal and histogram (unused here).
@@ -36,8 +36,6 @@ class MacdCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day): decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < 35:  # warm-up: MACD needs 26 + 9 days first
-            return
         # crossed_above: the MACD line was below its signal line a day ago, and is above it now.
         if self.position.is_flat and self.macd.crossed_above(self.signal):
             self.buy()  # buy with all the capital at the next day's open
@@ -48,23 +46,27 @@ class MacdCrossover(bt.Strategy):
 # Run the backtest from 1 January 2021 to 11 November 2026 with Rs 1,00,000.
 result = bt.backtest(MacdCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 39,564.67
-Return       : 39.56%
-Max drawdown : -29.75%
-Trades       : 51 (31% won)
+Net profit   : Rs 47,464.45
+Return       : 47.46%
+Max drawdown : -26.32%
+Trades       : 52 (35% won), 1 still open
 ```
 
-MACD crosses often on daily bars: 51 trades in under six years, and fewer than one in three won. A few long trends paid for the many small losses, which is how most trend strategies make money. The max drawdown is the largest fall of the account from its highest value.
+MACD crosses often on daily bars: 52 closed trades in under six years, and only about one in three won. A few long trends paid for the many small losses, which is how most trend strategies make money. "1 still open" is the position bought on 7 October 2026 and still held on 11 November 2026: it counts in the net profit at that day's close, but not among the closed trades. The max drawdown is the largest fall of the account from its highest value.
+
+Python also prints a warning at the end of this run:
+
+```text
+OrdersNotPlacedWarning: 1 of 106 orders was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+```
+
+A buy with no quantity is sized at the close it was decided on, with 2 percent of the cash kept back. The buy decided on 7 April 2026 met an open 5.2 percent higher the next day (Rs 1,310.00 after a close of Rs 1,245.50), so it needed more than the cash and was refused; the strategy bought again at a later crossover.
 
 ## Try this
 

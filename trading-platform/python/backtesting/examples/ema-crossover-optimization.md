@@ -31,7 +31,7 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # days in the fast EMA
     slow = 50  # days in the slow EMA
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
@@ -39,8 +39,6 @@ class EmaCrossover(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day): decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: the slow EMA needs enough days first
-            return
         # crossed_above: the fast EMA was below the slow one a day ago, and is above it now.
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # buy with all the capital at the next day's open
@@ -61,24 +59,20 @@ if __name__ == "__main__":
     result = bt.backtest(EmaCrossover, client, start="2025-01-01", end="2026-11-11", capital=100_000,
                          params=opt.best)
 
-    # Print the summary of the check. m is a dict; f"..." fills in each {value}.
-    m = result.metrics
-    print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-    print(f"Return       : {m['total_return']:.2%}")
-    print(f"Max drawdown : {m['max_drawdown']:.2%}")
-    print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+    # Print the summary of the check.
+    print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
 Best on 2021-24: {'fast': 25, 'slow': 60}
-Net profit   : Rs 1,294.40
-Return       : 1.29%
-Max drawdown : -14.45%
+Net profit   : Rs 959.21
+Return       : 0.96%
+Max drawdown : -14.83%
 Trades       : 2 (50% won)
 ```
 
-The search picked 25 and 60, which made Rs 8,537 on 2021 to 2024. On 2025 and 2026, which it never saw, the same pair made only Rs 1,294 in 2 trades. That still beats the original 20 and 50, which lost Rs 7,213 on those dates, but it is far below the result on the years it was picked on: the best pair of the past is partly luck. The max drawdown is the largest fall of the account from its highest value.
+The search picked 25 and 60, the only one of the 12 pairs that made money on 2021 to 2024, and only Rs 1,714 at that. On 2025 and 2026, which it never saw, the same pair made Rs 959 in 2 trades. That beats the original 20 and 50, which lost Rs 7,757 on those dates, but a pair that wins narrowly while its neighbours all lose is a weak choice: the best pair of the past is partly luck. The max drawdown is the largest fall of the account from its highest value.
 
 ## Try this
 

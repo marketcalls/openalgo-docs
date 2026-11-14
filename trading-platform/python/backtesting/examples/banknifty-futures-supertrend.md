@@ -29,7 +29,7 @@ client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 class BankNiftySupertrend(bt.Strategy):
     symbol, exchange, interval = "BANKNIFTY23NOV26FUT", "NFO", "15m"  # the November contract, 15-minute bars
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         # ta.supertrend gives the line and its direction; "_" drops the direction, unused here.
@@ -37,8 +37,6 @@ class BankNiftySupertrend(bt.Strategy):
 
     # on_bar runs at the close of every 15-minute bar: decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < 10:  # warm-up: the ATR needs 10 bars first
-            return
         # self.target(lots=...) trades to that position, whatever is held now.
         if bar.close > self.supertrend[-1]:  # above the line ([-1] is the latest value)
             self.target(lots=1)  # hold one lot long; a short is bought back first
@@ -49,25 +47,35 @@ class BankNiftySupertrend(bt.Strategy):
 # Run the backtest from 1 October to 11 November 2026 with Rs 5,00,000.
 result = bt.backtest(BankNiftySupertrend, client, start="2026-10-01", end="2026-11-11", capital=500_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
-print(f"Charges      : Rs {m['total_costs']:,.2f}")  # all charges paid
+# Print the summary, then the charges. result.metrics holds every figure of the run by name;
+# f"..." fills in the {value}, and ":,.2f" writes it with commas and 2 decimals.
+print(result.summary())  # net profit, return, drawdown and trades
+print(f"Charges      : Rs {result.metrics['total_costs']:,.2f}")  # all charges paid
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -6,313.46
-Return       : -1.26%
-Max drawdown : -18.58%
+Net profit   : Rs -11,939.33
+Return       : -2.39%
+Max drawdown : -18.78%
 Trades       : 42 (43% won)
-Charges      : Rs 41,774.67
+Charges      : Rs 41,771.73
 ```
 
-The trend flipped often over these sessions: 42 trades, 43 percent won. Before charges the strategy made about Rs 35,500, and the charges of about Rs 1,000 a round trip (a trade in and out) turned that into a loss. The max drawdown is the largest fall of the account from its highest value.
+The trend flipped often over these sessions: 42 trades, 43 percent won. Before charges the strategy made about Rs 29,800, and the charges of about Rs 1,000 a round trip (a trade in and out) turned that into a loss. The max drawdown is the largest fall of the account from its highest value.
+
+NFO trades until 15:40 from 3 August 2026, so each session ends with bars that close at 15:15, 15:30 and 15:40. After the 15:10 square-off has closed the position, the strategy asks again for a lot on each of those last bars, and now and then a flip comes after 15:00. Both come after the 15:00 cut-off for new intraday positions, so the engine does not place them, as a broker would not. That is what the cut-off is for, so Python prints no warning about them; `result.warnings` counts them. This block continues the one above:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+print(result.warnings[0])  # the first note of the run: the orders the cut-off kept out
+```
+
+<!-- output -->
+```text
+86 of 128 orders were outside the MIS entry window, each session's open to 15:00 (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-10-01 15:15 IST
+```
 
 ## Try this
 

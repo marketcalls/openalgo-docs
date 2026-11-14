@@ -22,31 +22,19 @@ from openalgo import api, ta
 client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 
 
-# A function ("def") is a named piece of code you can run again: print_summary(result).
-def print_summary(result):
-    m = result.metrics  # a dict: the figures of the run, looked up by name
-    # f"..." fills in each {value}: ":,.2f" is rupees with commas, ":.2%" a percent.
-    print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-    print(f"Return       : {m['total_return']:.2%}")
-    print(f"Max drawdown : {m['max_drawdown']:.2%}")
-    print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
-
-
 # The strategy. A class bundles settings and functions; inside it, "self" is the strategy itself.
 class NiftyFuturesEma(bt.Strategy):
     symbol, exchange, interval = "NIFTY23NOV26FUT", "NFO", "15m"  # the November contract, 15-minute bars
     fast = 20  # bars in the fast EMA
     slow = 50  # bars in the slow EMA
 
-    # init runs once, before the first bar: the two EMAs of the closing prices.
+    # init runs before the first bar: the two EMAs of the closing prices.
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
     # on_bar runs at the close of every 15-minute bar: buy, sell or wait.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: wait until the slow EMA has 50 bars
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy(lots=1)  # one lot: 65 units
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
@@ -55,15 +43,15 @@ class NiftyFuturesEma(bt.Strategy):
 
 # Run it from 1 October to 11 November 2026 with Rs 5,00,000, enough for the margin of one lot.
 result = bt.backtest(NiftyFuturesEma, client, start="2026-10-01", end="2026-11-11", capital=500_000)
-print_summary(result)
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 31,722.48
-Return       : 6.34%
+Net profit   : Rs 33,888.62
+Return       : 6.78%
 Max drawdown : -1.54%
-Trades       : 4 (100% won)
+Trades       : 5 (100% won)
 ```
 
 The **max drawdown** is the largest fall of the account from its highest value. The [futures lesson](tutorial/07-futures.md) walks through this strategy step by step.
@@ -76,17 +64,19 @@ A lot is the fixed number of units one contract trades in: 65 for this NIFTY con
 <!-- requires-server -->
 ```python
 # Each trade: when it opened and closed, how many units, and its profit after charges.
-trades = result.trades[["entry_time", "exit_time", "entry_units", "net_pnl_rupees"]]
+# trade_list() is the table of closed trades, one row each; [[...]] picks four columns.
+trades = result.trade_list()[["entry_time", "exit_time", "quantity", "net_pnl"]]
 print(trades.to_string(index=False, float_format="%.2f"))  # 2 decimals, no row numbers
 ```
 
 <!-- output -->
 ```text
-               entry_time                 exit_time  entry_units  net_pnl_rupees
-2026-10-09 13:15:00+05:30 2026-10-09 15:10:00+05:30        65.00          762.54
-2026-10-13 10:30:00+05:30 2026-10-13 15:10:00+05:30        65.00        10343.47
-2026-10-26 13:15:00+05:30 2026-10-26 15:10:00+05:30        65.00         6249.03
-2026-10-29 09:30:00+05:30 2026-10-29 15:10:00+05:30        65.00        14368.12
+               entry_time                 exit_time  quantity  net_pnl
+2026-10-06 10:15:00+05:30 2026-10-06 15:10:00+05:30     65.00  2166.95
+2026-10-09 13:15:00+05:30 2026-10-09 15:10:00+05:30     65.00   762.54
+2026-10-13 10:30:00+05:30 2026-10-13 15:10:00+05:30     65.00 10343.47
+2026-10-26 13:15:00+05:30 2026-10-26 15:10:00+05:30     65.00  6249.03
+2026-10-29 09:30:00+05:30 2026-10-29 15:10:00+05:30     65.00 14368.12
 ```
 
 Every trade was one lot, 65 units, and every one was closed by the 15:10 square-off.
@@ -103,17 +93,17 @@ class Overnight(NiftyFuturesEma):
     product = "NRML"  # held overnight, no square-off
 
 
-# Run it over the same dates and print the four numbers.
+# Run it over the same dates and print its summary.
 overnight = bt.backtest(Overnight, client, start="2026-10-01", end="2026-11-11", capital=500_000)
-print_summary(overnight)
+print(overnight.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 156,617.14
-Return       : 31.32%
-Max drawdown : -5.50%
-Trades       : 3 (33% won)
+Net profit   : Rs 1,50,448.96
+Return       : 30.09%
+Max drawdown : -5.57%
+Trades       : 4 (25% won), 1 still open
 ```
 
 Most of this profit is the lot bought on 29 October and still held on 11 November. A position still open at the end is valued at the last close: it counts in the net profit but not in the closed trades.
@@ -133,13 +123,13 @@ print(settled.head(4).to_string(index=False))
 <!-- output -->
 ```text
       date          symbol  quantity_units  price_rupees  amount_rupees  kind
+2026-10-06 NIFTY23NOV26FUT            65.0       22882.6         3412.5 daily
+2026-10-07 NIFTY23NOV26FUT             0.0       22722.3        -8697.0 daily
 2026-10-09 NIFTY23NOV26FUT            65.0       22723.2         2509.0 daily
 2026-10-12 NIFTY23NOV26FUT             0.0       22500.0       -12480.0 daily
-2026-10-13 NIFTY23NOV26FUT            65.0       22965.0        15463.5 daily
-2026-10-14 NIFTY23NOV26FUT            65.0       22760.0       -13325.0 daily
 ```
 
-`price_rupees` is the day's settlement price, `quantity_units` what was held after the close (0 on 12 October, the day the lot was sold) and `amount_rupees` the day's profit or loss, paid in cash. Together the daily amounts add up to the profit before charges.
+`price_rupees` is the day's settlement price, `quantity_units` what was held after the close (0 on 7 and 12 October, the days the lot was sold) and `amount_rupees` the day's profit or loss, paid in cash. Together the daily amounts add up to the profit before charges.
 
 ## How much margin does one lot block?
 
@@ -163,7 +153,7 @@ print(f"Most margin blocked: Rs {overnight.equity['margin_rupees'].max():,.2f}")
 <!-- output -->
 ```text
 NIFTY 20 percent of contract value (default)
-Most margin blocked: Rs 296,595.00
+Most margin blocked: Rs 296,790.00
 ```
 
 One lot worth about Rs 14.8 lakh blocked about Rs 3 lakh of the Rs 5,00,000. A bare number such as `margin=15` is refused, because it could mean a percent or rupees. The margin is a backtest assumption only: in live trading your broker computes it.
@@ -188,4 +178,5 @@ Yes. A **short** sells first and buys back later, to gain from a fall. `self.sel
 * **Several underlyings:** `symbols = ("HDFCBANK", "ICICIBANK")` with `exchange = "NFO"`.
 * **Contract terms:** from the reference tables, or from `instrument=`; with your own data, a dict of bars keyed by contract symbol.
 * **Margin rules:** a bare number, a percent above 100 or a contract symbol in `margin=` raises a `ConfigError` saying what to write; `result.rerun(margin=...)` repeats a run with another margin.
-* **Not available yet:** MCX futures from the reference tables (pass `instrument=`, as the [CRUDEOIL example](examples/crudeoil-futures-macd.md) does); condition strategies on an underlying; `symbols` that mix underlyings and contracts.
+* **Not available yet:** an MCX underlying such as `underlying = "CRUDEOIL"` from the reference tables, which have no MCX expiry rule (pass each contract with `instrument=`; a named MCX contract works, as in the [CRUDEOIL example](examples/crudeoil-futures-macd.md)); condition strategies on an underlying; `symbols` that mix underlyings and contracts.
+* **Warm-up:** a named contract warms its indicators up on its own bars before `start`. A series built from `underlying` loads no history before `start`, because its contracts and rolls begin there, so the strategy waits inside the run until its indicators are ready, and Python prints a `WarmUpWarning` that says when it first decided.

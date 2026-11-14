@@ -33,7 +33,7 @@ client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 class OpeningRangeBreakout(bt.Strategy):
     symbol, exchange, interval = "SBIN", "NSE", "5m"  # 5-minute bars: the engine trades MIS
 
-    # init runs once, before the first bar. (def starts a method: steps that belong to the class.)
+    # init runs before the first bar. (def starts a method: steps that belong to the class.)
     def init(self):
         self.traded_today = True  # no trade until the first opening range is known
 
@@ -54,19 +54,15 @@ class OpeningRangeBreakout(bt.Strategy):
 # Run the backtest on SBIN 5-minute bars, 1 August to 11 November 2026, with Rs 1,00,000.
 result = bt.backtest(OpeningRangeBreakout, client, start="2026-08-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. f"..." is an f-string: the values in braces are filled in.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())   # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -4,648.41
-Return       : -4.65%
-Max drawdown : -11.18%
+Net profit   : Rs -4,572.32
+Return       : -4.57%
+Max drawdown : -10.93%
 Trades       : 27 (41% won)
 ```
 
@@ -80,7 +76,7 @@ Trades       : 27 (41% won)
 
 ## What happened
 
-* The strategy bought on the 27 mornings SBIN broke above its opening range, and lost Rs 4,648.41 over these three months. 8 trades were sold at the stop-loss and 19 at the 15:00 square-off; 41 percent of them made money.
+* The strategy bought on the 27 mornings SBIN broke above its opening range, and lost Rs 4,572.32 over these three months. 8 trades were sold at the stop-loss and 19 at the 15:00 square-off; 41 percent of them made money.
 * A losing result is still a useful one: you learned it without risking money. The next lesson tries the other side of the range.
 * Each order was decided at a bar's close and filled at the next bar's open, with intraday charges and slippage.
 * When your OpenAlgo server has 1-minute bars for the whole period, the engine checks the stop on them, so a stop is hit at the minute the price reaches it.

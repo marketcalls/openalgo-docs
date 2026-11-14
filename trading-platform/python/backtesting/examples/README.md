@@ -2,9 +2,11 @@
 
 Real strategies backtested on real market data. Each page gives the rules, one block of commented code you can copy and run, the output it printed, and a few changes to try. New to backtesting? Start with the [tutorial](../tutorial/README.md).
 
-The data comes straight from your OpenAlgo server: put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the `client = ...` line. Every run uses the engine's defaults for Indian markets without being asked: charges at each trade date's rates, slippage, lot and tick sizes, session times and holidays, and the MIS square-off.
+The data comes straight from your OpenAlgo server: put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY` in the `client = ...` line. Every run uses the engine's defaults for Indian markets without being asked: charges at each trade date's rates, slippage, whole shares, lot and tick sizes, session times and holidays, and the MIS square-off.
 
-Two words you will meet in the tables: **CNC** is delivery, where shares are held overnight for as long as the trade lasts; **MIS** is intraday, where every position is closed (squared off) before the session ends. A daily strategy decides once a day, at the close; a 5-minute strategy decides at the close of every 5-minute bar.
+Two words you will meet in the tables: **CNC** is delivery, where shares are held overnight for as long as the trade lasts; **MIS** is intraday, where every position is closed (squared off) before the session ends. A daily strategy decides once a day, at the close; a 5-minute strategy decides at the close of every 5-minute bar. The engine loads the bars before the start date by itself, so the indicators are ready on the first day of every run.
+
+Python may print a warning under the output, and the run is still complete. Daily runs from early 2021 print an `UnverifiedScheduleWarning`: until 31 March 2021 NSE charged shares outside the NIFTY 50 and NIFTY Next 50 a lower transaction charge, and the engine does not know which shares were in those indices, so it charges every share the standard rate and says it is unverified. For a NIFTY 50 share such as SBIN the standard rate is the right one. A run in which orders were refused or skipped ends with an `OrdersNotPlacedWarning` that says how many and why; orders kept out by a rule you set, such as the cut-off for new intraday positions, are only counted in `result.warnings`.
 
 ## Equity
 

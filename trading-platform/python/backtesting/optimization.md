@@ -24,15 +24,13 @@ class EmaCrossover(bt.Strategy):
     fast = 20  # parameters: the sweep changes these
     slow = 50
 
-    # init runs once, before the first bar: the two EMAs of the closing prices.
+    # init runs before the first bar: the two EMAs of the closing prices.
     def init(self):
         self.fast_ema = self.I(ta.ema, self.close, self.fast)
         self.slow_ema = self.I(ta.ema, self.close, self.slow)
 
     # on_bar runs at the close of every bar: buy, sell or wait.
     def on_bar(self, bar):
-        if len(self.close) < self.slow:  # warm-up: wait until the slow EMA has enough days
-            return
         if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
             self.buy()  # all the capital, at the next day's open
         elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
@@ -52,36 +50,31 @@ if __name__ == "__main__":
 
     # The full backtest of the best values. "**" passes the dict as fast=..., slow=...
     best = sweep.select(**sweep.best)
-    m = best.metrics  # a dict: the figures of the run, looked up by name
-    # f"..." fills in each {value}: ":,.2f" is rupees with commas, ":.2%" a percent.
-    print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-    print(f"Return       : {m['total_return']:.2%}")
-    print(f"Max drawdown : {m['max_drawdown']:.2%}")
-    print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+    print(best.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
  fast  slow  net_profit  total_return  max_drawdown  sharpe  trades  objective
-    5    30    99262.54          0.99         -0.26    0.72      28   99262.54
-    5    50    74667.11          0.75         -0.28    0.59      23   74667.11
-    5   100    25352.21          0.25         -0.29    0.30      17   25352.21
-   10    30    71912.31          0.72         -0.24    0.58      23   71912.31
-   10    50    58861.66          0.59         -0.27    0.50      19   58861.66
-   10   100    18377.28          0.18         -0.28    0.25      14   18377.28
-   20    30    54755.41          0.55         -0.26    0.48      17   54755.41
-   20    50    53267.48          0.53         -0.30    0.46      11   53267.48
-   20   100    26271.69          0.26         -0.27    0.31       9   26271.69
+    5    30    98375.98          0.98         -0.25    0.72      28   98375.98
+    5    50    65851.70          0.66         -0.28    0.55      25   65851.70
+    5   100    25437.38          0.25         -0.29    0.30      17   25437.38
+   10    30    69968.22          0.70         -0.23    0.57      23   69968.22
+   10    50    55576.39          0.56         -0.26    0.49      19   55576.39
+   10   100    18630.46          0.19         -0.28    0.25      14   18630.46
+   20    30    53972.84          0.54         -0.25    0.48      17   53972.84
+   20    50    53941.09          0.54         -0.29    0.47      11   53941.09
+   20   100    25892.34          0.26         -0.26    0.31       9   25892.34
 best: {'fast': 5, 'slow': 30}
-Net profit   : Rs 99,262.54
-Return       : 99.26%
-Max drawdown : -25.52%
-Trades       : 28 (39% won)
+Net profit   : Rs 98,375.98
+Return       : 98.38%
+Max drawdown : -25.15%
+Trades       : 28 (39% won), 1 still open
 ```
 
 Reading it:
 
-* `sweep.table` has one row per combination. `total_return` and `max_drawdown` are fractions: 0.53 is 53 percent. The **max drawdown** is the largest fall of the account from its highest value; the **Sharpe** ratio is the return per unit of day-to-day swings. `objective` is the figure the sweep ranks by, net profit by default.
+* `sweep.table` has one row per combination. `total_return` and `max_drawdown` are fractions: 0.54 is 54 percent. The **max drawdown** is the largest fall of the account from its highest value; the **Sharpe** ratio is the return per unit of day-to-day swings. `objective` is the figure the sweep ranks by, net profit by default.
 * `sweep.best` is the combination with the highest objective.
 * `sweep.select(...)` gives the full result of one combination, exactly what `bt.backtest` gives for those values, with its trades and report.
 
@@ -137,12 +130,12 @@ if __name__ == "__main__":
 ```text
 fast       5        10       20
 slow
-30    99263.0  71912.0  54755.0
-50    74667.0  58862.0  53267.0
-100   25352.0  18377.0  26272.0
+30    98376.0  69968.0  53973.0
+50    65852.0  55576.0  53941.0
+100   25437.0  18630.0  25892.0
 ```
 
-Every pair made money over these years, and the profit fell as the averages got slower. Neighbouring cells agree, which is a better sign than one lone high number surrounded by poor ones.
+Every pair made money over these years, and the profit mostly fell as the averages got slower. Neighbouring cells agree, which is a better sign than one lone high number surrounded by poor ones.
 
 ## Should I trade the best values?
 

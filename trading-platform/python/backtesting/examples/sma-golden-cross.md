@@ -28,7 +28,7 @@ client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
 class GoldenCross(bt.Strategy):
     symbol, exchange, interval = "HDFCBANK", "NSE", "D"  # HDFCBANK on NSE, daily bars
 
-    # init runs once, before the first bar. self.I works out an indicator so that
+    # init runs before the first bar. self.I works out an indicator so that
     # each bar sees only the values known at that bar.
     def init(self):
         self.sma50 = self.I(ta.sma, self.close, 50)
@@ -36,8 +36,6 @@ class GoldenCross(bt.Strategy):
 
     # on_bar runs at the close of every bar (here once a day): decide what to do.
     def on_bar(self, bar):
-        if len(self.close) < 200:  # warm-up: the 200-day SMA needs 200 days first
-            return
         # crossed_above: the 50-day SMA was below the 200-day a day ago, and is above it now.
         if self.position.is_flat and self.sma50.crossed_above(self.sma200):
             self.buy()  # golden cross: buy with all the capital at the next day's open
@@ -48,23 +46,19 @@ class GoldenCross(bt.Strategy):
 # Run the backtest from 1 January 2021 to 11 November 2026 with Rs 1,00,000.
 result = bt.backtest(GoldenCross, client, start="2021-01-01", end="2026-11-11", capital=100_000)
 
-# Print the summary. m is a dict (values looked up by name); f"..." fills in each {value}.
-m = result.metrics
-print(f"Net profit   : Rs {m['net_profit']:,.2f}")
-print(f"Return       : {m['total_return']:.2%}")
-print(f"Max drawdown : {m['max_drawdown']:.2%}")
-print(f"Trades       : {m['trades']} ({m['win_rate']:.0%} won)")
+# Print the summary.
+print(result.summary())  # net profit, return, drawdown and trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 5,432.61
-Return       : 5.43%
-Max drawdown : -13.51%
+Net profit   : Rs 5,326.02
+Return       : 5.33%
+Max drawdown : -13.25%
 Trades       : 3 (67% won)
 ```
 
-Three trades in almost six years. The 200-day average needs 200 sessions before it has a value, so the first trade came only in September 2022. The max drawdown is the largest fall of the account from its highest value.
+Three trades in almost six years, the first in September 2022: a golden cross is rare. The engine loaded HDFCBANK's bars from before 2021 by itself, so the 200-day average had its value from the first day of the run. The max drawdown is the largest fall of the account from its highest value.
 
 ## Try this
 
