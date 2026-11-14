@@ -171,9 +171,11 @@ print(result.assumptions["warm_up"])  # the warm-up of the first run on this pag
 automatic: no decision before start, nor for a symbol before every self.I indicator of it has closed its warm-up of bars (its window-stability length on the engine's reference bars, the same for any data and in live trading; bars before start count); ema(SBIN.close, 50) needs 512 D bars of SBIN; history before start: SBIN 512 strategy bars from 2018-12-10 to 2020-12-31 (asked from 2018-06-17); ready at start
 ```
 
-The slow EMA needs 512 daily bars. The engine asked your OpenAlgo server for SBIN's bars from 28 October 2018, a few weeks more than 512 trading days, to allow for holidays, and kept the last 512 of them, from 10 December 2018 to 31 December 2020. So the strategy was ready on the start date.
+The slow EMA needs 512 daily bars. The engine asked your OpenAlgo server for SBIN's bars from 17 June 2018, more than 512 trading days back, to allow for holidays (it asks in fixed steps, so every run of an optimization asks the same way), and kept the last 512 of them, from 10 December 2018 to 31 December 2020. So the strategy was ready on the start date.
 
 A strategy's own warm-up line at the top of `on_bar`, one that returns while too few bars have closed, still works, but it is no longer needed.
+
+**Several symbols wait one by one.** In a strategy with more than one symbol, each symbol joins the run on the first bar its own indicators are ready; the symbols that are ready trade in the meantime. Until a symbol is ready, it is left out of the bars `on_bar` receives, its orders are not placed, and its indicators (and anything else worked out from its bars) read `NaN`, or `False` for a signal. Its prices (`open`, `high`, `low`, `close`, `volume`) can still be read. So a strategy cannot trade one share on an average of another that is not ready yet.
 
 ## When do I pass `tz=`?
 
