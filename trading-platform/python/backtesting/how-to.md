@@ -423,7 +423,7 @@ WarmUpWarning: The strategy waited inside the run for its indicators to warm up 
 
 `result.warnings` has the details: the 50-day EMA needs 512 daily bars, and the bars given begin on 1 January 2021. The fix: fetch the bars from an earlier date and pass `start=`, as in [Use your own data](#use-your-own-data) above. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md).
 
-The wait is for history that does not exist. When the history exists but OpenAlgo cannot send it (the server is not running, or the broker login has expired), the run does not wait: it stops with a `ServerError` that says to log in to the broker in OpenAlgo and run the backtest again. Before it stops, the engine asks the server once more for the first day of the run, without the local cache, so a broker that only refuses older dates does not stop it.
+The wait is for history that does not exist. When the history exists but OpenAlgo cannot send it (the server is not running, or the broker login has expired), the run does not wait: it stops with a `ServerError` that says to log in to the broker in OpenAlgo and run the backtest again. Before it stops, the engine asks the server once more for the stock's most recent sessions, without the local cache, so a broker that only refuses older dates does not stop it.
 
 ## Understand why `init` runs twice
 
