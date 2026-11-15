@@ -91,9 +91,9 @@ print(trades[columns].head(3).round({"net_pnl": 2}).to_string())  # head(3): the
 ```text
                      entry_time                 exit_time  quantity  entry_price  exit_price   net_pnl
 trade
-1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30     270.0       356.95      456.95  26741.28
-2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30     246.0       503.15      460.20 -10846.48
-3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30     222.0       507.15      470.90  -8305.91
+1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30     270.0       356.95      456.95  26742.48
+2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30     246.0       503.15      460.20 -10846.92
+3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30     222.0       507.15      470.90  -8306.89
 ```
 
 Each trade was decided at a day's close and filled at the next day's open, 09:15. The table also has `direction`, `product`, `gross_pnl`, `charges`, `return_pct`, `bars_held`, `days_held` and `exit_reason`. `result.trade_list().to_csv("trades.csv")` saves it for a spreadsheet. Lesson: [Read the Results](tutorial/02-read-the-results.md).
@@ -422,6 +422,8 @@ WarmUpWarning: The strategy waited inside the run for its indicators to warm up 
 ```
 
 `result.warnings` has the details: the 50-day EMA needs 512 daily bars, and the bars given begin on 1 January 2021. The fix: fetch the bars from an earlier date and pass `start=`, as in [Use your own data](#use-your-own-data) above. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md).
+
+The wait is for history that does not exist. When the history exists but OpenAlgo cannot send it (the server is not running, or the broker login has expired), the run does not wait: it stops with a `ServerError` that says to log in to the broker in OpenAlgo and run the backtest again. Before it stops, the engine asks the server once more for the first day of the run, without the local cache, so a broker that only refuses older dates does not stop it.
 
 ## Understand why `init` runs twice
 

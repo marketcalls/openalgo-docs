@@ -56,7 +56,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
-Charges      : Rs 3,321.65
+Charges      : Rs 3,322.91
 ```
 
 The net profit is after every charge. The **max drawdown** is the largest fall of the account from its highest value.
@@ -76,18 +76,18 @@ The charges of the first trade, its buy and its sell:
 <!-- requires-server -->
 ```python
 # result.costs has one row per fill with every charge in rupees; show the first two rows.
-columns = ["side", "price_rupees", "brokerage", "stt", "exchange_txn", "sebi_fee", "stamp_duty", "gst", "dp_charge", "total"]
+columns = ["side", "price_rupees", "brokerage", "stt", "exchange_txn", "sebi_fee", "stamp_duty", "gst", "dp_charge", "total", "charged"]
 print(result.costs[columns].head(2).round(2).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
-side  price_rupees  brokerage    stt  exchange_txn  sebi_fee  stamp_duty  gst  dp_charge  total
- BUY        356.95        0.0  96.38          3.33      0.10       14.46 0.60       0.00 114.85
-SELL        456.95        0.0 123.38          4.26      0.12        0.00 0.77      15.34 143.86
+side  price_rupees  brokerage    stt  exchange_txn  sebi_fee  stamp_duty  gst  dp_charge  total  charged
+ BUY        356.95        0.0  96.38          3.33      0.10       14.46 0.60       0.00 114.85   114.03
+SELL        456.95        0.0 123.38          4.26      0.12        0.00 0.77      15.34 143.86   143.49
 ```
 
-Reading the buy: 270 shares at 356.95 is an order of Rs 96,377. Delivery brokerage is zero. STT is 0.1 percent of the value (Rs 96.38), stamp duty 0.015 percent (Rs 14.46), and the exchange charge, SEBI fee and GST add about Rs 4. The sell pays STT again, no stamp duty, and the DP charge of Rs 15.34. Every rate is the one in force on the trade's date.
+Reading the buy: 270 shares at 356.95 is an order of Rs 96,377. Delivery brokerage is zero. STT is 0.1 percent of the value (Rs 96.38), stamp duty 0.015 percent (Rs 14.46), and the exchange charge, SEBI fee and GST add about Rs 4. The sell pays STT again, no stamp duty, and the DP charge of Rs 15.34. Every rate is the one in force on the trade's date. `total` adds up the charges as worked out; `charged` is what the account paid for the fill. The day's contract note rounds STT and stamp duty to whole rupees (Rs 96 and Rs 14 for the buy), so the buy paid Rs 114.03 and the sell Rs 143.49. A trade's charges are what its fills paid.
 
 ## How do I use my own broker's brokerage?
 
@@ -116,7 +116,7 @@ Net profit   : Rs 53,485.86
 Return       : 53.49%
 Max drawdown : -29.42%
 Trades       : 11 (36% won)
-Charges      : Rs 3,836.09
+Charges      : Rs 3,836.94
 ```
 
 Twenty-two orders at Rs 20 each (Rs 440), plus the GST on them, raised the charges and lowered the profit. To price one trade without a backtest, use the [cost calculator](support-functions/cost-calculator.md).
@@ -149,7 +149,7 @@ Net profit   : Rs 54,954.60
 Return       : 54.95%
 Max drawdown : -29.24%
 Trades       : 11 (36% won)
-Charges      : Rs 3,330.54
+Charges      : Rs 3,328.25
 ```
 
 Over 22 fills, the default slippage cost about Rs 1,000 of profit. Keep it on: real fills are never exactly at the open.
@@ -226,7 +226,7 @@ Net profit   : Rs 55,819.69
 Return       : 55.82%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
-Charges      : Rs 3,414.87
+Charges      : Rs 3,416.24
 first buy, whole shares: 270.0
 first buy, part shares : 279.82
 ```
@@ -268,7 +268,7 @@ Here there are two. The first: no lot or tick size was given for SBIN, so the en
 
 ## More options
 
-* **Contract-note rounding:** by default STT and stamp duty are rounded to the rupee once a day per contract note, as a broker does; `result.contract_notes` shows each note. `costs=bt.costs.CostModel(rounding="calculator")` rounds each trade instead.
+* **Contract-note rounding:** by default STT and stamp duty are rounded to the rupee once a day per contract note, as a broker does; `result.contract_notes` shows each note. Each fill pays its share of its note (`result.costs["charged"]`), and a trade pays what its fills paid, so the trades add up to the account. `costs=bt.costs.CostModel(rounding="calculator")` rounds each trade instead.
 * **Dated rates:** charges are built in from 1 July 2020, one schedule per rate change; `result.costs` names the `schedule` of each fill. An earlier start stops with a `CostError`: pass `costs=None`, or `bt.costs.CostModel(backfill=True)`.
 * **Not costed yet:** currency derivatives (CDS, BCD) and MCX options stop with a `CostError`; pass `costs=None`.
 * **Your own brokerage:** `bt.costs.custom(delivery=..., intraday=..., futures=..., options=..., dp_fee=...)`.

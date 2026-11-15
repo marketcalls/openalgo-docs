@@ -181,19 +181,19 @@ A **trade** is a round trip: a buy and the sell that closed it (or a short sale 
 | Winning trades (`winning_trades`) | 4 | Trades that made money after their charges. |
 | Losing trades (`losing_trades`) | 7 | Trades that lost money after their charges. |
 | Win rate (`win_rate`) | 36.36% | The share of trades that made money. Trend strategies often win less than half their trades and still make money, because their wins are large. |
-| Average win (`average_win`) | Rs 27,746.08 | The average profit of a winning trade. |
-| Average loss (`average_loss`) | Rs -8,148.85 | The average loss of a losing trade. |
+| Average win (`average_win`) | Rs 27,746.23 | The average profit of a winning trade. |
+| Average loss (`average_loss`) | Rs -8,149.12 | The average loss of a losing trade. |
 | Profit factor (`profit_factor`) | 1.95 | All the money won divided by all the money lost. Above 1 makes money; many traders look for 1.5 or more. |
-| Expectancy (`expectancy`) | Rs 4,903.85 | The average profit per trade: what one more trade like these would earn on average. |
+| Expectancy (`expectancy`) | Rs 4,903.74 | The average profit per trade: what one more trade like these would earn on average. |
 | Payoff ratio (`payoff_ratio`) | 3.40 | The average win divided by the average loss. Here a win was 3.4 times the size of a loss. |
-| Largest win (`largest_win`) | Rs 40,455.86 | The best trade. |
-| Largest loss (`largest_loss`) | Rs -16,998.74 | The worst trade. Compare it with your capital: could you take it again? |
+| Largest win (`largest_win`) | Rs 40,455.82 | The best trade. |
+| Largest loss (`largest_loss`) | Rs -16,999.48 | The worst trade. Compare it with your capital: could you take it again? |
 | Consecutive wins (`max_consecutive_wins`) | 1 | The longest run of winning trades in a row. |
 | Consecutive losses (`max_consecutive_losses`) | 2 | The longest run of losing trades in a row. Expect a longer losing run than this one in real trading, and decide in advance whether you would keep going. |
 | Average holding time (`average_holding_seconds`) | 1,10,12,072.73 seconds | How long a trade was held on average. Divide by 86,400 for days: about 127 days here. |
 | Gross P&L (`gross_pnl`) | Rs 57,264.00 | The trades' profit before charges. |
-| Costs (`total_costs`) | Rs 3,321.65 | The trades' charges: brokerage, STT, exchange charges, SEBI fee, stamp duty, GST and the DP charge. |
-| Net P&L (`net_pnl`) | Rs 53,942.35 | The trades' profit after their charges. It is Rs 1.26 more than the net profit: the account also pays the rounding of each day's contract note, which rounds STT and stamp duty to whole rupees. |
+| Costs (`total_costs`) | Rs 3,322.91 | The trades' charges: brokerage, STT, exchange charges, SEBI fee, stamp duty, GST and the DP charge, with each trade's share of the rounding on each day's contract note (STT and stamp duty are rounded to whole rupees there). |
+| Net P&L (`net_pnl`) | Rs 53,941.09 | The trades' profit after their charges. With no position left open at the end, as here, it equals the net profit: the trades add up to what your account made. |
 | Costs / gross P&L (`cost_share_of_gross_pnl`) | 5.80% | The share of the gross profit that charges took. A strategy that trades often can lose most of its profit to charges; watch this figure for intraday strategies. |
 | Turnover (`turnover`) | Rs 28,32,597.50 | The total value of every buy and every sell. |
 | Turnover ratio (`turnover_ratio`) | 20.96 | Turnover divided by the average equity: the account was traded about 21 times over. Higher turnover means more charges and more slippage. |

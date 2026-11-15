@@ -141,20 +141,20 @@ open_trades                                          Open trades                
 winning_trades                                    Winning trades                          4      count
 losing_trades                                      Losing trades                          7      count
 win_rate                                                Win rate                   0.363636   fraction
-average_win                                          Average win               27746.076004     rupees
-average_loss                                        Average loss               -8148.851097     rupees
-profit_factor                                      Profit factor                   1.945661      ratio
-expectancy                                            Expectancy                4903.849667     rupees
-payoff_ratio                                        Payoff ratio                   3.404906      ratio
-largest_win                                          Largest win               40455.863962     rupees
-largest_loss                                        Largest loss              -16998.742792     rupees
+average_win                                          Average win                 27746.2275     rupees
+average_loss                                        Average loss               -8149.117143     rupees
+profit_factor                                      Profit factor                   1.945608      ratio
+expectancy                                            Expectancy                4903.735455     rupees
+payoff_ratio                                        Payoff ratio                   3.404814      ratio
+largest_win                                          Largest win                   40455.82     rupees
+largest_loss                                        Largest loss                  -16999.48     rupees
 max_consecutive_wins                            Consecutive wins                          1      count
 max_consecutive_losses                        Consecutive losses                          2      count
 average_holding_seconds                     Average holding time            11012072.727273    seconds
 gross_pnl                                              Gross P&L                    57264.0     rupees
-total_costs                                                Costs                3321.653663     rupees
-net_pnl                                                  Net P&L               53942.346337     rupees
-cost_share_of_gross_pnl                        Costs / gross P&L                   0.058006   fraction
+total_costs                                                Costs                    3322.91     rupees
+net_pnl                                                  Net P&L                   53941.09     rupees
+cost_share_of_gross_pnl                        Costs / gross P&L                   0.058028   fraction
 turnover                                                Turnover                  2832597.5     rupees
 turnover_ratio                                    Turnover ratio                  20.957028      ratio
 benchmark_total_return                          Benchmark return                   0.806287   fraction
@@ -207,10 +207,10 @@ tail_ratio                                            Tail ratio                
 outlier_win_ratio                              Outlier win ratio                   3.221468      ratio
 outlier_loss_ratio                            Outlier loss ratio                   3.076299      ratio
 win_loss_ratio                                    Win/loss ratio                   0.571429      ratio
-kelly_criterion                                  Kelly criterion                    0.17674   fraction
-risk_of_ruin                                        Risk of ruin                   0.036067   fraction
-cpc_index                                              CPC index                   2.409016      ratio
-common_sense_ratio                            Common sense ratio                   2.228911      ratio
+kelly_criterion                                  Kelly criterion                   0.176735   fraction
+risk_of_ruin                                        Risk of ruin                   0.036075   fraction
+cpc_index                                              CPC index                   2.408885      ratio
+common_sense_ratio                            Common sense ratio                    2.22885      ratio
 ```
 
 How to read the table:
@@ -218,7 +218,7 @@ How to read the table:
 * The left column, `key`, is the figure's name in code: `result.metrics["sharpe"]` gives the Sharpe ratio, 0.469393. The figures come in groups, such as Run, Returns and risk, Drawdown and Trades; the table's `group` column says which group each row belongs to.
 * `unit` says how to read the value. A **fraction** is a percent written as a share of 1: a `total_return` of 0.539411 is 53.94 percent. **rupees** is money, **ratio** a plain number, **count** a whole number, **days** calendar days, **seconds** seconds, **timestamp** a time in IST (`None` when there is none, such as the recovery of a drawdown that has not recovered yet), **flag** True or False, and **text** words.
 * The Benchmark group (beta, alpha and the others) is there because this run has `benchmark="NIFTY"`. Without a benchmark the table has 100 figures.
-* `net_pnl` in the Trades group, Rs 53,942.35, is Rs 1.26 more than `net_profit`, Rs 53,941.09. The trade figures add up each trade's own charges; the account also pays the rounding of each day's contract note, which rounds STT and stamp duty to whole rupees. `net_profit` is what your account made.
+* `net_pnl` in the Trades group, Rs 53,941.09, equals `net_profit`. Each trade's charges include its share of the rounding on each day's contract note (STT and stamp duty are rounded to whole rupees there), so the trades add up to what your account made. The two differ only when a position is still open at the end of the run: `net_pnl` counts closed trades only.
 
 A fifth column, `definition`, says how each figure is worked out:
 
@@ -254,23 +254,23 @@ print(trades[columns].to_string(float_format="%.2f"))  # every row, with two dec
 ```text
                      entry_time                 exit_time  quantity  entry_price  exit_price   net_pnl
 trade
-1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30    270.00       356.95      456.95  26741.28
-2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30    246.00       503.15      460.20 -10846.48
-3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30    222.00       507.15      470.90  -8305.91
-4     2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30    217.00       487.85      535.85  10153.35
-5     2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30    204.00       567.95      565.60   -752.78
-6     2023-09-15 09:15:00+05:30 2023-10-19 09:15:00+05:30    191.00       599.50      569.65  -5966.26
-7     2023-12-07 09:15:00+05:30 2024-08-14 09:15:00+05:30    178.00       610.15      800.75  33633.80
-8     2024-11-05 09:15:00+05:30 2025-01-01 09:15:00+05:30    170.00       830.05      795.35  -6222.16
-9     2025-04-03 09:15:00+05:30 2026-03-30 09:15:00+05:30    174.00       770.20     1004.75  40455.86
-10    2026-04-27 09:15:00+05:30 2026-05-11 09:15:00+05:30    159.00      1111.20     1006.75 -16998.74
-11    2026-07-03 09:15:00+05:30 2026-09-08 09:15:00+05:30    150.00      1055.25     1004.65  -7949.63
+1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30    270.00       356.95      456.95  26742.48
+2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30    246.00       503.15      460.20 -10846.92
+3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30    222.00       507.15      470.90  -8306.89
+4     2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30    217.00       487.85      535.85  10153.37
+5     2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30    204.00       567.95      565.60   -752.17
+6     2023-09-15 09:15:00+05:30 2023-10-19 09:15:00+05:30    191.00       599.50      569.65  -5966.78
+7     2023-12-07 09:15:00+05:30 2024-08-14 09:15:00+05:30    178.00       610.15      800.75  33633.24
+8     2024-11-05 09:15:00+05:30 2025-01-01 09:15:00+05:30    170.00       830.05      795.35  -6221.68
+9     2025-04-03 09:15:00+05:30 2026-03-30 09:15:00+05:30    174.00       770.20     1004.75  40455.82
+10    2026-04-27 09:15:00+05:30 2026-05-11 09:15:00+05:30    159.00      1111.20     1006.75 -16999.48
+11    2026-07-03 09:15:00+05:30 2026-09-08 09:15:00+05:30    150.00      1055.25     1004.65  -7949.90
 ```
 
 * Each row is one trade: bought at `entry_time` and sold at `exit_time`, both in IST (`+05:30`). 09:15 is the market open, when every order of this daily strategy filled.
 * `quantity` is the number of shares bought: whole shares, as many as 98 percent of the account could pay for. Later trades bought fewer, because each share cost more.
 * The prices are per share, in rupees, and include slippage. `net_pnl` is the trade's profit or loss in rupees, after its own charges.
-* The first trade, bought in May 2021 at 356.95 and sold in December 2021 at 456.95, made Rs 26,741.28. A few long trends like that one paid for the many short losses.
+* The first trade, bought in May 2021 at 356.95 and sold in December 2021 at 456.95, made Rs 26,742.48. A few long trends like that one paid for the many short losses.
 * The table has more columns: `direction` (long or short), `product`, `gross_pnl` (before charges), `charges`, `return_pct` (the trade's return in percent), `bars_held` and `days_held` (how long it was held) and `exit_reason` (why it was sold; `signal` is your own `self.exit()`).
 
 ## The HTML report

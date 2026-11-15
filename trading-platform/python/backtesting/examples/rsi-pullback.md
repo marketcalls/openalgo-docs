@@ -64,9 +64,9 @@ Return       : -9.41%
 Max drawdown : -29.72%
 Trades       : 7 (57% won)
                entry_time                 exit_time   net_pnl
-2021-05-17 09:15:00+05:30 2021-05-27 09:15:00+05:30   5897.84
-2022-01-25 09:15:00+05:30 2022-03-10 09:15:00+05:30   6714.27
-2022-04-12 09:15:00+05:30 2022-07-22 09:15:00+05:30 -14190.78
+2021-05-17 09:15:00+05:30 2021-05-27 09:15:00+05:30   5898.19
+2022-01-25 09:15:00+05:30 2022-03-10 09:15:00+05:30   6715.52
+2022-04-12 09:15:00+05:30 2022-07-22 09:15:00+05:30 -14189.65
 ```
 
 Four of the seven pullbacks recovered, but the one of April 2022 did not: the stock kept falling, the RSI stayed below 60 for three months, and with no stop-loss that one trade lost Rs 14,191, more than the two winners before it made together (Rs 12,612). That is the risk of buying dips without a stop. The max drawdown is the largest fall of the account from its highest value.

@@ -76,11 +76,11 @@ print(trades[columns].head().to_string(float_format="%.2f"))
 ```text
                      entry_time                 exit_time  quantity  entry_price  exit_price   net_pnl  return_pct exit_reason
 trade
-1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30    270.00       356.95      456.95  26741.28       27.75      signal
-2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30    246.00       503.15      460.20 -10846.48       -8.76      signal
-3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30    222.00       507.15      470.90  -8305.91       -7.38      signal
-4     2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30    217.00       487.85      535.85  10153.35        9.59      signal
-5     2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30    204.00       567.95      565.60   -752.78       -0.65      signal
+1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30    270.00       356.95      456.95  26742.48       27.75      signal
+2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30    246.00       503.15      460.20 -10846.92       -8.76      signal
+3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30    222.00       507.15      470.90  -8306.89       -7.38      signal
+4     2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30    217.00       487.85      535.85  10153.37        9.59      signal
+5     2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30    204.00       567.95      565.60   -752.17       -0.65      signal
 ```
 
 How to read a row:
@@ -138,7 +138,7 @@ CAGR         : 7.64%
 Sharpe ratio : 0.47
 Exposure     : 66%
 Profit factor: 1.95
-Charges      : Rs 3,321.65
+Charges      : Rs 3,322.91
 ```
 
 Returns, rates and drawdowns are stored as fractions (0.0764 is 7.64 percent); the `:.2%` in the f-string prints them as percents. [Metrics Explained](metrics-explained.md) explains every figure in plain words, and [Metric Definitions](metric-definitions.md) gives its formula.

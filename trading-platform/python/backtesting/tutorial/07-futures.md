@@ -66,15 +66,15 @@ Max drawdown : -1.54%
 Trades       : 5 (100% won)
                      entry_time                 exit_time  quantity  net_pnl
 trade
-1     2026-10-06 10:15:00+05:30 2026-10-06 15:10:00+05:30     65.00  2166.95
-2     2026-10-09 13:15:00+05:30 2026-10-09 15:10:00+05:30     65.00   762.54
-3     2026-10-13 10:30:00+05:30 2026-10-13 15:10:00+05:30     65.00 10343.47
-4     2026-10-26 13:15:00+05:30 2026-10-26 15:10:00+05:30     65.00  6249.03
-5     2026-10-29 09:30:00+05:30 2026-10-29 15:10:00+05:30     65.00 14368.12
+1     2026-10-06 10:15:00+05:30 2026-10-06 15:10:00+05:30     65.00  2166.14
+2     2026-10-09 13:15:00+05:30 2026-10-09 15:10:00+05:30     65.00   763.10
+3     2026-10-13 10:30:00+05:30 2026-10-13 15:10:00+05:30     65.00 10343.26
+4     2026-10-26 13:15:00+05:30 2026-10-26 15:10:00+05:30     65.00  6248.22
+5     2026-10-29 09:30:00+05:30 2026-10-29 15:10:00+05:30     65.00 14367.90
 ```
 
 * Every trade was one lot, 65 units, and every one was closed at 15:10 by the engine's square-off.
-* A trade's profit is the points the price moved times 65. On 29 October NIFTY futures rose 234.80 points after the entry: 234.80 x 65 = Rs 15,262 before charges, Rs 14,368.12 after them.
+* A trade's profit is the points the price moved times 65. On 29 October NIFTY futures rose 234.80 points after the entry: 234.80 x 65 = Rs 15,262 before charges, Rs 14,367.90 after them.
 * The max drawdown (the largest fall of the account from its highest value) was only 1.54 percent, because every trade made money.
 * Five trades in six weeks are far too few to judge a strategy. The point of this lesson is how futures work, not this result.
 

@@ -71,9 +71,9 @@ Return       : 15.37%
 Max drawdown : -3.69%
 Trades       : 27 (63% won)
                entry_time direction exit_reason  net_pnl
-2026-10-01 10:05:00+05:30      long      leg_sl -5959.21
-2026-10-05 09:35:00+05:30      long      leg_sl -5634.33
-2026-10-06 09:35:00+05:30      long  leg_target  4968.64
+2026-10-01 10:05:00+05:30      long      leg_sl -5959.09
+2026-10-05 09:35:00+05:30      long      leg_sl -5635.09
+2026-10-06 09:35:00+05:30      long  leg_target  4968.71
 ```
 
 `leg_sl` is the stop-loss, `leg_target` the target and `scheduler` the 15:10 square-off. The charges come to about Rs 900 a round trip (a trade in and out), most of it the 0.05 percent STT (securities transaction tax) on the sell side. The max drawdown is the largest fall of the account from its highest value.

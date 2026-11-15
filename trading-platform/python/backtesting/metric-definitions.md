@@ -68,7 +68,7 @@ key
 cagr                       CAGR  0.076399  fraction
 sharpe             Sharpe ratio  0.469393     ratio
 max_drawdown   Maximum drawdown -0.293518  fraction
-profit_factor     Profit factor  1.945661     ratio
+profit_factor     Profit factor  1.945608     ratio
 ```
 
 How to read the units:

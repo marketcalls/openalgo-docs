@@ -59,7 +59,7 @@ Net profit   : Rs -11,939.33
 Return       : -2.39%
 Max drawdown : -18.78%
 Trades       : 42 (43% won)
-Charges      : Rs 41,771.73
+Charges      : Rs 41,771.33
 ```
 
 The trend flipped often over these sessions: 42 trades, 43 percent won. Before charges the strategy made about Rs 29,800, and the charges of about Rs 1,000 a round trip (a trade in and out) turned that into a loss. The max drawdown is the largest fall of the account from its highest value.

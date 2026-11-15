@@ -259,8 +259,8 @@ Max drawdown : -31.93%
 Trades       : 23 (43% won), 1 still open
            count       sum
 symbol
-ICICIBANK     12  22256.45
-SBIN          11  56537.44
+ICICIBANK     12  22256.90
+SBIN          11  56538.23
 ```
 
 All the symbols of one strategy trade on one exchange.
