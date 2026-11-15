@@ -16,4 +16,4 @@ Before you start, you need a running OpenAlgo server, your API key and `pip inst
 10. [Rebalance a Portfolio](10-portfolio-rebalancing.md): hold several stocks in fixed shares and rebalance them.
 11. [Use Your Own Data](11-your-own-data.md): backtest on price bars you bring yourself, with enough earlier days for the indicators.
 
-When you have finished, the [examples](../examples/README.md) show more complete strategies (SMA, MACD, Supertrend, RSI and futures), and [How do I ...?](../how-to.md) answers the common questions in a few lines each.
+When you have finished, the [examples](../examples/README.md) show more complete strategies (SMA, MACD, Supertrend, RSI and futures), and [Common Tasks](../how-to.md) covers the common tasks in a few lines each.

@@ -378,7 +378,7 @@ Every closed trade has an `exit_reason` in `result.trade_list()` (and every fill
 
 ## More options
 
-* **Trade to a size:** `self.target(qty=100)` makes the position 100 shares long (`-100` short, `0` flat) in one order; it also takes `lots=`, `value=` or `percent=`. See [How do I ...?](how-to.md#long-only-short-only-or-long-and-short).
+* **Trade to a size:** `self.target(qty=100)` makes the position 100 shares long (`-100` short, `0` flat) in one order; it also takes `lots=`, `value=` or `percent=`. See [Common Tasks](how-to.md#trade-long-only-short-only-or-both).
 * **Reverse:** a sell larger than the long is rejected with `reverse_not_allowed`, unless you pass `reverse=True`: it then closes the long and opens a short with the rest.
 * **Partial exits:** `self.exit(fraction=0.5)` or `self.reduce(qty=30)` (`reduce` also takes `lots=` or `fraction=`).
 * **Several targets:** `targets=[(bt.pct(5), 0.5), (bt.pct(10), 0.3)]` sells half at 5 percent and 30 percent at 10 percent; `after_first_target="breakeven"` then moves the stop to the buying price.

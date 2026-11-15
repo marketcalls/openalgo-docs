@@ -1,16 +1,16 @@
-# How do I ...?
+# Common Tasks
 
-Short answers to the questions traders ask most, each with one small example on real data from your OpenAlgo server. Each answer links to the tutorial lesson that explains it step by step.
+Short recipes for the tasks traders do most often, each with one small example on real data from your OpenAlgo server. Each recipe links to the tutorial lesson that explains it step by step.
 
-## The strategy the answers use
+## The strategy the examples use
 
-Every answer changes one thing in the first strategy of this section, the EMA crossover from [Your First Backtest](tutorial/01-first-backtest.md):
+Every example changes one thing in the first strategy of this section, the EMA crossover from [Your First Backtest](tutorial/01-first-backtest.md):
 
 * An **EMA** (exponential moving average) is the average closing price of recent days, with the latest days counting most.
 * The strategy **buys** SBIN when its 20-day EMA rises above its 50-day EMA, and **sells** when the 20-day EMA falls back below.
 * It runs on **daily bars**: one bar (or candle) per trading day, with its open, high, low and close price. A share on daily bars trades as **CNC** (delivery): the shares are held overnight, as long as the strategy wants.
 
-Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`. Run this block first: every answer below continues from it, in the same Python session.
+Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`. Run this block first: every example below continues from it, in the same Python session.
 
 <!-- requires-server -->
 ```python
@@ -56,7 +56,7 @@ Trades       : 11 (36% won)
 
 The engine loads SBIN's daily bars from before 1 January 2021 by itself, so both EMAs are ready on the first day: the strategy needs no waiting code.
 
-## Print a short summary?
+## Print a short summary
 
 `print(result.summary())` prints the net profit, the return, the max drawdown (the largest fall of the account from its highest value) and the trades with the share that made money. A run with `benchmark="NIFTY"` adds a line with NIFTY's return, and a run with no closed trade says `no closed trades`. For one figure in your own code, look it up by name in `result.metrics`:
 
@@ -74,7 +74,7 @@ Return per year (CAGR): 7.64%
 
 `print(result)` prints the long version: every setting the run used and its warnings. Lesson: [Read the Results](tutorial/02-read-the-results.md); every figure: [Metric Definitions](metric-definitions.md).
 
-## Get the trade list as a table?
+## Get the trade list as a table
 
 `result.trade_list()` gives the closed trades as a pandas table, one row per trade, with times in Indian time (IST), the quantity in shares and the money in rupees:
 
@@ -98,7 +98,7 @@ trade
 
 Each trade was decided at a day's close and filled at the next day's open, 09:15. The table also has `direction`, `product`, `gross_pnl`, `charges`, `return_pct`, `bars_held`, `days_held` and `exit_reason`. `result.trade_list().to_csv("trades.csv")` saves it for a spreadsheet. Lesson: [Read the Results](tutorial/02-read-the-results.md).
 
-## Stop-loss, target and trailing stop?
+## Add a stop-loss, target or trailing stop
 
 A **stop-loss** closes a trade when the price moves a set distance against you, so one trade cannot lose too much. A **target** closes it when the price has moved a set distance in your favour. Give both on the buy: `bt.pct(5)` means 5 percent from your buy price.
 
@@ -131,7 +131,7 @@ Trades       : 11 (27% won)
 
 `leg_sl` is the stop-loss, `leg_target` the target and `signal` the strategy's own `self.exit()`. On SBIN's daily swings a 5 percent stop closed 7 of the 11 trades early, and this run lost money: always test a stop distance before you trust it. A **trailing stop** follows the price up and never moves down: add `trail=bt.trail_pct(3)` to the buy. Lesson: [Stop-Loss and Target](tutorial/03-stop-loss-and-target.md).
 
-## Position sizing?
+## Size a position
 
 Position sizing decides how much each trade buys. With no quantity, `self.buy()` buys as many whole shares as 98 percent of the capital pays for (2 percent stays in cash, in case the next open is higher). Set `size` once on the class to change it for every buy:
 
@@ -158,7 +158,7 @@ Trades       : 11 (36% won)
 
 Other ways: `self.buy(qty=100)` for 100 shares, `size = bt.size.value(50_000)` for Rs 50,000 a trade, and `size = bt.size.fixed_risk(1)` with a stop-loss to risk 1 percent of the account per trade. Lesson: [How Much to Buy](tutorial/04-how-much-to-buy.md).
 
-## Buy part shares?
+## Buy part shares
 
 The engine buys whole shares by default, the way your broker trades them: a size that works out to 182.6 shares buys 182. For research, `quantity_mode="fractional"` buys the exact part shares instead, with all the capital at the fill price, so the result does not depend on the share price:
 
@@ -178,7 +178,7 @@ print(part.trade_list()["quantity"].head(3).round(2).tolist())
 
 The first trade bought 279.82 part shares, where the whole-share run bought 270. Your broker cannot fill part shares, so keep the default for a result you mean to trade. Lesson: [How Much to Buy](tutorial/04-how-much-to-buy.md).
 
-## Trade intraday?
+## Trade intraday
 
 Give the strategy intraday bars, such as `"15m"` (15 minutes). The engine then trades **MIS**, the intraday product: it stops new entries at 14:50 and squares off (closes) every open position at 15:00 IST (the NSE times from 3 August 2026). Brokers keep a limited intraday history, so the run covers a recent stretch:
 
@@ -207,7 +207,7 @@ Trades       : 8 (38% won)
 
 Lesson: [Trade Intraday](tutorial/05-intraday.md).
 
-## Long only, short only, or long and short?
+## Trade long only, short only, or both
 
 A **long** trade buys first and gains when the price rises. A **short** trade sells first, buys back later, and gains when the price falls. A share cannot be held short overnight, so short it intraday (MIS), or trade futures. `self.target(qty=-50)` means "be short 50 shares":
 
@@ -242,7 +242,7 @@ Trades       : 19 (42% won)
 
 For short only, use `self.sell(qty=50)` to enter and `self.exit()` to buy back. Lesson: [Go Short](tutorial/06-going-short.md).
 
-## Why do I see a warning about rejected orders?
+## Read the warning about orders not placed
 
 When the engine refuses or skips orders you did not plan for, the run goes on without them, and at the end Python prints one `OrdersNotPlacedWarning` that counts them and gives the most common reason. A short on daily bars is the usual cause, because a delivery (CNC) short is not allowed:
 
@@ -277,7 +277,7 @@ OrdersNotPlacedWarning: 12 of 12 orders were rejected because a delivery (CNC) s
 
 `result.warnings` has the full line with what to do: short a stock intraday (MIS), or trade futures. Orders kept out by a rule you set, such as the 14:50 cut-off for new intraday positions, give no such warning: `result.warnings` only counts them. Lesson: [Go Short](tutorial/06-going-short.md); every reject code: [Orders and Risk](orders-and-risk.md#why-was-my-order-rejected).
 
-## Make a tearsheet?
+## Make a tearsheet
 
 A tearsheet is the report of a backtest: its figures and charts on one HTML page that opens in any browser, with no internet needed.
 
@@ -294,7 +294,7 @@ sbin_ema.html
 
 The page has a bar of section links and a light and dark switch at the top, then the sections Overview, Performance, Risk, Monthly, Distribution, Metrics, Trades and Notes. Look first at the cumulative return chart, the worst drawdowns and the trade list. `mode="basic"` gives a shorter report. Lesson: [Read the Results](tutorial/02-read-the-results.md); every part of the report: [Results and Reports](results-and-reports.md#the-html-tearsheet).
 
-## Use NIFTY as the benchmark?
+## Use NIFTY as the benchmark
 
 A benchmark is what you compare the strategy with: would simply holding NIFTY 50 have done better? Pass `benchmark="NIFTY"`, and the engine reads NIFTY's daily closes from your OpenAlgo server:
 
@@ -321,7 +321,7 @@ Beta         : 0.71
 
 Beta says how strongly the strategy moved with the index (1 is in step with it). For SENSEX pass `benchmark=("SENSEX", "BSE_INDEX")`. Lesson: [Compare with NIFTY](tutorial/08-compare-with-nifty.md).
 
-## Trade futures?
+## Trade futures
 
 Name the contract as the symbol, on NFO. A buy with no quantity buys one **lot**, the fixed number of units a contract trades in (65 for NIFTY). `product = "NRML"` holds the position overnight. Futures block **margin**, money set aside while the position is open (20 percent of the contract value by default), so the run needs more capital:
 
@@ -349,7 +349,7 @@ Trades       : 4 (25% won), 1 still open
 
 NIFTY23NOV26FUT expires on 23 November 2026, and your broker serves a contract's history only while it trades: after that, use the current contract and recent dates. Lesson: [Trade Futures](tutorial/07-futures.md).
 
-## Optimize a strategy's parameters?
+## Optimize a strategy's parameters
 
 `bt.optimize` backtests every combination of the numbers you list and ranks them. Here it tries four fast and four slow EMA lengths on 2021 to 2024, and ranks them by the Sharpe ratio (the return for the risk taken; higher is better):
 
@@ -369,7 +369,7 @@ print(opt.best)  # the best pair
 
 Do not trust the single best pair: among many, one looks good by luck. Check it on later years the sweep did not see (`start="2025-01-01"`). `workers=1` runs in one process, which works anywhere, a notebook included. Lesson: [Find Better Settings](tutorial/09-find-better-settings.md).
 
-## Use my own data?
+## Use your own data
 
 Pass a DataFrame of bars with `data=` instead of the client. Here the bars come from `client.history`. Fetch them from earlier than the day the test starts, so the EMAs are ready on it, and say where the test starts with `start=`. Daily bars need nothing more; intraday bars also need `tz="Asia/Kolkata"`, to say their times are Indian time:
 
@@ -394,7 +394,7 @@ Trades       : 11 (36% won)
 
 The same bars give the same result. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md); more on columns and time zones: [Data](data.md#your-own-data).
 
-## Why does my strategy not trade in its first months?
+## Understand the wait before the first trade
 
 An indicator needs earlier bars before its value settles: about two years of days for a 50-day EMA. When the engine fetches the bars itself, it loads that history before `start`. When your own bars begin on `start`, or a stock has just listed, there is no earlier history, so the strategy waits inside the run, without trading, until its indicators are ready:
 
@@ -421,13 +421,13 @@ Python says so on the screen when the run ends, after the file name and line num
 WarmUpWarning: The strategy waited inside the run for its indicators to warm up and made its first decision at 2023-01-23 15:30 IST (SBIN waited 511 strategy bars): signals before then were not taken. See result.warnings for why.
 ```
 
-`result.warnings` has the details: the 50-day EMA needs 512 daily bars, and the bars given begin on 1 January 2021. The fix: fetch the bars from an earlier date and pass `start=`, as in the answer above. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md).
+`result.warnings` has the details: the 50-day EMA needs 512 daily bars, and the bars given begin on 1 January 2021. The fix: fetch the bars from an earlier date and pass `start=`, as in [Use your own data](#use-your-own-data) above. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md).
 
-## Why does `init` run twice?
+## Understand why `init` runs twice
 
 To learn the warm-up. Before it loads any data, the engine runs `init` on its own reference bars (made-up prices it keeps for this one job) to find how many earlier bars each indicator needs; then it runs `init` again on your bars, with that history loaded. So keep `init` for setting up indicators with `self.I`: a `print` in it shows twice. `self.I` works only in `init`; called in `on_bar`, it stops the run with an `IndicatorOutsideInitError`. More: [Writing Strategies](writing-strategies.md#what-does-each-part-do).
 
-## Backtest older years?
+## Backtest older years
 
 Charges are built in from 1 July 2020, and a run that starts earlier stops with a `CostError`. `costs=bt.costs.CostModel(backfill=True)` charges older fills at the oldest rates the engine has, and a warning counts them:
 
@@ -454,7 +454,7 @@ The 50-day EMA needs 512 daily bars before the start, and here the broker served
 
 `costs=None` runs with no charges at all; the result then warns that the profit is overstated. More: [Charges](costs-slippage-and-margin.md#what-am-i-charged-on-each-trade).
 
-## What does the warning about unverified charges mean?
+## Read the warning about unverified charges
 
 A daily run on NSE shares that starts in early 2021 prints an `UnverifiedScheduleWarning`: the charge rates in force until 31 March 2021 are marked as not verified. In those months NSE charged shares outside the NIFTY 50 and NIFTY Next 50 a lower transaction charge, and the engine does not know which shares belong to those indices. `result.warnings` has the full text:
 
@@ -472,7 +472,7 @@ charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 used for 2021-
 
 For a NIFTY 50 or NIFTY Next 50 share, such as SBIN, the charges are right. For another share the transaction charge of fills before 1 April 2021 is a little too high. More: [Charges](costs-slippage-and-margin.md#what-am-i-charged-on-each-trade).
 
-## Rebalance a buy-and-hold portfolio?
+## Rebalance a buy-and-hold portfolio
 
 Rebalancing brings each stock of a portfolio back to its share of the account. Name the stocks with `symbols`, and call `self.rebalance(weights)` with the percent of the account for each. This one holds four stocks in equal parts and rebalances at the first session of every quarter:
 
@@ -512,7 +512,7 @@ rebalance orders: 69
 
 A rebalance trims and tops up holdings but never closes one, so the run has no closed trades (the summary counts the holdings still open): read `result.orders` and `result.final_positions`. Lesson: [Rebalance a Portfolio](tutorial/10-portfolio-rebalancing.md).
 
-## Export everything to a spreadsheet or CSV?
+## Export everything to a spreadsheet or CSV
 
 `result.to_csv("results")` writes every table of the run as a CSV file into the folder `results`:
 

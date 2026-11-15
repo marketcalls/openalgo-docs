@@ -294,7 +294,7 @@
       * [Find Better Settings](trading-platform/python/backtesting/tutorial/09-find-better-settings.md)
       * [Rebalance a Portfolio](trading-platform/python/backtesting/tutorial/10-portfolio-rebalancing.md)
       * [Use Your Own Data](trading-platform/python/backtesting/tutorial/11-your-own-data.md)
-    * [How do I ...?](trading-platform/python/backtesting/how-to.md)
+    * [Common Tasks](trading-platform/python/backtesting/how-to.md)
     * [Writing Strategies](trading-platform/python/backtesting/writing-strategies.md)
     * [Orders and Risk](trading-platform/python/backtesting/orders-and-risk.md)
     * [Costs, Slippage and Margin](trading-platform/python/backtesting/costs-slippage-and-margin.md)
