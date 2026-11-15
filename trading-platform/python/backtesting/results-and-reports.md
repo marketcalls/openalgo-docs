@@ -167,7 +167,7 @@ for year, value in result.performance.yearly_returns.items():
 
 ## The HTML tearsheet
 
-A **tearsheet** is the full report of a backtest on one HTML page, laid out as a dashboard. `result.tearsheet(path)` writes it and returns the file name; open the file in your browser. Everything is inside the one file, so it opens without an internet connection and you can send it to someone as it is.
+A **tearsheet** is the full report of a backtest on one HTML page, laid out as a dashboard. `result.tearsheet(path)` writes it and returns the file name; open the file in your browser. Everything is inside the one file, so it opens without an internet connection and you can send it to someone as it is. [The Tearsheet](tearsheet.md) walks through every section, with a screenshot of each.
 
 <!-- requires-server -->
 <!-- continues -->

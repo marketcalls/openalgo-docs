@@ -301,6 +301,8 @@ Open the file in any browser; it needs no internet. A bar at the top links to ea
 * **Trades:** the trade list (the same rows as `result.trade_list()`) and the charges by kind.
 * **Notes:** how the figures were computed, and the settings and warnings of the run.
 
+[The Tearsheet](../tearsheet.md) walks through every section of this report, with a screenshot of each.
+
 What to look at first:
 
 1. **The cumulative return chart** (Performance): did the strategy end above or below NIFTY, and did it climb steadily or in a few big jumps?
