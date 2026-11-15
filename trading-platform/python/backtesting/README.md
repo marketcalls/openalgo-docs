@@ -1,7 +1,7 @@
 # Backtesting
 
 {% hint style="warning" %}
-**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.2.0, which is being released now. With 2.1.1 the figures differ slightly, and `result.summary()` and `result.trade_list()` are not there yet.
+**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.2.0 or later: run `pip install -U openalgo` to update.
 {% endhint %}
 
 ## What is a backtest?
