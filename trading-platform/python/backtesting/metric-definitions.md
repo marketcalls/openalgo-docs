@@ -1,6 +1,6 @@
 # Metric Definitions
 
-This page lists every figure a backtest reports: its name in code (the key), its label on the report, its unit and how it is worked out. Look a figure up here when a number in `result.metrics` or on the tearsheet is new to you.
+This page lists every figure a backtest reports: its name in code (the key), its label on the report, its unit and how it is worked out. Look a figure up here when a number in `result.metrics` or on the tearsheet is new to you. [Metrics Explained](metrics-explained.md) explains the same figures in plain words, with the values of a real run and how to read them.
 
 {% hint style="warning" %}
 **Preview.** These figures are part of the backtesting engine, new in SDK 2.1.0; the interface may change in later releases.

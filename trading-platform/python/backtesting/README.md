@@ -87,6 +87,7 @@ Trades       : 11 (36% won)
 * [Tutorial](tutorial/README.md): eleven short lessons, from this first backtest to stops, sizing, intraday, shorts, futures and portfolios. Start here.
 * [Examples](examples/README.md): complete strategies on real market data (EMA, SMA, MACD, Supertrend, RSI, the opening range breakout and futures), each with its code and its output.
 * [Common Tasks](how-to.md): short recipes for the common tasks, each with a small example.
+* [Metrics Explained](metrics-explained.md): what every figure of a backtest means, in plain words, with the values of a real run.
 
 The reference pages explain every option:
 

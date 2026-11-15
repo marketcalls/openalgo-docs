@@ -141,7 +141,7 @@ Profit factor: 1.95
 Charges      : Rs 3,321.65
 ```
 
-Returns, rates and drawdowns are stored as fractions (0.0764 is 7.64 percent); the `:.2%` in the f-string prints them as percents. [Metric Definitions](metric-definitions.md) explains every figure.
+Returns, rates and drawdowns are stored as fractions (0.0764 is 7.64 percent); the `:.2%` in the f-string prints them as percents. [Metrics Explained](metrics-explained.md) explains every figure in plain words, and [Metric Definitions](metric-definitions.md) gives its formula.
 
 ## Year by year
 
