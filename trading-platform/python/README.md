@@ -7,20 +7,6 @@ To install the OpenAlgo Python library, use pip:
 pip install openalgo
 ```
 
-### Version and order-result contracts
-
-`pip install openalgo` installs SDK 2.1.1, the release these pages describe; it needs Python 3.12 or newer. To upgrade an existing install, use `pip install --upgrade openalgo`. The SDK and platform versions are independent: the platform currently pins `openalgo==2.0.5` in its `pyproject.toml`, and anything marked "from SDK 2.1.0" on these pages needs 2.1.0.
-
-Prices, quantities, expiries and lot sizes below are illustrative. Resolve the actual contract's `lotsize`, `tick_size` and applicable `freeze_qty` with `client.symbol(...)` or `client.search(...)` before trading. On regular order methods the SDK parameter is `price_type`; the REST field it sends is `pricetype`.
-
-Check the returned `status` and `mode`. Eligible Semi-Auto requests can return success with `mode="semi_auto"` and `pending_order_id` while waiting for Action Center approval; no broker order exists yet. A placement acknowledgement is not proof of a fill. A client timeout or server `502` possible-placement message requires broker-book reconciliation before retrying. Inspect each basket/split child separately. See [REST order outcomes](../../api-documentation/v1/README.md#order-outcomes-and-retries).
-
-`strategy` on `cancelallorder()` and `closeposition()` is a tracking label, not a filter; those calls affect the active account. For a Strategy RMS strategy use the module-specific methods described in [Strategy RMS From Python](strategy-management.md).
-
-Portfolio, SIP and Sector Rotation have no named wrappers in SDK 2.0.5; use their documented [REST APIs](../../api-documentation/v1/README.md).
-
-To test a strategy on past bars with Indian charges, slippage and session rules, see [Backtesting](backtesting/README.md), a preview that is new in SDK 2.1.0.
-
 ### Get the OpenAlgo apikey
 
 Make Sure that your OpenAlgo Application is running. Login to OpenAlgo Application with valid credentials and get the OpenAlgo apikey
