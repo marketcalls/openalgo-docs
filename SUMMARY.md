@@ -76,6 +76,7 @@
   * [Motilal Oswal](connect-brokers/brokers/motilal-oswal.md)
   * [Mstock](connect-brokers/brokers/mstock.md)
   * [Nubra](connect-brokers/brokers/nubra.md)
+  * [Nuvama](connect-brokers/brokers/nuvama.md)
   * [Paytm](connect-brokers/brokers/paytm.md)
   * [Pocketful](connect-brokers/brokers/pocketful.md)
   * [Sahi](connect-brokers/brokers/sahi.md)
