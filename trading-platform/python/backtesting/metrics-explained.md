@@ -208,9 +208,9 @@ How far the trades went against you and in your favour while they were open, and
 | Average MFE (`average_mfe`) | 20.56% | How far a trade was up at its best, on average. |
 | Worst MAE (`worst_mae`) | Rs -16,607.55 | The deepest open loss of any trade, in rupees: here trade 10, which closed at that loss. Could you sit through it again? |
 | Best MFE (`best_mfe`) | Rs 80,823.00 | The highest open profit of any trade: here trade 9, which closed Rs 40,811.70 up before charges, half of it. |
-| Edge ratio (`edge_ratio`) | 4.03 | Average MFE divided by the average MAE. Above 1, the trades moved further in your favour than against you after the entry: here four times as far. Near 1, the price moved about as far either way after the entries. |
+| Edge ratio (`edge_ratio`) | 4.03 | Average MFE divided by the size of the average MAE (without its minus sign). Above 1, the trades moved further in your favour than against you after the entry: here four times as far. Near 1, the price moved about as far either way after the entries. |
 | Profit kept (`profit_kept`) | 52.08% | The winners' profit before charges divided by their MFE: the share of their best open profit they kept. Low means the exits are late. Here the winners kept about half. |
-| Turnover of closed trades (`closed_turnover`) | Rs 28,32,597.50 | The value of every buy and every sell of the closed trades. The two trading cost ratios below are measured against it. It equals the turnover here because no trade was open at the end. |
+| Turnover of closed trades (`closed_turnover`) | Rs 28,32,597.50 | The value of every buy and every sell of the closed trades. The trading cost of turnover below is measured against it. It equals the turnover here because no trade was open at the end. |
 | Slippage (`total_slippage`) | Rs 706.85 | What slippage cost the closed trades: each fill's price against its price before slippage. It is already inside the fill prices, so it is already in the gross and net P&L: it is shown, never taken off a second time. |
 | Trading cost (`trading_cost`) | Rs 4,029.76 | Charges plus slippage: everything trading cost the closed trades. |
 | Trading cost / gross P&L (`trading_cost_share_of_gross_pnl`) | 7.04% | The share of the profit before charges that the trading cost took. |

@@ -150,16 +150,14 @@ The tiles sum up the closed trades: how many, the win rate, the profit factor, t
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-trading-cost.png" alt="The Trading Cost row: six tiles, turnover of closed trades Rs 28,32,598, charges Rs 3,323, slippage Rs 706.85, trading cost Rs 4,030, cost over gross P&L 7.04 percent and cost over turnover 14.2 basis points"><figcaption><p>Trades: what trading cost the closed trades</p></figcaption></figure>
 
-The **Trading Cost** row puts the two costs of trading side by side:
+The **Trading Cost** row puts the two costs of trading side by side. A tile shows whole rupees from Rs 1,000 up and paise below, which is why slippage reads Rs 706.85 and the trading cost Rs 4,030. The figures below are as the tiles show them; `result.metrics` and the Charges table give them to the paisa.
 
-* **Turnover** (Rs 28,32,597.50): the value of every buy and every sell of the closed trades. The last tile measures the cost against it.
-* **Charges** (Rs 3,322.91): brokerage, STT and the other charges, itemised in the Charges table below.
+* **Turnover** (Rs 28,32,598): the value of every buy and every sell of the closed trades. The last tile measures the cost against it.
+* **Charges** (Rs 3,323): brokerage, STT and the other charges, itemised in the Charges table below.
 * **Slippage** (Rs 706.85): what the fills lost to slippage, each fill's price against its price before slippage. It is already inside the fill prices, so it is already in the gross and net P&L: the tile shows it, nothing takes it off a second time.
-* **Trading cost** (Rs 4,029.76): charges plus slippage, everything trading cost these trades.
+* **Trading cost** (Rs 4,030): charges plus slippage, everything trading cost these trades.
 * **Cost / gross P&L** (7.04 percent): the share of the profit before charges that the trading cost took.
 * **Cost / turnover** (14.2 basis points; a basis point is 0.01 percent): Rs 142 of cost on every Rs 1,00,000 bought or sold. A trade pays it on its buy and on its sell, so it has to move about 0.28 percent just to pay its way. Watch this tile for a strategy that trades often.
-
-A tile shows whole rupees from Rs 1,000 up and paise below, which is why slippage reads Rs 706.85 and the trading cost Rs 4,030.
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-mae-mfe.png" alt="The MAE and MFE block: six tiles (average MAE -5.10 percent, average MFE 20.56 percent, worst MAE Rs -16,608, best MFE Rs 80,823, edge ratio 4.03 and profit kept 52.08 percent), a red histogram of each trade's MAE and a green histogram of each trade's MFE in percent of capital at work, and two scatter charts of MAE and of MFE against each trade's return, with winners as green circles and the other trades as red crosses"><figcaption><p>Trades: how far each trade went against you and in your favour</p></figcaption></figure>
 
@@ -168,16 +166,16 @@ While a trade is open, its profit rises and falls. **MAE** (maximum adverse excu
 The six tiles:
 
 * **Avg MAE** (-5.10 percent) and **Avg MFE** (20.56 percent): on average a trade was at worst 5.10 percent down and at best 20.56 percent up.
-* **Worst MAE** (Rs -16,607.55): the deepest open loss of any trade. It was trade 10, which closed at that very loss.
+* **Worst MAE** (Rs -16,608): the deepest open loss of any trade. It was trade 10, which closed at that very loss.
 * **Best MFE** (Rs 80,823): the highest open profit of any trade. It was trade 9, which closed Rs 40,811.70 up before charges: it gave back half.
-* **Edge ratio** (4.03): the average MFE over the average MAE. Above 1, the trades moved further in your favour than against you; here four times as far.
+* **Edge ratio** (4.03): the average MFE over the size of the average MAE (without its minus sign). Above 1, the trades moved further in your favour than against you; here four times as far.
 * **Profit kept** (52.08 percent): the winners' profit before charges over their best open profit. The four winners kept about half of what they had at their best.
 
 The four charts show each trade:
 
 * **MAE Distribution** and **MFE Distribution** count the trades by their MAE and by their MFE; the dashed line is the average. Here no trade went more than 9.40 percent against, and seven of the 11 never got more than 10 percent ahead while four ran 29 to 60 percent ahead.
-* **MAE vs Return** puts each trade's MAE across and its return up: a green circle is a winner, a red cross a loser (or a flat trade). Read it against your stop-loss. A loser whose MAE is much deeper than its stop says the stop is not where the trades end: the price gapped through it, or it was set too wide. A winner far to the left says a tighter stop would have cut it: trade 9 was 5.22 percent down at one point and still made 30.19 percent, so a stop closer than about 5 percent would have stopped it out. This strategy has no stop-loss, and most of its losers closed near their MAE, when the EMAs crossed back. The return is after charges and the MAE before them, so a loser that closed at its worst returned a little less than its MAE: trade 2 was 8.54 percent down at worst and returned -8.76 percent.
-* **MFE vs Return** puts each trade's MFE across and its return up. A winner that gave back most of its MFE says the exits are late. Here trades 1, 7 and 9 were 49 to 60 percent up at their best but closed 28 to 31 percent up: the crossover exit waits for the fast EMA to cross back, and gave back about half of each large rise. A target or a trailing stop ([Stop-Loss and Target](tutorial/03-stop-loss-and-target.md)) is the usual way to keep more of it.
+* **MAE vs Return** puts each trade's MAE across and its return up: a green circle is a winner, a red cross a loser (or a flat trade). Read it against your stop-loss. A loser whose MAE is much deeper than its stop says the stop is not where the trades end: the price gapped through it and the exit filled beyond it, or (for an option or a GTT) the stop's limit order did not fill. A winner far to the left says a tighter stop would have cut it: trade 9 was 5.22 percent down at one point and still made 30.19 percent, so a stop closer than about 5 percent would have stopped it out. This strategy has no stop-loss, and most of its losers closed near their MAE, when the EMAs crossed back. The return is after charges and the MAE before them, so a loser that closed at its worst returned a little less than its MAE: trade 2 was 8.54 percent down at worst and returned -8.76 percent.
+* **MFE vs Return** puts each trade's MFE across and its return up. A winner that gave back most of its MFE says the exits are late. Here trades 1, 7 and 9 were 49 to 60 percent up at their best but closed 28 to 31 percent up: the crossover exit waits for the fast EMA to cross back, and they gave back a third to a half of each large rise. Trade 4 gave back the largest share: it was 29.05 percent up at its best and closed 9.59 percent up, about two thirds of its MFE gone. A target or a trailing stop ([Stop-Loss and Target](tutorial/03-stop-loss-and-target.md)) is the usual way to keep more of it.
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-trade-list.png" alt="The Trade List: one row per closed trade with its entry and exit times, quantity, entry and exit price, gross P&L, charges, net P&L, return, MAE and MFE in rupees, and bars and days held; the exit reason column starts at the right edge"><figcaption><p>Trades: the trade list, with each trade's MAE and MFE</p></figcaption></figure>
 

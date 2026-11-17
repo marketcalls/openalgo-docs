@@ -120,7 +120,7 @@ trade
 
 * `mae` (maximum adverse excursion) is the lowest the trade's profit stood at while it was open, before charges: zero or negative. Trade 1 was at worst Rs 594 down.
 * `mfe` (maximum favourable excursion) is the highest: zero or positive. Trade 1 was at best Rs 50,044.50 up but closed Rs 27,000 up: it gave back almost half. A winner that gives back most of its best open profit says the exits are late.
-* `mae_pct` and `mfe_pct` are the same in percent of the trade's capital at work (entry price x the most shares held). Compare `mae_pct` with your stop-loss: trade 2 fell 8.54 percent and closed at that loss, because this strategy has no stop.
+* `mae_pct` and `mfe_pct` are the same in percent of the trade's capital at work (entry price x the most shares held). Compare `mae_pct` with your stop-loss. With no stop, nothing closed trade 2 earlier: it fell 8.54 percent and closed at that loss when the EMAs crossed back.
 * Only prices the trade could have seen while it was open count: the high and low of each day it was held through, and its own fill prices. In live trading (`bt.live`, not available yet) the same engine works these figures out from the ticks it receives, so a trade there can show a smaller MAE or MFE when the broker's feed did not show every price.
 * `slippage` is what slippage cost the trade's buy and sell, in rupees. It is already in the prices and in the P&L, so it is shown, never taken off again.
 
