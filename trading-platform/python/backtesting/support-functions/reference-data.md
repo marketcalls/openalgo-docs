@@ -164,7 +164,7 @@ print(result.fills[["time", "side", "quantity_units", "price_rupees", "reason"]]
 
 <!-- output -->
 ```text
-NIFTY23NOV2625300CE: lot 65, tick 0.05, freeze 1800 from the reference tables (builtin:2026-11-12:319d8b455d2d)
+NIFTY23NOV2625300CE: lot 65, tick 0.05, freeze 1800 from the reference tables (builtin:2026-11-17:a50a575215e7)
                      time side  quantity_units  price_rupees reason
 2026-11-11 09:45:00+05:30  BUY           130.0        389.25  entry
 2026-11-11 09:55:00+05:30 SELL           130.0        348.55 leg_sl
