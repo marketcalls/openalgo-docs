@@ -152,7 +152,7 @@ Trades       : 11 (36% won)
 Charges      : Rs 3,328.25
 ```
 
-Over 22 fills, the default slippage cost about Rs 1,000 of profit. Keep it on: real fills are never exactly at the open.
+Over 22 fills, the default slippage lowered the profit by about Rs 1,000. What it cost the fills themselves is `result.metrics["total_slippage"]`: Rs 706.85 for the first run. The profit differs by more because, with no slippage, five of the trades could buy one more share each. Keep it on: real fills are never exactly at the open.
 
 ## How much money does a trade block?
 
