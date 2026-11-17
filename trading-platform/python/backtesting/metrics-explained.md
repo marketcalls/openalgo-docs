@@ -1,6 +1,6 @@
 # Metrics Explained
 
-A backtest reports up to 109 figures: what the strategy made, how far it fell on the way, how its trades went and how it compared with NIFTY. This page explains each figure in plain words, shows its value for one real run, and says how to tell a good value from a bad one. [Metric Definitions](metric-definitions.md) gives the exact formula of each figure.
+A backtest reports up to 120 figures: what the strategy made, how far it fell on the way, how its trades went and how it compared with NIFTY. This page explains each figure in plain words, shows its value for one real run, and says how to tell a good value from a bad one. [Metric Definitions](metric-definitions.md) gives the exact formula of each figure.
 
 {% hint style="info" %}
 A backtest shows what a strategy would have done on past prices. No figure here predicts what it will do next. Use the figures to compare strategies and to see their risks before you trade one.
@@ -75,7 +75,7 @@ Two words come up again and again below:
 
 ## Start with these eight
 
-Out of 109 figures, eight tell you most of what you need. This block continues the one above and prints them:
+Out of 120 figures, eight tell you most of what you need. This block continues the one above and prints them:
 
 <!-- requires-server -->
 <!-- continues -->
@@ -198,9 +198,27 @@ A **trade** is a round trip: a buy and the sell that closed it (or a short sale 
 | Turnover (`turnover`) | Rs 28,32,597.50 | The total value of every buy and every sell. |
 | Turnover ratio (`turnover_ratio`) | 20.96 | Turnover divided by the average equity: the account was traded about 21 times over. Higher turnover means more charges and more slippage. |
 
+## Excursions and trading cost
+
+How far the trades went against you and in your favour while they were open, and what trading cost them. A trade's **MAE** (maximum adverse excursion) is the worst its profit stood at while it was open, before charges: its deepest open loss, zero or negative. Its **MFE** (maximum favourable excursion) is the best: its highest open profit, zero or positive. Only prices the trade could have seen count: the high and low of each bar it was held through, and its own fill prices. The percents are of the trade's **capital at work**: its entry price times the most shares it held.
+
+| Figure | This run | What it tells you |
+|---|---|---|
+| Average MAE (`average_mae`) | -5.10% | How far a trade was down at its worst, on average. Compare it with your stop-loss: a stop much tighter than this would have closed most trades early. |
+| Average MFE (`average_mfe`) | 20.56% | How far a trade was up at its best, on average. |
+| Worst MAE (`worst_mae`) | Rs -16,607.55 | The deepest open loss of any trade, in rupees: here trade 10, which closed at that loss. Could you sit through it again? |
+| Best MFE (`best_mfe`) | Rs 80,823.00 | The highest open profit of any trade: here trade 9, which closed Rs 40,811.70 up before charges, half of it. |
+| Edge ratio (`edge_ratio`) | 4.03 | Average MFE divided by the average MAE. Above 1, the trades moved further in your favour than against you after the entry: here four times as far. Near 1, the price moved about as far either way after the entries. |
+| Profit kept (`profit_kept`) | 52.08% | The winners' profit before charges divided by their MFE: the share of their best open profit they kept. Low means the exits are late. Here the winners kept about half. |
+| Turnover of closed trades (`closed_turnover`) | Rs 28,32,597.50 | The value of every buy and every sell of the closed trades. The two trading cost ratios below are measured against it. It equals the turnover here because no trade was open at the end. |
+| Slippage (`total_slippage`) | Rs 706.85 | What slippage cost the closed trades: each fill's price against its price before slippage. It is already inside the fill prices, so it is already in the gross and net P&L: it is shown, never taken off a second time. |
+| Trading cost (`trading_cost`) | Rs 4,029.76 | Charges plus slippage: everything trading cost the closed trades. |
+| Trading cost / gross P&L (`trading_cost_share_of_gross_pnl`) | 7.04% | The share of the profit before charges that the trading cost took. |
+| Trading cost of turnover (`trading_cost_bps`) | 14.23 bps | The trading cost per rupee traded, in basis points (one basis point is 0.01 percent): Rs 142 on every Rs 1,00,000 bought or sold. A trade pays it on its buy and on its sell, so it has to move about 0.28 percent just to cover its cost. |
+
 ## Benchmark
 
-How the strategy compared with the benchmark, here NIFTY 50. This group is there only when the run has a benchmark, such as `benchmark="NIFTY"`; without one a run has 100 figures.
+How the strategy compared with the benchmark, here NIFTY 50. This group is there only when the run has a benchmark, such as `benchmark="NIFTY"`; without one a run has 111 figures.
 
 | Figure | This run | What it tells you |
 |---|---|---|

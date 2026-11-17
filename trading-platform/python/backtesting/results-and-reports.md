@@ -93,7 +93,38 @@ How to read a row:
 
 The trade list has more columns: `symbol`, `direction` (`long` or `short`), `product` (CNC, MIS or NRML), `gross_pnl` (before charges), `charges`, `bars_held` (bars from the entry to the exit; sessions on daily bars), `days_held` (calendar days) and `r_multiple` (the net P&L in units of the risk to the stop-loss, empty without a stop). The tearsheet's trade table shows the same rows.
 
-Other tables: `result.orders` (every order, rejected ones with a `reject_code` that says why), `result.fills` (every executed order and its price) and `result.final_positions` (what was still held at the end).
+Other tables: `result.orders` (every order, rejected ones with a `reject_code` that says why), `result.fills` (every executed order, its price and `slippage_rupees`, what slippage cost it) and `result.final_positions` (what was still held at the end).
+
+## How far each trade went
+
+While a trade is open, its profit rises and falls. The trade list keeps the worst and the best it reached, and what slippage cost it:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# mae: the worst open loss of each trade, mfe: its best open profit, both in rupees before charges
+columns = ["gross_pnl", "mae", "mfe", "mae_pct", "mfe_pct", "slippage"]
+print(trades[columns].head().to_string(float_format="%.2f"))  # the first five trades, 2 decimals
+```
+
+<!-- output -->
+```text
+       gross_pnl       mae      mfe  mae_pct  mfe_pct  slippage
+trade
+1       27000.00   -594.00 50044.50    -0.62    51.93     54.00
+2      -10565.70 -10565.70 11279.10    -8.54     9.11     61.50
+3       -8047.50  -8047.50  3296.70    -7.15     2.93     55.50
+4       10416.00  -2853.55 30748.90    -2.70    29.05     54.25
+5        -479.40  -2886.60 11005.80    -2.49     9.50     61.20
+```
+
+* `mae` (maximum adverse excursion) is the lowest the trade's profit stood at while it was open, before charges: zero or negative. Trade 1 was at worst Rs 594 down.
+* `mfe` (maximum favourable excursion) is the highest: zero or positive. Trade 1 was at best Rs 50,044.50 up but closed Rs 27,000 up: it gave back almost half. A winner that gives back most of its best open profit says the exits are late.
+* `mae_pct` and `mfe_pct` are the same in percent of the trade's capital at work (entry price x the most shares held). Compare `mae_pct` with your stop-loss: trade 2 fell 8.54 percent and closed at that loss, because this strategy has no stop.
+* Only prices the trade could have seen while it was open count: the high and low of each day it was held through, and its own fill prices. In live trading (`bt.live`, not available yet) the same engine works these figures out from the ticks it receives, so a trade there can show a smaller MAE or MFE when the broker's feed did not show every price.
+* `slippage` is what slippage cost the trade's buy and sell, in rupees. It is already in the prices and in the P&L, so it is shown, never taken off again.
+
+`result.metrics` sums these up (`average_mae`, `average_mfe`, `edge_ratio`, `profit_kept`, `trading_cost` and more), and the tearsheet draws them: see [The Tearsheet](tearsheet.md#trades).
 
 ## The equity curve
 
@@ -119,7 +150,7 @@ The account never fell below the starting Rs 1,00,000. It peaked at Rs 2,17,898.
 
 ## Performance figures
 
-`result.metrics` holds about a hundred figures, read by name. A few worth knowing first:
+`result.metrics` holds more than a hundred figures, read by name. A few worth knowing first:
 
 <!-- requires-server -->
 <!-- continues -->
@@ -192,7 +223,7 @@ At the top, a header links to each section and has an **Export PDF** button (you
 | Monthly | The monthly and weekly returns as coloured grids (heatmaps), and each year's return against the benchmark |
 | Distribution | How the daily returns spread: a histogram and a box plot |
 | Metrics | Every figure in one table you can sort, with the benchmark's beside it |
-| Trades | The trade figures, the trade list of `result.trade_list()` (sort it by any column, page by page), the charges by component and the R-multiples of trades opened with a stop-loss |
+| Trades | The trade figures, the trading cost (charges plus slippage), the MAE and MFE of the trades as tiles, histograms and scatter charts, the trade list of `result.trade_list()` (sort it by any column, page by page), the charges by component and the R-multiples of trades opened with a stop-loss |
 | Notes | How the figures were worked out, every setting the run used and every warning |
 
 What to look at first: the Overview tiles for the return and the max drawdown, the cumulative return chart in Performance (did the account grow steadily, or in one lucky stretch?), the drawdown chart in Risk (how deep and how long were the bad patches?), the trade list in Trades, and the warnings at the end of Notes. Under a tile, a second figure is the benchmark's, measured the same way, when the run has a benchmark. Hover over a chart to read its values.
@@ -202,9 +233,9 @@ What to look at first: the Overview tiles for the return and the max drawdown, t
 | `mode=` | What the page holds |
 |---|---|
 | `"full"` (the default) | Every section |
-| `"basic"` | The Overview, the cumulative return and period returns, the drawdown chart and the worst drawdowns, the monthly heatmap and the yearly returns, the trades and charges, and the Notes |
+| `"basic"` | The Overview, the cumulative return and period returns, the drawdown chart and the worst drawdowns, the monthly heatmap and the yearly returns, the trades, the trading cost, the MAE and MFE histograms and the charges, and the Notes |
 | `"metrics"` | Every figure with its value and definition, and the settings the run used |
-| `"charts"` | Every chart and nothing else |
+| `"charts"` | Every chart and nothing else, the MAE and MFE histograms and scatter charts included |
 
 `log_scale=True` draws the cumulative return on a log scale, which reads better on long runs.
 
@@ -321,7 +352,7 @@ The figures are fractions (0.6283 is 62.83 percent). Read it like this: the real
 
 ## More options
 
-* **Every table:** `result.trade_list()` (the closed trades as a trader reads them), `result.trades` (the same trades in the engine's own columns: `entry_units`, `net_pnl_rupees`, `initial_risk_rupees` and more), `fills`, `orders`, `positions` (each change of a position), `equity`, `returns`, `events` and `risk_events`, `final_positions`, `stale_marks`, `costs` (each fill's charges, item by item), `contract_notes`, `skipped` (orders sized to zero), `settlements` and `rolls` (futures), `r_summary`, `gross_pnl` and `to_dataframes()`. Times are IST; columns ending in `_ts` are the same instants in UTC nanoseconds; prices are rupees; quantities are units, never lots.
+* **Every table:** `result.trade_list()` (the closed trades as a trader reads them), `result.trades` (the same trades in the engine's own columns: `entry_units`, `net_pnl_rupees`, `initial_risk_rupees`, `mae_rupees`, `mfe_rupees`, `mae_pct`, `mfe_pct`, `slippage_rupees` and more), `fills`, `orders`, `positions` (each change of a position), `equity`, `returns`, `events` and `risk_events`, `final_positions`, `stale_marks`, `costs` (each fill's charges, item by item), `contract_notes`, `skipped` (orders sized to zero), `settlements` and `rolls` (futures), `r_summary`, `gross_pnl` and `to_dataframes()`. Times are IST; columns ending in `_ts` are the same instants in UTC nanoseconds; prices are rupees; quantities are units, never lots.
 * **Every figure, with its definition:** `result.metrics_table()` returns a table with the group, label, value, unit and definition of each figure.
 * **The series behind the figures:** `result.performance` has `drawdown`, `drawdown_details(top=5)`, `monthly_returns`, `rolling`, `horizons` (the last 1, 3 and 6 months, 1, 3 and 5 years), `losing_streaks`, `cost_breakdown` and, with a benchmark, `benchmark_comparison("year")`. See [Metrics](support-functions/metrics.md).
 * **How the figures are measured:** from your capital and the open of the first bar; drawdowns are zero or negative; returns are per trading session, annualised with the real number of NSE sessions in each year (not a fixed 252); CAGR uses 365.25 calendar days a year and is not given for runs shorter than 28 days; net figures are after every charge; trade figures count closed trades only; the risk-free rate is 0 (pass one to [`metrics.analyse`](support-functions/metrics.md)); a figure the data cannot define is NaN.

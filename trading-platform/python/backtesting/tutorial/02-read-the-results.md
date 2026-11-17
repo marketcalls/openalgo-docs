@@ -86,7 +86,7 @@ The figures in `result.metrics` are plain numbers: a percent is kept as a fracti
 
 ## Every figure at once
 
-`result.metrics` holds 109 figures for this run. `result.metrics_table()` lists them all as a table (a pandas DataFrame), one row per figure:
+`result.metrics` holds 120 figures for this run. `result.metrics_table()` lists them all as a table (a pandas DataFrame), one row per figure:
 
 <!-- requires-server -->
 <!-- continues -->
@@ -157,6 +157,17 @@ net_pnl                                                  Net P&L                
 cost_share_of_gross_pnl                        Costs / gross P&L                   0.058028   fraction
 turnover                                                Turnover                  2832597.5     rupees
 turnover_ratio                                    Turnover ratio                  20.957028      ratio
+average_mae                                          Average MAE                  -0.051022   fraction
+average_mfe                                          Average MFE                   0.205575   fraction
+worst_mae                                              Worst MAE                  -16607.55     rupees
+best_mfe                                                Best MFE                    80823.0     rupees
+edge_ratio                                            Edge ratio                   4.029161      ratio
+profit_kept                                          Profit kept                   0.520811   fraction
+closed_turnover                        Turnover of closed trades                  2832597.5     rupees
+total_slippage                                          Slippage                     706.85     rupees
+trading_cost                                        Trading cost                    4029.76     rupees
+trading_cost_share_of_gross_pnl         Trading cost / gross P&L                   0.070372   fraction
+trading_cost_bps                        Trading cost of turnover                  14.226377        bps
 benchmark_total_return                          Benchmark return                   0.806287   fraction
 benchmark_sessions                            Benchmark sessions                       1453      count
 alpha                                                      Alpha                   0.015513   fraction
@@ -216,8 +227,9 @@ common_sense_ratio                            Common sense ratio                
 How to read the table:
 
 * The left column, `key`, is the figure's name in code: `result.metrics["sharpe"]` gives the Sharpe ratio, 0.469393. The figures come in groups, such as Run, Returns and risk, Drawdown and Trades; the table's `group` column says which group each row belongs to.
-* `unit` says how to read the value. A **fraction** is a percent written as a share of 1: a `total_return` of 0.539411 is 53.94 percent. **rupees** is money, **ratio** a plain number, **count** a whole number, **days** calendar days, **seconds** seconds, **timestamp** a time in IST (`None` when there is none, such as the recovery of a drawdown that has not recovered yet), **flag** True or False, and **text** words.
-* The Benchmark group (beta, alpha and the others) is there because this run has `benchmark="NIFTY"`. Without a benchmark the table has 100 figures.
+* `unit` says how to read the value. A **fraction** is a percent written as a share of 1: a `total_return` of 0.539411 is 53.94 percent. **rupees** is money, **ratio** a plain number, **count** a whole number, **days** calendar days, **seconds** seconds, **bps** basis points (hundredths of a percent: a `trading_cost_bps` of 14.23 is 0.1423 percent), **timestamp** a time in IST (`None` when there is none, such as the recovery of a drawdown that has not recovered yet), **flag** True or False, and **text** words.
+* The Benchmark group (beta, alpha and the others) is there because this run has `benchmark="NIFTY"`. Without a benchmark the table has 111 figures.
+* The Excursions and trading cost group (`average_mae` to `trading_cost_bps`) says how far the trades went against you and in your favour while they were open, and what charges and slippage cost them. [Metrics Explained](../metrics-explained.md#excursions-and-trading-cost) explains each of these figures.
 * `net_pnl` in the Trades group, Rs 53,941.09, equals `net_profit`. Each trade's charges include its share of the rounding on each day's contract note (STT and stamp duty are rounded to whole rupees there), so the trades add up to what your account made. The two differ only when a position is still open at the end of the run: `net_pnl` counts closed trades only.
 
 A fifth column, `definition`, says how each figure is worked out:
@@ -271,7 +283,7 @@ trade
 * `quantity` is the number of shares bought: whole shares, as many as 98 percent of the account could pay for. Later trades bought fewer, because each share cost more.
 * The prices are per share, in rupees, and include slippage. `net_pnl` is the trade's profit or loss in rupees, after its own charges.
 * The first trade, bought in May 2021 at 356.95 and sold in December 2021 at 456.95, made Rs 26,742.48. A few long trends like that one paid for the many short losses.
-* The table has more columns: `direction` (long or short), `product`, `gross_pnl` (before charges), `charges`, `return_pct` (the trade's return in percent), `bars_held` and `days_held` (how long it was held) and `exit_reason` (why it was sold; `signal` is your own `self.exit()`).
+* The table has more columns: `direction` (long or short), `product`, `gross_pnl` (before charges), `charges`, `return_pct` (the trade's return in percent), `bars_held` and `days_held` (how long it was held), `exit_reason` (why it was sold; `signal` is your own `self.exit()`), `mae` and `mfe` (the worst and the best the trade's profit stood at while it was open, in rupees before charges), `mae_pct` and `mfe_pct` (the same in percent) and `slippage` (what slippage cost the trade, already in its prices).
 
 ## The HTML report
 
@@ -298,7 +310,7 @@ Open the file in any browser; it needs no internet. A bar at the top links to ea
 * **Monthly:** the return of every month, week and year, as coloured grids.
 * **Distribution:** how the daily returns were spread, from the worst day to the best.
 * **Metrics:** every figure in one table, with NIFTY's beside it.
-* **Trades:** the trade list (the same rows as `result.trade_list()`) and the charges by kind.
+* **Trades:** what trading cost the trades (charges plus slippage), how far each trade went against you and in your favour (MAE and MFE), the trade list (the same rows as `result.trade_list()`) and the charges by kind.
 * **Notes:** how the figures were computed, and the settings and warnings of the run.
 
 [The Tearsheet](../tearsheet.md) walks through every section of this report, with a screenshot of each.

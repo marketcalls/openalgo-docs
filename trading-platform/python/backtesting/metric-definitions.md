@@ -82,6 +82,7 @@ How to read the units:
 | days | Calendar days, which can have a fraction |
 | seconds | Seconds |
 | sessions | Trading sessions (days the exchange was open) per year |
+| bps | Basis points: one basis point is 0.01 percent |
 | timestamp | An Indian time (IST), or None |
 | text | Text |
 | flag | True or False |
@@ -89,7 +90,7 @@ How to read the units:
 A few rules hold for every figure:
 
 * **Drawdowns are zero or negative.** A drawdown is a fall of the account from its highest value so far: `max_drawdown` of -0.2935 is a fall of 29.35 percent, and `max_drawdown_amount` of -500 is a fall of Rs 500.
-* **NaN** means the data cannot give the figure, for example a Sharpe ratio with no ups and downs to measure.
+* **NaN** means the data cannot give the figure, for example a Sharpe ratio with no ups and downs to measure. A trades table you build yourself for `metrics.analyse` without the columns `mae`, `mfe`, `mae_pct`, `mfe_pct` and `slippage` gives NaN for the figures that need them.
 * The **Benchmark** group appears only when the run has a benchmark, such as `benchmark="NIFTY"`.
 * Figures are measured from your capital, per trading session, after all charges. [Results and Reports](results-and-reports.md#more-options) has the details.
 
@@ -165,8 +166,24 @@ A few rules hold for every figure:
 | `total_costs` | Costs | rupees | Sum of closed trades' costs. |
 | `net_pnl` | Net P&L | rupees | Sum of closed trades' P&L after costs. |
 | `cost_share_of_gross_pnl` | Costs / gross P&L | fraction | Costs over gross P&L; NaN when gross P&L is zero or negative. |
-| `turnover` | Turnover | rupees | Traded value: \|price\| x quantity of every entry and every exit. |
+| `turnover` | Turnover | rupees | Traded value: \|price\| x quantity x multiplier of every entry and every exit (the multiplier is 1 for a trades table without one). |
 | `turnover_ratio` | Turnover ratio | ratio | Turnover over mean equity. |
+
+## Excursions and trading cost
+
+| Key | Label | Unit | Definition |
+|---|---|---|---|
+| `average_mae` | Average MAE | fraction | Mean over closed trades of the maximum adverse excursion (MAE) as a share of the trade's largest capital at work (average entry price x largest quantity held x multiplier). A trade's MAE is the lowest running P&L it showed before charges: its P&L realized so far plus the open position valued at a price known to have traded while it was open (the high and low of each base bar it held through, its fill prices, the open of a bar it exited in, a live session's ticks). Zero or negative. |
+| `average_mfe` | Average MFE | fraction | Mean over closed trades of the maximum favourable excursion (MFE), the highest running P&L a trade showed, as a share of its largest capital at work. Zero or positive. |
+| `worst_mae` | Worst MAE | rupees | The lowest MAE of a closed trade. |
+| `best_mfe` | Best MFE | rupees | The highest MFE of a closed trade. |
+| `edge_ratio` | Edge ratio | ratio | Mean MFE over the mean magnitude of the MAE, both as shares of capital at work: above 1, trades moved further in their favour than against them. |
+| `profit_kept` | Profit kept | fraction | Sum of the gross P&L of the winning trades (net P&L above zero) over the sum of their MFE: the share of their best open profit the winners kept. |
+| `closed_turnover` | Turnover of closed trades | rupees | Traded value of the closed trades: \|price\| x quantity x multiplier of each entry and each exit. The trading cost is measured against it; the turnover also counts the entries of trades still open. |
+| `total_slippage` | Slippage | rupees | What slippage cost the closed trades' fills: each fill's price against its price before slippage (the open, a level, a last close), times units and multiplier, worse positive. It is already in the fill prices, so in gross and net P&L, and is not deducted again. NaN when a fill had none modelled (a broker priced it). |
+| `trading_cost` | Trading cost | rupees | Costs plus slippage of the closed trades. |
+| `trading_cost_share_of_gross_pnl` | Trading cost / gross P&L | fraction | Trading cost over gross P&L; NaN when gross P&L is zero or negative. |
+| `trading_cost_bps` | Trading cost of turnover | bps | Trading cost over the turnover of closed trades, in basis points. |
 
 ## Benchmark
 
