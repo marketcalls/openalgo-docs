@@ -4,6 +4,8 @@
 
 OpenAlgo tracks order execution latency at multiple stages to help identify performance bottlenecks and ensure SLA compliance.
 
+Every `/api/v1` call is timed, not only orders. The monitor reports them one group of endpoints at a time, with orders as the default, because an average across an order and a history download describes neither. See [Endpoint Groups](#endpoint-groups).
+
 Latency records live in their own database, `LATENCY_DATABASE_URL` (default `sqlite:///db/latency.db`), separate from both `openalgo.db` and `logs.db`.
 
 ## Architecture Diagram
@@ -38,7 +40,7 @@ The column names on `OrderLatency` are `validation_latency_ms` and `response_lat
 │ user_id               │ Integer     │ User ID                             │
 │ broker                │ String(50)  │ Broker name                         │
 │ symbol                │ String(50)  │ Trading symbol                      │
-│ order_type            │ String(20)  │ PLACE, SMART, MODIFY, CANCEL, ...   │
+│ order_type            │ String(20)  │ Endpoint tag: PLACE, HISTORY, ...   │
 │ rtt_ms                │ Float       │ Broker API round-trip time          │
 │ validation_latency_ms │ Float       │ Pre-request processing              │
 │ response_latency_ms   │ Float       │ Post-response processing            │
@@ -50,6 +52,31 @@ The column names on `OrderLatency` are `validation_latency_ms` and `response_lat
 │ error                 │ String(500) │ Error message if any                │
 └───────────────────────┴─────────────┴─────────────────────────────────────┘
 ```
+
+`order_type` holds the endpoint the call was to (`PLACE`, `HISTORY`, `FUNDS` and so on), not the price type of an order. The column name is from when only orders were recorded.
+
+## Endpoint Groups
+
+`database/latency_groups.py` is the one place that says which tag each endpoint is recorded under and which group it belongs to. The recorder, the statistics, the purge and the page all read it; none keeps a list of its own. The groups follow the sections of the [API reference](../../api-documentation/v1/README.md).
+
+| Group | Endpoints | Kept |
+|-------|-----------|------|
+| Orders (default) | Place, smart, options, options multi-leg, basket, split, modify, cancel, cancel all, close position, and the three GTT actions | Forever |
+| Account and books | Order status, open position, order book, trade book, position book, holdings, funds, margin, GTT order book | 7 days |
+| Market data | Quote, multiple quotes, depth, history, ticker | 7 days |
+| Options | Option chain, Greeks, batch Greeks, option symbol, synthetic future | 7 days |
+| Symbols and settings | Symbol, search, expiry, instruments, intervals, market calendar, analyzer mode, sandbox P&L, chart preferences, ping | 7 days |
+| Tools and alerts | Portfolio, SIP and sector analysis, the strategy module, Telegram, WhatsApp, Slack, Discord | 7 days |
+| Other | Any record whose tag is in no group. Listed only when there is one. | 7 days |
+| All calls | Every record together | As above |
+
+Rules that follow from this:
+
+- **A group's figures come from that group's records only.** Counts, averages and the speed bands cover everything stored for the group; the median and P99 cover the last 30 days.
+- **Only orders are rated.** The Excellent, Good, Acceptable and Slow bands (150, 250 and 400 ms) describe an order confirmation, so the page shows them for the orders group and not for the others.
+- **The orders group is the keep list.** `ORDER_TAGS` is what `purge_old_data_logs` leaves alone. There is one list, not one per module.
+- **A new endpoint has to be placed.** `test/test_latency_groups.py` fails for a registered namespace that has no `Endpoint` in a group, and for a group that names a namespace that does not exist.
+- **Old spellings are read as what they are.** Options orders were once stored as `OPTIONSORDER` and `OPTIONSMULTIORDER`; `LEGACY_TAGS` counts those rows as options orders and keeps them.
 
 ## Implementation
 
@@ -70,27 +97,19 @@ class LatencyTracker:
 
 ### Decorator Wiring
 
-`track_latency(api_type)` is not applied by hand to route functions. `init_latency_monitoring(app)` walks the Flask-RESTX namespaces and wraps every resource method through `wrap_resource_methods()`, mapping each namespace name to an uppercase api_type.
+`track_latency(api_type)` is not applied by hand to route functions. `init_latency_monitoring(app)` walks the Flask-RESTX namespaces and wraps every resource method through `wrap_resource_methods()`, taking each namespace's tag from `database/latency_groups.py`.
 
 ```python
 # utils/latency_monitor.py
-api_types = {
-    "place_order": "PLACE",
-    "place_smart_order": "SMART",
-    "modify_order": "MODIFY",
-    "cancel_order": "CANCEL",
-    "place_gtt_order": "GTT_PLACE",
-    "quotes": "QUOTES",
-    # ...
-}
+from database.latency_groups import TAG_FOR_NAMESPACE
 
 for namespace in api.namespaces:
-    api_type = api_types.get(namespace.name, namespace.name.upper())
+    api_type = TAG_FOR_NAMESPACE.get(namespace.name, namespace.name.upper())
     for resource in namespace.resources:
         wrap_resource_methods(resource.resource, api_type)
 ```
 
-An unmapped namespace falls back to its uppercased name.
+A namespace placed in no group falls back to its uppercased name and is reported under **Other**; `test/test_latency_groups.py` fails until it is placed.
 
 ## Dashboard
 
@@ -106,12 +125,14 @@ An unmapped namespace falls back to its uppercased name.
 | Route | Behavior |
 |-------|----------|
 | `GET /latency/` | Older server-side dashboard template, still registered |
-| `GET /latency/api/logs` | Recent records; `limit` defaults to 100 and is capped at 1,000 |
-| `GET /latency/api/stats` | Overall stats, per-broker stats, and per-broker RTT histograms |
-| `GET /latency/api/broker/<broker>/stats` | One broker's stats plus its histogram |
-| `GET /latency/export` | Export all records as `latency_logs.csv` |
+| `GET /latency/api/logs` | Recent records of one group; `limit` defaults to 100 and is capped at 1,000 |
+| `GET /latency/api/stats` | One group's overall stats, per-broker stats and per-endpoint stats, cached for 60 seconds |
+| `GET /latency/api/broker/<broker>/stats` | One broker's stats in a group, plus its RTT histogram |
+| `GET /latency/export` | Export as CSV: every record as `latency_logs.csv`, or one group as `latency_<group>.csv` |
 
-Histograms are computed with 30 numpy bins over the observed RTT range.
+Each route takes the group in the query string: `/latency/api/stats?group=orders`, `/latency/api/logs?group=market_data`, `/latency/export?group=orders`. The figures and records default to `orders`; the export defaults to everything. A name that is not a group is refused with a 400.
+
+`/latency/api/stats` no longer attaches per-broker histograms: nothing on the page drew them, and building them read every record of every broker on each poll. Only the one-broker route still builds a histogram, with 30 numpy bins over that broker's observed RTT range.
 
 ### Dashboard View
 
@@ -193,7 +214,7 @@ The whole statistics block is computed in a handful of aggregate queries and cac
 
 `init_latency_monitoring(app)` calls `purge_old_data_logs(days=7)` once at startup.
 
-Order-execution records are kept forever. Everything else, meaning data and account queries, is deleted after seven days. The keep-forever set is `PLACE`, `SMART`, `MODIFY`, `CANCEL`, `CLOSE`, `CANCEL_ALL`, `BASKET`, `SPLIT`, `OPTIONS`, `OPTIONS_MULTI`, `GTT_PLACE`, `GTT_MODIFY`, and `GTT_CANCEL`. The same set is written out twice, in `utils/latency_monitor.KEEP_FOREVER_TYPES` and in `database/latency_db.purge_old_data_logs`, and the two must stay in step: a type listed in only the first is purged despite being an order.
+Order-execution records are kept forever. Everything else, meaning data and account queries, is deleted after seven days. The keep-forever set is the orders group, `ORDER_TAGS` in `database/latency_groups.py`, which both `utils/latency_monitor.KEEP_FOREVER_TYPES` and `database/latency_db.purge_old_data_logs` read, so there is one list to change. Before 2.0.3.4 the set was written out in two places and the tagging table misspelled the options orders, so options and options multi-leg orders were purged after a week; records stored under those old spellings (`LEGACY_TAGS`) are now counted as orders and kept.
 
 ## Alerting
 
@@ -253,7 +274,10 @@ LIMIT 10
 | File | Purpose |
 |------|---------|
 | `utils/latency_monitor.py` | Tracking utilities |
-| `database/latency_db.py` | Latency model |
+| `database/latency_db.py` | Latency model and per-group statistics |
+| `database/latency_groups.py` | Endpoint tags and groups (the single definition) |
 | `blueprints/latency.py` | Dashboard and export routes |
 | `utils/httpx_client.py` | HTTP timing hooks |
 | `frontend/src/pages/monitoring/LatencyDashboard.tsx` | React dashboard |
+| `frontend/src/api/latency.ts` | The dashboard's types and requests |
+| `test/test_latency_groups.py` | What belongs to which group, and that figures are per group |

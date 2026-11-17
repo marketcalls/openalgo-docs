@@ -58,7 +58,7 @@ Use the toggle on the top-right to switch to **API Key Mode**.
 1. Under **Generate new API Key**, enter:
    * **Application Name**: e.g. `openalgo`
    * **Redirect URL**: `http://127.0.0.1:5000/dhan/callback`
-   * (Optional) **Postback URL** if your system supports order postbacks
+   * Leave **Postback URL** blank. OpenAlgo receives your order updates through its own order feed, and refuses postbacks from Dhan because they carry no proof of who sent them.
 2. Click **Generate API Key**.
 3. Copy your:
    * **API Key**

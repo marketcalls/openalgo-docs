@@ -6,7 +6,7 @@ Use [Broker Configuration and Login](../broker-configuration.md) to save these c
 
 Sahi is an Indian online stock trading platform. Its Direct API lets you place and manage orders, read your positions, holdings and funds, and stream live market data, which makes it a good fit for algorithmic trading through OpenAlgo.
 
-Sahi signs you in with an API key and secret, not an OAuth login. There is no redirect URL to register with Sahi, no TOTP and nothing to type when you log in: OpenAlgo exchanges your saved key and secret for the day's access token.
+Sahi signs you in with an API key and secret, not an OAuth login, and there is no redirect URL to register with Sahi. **Login with Sahi** opens a short form in OpenAlgo with one optional field, **TOTP code**. For a TOTP key, type the 6-digit code your authenticator app shows; for a Regular key, leave it blank. OpenAlgo exchanges your saved key and secret, with the code when you give one, for the day's access token. The code is used once and never saved.
 
 <figure><img src="../../.gitbook/assets/sahi3 (1).png" alt=""><figcaption></figcaption></figure>
 
@@ -18,7 +18,9 @@ Sahi signs you in with an API key and secret, not an OAuth login. There is no re
 
 2. Click **Create API key**. Complete two-factor verification if asked.
 3. Enter a **Name** you will recognise later, for example `OpenAlgo`.
-4. Choose the **Access**: pick **Full access** (orders and market data) and key type **TOTP**. A **Market data** key cannot place orders.
+4. Choose the **Access**: pick **Full access** (orders and market data). A **Market data** key cannot place orders. Then choose the key type:
+   * **TOTP**: the key approves itself each day when you type its code at login. Add the TOTP secret Sahi shows to your authenticator app.
+   * **Regular**: the key has to be approved in the API Dashboard every trading day before you log in.
 
 <figure><img src="../../.gitbook/assets/sahi133.png" alt=""><figcaption></figcaption></figure>
 
@@ -33,7 +35,7 @@ Sahi signs you in with an API key and secret, not an OAuth login. There is no re
 {% endhint %}
 
 {% hint style="info" %}
-**Approve the key every trading day.** After 6:00 AM IST the key shows **Expired** in the API Dashboard. Click **Approve** on it before you log in to OpenAlgo; until you do, Sahi will not issue a token and the OpenAlgo login fails with a message asking you to approve the key. A key created today is already approved. Sahi's access tokens also expire at 6:00 AM IST, so log in to OpenAlgo once each trading day.
+**A Regular key is approved every trading day.** After 6:00 AM IST it shows **Expired** in the API Dashboard. Click **Approve** on it before you log in to OpenAlgo; until you do, Sahi will not issue a token and the OpenAlgo login fails with a message asking you to approve the key. A key created today is already approved. A TOTP key needs no approval: type its current code on the login form instead. Sahi's access tokens expire at 6:00 AM IST, so log in to OpenAlgo once each trading day with either key type.
 {% endhint %}
 
 Then store the key and secret in your `.env` file, and add `sahi` to `VALID_BROKERS` if it is not already listed. The `REDIRECT_URL` is not registered anywhere at Sahi; OpenAlgo uses it only to know which broker you use.

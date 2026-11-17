@@ -50,7 +50,9 @@ Volume and grid display can be adjusted independently from the primary price sca
 
 ## Drawing Tools
 
-One drawing rail controls the active pane and includes line, channel, Fibonacci/Gann, shape, cycle, forecast, measurement, text and volume tools (Anchored VWAP and Fixed Range Volume Profile). Drawings support styling, locking, magnet mode, undo/redo, and per-pane persistence.
+One drawing rail controls the active pane and includes line, channel, Fibonacci/Gann, shape, pattern, cycle, forecast, measurement, text and volume tools (Anchored VWAP and Fixed Range Volume Profile). Drawings support styling, locking, magnet mode, undo/redo, and per-pane persistence.
+
+The Patterns group includes **Elliott waves** with five counts: impulse, correction, triangle, double combination and triple combination. Click the origin first, point 0, where the first wave starts, then the end of each wave. The origin carries no label and the waves are numbered from the second point, as a count is read: (1) to (5) on an impulse, (A) to (C) on a correction, (A) to (E) on a triangle, (W) (X) (Y) and (W) (X) (Y) (X) (Z) on the combinations. Counts are labelled in the Intermediate degree; the terminal has no control yet for another degree or label style.
 
 The shared rail deliberately targets only the active pane. Confirm the highlighted pane before adding, editing, or removing a drawing in a multi-chart layout.
 
