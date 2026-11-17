@@ -1,6 +1,6 @@
 # Brokers
 
-OpenAlgo currently includes **38 broker plugin directories**: 36 securities-broker integrations, the Dhan sandbox plugin, and [Delta Exchange](../../crypto/exchanges/delta-exchange.md) for crypto derivatives. The 37 securities/sandbox plugins are listed below; Delta Exchange is documented under Crypto.
+OpenAlgo currently includes **39 broker plugin directories**: 37 securities-broker integrations, the Dhan sandbox plugin, and [Delta Exchange](../../crypto/exchanges/delta-exchange.md) for crypto derivatives. The 38 securities/sandbox plugins are listed below; Delta Exchange is documented under Crypto.
 
 Start with [Broker Configuration and Login](../broker-configuration.md) for saving keys, `.env` precedence, connecting and switching. Broker presence does not guarantee every exchange, history, streaming or order feature; the active adapter's capabilities and account entitlement determine availability.
 
@@ -30,7 +30,7 @@ The short codes below identify plugin directories under `broker/`. Broker Config
 22. [Motilal Oswal](motilal-oswal.md) (`motilal`)
 23. [Mstock](mstock.md) (`mstock`)
 24. [Nubra](nubra.md) (`nubra`)
-25. Nuvama
+25. [Nuvama](nuvama.md) (`nuvama`)
 26. [Paytm](paytm.md) (`paytm`)
 27. [Pocketful](pocketful.md) (`pocketful`)
 28. [Rmoney (XTS)](rmoney.md) (`rmoney`)

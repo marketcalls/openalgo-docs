@@ -25,7 +25,7 @@ It's not just an API wrapper. OpenAlgo is **the open source trading ecosystem fo
 
 | | |
 | --- | --- |
-| **38 broker plugins** | 36 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin |
+| **39 broker plugins** | 37 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin |
 | **8 official SDKs** | Python, Node.js, Java, .NET, Go, Rust, R, MATLAB |
 | **61 node types** | In the Flow visual strategy builder |
 | **112 built-in chart indicators** | In the built-in charting terminal |
@@ -120,7 +120,7 @@ See [Historify](new-features/historify.md) and [Portfolio Backtester and Analyze
 
 #### Multi-Broker, Multi-Platform
 
-OpenAlgo ships **38 broker plugins**: 36 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. The securities plugins share normalized API and WebSocket interfaces, reducing broker-specific strategy code.
+OpenAlgo ships **39 broker plugins**: 37 securities brokers, Delta Exchange for crypto derivatives, and a Dhan sandbox plugin for testing without real money. The securities plugins share normalized API and WebSocket interfaces, reducing broker-specific strategy code.
 
 <figure><img src=".gitbook/assets/diagram-why-openalgo-broker-abstraction.png" alt="Strategy code calls the OpenAlgo REST API and WebSocket proxy; REST orders and built-in Flow go through the services layer, the WebSocket proxy loads streaming adapters directly and streams live prices from the broker back to your code, and the 38 broker plugins call the broker APIs"><figcaption></figcaption></figure>
 

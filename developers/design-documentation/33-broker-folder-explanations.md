@@ -35,7 +35,7 @@ broker/
 │   └── ... (same shape)
 ├── angel/
 │   └── ... (same shape)
-└── ... (38 broker plugins total)
+└── ... (39 broker plugins total)
 ```
 
 The streaming files are named after the broker, so Angel uses `broker/angel/streaming/angel_adapter.py` and so on. Not every plugin ships every optional module: `gtt_api.py` exists for Angel One, Dhan, Fyers, Rupeezy, Upstox and Zerodha, and `<broker>_order_adapter.py` only where the broker pushes order updates. `mapping/` and `database/` have no `__init__.py` in most plugins.
@@ -301,7 +301,7 @@ touch broker/newbroker/{api,mapping,database,streaming}/__init__.py
 VALID_BROKERS = 'zerodha,dhan,angel,newbroker'
 ```
 
-`VALID_BROKERS` in `.sample.env` currently lists all 38 plugins.
+`VALID_BROKERS` in `.sample.env` currently lists all 39 plugins.
 
 ## Field Mapping Examples
 
