@@ -63,6 +63,7 @@ Net profit   : Rs -844.47
 Return       : -0.84%
 Max drawdown : -2.77%
 Trades       : 16 (31% won), 1 still open
+Overfitting  : too few trades to judge (16 closed, 30 needed)
 Average trade: Rs 9,301
 ```
 

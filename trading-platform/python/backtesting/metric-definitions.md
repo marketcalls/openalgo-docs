@@ -50,6 +50,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 `result.metrics_table()` gives every figure of the run with the label, unit and definition listed below. This block continues the first one and looks up four figures:

@@ -59,6 +59,7 @@ Net profit   : Rs -11,939.33
 Return       : -2.39%
 Max drawdown : -18.78%
 Trades       : 42 (43% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
 Charges      : Rs 41,771.33
 ```
 

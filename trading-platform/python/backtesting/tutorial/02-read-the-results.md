@@ -53,6 +53,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Benchmark    : 80.63% return (NIFTY)
 ```
 
@@ -62,6 +63,7 @@ Benchmark    : 80.63% return (NIFTY)
 * **Return** (53.94 percent) is the net profit as a percent of the starting capital, Rs 1,00,000.
 * **Max drawdown** (-29.35 percent) is the largest fall of the account from its highest value to a later low. At its worst moment, the account was 29.35 percent below the best value it had reached. Ask yourself whether you would have kept the strategy running through that fall: if not, the profit at the end does not help you.
 * **Trades** (11) counts the round trips: a buy and the sell that closed it. The **win rate** (36 percent won) is the share of trades that made money, here 4 of 11. A trend strategy often wins less than half its trades: many small losses, and a few large wins that pay for them. The profit matters more than how often you win.
+* **Overfitting** (too few trades to judge, 11 closed, 30 needed) is the engine's quick check of whether the profit could be luck, or fitted to the past it was tested on. It shuffles and redraws the closed trades, and it needs at least 30 of them to judge anything; with 11 it says so instead of guessing. [Overfitting checks](../results-and-reports.md#overfitting-checks) explains the four checks and how to read them.
 * **Benchmark** (80.63 percent) is what simply holding NIFTY 50 returned over the same dates. Here the index did better than the strategy; [Compare with NIFTY](08-compare-with-nifty.md) looks at that closely.
 
 ## One figure by its name

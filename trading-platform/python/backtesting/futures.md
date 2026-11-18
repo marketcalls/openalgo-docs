@@ -52,6 +52,7 @@ Net profit   : Rs 33,888.62
 Return       : 6.78%
 Max drawdown : -1.54%
 Trades       : 5 (100% won)
+Overfitting  : too few trades to judge (5 closed, 30 needed)
 ```
 
 The **max drawdown** is the largest fall of the account from its highest value. The [futures lesson](tutorial/07-futures.md) walks through this strategy step by step.
@@ -104,6 +105,7 @@ Net profit   : Rs 1,50,448.96
 Return       : 30.09%
 Max drawdown : -5.57%
 Trades       : 4 (25% won), 1 still open
+Overfitting  : too few trades to judge (4 closed, 30 needed)
 ```
 
 Most of this profit is the lot bought on 29 October and still held on 11 November. A position still open at the end is valued at the last close: it counts in the net profit but not in the closed trades.

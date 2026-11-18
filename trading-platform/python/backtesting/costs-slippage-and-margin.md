@@ -56,6 +56,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Charges      : Rs 3,322.91
 ```
 
@@ -116,6 +117,7 @@ Net profit   : Rs 53,485.86
 Return       : 53.49%
 Max drawdown : -29.42%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Charges      : Rs 3,836.94
 ```
 
@@ -149,6 +151,7 @@ Net profit   : Rs 54,954.60
 Return       : 54.95%
 Max drawdown : -29.24%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Charges      : Rs 3,328.25
 ```
 
@@ -226,6 +229,7 @@ Net profit   : Rs 55,819.69
 Return       : 55.82%
 Max drawdown : -29.82%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Charges      : Rs 3,416.24
 first buy, whole shares: 270.0
 first buy, part shares : 279.82

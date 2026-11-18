@@ -46,6 +46,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 What the four lines mean:
@@ -263,6 +264,27 @@ Beta            : 0.71
 
 Over these years the crossover made less than simply holding NIFTY 50. A beta of 0.71 means that on an average day it moved about 0.7 percent for each 1 percent move of NIFTY. The lesson [Compare with NIFTY](tutorial/08-compare-with-nifty.md) explains alpha, beta and the NIFTY line on the tearsheet.
 
+## Overfitting checks
+
+A strategy tuned to one stretch of history can look best exactly where it will not hold. Every backtest therefore has four quick checks of its closed trades. They are worked out the first time you read them (in `result.summary()`, `result.warnings` or the tearsheet), never while the backtest runs, and they change none of its figures:
+
+* **Random out of sample**: 30 percent of the sessions are set aside at random, 200 times. The check passes when, in at least 80 percent of these draws, the set-aside sessions keep at least half of the Sharpe ratio of the others.
+* **Trade reshuffle**: the same closed trades in 200 random orders, to show the drawdowns they could have given. It only reports, unless you give it a largest drawdown you accept.
+* **Trade resample**: 200 paths of trades drawn at random from your own, a trade may come more than once. The check passes when at least 95 percent of the paths make money and at most 5 percent fall 50 percent from a peak.
+* **Variance**: the same paths with the win rate 5 points lower. The check passes when at least 80 percent of them still make money.
+
+A check needs at least 30 closed trades and a run that made money. Otherwise it says "not judged" and why, and it never passes.
+
+`result.summary()` sums them up in its Overfitting line. The SBIN run above closed 11 trades, so it reads `too few trades to judge (11 closed, 30 needed)`. The [MACD crossover example](examples/macd-crossover.md), with 52 trades, reads `quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational`. Each failed check also adds a line to `result.warnings` with its figures and its rule.
+
+How to read them:
+
+* Passing proves nothing on its own.
+* A failure says the edge did not hold up under that check: it may be fitted to the past, or too small to tell apart from the luck of the run's own trades. It is not proof that the strategy is overfitted.
+* None of these four can see a strategy picked as the best of many settings tried. If you chose the settings with [Optimization](optimization.md), test them on dates the search did not see.
+
+`result.robustness()` runs the full set of checks, with charts and an HTML report.
+
 ## Warnings
 
 `result.warnings` lists what you should know about a run, most important first:
@@ -324,6 +346,7 @@ Net profit   : Rs 69,968.22
 Return       : 69.97%
 Max drawdown : -23.24%
 Trades       : 23 (39% won), 1 still open
+Overfitting  : too few trades to judge (23 closed, 30 needed)
 ```
 
 To try many numbers at once and rank them, see [Find Better Settings](tutorial/09-find-better-settings.md).

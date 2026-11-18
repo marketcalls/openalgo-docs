@@ -56,6 +56,7 @@ Net profit   : Rs 5,326.02
 Return       : 5.33%
 Max drawdown : -13.25%
 Trades       : 3 (67% won)
+Overfitting  : too few trades to judge (3 closed, 30 needed)
 ```
 
 Three trades in almost six years, the first in September 2022: a golden cross is rare. The engine loaded HDFCBANK's bars from before 2021 by itself, so the 200-day average had its value from the first day of the run. The max drawdown is the largest fall of the account from its highest value.

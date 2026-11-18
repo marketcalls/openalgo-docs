@@ -61,6 +61,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Benchmark    : 80.63% return (NIFTY)
 Beta         : 0.71
 Alpha        : 1.55% a year

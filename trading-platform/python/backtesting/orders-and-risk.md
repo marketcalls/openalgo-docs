@@ -52,6 +52,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 The **max drawdown** is the largest fall of the account from its highest value.
@@ -84,6 +85,7 @@ Net profit   : Rs 12,591.62
 Return       : 12.59%
 Max drawdown : -14.59%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 Fifty shares used only part of the capital, so the profit is smaller than with all of it.
@@ -119,6 +121,7 @@ Net profit   : Rs 6,837.93
 Return       : 6.84%
 Max drawdown : -20.63%
 Trades       : 11 (18% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 The faster exit cut the losing trades early, but it also sold the big trends early, so on SBIN it made far less.
@@ -154,6 +157,7 @@ Net profit   : Rs 24,010.20
 Return       : 24.01%
 Max drawdown : -28.48%
 Trades       : 11 (27% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 {'leg_sl': 7, 'signal': 4}
 ```
 
@@ -186,6 +190,7 @@ Net profit   : Rs 16,196.09
 Return       : 16.20%
 Max drawdown : -21.81%
 Trades       : 11 (27% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 {'leg_sl': 7, 'leg_target': 3, 'signal': 1}
 ```
 
@@ -216,6 +221,7 @@ Net profit   : Rs 24,525.35
 Return       : 24.53%
 Max drawdown : -22.95%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 {'signal': 7, 'leg_sl': 4}
 ```
 
@@ -267,6 +273,7 @@ Net profit   : Rs -1,469.38
 Return       : -1.47%
 Max drawdown : -3.74%
 Trades       : 8 (38% won)
+Overfitting  : too few trades to judge (8 closed, 30 needed)
 {'scheduler': 7, 'signal': 1}
 ```
 
@@ -296,6 +303,7 @@ Net profit   : Rs -3,038.31
 Return       : -3.04%
 Max drawdown : -3.04%
 Trades       : 8 (25% won)
+Overfitting  : too few trades to judge (8 closed, 30 needed)
 {'daily_loss_limit': 5, 'scheduler': 3}
 ```
 

@@ -52,6 +52,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 The engine loads SBIN's daily bars from before 1 January 2021 by itself, so both EMAs are ready on the first day: the strategy needs no waiting code.
@@ -126,6 +127,7 @@ Net profit   : Rs -10,002.82
 Return       : -10.00%
 Max drawdown : -23.38%
 Trades       : 11 (27% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 {'leg_sl': 7, 'leg_target': 3, 'signal': 1}
 ```
 
@@ -154,6 +156,7 @@ Net profit   : Rs 28,200.50
 Return       : 28.20%
 Max drawdown : -17.50%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 Other ways: `self.buy(qty=100)` for 100 shares, `size = bt.size.value(50_000)` for Rs 50,000 a trade, and `size = bt.size.fixed_risk(1)` with a stop-loss to risk 1 percent of the account per trade. Lesson: [How Much to Buy](tutorial/04-how-much-to-buy.md).
@@ -202,6 +205,7 @@ Net profit   : Rs -1,469.38
 Return       : -1.47%
 Max drawdown : -3.74%
 Trades       : 8 (38% won)
+Overfitting  : too few trades to judge (8 closed, 30 needed)
 {'scheduler': 7, 'signal': 1}
 ```
 
@@ -237,6 +241,7 @@ Net profit   : Rs -1,043.80
 Return       : -1.04%
 Max drawdown : -2.25%
 Trades       : 19 (42% won)
+Overfitting  : too few trades to judge (19 closed, 30 needed)
 {'short': 11, 'long': 8}
 ```
 
@@ -267,6 +272,7 @@ Net profit   : Rs 0.00
 Return       : 0.00%
 Max drawdown : 0.00%
 Trades       : no closed trades
+Overfitting  : too few trades to judge (0 closed, 30 needed)
 ```
 
 On the screen, after the file name and line number:
@@ -315,6 +321,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Benchmark    : 80.63% return (NIFTY)
 Beta         : 0.71
 ```
@@ -345,6 +352,7 @@ Net profit   : Rs 1,50,448.96
 Return       : 30.09%
 Max drawdown : -5.57%
 Trades       : 4 (25% won), 1 still open
+Overfitting  : too few trades to judge (4 closed, 30 needed)
 ```
 
 NIFTY23NOV26FUT expires on 23 November 2026, and your broker serves a contract's history only while it trades: after that, use the current contract and recent dates. Lesson: [Trade Futures](tutorial/07-futures.md).
@@ -390,6 +398,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 The same bars give the same result. Lesson: [Use Your Own Data](tutorial/11-your-own-data.md); more on columns and time zones: [Data](data.md#your-own-data).
@@ -413,6 +422,7 @@ Net profit   : Rs 30,738.50
 Return       : 30.74%
 Max drawdown : -29.38%
 Trades       : 7 (29% won)
+Overfitting  : too few trades to judge (7 closed, 30 needed)
 ```
 
 Python says so on the screen when the run ends, after the file name and line number:
@@ -449,6 +459,7 @@ Net profit   : Rs 1,04,087.35
 Return       : 104.09%
 Max drawdown : -35.12%
 Trades       : 17 (29% won)
+Overfitting  : too few trades to judge (17 closed, 30 needed)
 ['charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2020-07-01 are backfilled for 6 fills, from 2019-03-19']
 ```
 
@@ -509,6 +520,7 @@ Net profit   : Rs 11,055.12
 Return       : 11.06%
 Max drawdown : -33.98%
 Trades       : no closed trades (4 still open)
+Overfitting  : too few trades to judge (0 closed, 30 needed)
 rebalance orders: 69
 ```
 

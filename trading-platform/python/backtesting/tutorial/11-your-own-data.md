@@ -81,6 +81,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 The same bars give the same result as the first lesson, to the paisa: Rs 53,941.09 in 11 trades, with a max drawdown (the largest fall of the account from its highest value) of 29.35 percent. Passing the bars yourself changes nothing, until you change the bars.
@@ -108,6 +109,7 @@ Net profit   : Rs 30,738.50
 Return       : 30.74%
 Max drawdown : -29.38%
 Trades       : 7 (29% won)
+Overfitting  : too few trades to judge (7 closed, 30 needed)
 ```
 
 Python also prints a warning on the screen when this run ends, after your file's name and line number:

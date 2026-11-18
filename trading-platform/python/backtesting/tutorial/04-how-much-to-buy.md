@@ -55,6 +55,7 @@ Net profit   : Rs 25,351.07
 Return       : 25.35%
 Max drawdown : -23.46%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Average buy  : Rs 67,267
 ```
 
@@ -90,6 +91,7 @@ Net profit   : Rs 28,200.50
 Return       : 28.20%
 Max drawdown : -17.50%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Average buy  : Rs 57,213
 ```
 
@@ -126,6 +128,7 @@ Net profit   : Rs 12,929.84
 Return       : 12.93%
 Max drawdown : -8.73%
 Trades       : 11 (27% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 Average buy  : Rs 33,703
 ```
 
