@@ -86,7 +86,7 @@ Overfitting  : too few trades to judge (11 closed, 30 needed)
 
 The same bars give the same result as the first lesson, to the paisa: Rs 53,941.09 in 11 trades, with a max drawdown (the largest fall of the account from its highest value) of 29.35 percent. Passing the bars yourself changes nothing, until you change the bars.
 
-Daily bars from `client.history` need nothing more. Intraday bars, such as 5-minute ones, also need `tz="Asia/Kolkata"` in the `bt.backtest(...)` call: their times carry no time zone, and the argument says they are Indian time (IST).
+Bars from `client.history` need nothing more, intraday ones included: the times of its 5-minute or 15-minute bars come with the Indian time zone (IST) attached. Intraday times without a time zone, as most spreadsheets hold them, need `tz="Asia/Kolkata"` in the `bt.backtest(...)` call, to say they are Indian time ([When do I pass tz=?](../data.md#when-do-i-pass-tz)).
 
 ## Bars that start on the start date
 
@@ -124,7 +124,7 @@ The strategy waited two years, until January 2023, for its 50-day EMA, and made 
 
 * `client.history(...)` gives you the bars as a table you can print and check before a backtest.
 * `bt.backtest(..., data=bars, start="2021-01-01")` runs on your bars instead of fetching them. Fetch them from earlier than `start`, so the indicators are ready on the first day.
-* Daily bars need no time zone; intraday bars need `tz="Asia/Kolkata"`.
+* Bars from `client.history` need no time zone; intraday times without one, as in a spreadsheet, need `tz="Asia/Kolkata"`.
 * The engine still applies the Indian market rules (charges, slippage, sessions) to bars you pass.
 
 ## More options

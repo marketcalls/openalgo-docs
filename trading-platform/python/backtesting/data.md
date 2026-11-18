@@ -224,7 +224,29 @@ except ConfigError as error:
 the timestamps of the supplied data carry no time zone. Pass tz= (for example tz='Asia/Kolkata' for IST clock times, tz='UTC' for UTC): there is no default, because a wrong guess shifts every bar by 5 hours 30 minutes.
 ```
 
-Pass `tz="Asia/Kolkata"` for Indian clock times: `bt.backtest(Intraday, data=sheet15, tz="Asia/Kolkata", capital=100_000)`.
+Pass `tz="Asia/Kolkata"` for Indian clock times. A year of 15-minute bars has one more catch: NSE's Diwali Muhurat trading session of Sunday 8 November 2026 opened at 14:20, between the 15-minute steps the engine counts from 09:15 (14:15 and 14:30), so it cannot place that session's 15-minute bars. It stops with a message that says to pass 1-minute data, from which it builds those bars itself, or to leave that session out. This block leaves it out and runs with `tz=`:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# Leave out the Muhurat session of 8 November 2026: it opened at 14:20, between two 15-minute steps
+sheet15 = sheet15.drop(sheet15.loc["2026-11-08"].index)
+
+# Run with tz=: the clock times are read as Indian time
+intraday = bt.backtest(Intraday, data=sheet15, tz="Asia/Kolkata", capital=100_000)
+print(intraday.summary())
+```
+
+<!-- output -->
+```text
+Net profit   : Rs -631.08
+Return       : -0.63%
+Max drawdown : -5.01%
+Trades       : 40 (50% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+```
+
+The run goes ahead. These bars begin on 1 November 2025 with none before them, so the strategy first waits for its EMAs inside the run, and Python prints a `WarmUpWarning`, as in [History before the start date](#history-before-the-start-date). The point here is the time zone, not this result.
 
 ## Columns with other names
 

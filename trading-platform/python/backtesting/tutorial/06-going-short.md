@@ -118,7 +118,7 @@ Every sell was refused, because you cannot sell shares in delivery that you do n
 
 `self.target(qty=80)` means "be long 80 shares", and `self.target(qty=-80)` means "be short 80 shares". The engine works out the order: if you are short 80 and ask to be long 80, it buys 160 in one order, 80 to close the short and 80 to open the long. If you already hold the target, it does nothing.
 
-This strategy takes both sides of the opening range: long after a close above the range, short after a close below it, and it flips when the price later breaks the other side. A flip needs time, so it watches until 14:30. 80 shares of SBIN cost between about Rs 75,000 and Rs 99,000 over this year, so this run starts with Rs 1,50,000: with Rs 1,00,000, its losses would leave too little cash for 80 shares, and from February 2026 the engine would refuse most of its orders (reject code `margin`).
+This strategy takes both sides of the opening range: long after a close above the range, short after a close below it, and it flips when the price later breaks the other side. A flip needs time, so it watches until 14:30. 80 shares of SBIN cost between about Rs 75,000 and Rs 99,000 over this year, so this run starts with Rs 1,50,000: with Rs 1,00,000, its losses would leave too little cash for 80 shares, and from February 2026 the engine would refuse most of its orders (reject code `margin`). Its return is a percent of Rs 1,50,000, so it does not compare directly with the returns of the Rs 1,00,000 runs above and in lesson 5.
 
 <!-- requires-server -->
 <!-- continues -->

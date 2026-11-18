@@ -127,7 +127,7 @@ print(ref.round_to_lot(200, 65), "units")  # down to whole lots of 65
 
 ## In a backtest
 
-When a strategy trades a future or an option, the engine takes its lot, tick, freeze quantity and expiry from these tables, and says so in the run's assumptions. This strategy trades the NIFTY 25300 call of 23 November 2026 on the option's own 5-minute bars from your OpenAlgo server: once a day, two lots when a bar closes above the high of the first 15 minutes, with a stop-loss 10 percent below the buy price and a target 15 percent above. The option was listed on 26 August 2026 but first traded on 1 October, and your broker serves its bars only from then and only while it trades, so the run covers 1 October to 11 November 2026 (Historify keeps expired contracts you download while they trade, for longer tests):
+When a strategy trades a future or an option, the engine takes its lot, tick, freeze quantity and expiry from these tables, and says so in the run's assumptions. This strategy trades the NIFTY 25300 call of 23 November 2026 on the option's own 5-minute bars from your OpenAlgo server: once a day, two lots when a bar closes above the high of the first 15 minutes, with a stop-loss 10 percent below the buy price and a target 15 percent above. The option was listed on 26 August 2026 but first traded on 1 October, and your broker serves its 5-minute bars only from then and only while it trades, so the run covers 1 October to 11 November 2026. Historify on your OpenAlgo server keeps expired contracts you download while they trade, for longer tests (`source="db"`, see [Data](../data.md#where-the-bars-come-from)):
 
 <!-- requires-server -->
 ```python

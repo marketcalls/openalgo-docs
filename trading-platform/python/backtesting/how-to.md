@@ -379,7 +379,7 @@ Do not trust the single best pair: among many, one looks good by luck. Check it 
 
 ## Use your own data
 
-Pass a DataFrame of bars with `data=` instead of the client. Here the bars come from `client.history`. Fetch them from earlier than the day the test starts, so the EMAs are ready on it, and say where the test starts with `start=`. Daily bars need nothing more; intraday bars also need `tz="Asia/Kolkata"`, to say their times are Indian time:
+Pass a DataFrame of bars with `data=` instead of the client. Here the bars come from `client.history`. Fetch them from earlier than the day the test starts, so the EMAs are ready on it, and say where the test starts with `start=`. Such bars need nothing more, intraday ones included (`client.history` gives their times with the Indian time zone); intraday times without a time zone, as in a spreadsheet, need `tz="Asia/Kolkata"`, to say they are Indian time:
 
 <!-- requires-server -->
 <!-- continues -->
