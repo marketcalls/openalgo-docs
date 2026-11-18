@@ -127,7 +127,7 @@ print(ref.round_to_lot(200, 65), "units")  # down to whole lots of 65
 
 ## In a backtest
 
-When a strategy trades a future or an option, the engine takes its lot, tick, freeze quantity and expiry from these tables, and says so in the run's assumptions. This strategy buys the NIFTY 25300 call of 23 November 2026 on 11 November 2026, on the option's own 5-minute bars from your OpenAlgo server: two lots when a bar closes above the high of the first 15 minutes, with a stop-loss 10 percent below the buy price and a target 15 percent above:
+When a strategy trades a future or an option, the engine takes its lot, tick, freeze quantity and expiry from these tables, and says so in the run's assumptions. This strategy trades the NIFTY 25300 call of 23 November 2026 on the option's own 5-minute bars from your OpenAlgo server: once a day, two lots when a bar closes above the high of the first 15 minutes, with a stop-loss 10 percent below the buy price and a target 15 percent above. The option was listed on 26 August 2026 but first traded on 1 October, and your broker serves its bars only from then and only while it trades, so the run covers 1 October to 11 November 2026 (Historify keeps expired contracts you download while they trade, for longer tests):
 
 <!-- requires-server -->
 ```python
@@ -145,32 +145,41 @@ class CallBreakout(bt.Strategy):
 
     # init runs before the first bar
     def init(self):
-        self.traded = False  # one trade only
+        self.traded = True  # no trade until the first day's range is known
 
     # on_bar runs at the close of every 5-minute bar
     def on_bar(self, bar):
         if bar.time.strftime("%H:%M") == "09:25":  # the third bar: the first 15 minutes are done
             self.range_high = max(self.high[-3:])  # the highest high of the first three bars
+            self.traded = False  # a new session: one trade allowed today
         elif bar.time.strftime("%H:%M") > "09:25" and not self.traded and bar.close > self.range_high:
             self.buy(lots=2, stop=bt.pct(10), target=bt.pct(15))  # 2 lots = 130 units
             self.traded = True
 
 
-# Run it on 11 November 2026, then print the contract terms used and the fills
-result = bt.backtest(CallBreakout, client, start="2026-11-11", end="2026-11-11", capital=100_000)
-print(result.assumptions["instruments"])
-print(result.fills[["time", "side", "quantity_units", "price_rupees", "reason"]].to_string(index=False))
+# Run it over the option's traded life, 1 October to 11 November 2026
+result = bt.backtest(CallBreakout, client, start="2026-10-01", end="2026-11-11", capital=100_000)
+print(result.assumptions["instruments"])  # the contract terms the engine used
+print(result.summary())  # net profit, return, drawdown and trades
+# The fills of 11 November 2026, the last session of the run.
+fills = result.fills[["time", "side", "quantity_units", "price_rupees", "reason"]]
+print(fills[fills["time"].dt.strftime("%Y-%m-%d") == "2026-11-11"].to_string(index=False))
 ```
 
 <!-- output -->
 ```text
 NIFTY23NOV2625300CE: lot 65, tick 0.05, freeze 1800 from the reference tables (builtin:2026-11-17:a50a575215e7)
+Net profit   : Rs -5,673.33
+Return       : -5.67%
+Max drawdown : -5.67%
+Trades       : 7 (14% won)
+Overfitting  : too few trades to judge (7 closed, 30 needed)
                      time side  quantity_units  price_rupees reason
 2026-11-11 09:45:00+05:30  BUY           130.0        389.25  entry
 2026-11-11 09:55:00+05:30 SELL           130.0        348.55 leg_sl
 ```
 
-The breakout came at 09:45 and two lots (130 units) were bought at 389.25. The premium then fell, and the 10 percent stop closed the trade at 09:55, a little below the stop level because every fill pays the default slippage for index options (0.5 percent of the premium). The run is intraday (MIS), so the engine held the stop and target itself. To run it after 23 November 2026, pick an option of the current expiry and a recent session.
+The engine took the lot (65), the tick (0.05) and the freeze quantity (1,800 units) from its reference tables. The strategy bought on 7 days and only one trade reached its target. It lost Rs 5,673.33, almost all of it on the last day: in October the call was far out of the money and cost Rs 3 to Rs 13, so a 10 percent stop lost little, but by 11 November its premium was Rs 389. That day the breakout came at 09:45 and two lots (130 units) were bought at 389.25. The premium then fell, and the 10 percent stop closed the trade at 09:55, a little below the stop level because every fill pays the default slippage for index options (0.5 percent of the premium). The run is intraday (MIS), so the engine held the stop and target itself. Seven trades are too few for the Overfitting line to judge ([Overfitting checks](../results-and-reports.md#overfitting-checks)). To run it after 23 November 2026, pick an option of the current expiry, with `start` its first session with trades.
 
 ## More options
 

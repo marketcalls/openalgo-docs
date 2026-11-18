@@ -8,7 +8,7 @@ A **futures contract** is an agreement to buy or sell NIFTY on a set date, its *
 
 The strategy is the EMA crossover: buy one lot when the 20-bar EMA (an average of closing prices that weighs recent bars more) crosses above the 50-bar EMA, sell when it crosses back below. It runs on **15-minute bars** (one bar, or candle, per 15 minutes), so the engine trades it **MIS** (intraday): no new entry from 15:00, and every open position is closed (squared off) at 15:10.
 
-Your broker serves a contract's history only while the contract trades, so the run covers 1 October to 11 November 2026. After 23 November 2026, switch to the current contract (for example `NIFTY29DEC26FUT`) and dates inside its life.
+Your broker serves a contract's history only while the contract trades, so the run covers the contract's whole life up to 11 November 2026, from its first session on 26 August 2026. For longer tests, download the contracts into Historify while they trade: it keeps expired contracts (`source="db"`, see [Data](data.md#where-the-bars-come-from)). After 23 November 2026, switch to the current contract (for example `NIFTY29DEC26FUT`) and dates inside its life.
 
 Put the API key from your OpenAlgo dashboard in place of `OPENALGO_API_KEY`. Run this block first: the other blocks on this page continue from it.
 
@@ -41,8 +41,8 @@ class NiftyFuturesEma(bt.Strategy):
             self.exit()  # sell the lot
 
 
-# Run it from 1 October to 11 November 2026 with Rs 5,00,000, enough for the margin of one lot.
-result = bt.backtest(NiftyFuturesEma, client, start="2026-10-01", end="2026-11-11", capital=500_000)
+# Run it over the contract's life, 26 August to 11 November 2026, with Rs 5,00,000, enough for the margin of one lot.
+result = bt.backtest(NiftyFuturesEma, client, start="2026-08-26", end="2026-11-11", capital=500_000)
 print(result.summary())  # net profit, return, drawdown and trades
 ```
 
@@ -55,7 +55,13 @@ Trades       : 5 (100% won)
 Overfitting  : too few trades to judge (5 closed, 30 needed)
 ```
 
-The **max drawdown** is the largest fall of the account from its highest value. The [futures lesson](tutorial/07-futures.md) walks through this strategy step by step.
+The **max drawdown** is the largest fall of the account from its highest value. Five trades are too few for the Overfitting line to judge: its checks need 30 closed trades ([Overfitting checks](results-and-reports.md#overfitting-checks)). The [futures lesson](tutorial/07-futures.md) walks through this strategy step by step.
+
+A new contract has no bars before its first session, so the strategy waits inside the run for its EMAs: the 50-bar EMA needs 512 bars of 15 minutes, about 20 sessions, before its value settles. Its first decision came on 23 September 2026, and Python prints a warning that says so, after the file name and line number:
+
+```text
+WarmUpWarning: The strategy waited inside the run for its indicators to warm up and made its first decision at 2026-09-23 13:45 IST (NIFTY23NOV26FUT waited 511 strategy bars): signals before then were not taken. See result.warnings for why.
+```
 
 ## What is a lot?
 
@@ -95,7 +101,7 @@ class Overnight(NiftyFuturesEma):
 
 
 # Run it over the same dates and print its summary.
-overnight = bt.backtest(Overnight, client, start="2026-10-01", end="2026-11-11", capital=500_000)
+overnight = bt.backtest(Overnight, client, start="2026-08-26", end="2026-11-11", capital=500_000)
 print(overnight.summary())
 ```
 
@@ -181,4 +187,4 @@ Yes. A **short** sells first and buys back later, to gain from a fall. `self.sel
 * **Contract terms:** from the reference tables, or from `instrument=`; with your own data, a dict of bars keyed by contract symbol.
 * **Margin rules:** a bare number, a percent above 100 or a contract symbol in `margin=` raises a `ConfigError` saying what to write; `result.rerun(margin=...)` repeats a run with another margin.
 * **Not available yet:** an MCX underlying such as `underlying = "CRUDEOIL"` from the reference tables, which have no MCX expiry rule (pass each contract with `instrument=`; a named MCX contract works, as in the [CRUDEOIL example](examples/crudeoil-futures-macd.md)); condition strategies on an underlying; `symbols` that mix underlyings and contracts.
-* **Warm-up:** a named contract warms its indicators up on its own bars before `start`. A series built from `underlying` loads no history before `start`, because its contracts and rolls begin there, so the strategy waits inside the run until its indicators are ready, and Python prints a `WarmUpWarning` that says when it first decided.
+* **Warm-up:** a named contract warms its indicators up on its own bars before `start`; a run that starts on the contract's first session has none, so the strategy waits inside the run, as in the first example on this page. A series built from `underlying` loads no history before `start`, because its contracts and rolls begin there, so the strategy waits inside the run until its indicators are ready, and Python prints a `WarmUpWarning` that says when it first decided.

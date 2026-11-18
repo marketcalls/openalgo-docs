@@ -25,7 +25,7 @@ Python may print a warning under the output, and the run is still complete. Dail
 
 ## Futures
 
-Intraday futures strategies on real history from your OpenAlgo server, one lot each, long and short. Each tests the November 2026 contract from 1 October to 11 November 2026. Your broker serves history only for contracts still trading, so once that contract expires, switch the example to the current contract and its dates, as each page shows.
+Intraday futures strategies on real history from your OpenAlgo server, one lot each, long and short. Each tests the November 2026 contract over its whole trading life up to 11 November 2026: from 26 August for NIFTY and BANKNIFTY, from 20 July for CRUDEOIL. Your broker serves history only for contracts still trading, so a test cannot start earlier, and once that contract expires you switch the example to the current contract and its dates, as each page shows. Historify on your OpenAlgo server keeps expired contracts you download while they trade, for longer tests.
 
 | Example | Strategy |
 |---|---|

@@ -11,7 +11,7 @@ The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashbo
 * **Short:** sell one lot short (sell first, buy back later, to gain from a fall) when MACD crosses below its signal line while MACD is below zero.
 * **Exit:** the opposite crossover, or the square-off (the forced close of intraday positions) before the session closes. New trades from 17:00 only.
 * **Product:** MIS (intraday), Rs 3,00,000. The engine blocks 20 percent of the contract value as margin (the money set aside while a position is open).
-* **Data:** 1 October to 11 November 2026. The contract expires on 19 November 2026, after which your broker no longer serves its history: then switch to the current contract and dates inside its life.
+* **Data:** 20 July to 11 November 2026, the contract's whole trading life up to that date. MCX lists a crude oil contract months ahead, but this one first traded on 20 July 2026: the daily bars before then show no volume, and there are no 5-minute bars for them. Your broker serves a contract's history only while it trades, so the run cannot start earlier; Historify on your OpenAlgo server keeps expired contracts you download while they trade, for longer tests (`source="db"`, see [Data](../data.md#where-the-bars-come-from)). The contract expires on 19 November 2026: then switch to the current contract and dates inside its life.
 
 ## The code
 
@@ -49,8 +49,8 @@ class CrudeOilMacd(bt.Strategy):
                 self.sell(lots=1)
 
 
-# Run the backtest from 1 October to 11 November 2026 with Rs 3,00,000.
-result = bt.backtest(CrudeOilMacd, client, start="2026-10-01", end="2026-11-11", capital=300_000)
+# Run the backtest over the contract's trading life, 20 July to 11 November 2026, with Rs 3,00,000.
+result = bt.backtest(CrudeOilMacd, client, start="2026-07-20", end="2026-11-11", capital=300_000)
 
 # Print the summary.
 print(result.summary())  # net profit, return, drawdown and trades
@@ -58,14 +58,18 @@ print(result.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 34,383.92
-Return       : 11.46%
-Max drawdown : -12.91%
-Trades       : 70 (37% won)
+Net profit   : Rs 9,392.51
+Return       : 3.13%
+Max drawdown : -22.56%
+Trades       : 150 (33% won)
 Overfitting  : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational; see result.robustness()
 ```
 
-The strategy made money with only 37 percent of its trades winning, because its average win, Rs 6,163, was more than twice its average loss, Rs 2,860 (`result.metrics['average_win']` and `result.metrics['average_loss']`). The engine took the contract's lot (100 barrels), tick size (Rs 1) and expiry from its reference tables, and charged the commodity rates. The max drawdown is the largest fall of the account from its highest value. The Overfitting line says three of the engine's quick checks of the trades failed; [Overfitting checks](../results-and-reports.md#overfitting-checks) explains what that does and does not mean.
+The strategy made money with only 33 percent of its trades winning, because its average win, Rs 5,659, was more than twice its average loss, Rs 2,653 (`result.metrics['average_win']` and `result.metrics['average_loss']`). The profit is thin and late: from late July to the end of October the strategy lost about Rs 34,300, and the first eleven days of November made all of it back and Rs 9,400 more. The engine took the contract's lot (100 barrels), tick size (Rs 1) and expiry from its reference tables, and charged the commodity rates. The max drawdown is the largest fall of the account from its highest value.
+
+The Overfitting line says three of the engine's quick checks of the trades failed. For example, when 30 percent of the sessions were set aside at random, they kept half of the Sharpe ratio of the others in only 7.5 percent of 200 draws, where the check asks for 80 percent. That is not proof the strategy is overfitted, but the edge did not hold up under that check: a profit that rests on a few days is too small to tell apart from luck. See [Overfitting checks](../results-and-reports.md#overfitting-checks).
+
+The first trade came on 24 July. The MACD needs 512 bars of 5 minutes before its value settles, and a new contract has no bars before its first trade, so the strategy waited inside the run for it. Python prints a `WarmUpWarning` that says so, and it is the first note in `result.warnings`.
 
 Python also prints two `ReferenceDataWarning` lines after the run. They say that the MCX contract terms in the engine's tables are not yet confirmed against the exchange circular and were last checked on 31 March 2026; the lot and tick size match the master contract on your OpenAlgo server.
 
@@ -74,18 +78,18 @@ The crossovers before 17:00, which `entry_from` keeps out, and the ones after th
 <!-- continues -->
 <!-- requires-server -->
 ```python
-print(result.warnings[0])  # the first note of the run: the orders the entry window kept out
+print(result.warnings[1])  # the second note of the run: the orders the entry window kept out
 ```
 
 <!-- output -->
 ```text
-81 of 219 orders were outside the MIS entry window, 17:00 to 30 minutes before each session's close (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-10-05 09:05 IST
+196 of 488 orders were outside the MIS entry window, 17:00 to 30 minutes before each session's close (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-07-27 10:10 IST
 ```
 
 ## Try this
 
 * Long only: `longs, shorts = True, False`. Short only: `longs, shorts = False, True`.
 * Trade the whole day: delete the `entry_from` line.
-* After 19 November 2026: the current contract, for example `"CRUDEOIL18DEC26FUT"`, with `start="2026-11-01"` and `end` the last session before the day you run it.
+* After 19 November 2026: the current contract, for example `"CRUDEOIL18DEC26FUT"`, with `start` its first session with trades (the first daily bar `client.history` returns for it with a volume above zero) and `end` the last session before the day you run it.
 
 More: [Trade Futures](../tutorial/07-futures.md), [Futures](../futures.md).

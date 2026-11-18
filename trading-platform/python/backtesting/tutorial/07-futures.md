@@ -10,7 +10,7 @@ The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashbo
 * **A lot** is the fixed number of units a contract trades in: 65 for NIFTY. You buy whole lots only. One lot at a price of 22,800 is worth about Rs 14.8 lakh (65 x 22,800).
 * **Margin** is the money your broker blocks while you hold a position. It is only a part of the contract's value, so Rs 5 lakh is enough to hold one lot worth Rs 14.8 lakh. Your profit or loss is still on the full value.
 
-Your broker serves a contract's history only while the contract trades, so this lesson tests the November 2026 contract from 1 October to 11 November 2026. After 23 November 2026, switch to the current contract (for example `NIFTY29DEC26FUT`) and dates inside its life.
+Your broker serves a contract's history only while the contract trades, so this lesson tests the November 2026 contract over its whole life up to 11 November 2026, from its first session on 26 August 2026. Historify on your OpenAlgo server keeps expired contracts you download while they trade, for longer tests (`source="db"`, see [Data](../data.md#where-the-bars-come-from)). After 23 November 2026, switch to the current contract (for example `NIFTY29DEC26FUT`) and dates inside its life.
 
 ## The strategy on NIFTY futures
 
@@ -47,8 +47,8 @@ class NiftyFuturesEma(bt.Strategy):
             self.exit()  # sell the lot
 
 
-# Run the backtest with Rs 5,00,000, enough for the margin of one lot.
-result = bt.backtest(NiftyFuturesEma, client, start="2026-10-01", end="2026-11-11", capital=500_000)
+# Run the backtest over the contract's life, from its first session, with Rs 5,00,000, enough for the margin of one lot.
+result = bt.backtest(NiftyFuturesEma, client, start="2026-08-26", end="2026-11-11", capital=500_000)
 
 # Print the summary.
 print(result.summary())   # net profit, return, drawdown and trades
@@ -77,7 +77,8 @@ trade
 * Every trade was one lot, 65 units, and every one was closed at 15:10 by the engine's square-off.
 * A trade's profit is the points the price moved times 65. On 29 October NIFTY futures rose 234.80 points after the entry: 234.80 x 65 = Rs 15,262 before charges, Rs 14,367.90 after them.
 * The max drawdown (the largest fall of the account from its highest value) was only 1.54 percent, because every trade made money.
-* Five trades in six weeks are far too few to judge a strategy. The point of this lesson is how futures work, not this result.
+* The first trade came on 6 October, not 26 August: a new contract has no bars before its first session, and the 50-bar EMA needs 512 bars of 15 minutes (about 20 sessions) before its value settles. So the strategy waited inside the run until 23 September 2026, and Python prints a `WarmUpWarning` that says so.
+* Five trades are far too few to judge a strategy, and the Overfitting line says so: its checks need 30 closed trades ([Overfitting checks](../results-and-reports.md#overfitting-checks)). The point of this lesson is how futures work, not this result.
 
 ## Margin
 
@@ -91,7 +92,7 @@ The engine blocks **20 percent of the contract value** as margin for every futur
 print(f"Margin, default    : Rs {result.equity['margin_rupees'].max():,.2f}")
 
 # The same backtest with your broker's margin for one lot, here Rs 2,00,000.
-own = bt.backtest(NiftyFuturesEma, client, start="2026-10-01", end="2026-11-11", capital=500_000,
+own = bt.backtest(NiftyFuturesEma, client, start="2026-08-26", end="2026-11-11", capital=500_000,
                   margin=bt.rupees(200_000))
 print(f"Margin, your figure: Rs {own.equity['margin_rupees'].max():,.2f}")
 print(f"Net profit         : Rs {own.metrics['net_profit']:,.2f}")  # the same as before

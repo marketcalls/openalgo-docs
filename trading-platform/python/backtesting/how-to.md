@@ -183,7 +183,7 @@ The first trade bought 279.82 part shares, where the whole-share run bought 270.
 
 ## Trade intraday
 
-Give the strategy intraday bars, such as `"15m"` (15 minutes). The engine then trades **MIS**, the intraday product: it stops new entries at 14:50 and squares off (closes) every open position at 15:00 IST (the NSE times from 3 August 2026). Brokers keep a limited intraday history, so the run covers a recent stretch:
+Give the strategy intraday bars, such as `"15m"` (15 minutes). The engine then trades **MIS**, the intraday product: it stops new entries at 14:50 and squares off (closes) every open position at 15:00 IST (the NSE times from 3 August 2026; before that, 15:00 and 15:10). How far back intraday history goes depends on your broker ([How far back you can go](data.md#how-far-back-you-can-go)); this run uses a year:
 
 <!-- requires-server -->
 <!-- continues -->
@@ -193,20 +193,20 @@ class IntradayEma(EmaCrossover):
     interval = "15m"  # 15-minute bars: intraday (MIS)
 
 
-# Run it from August 2026, then print the summary and how the trades closed
-intraday = bt.backtest(IntradayEma, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+# Run it on a year of 15-minute bars, then print the summary and how the trades closed
+intraday = bt.backtest(IntradayEma, client, start="2025-11-01", end="2026-11-11", capital=100_000)
 print(intraday.summary())
 print(intraday.trade_list()["exit_reason"].value_counts().to_dict())  # "scheduler": closed by the square-off
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -1,469.38
-Return       : -1.47%
-Max drawdown : -3.74%
-Trades       : 8 (38% won)
-Overfitting  : too few trades to judge (8 closed, 30 needed)
-{'scheduler': 7, 'signal': 1}
+Net profit   : Rs -445.55
+Return       : -0.45%
+Max drawdown : -4.78%
+Trades       : 45 (47% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+{'scheduler': 41, 'signal': 4}
 ```
 
 Lesson: [Trade Intraday](tutorial/05-intraday.md).
@@ -230,19 +230,19 @@ class LongAndShort(EmaCrossover):
 
 
 # Run it, then print the summary and the count of long and short trades
-both = bt.backtest(LongAndShort, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+both = bt.backtest(LongAndShort, client, start="2025-11-01", end="2026-11-11", capital=100_000)
 print(both.summary())
 print(both.trade_list()["direction"].value_counts().to_dict())  # long and short trades
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -1,043.80
-Return       : -1.04%
-Max drawdown : -2.25%
-Trades       : 19 (42% won)
-Overfitting  : too few trades to judge (19 closed, 30 needed)
-{'short': 11, 'long': 8}
+Net profit   : Rs -2,780.07
+Return       : -2.78%
+Max drawdown : -4.81%
+Trades       : 95 (42% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+{'short': 50, 'long': 45}
 ```
 
 For short only, use `self.sell(qty=50)` to enter and `self.exit()` to buy back. Lesson: [Go Short](tutorial/06-going-short.md).
@@ -341,8 +341,8 @@ class NiftyFutures(EmaCrossover):
     product = "NRML"  # futures held overnight
 
 
-# Run it inside the contract's life, with Rs 5,00,000
-futures = bt.backtest(NiftyFutures, client, start="2026-10-01", end="2026-11-11", capital=500_000)
+# Run it over the contract's life, from its first session on 26 August 2026, with Rs 5,00,000
+futures = bt.backtest(NiftyFutures, client, start="2026-08-26", end="2026-11-11", capital=500_000)
 print(futures.summary())
 ```
 
@@ -355,7 +355,7 @@ Trades       : 4 (25% won), 1 still open
 Overfitting  : too few trades to judge (4 closed, 30 needed)
 ```
 
-NIFTY23NOV26FUT expires on 23 November 2026, and your broker serves a contract's history only while it trades: after that, use the current contract and recent dates. Lesson: [Trade Futures](tutorial/07-futures.md).
+Your broker serves a contract's history only while it trades, so the run starts on the contract's first session; after NIFTY23NOV26FUT expires on 23 November 2026, use the current contract and dates inside its life. Historify keeps expired contracts you download while they trade, for longer tests (`source="db"`). A new contract has no bars before its first session, so the strategy waits inside the run until its EMAs are ready, and Python prints a `WarmUpWarning` that says when it first decided. Lesson: [Trade Futures](tutorial/07-futures.md).
 
 ## Optimize a strategy's parameters
 
@@ -375,7 +375,7 @@ print(opt.best)  # the best pair
 {'fast': 10, 'slow': 70}
 ```
 
-Do not trust the single best pair: among many, one looks good by luck. Check it on later years the sweep did not see (`start="2025-01-01"`). `workers=1` runs in one process, which works anywhere, a notebook included. Lesson: [Find Better Settings](tutorial/09-find-better-settings.md).
+Do not trust the single best pair: among many, one looks good by luck. Check it on later years the sweep did not see (`start="2025-01-01"`): those years are the test part of a study over 2021 to 2026. `workers=1` runs in one process, which works anywhere, a notebook included. Lesson: [Find Better Settings](tutorial/09-find-better-settings.md).
 
 ## Use your own data
 
