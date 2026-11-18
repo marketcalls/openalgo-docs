@@ -90,6 +90,7 @@ Overfitting  : too few trades to judge (11 closed, 30 needed)
 * [Common Tasks](how-to.md): short recipes for the common tasks, each with a small example.
 * [The Tearsheet](tearsheet.md): the full HTML report of a backtest, section by section, with screenshots.
 * [Metrics Explained](metrics-explained.md): what every figure of a backtest means, in plain words, with the values of a real run.
+* [Live Trading](../live-trading/README.md): run the same strategy class on today's prices through OpenAlgo, in sandbox mode first (openalgo 2.3.0, being released).
 
 The reference pages explain every option:
 
@@ -112,7 +113,7 @@ The same strategy on the same data and settings gives the same result every time
 
 The following are part of the design but not built. Each raises `NotImplementedError` with a message that says what to do instead, so nothing is ignored silently.
 
-* `bt.live`: trading a strategy through OpenAlgo. Whether its orders are simulated (sandbox mode) or sent to your broker will be decided by the analyzer switch inside OpenAlgo, never by an argument in your code.
+* `bt.live` in openalgo 2.2.1: trading a strategy through OpenAlgo comes with openalgo 2.3.0.
 * `fill="close"` (filling at the decision bar's close).
 * Walk-forward optimization (`bt.walk_forward`).
 * Several strategies in one run, pairs (`pair_long`, `pair_short`), the portfolio runner `bt.rebalance` (to rebalance today, call `self.rebalance` inside a strategy, as in [Equal-Weight Rebalancing](examples/rebalancing.md)), and strategies declared on a `universe`.
