@@ -62,9 +62,10 @@ Net profit   : Rs 34,383.92
 Return       : 11.46%
 Max drawdown : -12.91%
 Trades       : 70 (37% won)
+Overfitting  : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational; see result.robustness()
 ```
 
-The strategy made money with only 37 percent of its trades winning, because its average win, Rs 6,163, was more than twice its average loss, Rs 2,860 (`result.metrics['average_win']` and `result.metrics['average_loss']`). The engine took the contract's lot (100 barrels), tick size (Rs 1) and expiry from its reference tables, and charged the commodity rates. The max drawdown is the largest fall of the account from its highest value.
+The strategy made money with only 37 percent of its trades winning, because its average win, Rs 6,163, was more than twice its average loss, Rs 2,860 (`result.metrics['average_win']` and `result.metrics['average_loss']`). The engine took the contract's lot (100 barrels), tick size (Rs 1) and expiry from its reference tables, and charged the commodity rates. The max drawdown is the largest fall of the account from its highest value. The Overfitting line says three of the engine's quick checks of the trades failed; [Overfitting checks](../results-and-reports.md#overfitting-checks) explains what that does and does not mean.
 
 Python also prints two `ReferenceDataWarning` lines after the run. They say that the MCX contract terms in the engine's tables are not yet confirmed against the exchange circular and were last checked on 31 March 2026; the lot and tick size match the master contract on your OpenAlgo server.
 

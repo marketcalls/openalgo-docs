@@ -50,6 +50,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 The engine replayed almost six years of SBIN, one day at a time, and traded the rules as if you had run them live. It applied Indian charges, slippage (the small amount every fill loses to the market) and NSE holidays without being asked, and it loaded SBIN's bars from before 2021 so that both EMAs were ready on the first day. The **max drawdown** is the largest fall of the account from its highest value. The [first lesson](tutorial/01-first-backtest.md) walks through this strategy line by line.
@@ -119,6 +120,7 @@ Net profit   : Rs 18,269.21
 Return       : 18.27%
 Max drawdown : -30.22%
 Trades       : 10 (30% won)
+Overfitting  : too few trades to judge (10 closed, 30 needed)
 ```
 
 A filter takes fewer trades. Whether it helps depends on the stock and the years: compare the summaries with and without it.
@@ -157,9 +159,10 @@ Net profit   : Rs 84,832.99
 Return       : 84.83%
 Max drawdown : -32.32%
 Trades       : 52 (42% won), 1 still open
+Overfitting  : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational; see result.robustness()
 ```
 
-The MACD turns sooner than the 20-day and 50-day EMAs, so it traded far more often: 52 closed trades against 11. "1 still open" is a position bought at the last crossover and still held on 11 November 2026. Python also prints a warning at the end of this run:
+The MACD turns sooner than the 20-day and 50-day EMAs, so it traded far more often: 52 closed trades against 11. With that many trades the quick overfitting checks can judge, and three of them failed ([Overfitting checks](results-and-reports.md#overfitting-checks) says what that does and does not mean). "1 still open" is a position bought at the last crossover and still held on 11 November 2026. Python also prints a warning at the end of this run:
 
 ```text
 OrdersNotPlacedWarning: 1 of 106 orders was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
@@ -186,6 +189,7 @@ Net profit   : Rs 69,968.22
 Return       : 69.97%
 Max drawdown : -23.24%
 Trades       : 23 (39% won), 1 still open
+Overfitting  : too few trades to judge (23 closed, 30 needed)
 ```
 
 A name the class does not have is an error, so a typing mistake cannot pass silently. To try many values at once and rank them, see [Optimization](optimization.md).
@@ -213,6 +217,7 @@ Net profit   : Rs -1,469.38
 Return       : -1.47%
 Max drawdown : -3.74%
 Trades       : 8 (38% won)
+Overfitting  : too few trades to judge (8 closed, 30 needed)
 ```
 
 Over these three months it lost a little after charges, and most trades ended at the 15:00 square-off rather than on a crossover. Three buys came after the 14:50 cut-off for new intraday positions and were not placed. That is what the cut-off is for, so Python prints no warning about them; `result.warnings` counts them (see [Why was my order rejected?](orders-and-risk.md#why-was-my-order-rejected)). The [intraday lesson](tutorial/05-intraday.md) explains MIS and the square-off with an opening range breakout on 5-minute bars.
@@ -257,6 +262,7 @@ Net profit   : Rs 95,424.76
 Return       : 47.71%
 Max drawdown : -31.93%
 Trades       : 23 (43% won), 1 still open
+Overfitting  : too few trades to judge (23 closed, 30 needed)
            count       sum
 symbol
 ICICIBANK     12  22256.90
@@ -296,6 +302,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 The result is the same as `EmaCrossover`'s, trade for trade: conditions wait for the indicators' warm-up just as `on_bar` does, and then buy and sell on the same days.

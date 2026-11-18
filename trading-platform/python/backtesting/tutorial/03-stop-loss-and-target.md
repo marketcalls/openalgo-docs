@@ -56,6 +56,7 @@ Net profit   : Rs 40,561.33
 Return       : 40.56%
 Max drawdown : -23.17%
 Trades       : 11 (27% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 **What changed:** the stop closed 7 of the 11 trades before the EMAs crossed back, so the worst fall of the account was smaller (-23.17 percent against -29.35), but it also sold some trades that recovered later, and the profit fell.
@@ -89,6 +90,7 @@ Net profit   : Rs 32,913.22
 Return       : 32.91%
 Max drawdown : -22.28%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 **What changed:** 4 trades sold at the target, which booked their profit before the price fell back, so the max drawdown was smaller; but it also cut the big trends short, and those made most of the profit.
@@ -120,6 +122,7 @@ Net profit   : Rs 64,544.99
 Return       : 64.54%
 Max drawdown : -24.44%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 **What changed:** the trailing stop sold 4 trades after a rise of at least 15 percent, keeping part of their gain instead of giving it back while waiting for the EMAs to cross. Here that gave more profit than lesson 1 and a smaller drawdown.

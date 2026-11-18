@@ -70,6 +70,7 @@ Net profit   : Rs 959.21
 Return       : 0.96%
 Max drawdown : -14.83%
 Trades       : 2 (50% won)
+Overfitting  : too few trades to judge (2 closed, 30 needed)
 ```
 
 The search picked 25 and 60, the only one of the 12 pairs that made money on 2021 to 2024, and only Rs 1,714 at that. On 2025 and 2026, which it never saw, the same pair made Rs 959 in 2 trades. That beats the original 20 and 50, which lost Rs 7,757 on those dates, but a pair that wins narrowly while its neighbours all lose is a weak choice: the best pair of the past is partly luck. The max drawdown is the largest fall of the account from its highest value.

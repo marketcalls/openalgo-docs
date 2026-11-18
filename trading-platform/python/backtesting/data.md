@@ -48,6 +48,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 What happened to the data:
@@ -115,6 +116,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 The result is the same as the run with the client, because the bars are the same, the history before 2021 included.
@@ -148,6 +150,7 @@ Net profit   : Rs 30,738.50
 Return       : 30.74%
 Max drawdown : -29.38%
 Trades       : 7 (29% won)
+Overfitting  : too few trades to judge (7 closed, 30 needed)
 ```
 
 Python prints the warning on the screen when the run ends, after the file name and line number:
@@ -246,6 +249,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 For names the engine cannot match (such as `o`, `h`, `l`, `c`) or bars stamped at their close, load them first with [`load_bars`](support-functions/data-loading.md).

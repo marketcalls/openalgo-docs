@@ -187,6 +187,12 @@ The **Trade List** has one row per closed trade, the same rows as `result.trade_
 
 When a strategy opens trades with a stop-loss, this section also has an **R-multiples** table: each trade's profit or loss in units of what its stop-loss risked.
 
+## Overfitting checks
+
+This section comes after Trades, in the full report and in `mode="basic"`. It shows the four quick checks of the closed trades: random out of sample, trade reshuffle, trade resample and variance, each with its figure, its rule and its verdict, a count of how many passed, failed or could not be judged, and a few lines on how to read them. [Overfitting checks](results-and-reports.md#overfitting-checks) explains each check.
+
+The checks need at least 30 closed trades. This run closed 11, so the section says "Too few trades to judge: 11 closed trades; the checks need 30 to judge" and judges nothing. Run a strategy with more trades to see the verdicts. A failed check means the edge did not hold up under it, not that the strategy is proven overfitted.
+
 ## Notes
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-notes.png" alt="The Notes section: how the figures were computed, and the start of the Assumptions table with base D, product CNC, fill next_open and quantity_mode venue"><figcaption><p>Notes: how the figures were worked out, and the settings of the run</p></figcaption></figure>

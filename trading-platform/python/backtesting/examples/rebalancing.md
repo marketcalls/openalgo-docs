@@ -58,6 +58,7 @@ Net profit   : Rs 11,055.12
 Return       : 11.06%
 Max drawdown : -33.98%
 Trades       : no closed trades (4 still open)
+Overfitting  : too few trades to judge (0 closed, 30 needed)
 Benchmark    : 80.63% return (NIFTY)
 Orders       : 69
   symbol  quantity_units  value_rupees  weight_pct

@@ -54,6 +54,7 @@ Net profit   : Rs 336.53
 Return       : 0.34%
 Max drawdown : -3.58%
 Trades       : 23 (57% won)
+Overfitting  : too few trades to judge (23 closed, 30 needed)
 ```
 
 * `self.sell()` while holding nothing opens a short. The engine squares it off at 15:00 by buying the shares back.
@@ -100,6 +101,7 @@ Net profit   : Rs 0.00
 Return       : 0.00%
 Max drawdown : 0.00%
 Trades       : no closed trades
+Overfitting  : too few trades to judge (0 closed, 30 needed)
 12 of 12 orders were rejected with reject_code 'product_rule' (result.orders), the first decided at 2021-04-19 15:30 IST: a delivery (CNC) short is not allowed in Indian cash markets; short a stock intraday with MIS, or trade futures
 ```
 
@@ -151,6 +153,7 @@ Net profit   : Rs -3,910.25
 Return       : -3.91%
 Max drawdown : -10.74%
 Trades       : 75 (48% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
                      time side  quantity_units  price_rupees    reason
 2026-08-17 10:20:00+05:30 SELL            80.0       1054.55     entry
 2026-08-17 13:00:00+05:30  BUY            80.0       1065.25    signal

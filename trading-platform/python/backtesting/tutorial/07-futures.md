@@ -64,6 +64,7 @@ Net profit   : Rs 33,888.62
 Return       : 6.78%
 Max drawdown : -1.54%
 Trades       : 5 (100% won)
+Overfitting  : too few trades to judge (5 closed, 30 needed)
                      entry_time                 exit_time  quantity  net_pnl
 trade
 1     2026-10-06 10:15:00+05:30 2026-10-06 15:10:00+05:30     65.00  2166.14

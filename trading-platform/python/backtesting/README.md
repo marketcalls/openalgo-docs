@@ -69,6 +69,7 @@ Net profit   : Rs 53,941.09
 Return       : 53.94%
 Max drawdown : -29.35%
 Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 [Lesson 1](tutorial/01-first-backtest.md) explains this code line by line.

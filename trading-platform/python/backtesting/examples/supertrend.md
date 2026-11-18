@@ -60,6 +60,7 @@ Net profit   : Rs 43,285.99
 Return       : 43.29%
 Max drawdown : -29.73%
 Trades       : 24 (46% won), 1 still open
+Overfitting  : too few trades to judge (24 closed, 30 needed)
 ```
 
 Nearly half the trades won, and the long trends of 2021 paid the most. One position, bought on 6 November 2026 when the trend turned up again, was still held on 11 November 2026: it counts in the net profit at that day's close, but not among the closed trades. The max drawdown, the largest fall of the account from its highest value, is about 30 percent: the price of staying in until the line is crossed.
