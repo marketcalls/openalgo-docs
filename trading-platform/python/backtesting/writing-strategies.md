@@ -196,7 +196,7 @@ A name the class does not have is an error, so a typing mistake cannot pass sile
 
 ## How do I use 15-minute or 5-minute bars?
 
-Change `interval`. On minute bars the engine trades **MIS**: no new entry from 14:50, and every open position is closed (squared off) at 15:00, as a broker does. The class below copies `EmaCrossover` and changes only the bar size.
+Change `interval`. On minute bars the engine trades **MIS**: no new entry from 14:50, and every open position is closed (squared off) at 15:00, as a broker does (the NSE times from 3 August 2026; before that, 15:00 and 15:10). The class below copies `EmaCrossover` and changes only the bar size.
 
 <!-- continues -->
 <!-- requires-server -->
@@ -206,21 +206,21 @@ class Intraday(EmaCrossover):
     interval = "15m"  # 15-minute bars: 20 and 50 bars instead of days
 
 
-# Run it on a recent stretch of minute bars (August to 11 November 2026) and print its summary.
-intraday = bt.backtest(Intraday, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+# Run it on a year of 15-minute bars (1 November 2025 to 11 November 2026) and print its summary.
+intraday = bt.backtest(Intraday, client, start="2025-11-01", end="2026-11-11", capital=100_000)
 print(intraday.summary())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -1,469.38
-Return       : -1.47%
-Max drawdown : -3.74%
-Trades       : 8 (38% won)
-Overfitting  : too few trades to judge (8 closed, 30 needed)
+Net profit   : Rs -445.55
+Return       : -0.45%
+Max drawdown : -4.78%
+Trades       : 45 (47% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
 ```
 
-Over these three months it lost a little after charges, and most trades ended at the 15:00 square-off rather than on a crossover. Three buys came after the 14:50 cut-off for new intraday positions and were not placed. That is what the cut-off is for, so Python prints no warning about them; `result.warnings` counts them (see [Why was my order rejected?](orders-and-risk.md#why-was-my-order-rejected)). The [intraday lesson](tutorial/05-intraday.md) explains MIS and the square-off with an opening range breakout on 5-minute bars.
+Over the year it lost a little after charges, Rs 445.55 from 45 trades, and 41 of them ended at the square-off rather than on a crossover. The Overfitting line judges nothing for a run that lost money ([Overfitting checks](results-and-reports.md#overfitting-checks)). Eight buys came at or after the cut-off for new intraday positions and were not placed. That is what the cut-off is for, so Python prints no warning about them; `result.warnings` counts them (see [Why was my order rejected?](orders-and-risk.md#why-was-my-order-rejected)). The [intraday lesson](tutorial/05-intraday.md) explains MIS and the square-off with an opening range breakout on 5-minute bars.
 
 ## How do I trade several stocks?
 

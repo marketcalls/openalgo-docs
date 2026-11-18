@@ -261,23 +261,23 @@ class Intraday(EmaCrossover):
     interval = "15m"
 
 
-# Run it on a recent stretch of 15-minute bars and count how the trades ended.
-intraday = bt.backtest(Intraday, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+# Run it on a year of 15-minute bars and count how the trades ended.
+intraday = bt.backtest(Intraday, client, start="2025-11-01", end="2026-11-11", capital=100_000)
 print(intraday.summary())
 print(intraday.trade_list()["exit_reason"].value_counts().to_dict())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -1,469.38
-Return       : -1.47%
-Max drawdown : -3.74%
-Trades       : 8 (38% won)
-Overfitting  : too few trades to judge (8 closed, 30 needed)
-{'scheduler': 7, 'signal': 1}
+Net profit   : Rs -445.55
+Return       : -0.45%
+Max drawdown : -4.78%
+Trades       : 45 (47% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+{'scheduler': 41, 'signal': 4}
 ```
 
-`scheduler` is the square-off at 15:00. The [intraday lesson](tutorial/05-intraday.md) explains intraday trading step by step.
+`scheduler` is the square-off, at the time of each date in the table above. Over the year the strategy closed 45 trades and lost Rs 445.55: the trades made about Rs 3,250 before charges, and the charges took about Rs 3,690. The Overfitting line judges nothing for a run that lost money ([Overfitting checks](results-and-reports.md#overfitting-checks)). The [intraday lesson](tutorial/05-intraday.md) explains intraday trading step by step.
 
 ## How do I stop trading after a bad day?
 
@@ -291,20 +291,20 @@ class Guarded(Intraday):
     max_daily_loss = 500  # rupees
 
 
-# Run it over the same months and count how the trades ended.
-guarded = bt.backtest(Guarded, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+# Run it over the same year and count how the trades ended.
+guarded = bt.backtest(Guarded, client, start="2025-11-01", end="2026-11-11", capital=100_000)
 print(guarded.summary())
 print(guarded.trade_list()["exit_reason"].value_counts().to_dict())
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs -3,038.31
-Return       : -3.04%
-Max drawdown : -3.04%
-Trades       : 8 (25% won)
-Overfitting  : too few trades to judge (8 closed, 30 needed)
-{'daily_loss_limit': 5, 'scheduler': 3}
+Net profit   : Rs -2,586.87
+Return       : -2.59%
+Max drawdown : -4.49%
+Trades       : 45 (42% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+{'scheduler': 29, 'daily_loss_limit': 14, 'signal': 2}
 ```
 
 `daily_loss_limit` is a trade closed by the limit. Here the result was worse than without it: a loss limit caps a bad day, it does not pick better trades. The day's loss counts the trades closed that session plus the open position's loss.
@@ -333,12 +333,17 @@ print(orders[orders["status"] == "Rejected"][["time", "side", "reject_code"]].to
 <!-- output -->
 ```text
                      time side  reject_code
+2026-02-20 15:15:00+05:30  BUY entry_window
+2026-02-27 15:00:00+05:30  BUY entry_window
+2026-03-17 15:00:00+05:30  BUY entry_window
+2026-04-02 15:30:00+05:30  BUY entry_window
+2026-04-24 15:15:00+05:30  BUY entry_window
 2026-08-25 15:15:00+05:30  BUY entry_window
 2026-10-13 15:00:00+05:30  BUY entry_window
 2026-10-28 15:00:00+05:30  BUY entry_window
 ```
 
-These crossovers came at 15:00 or later, after the 14:50 cut-off, so the buys were not placed. That is what the cut-off is for, so Python prints no warning about them. `result.warnings` counts them:
+These crossovers came at or after the cut-off of their date (15:00 until 31 July 2026, 14:50 from 3 August 2026), so the buys were not placed. That is what the cut-off is for, so Python prints no warning about them. `result.warnings` counts them:
 
 <!-- continues -->
 <!-- requires-server -->
@@ -349,7 +354,7 @@ print([line for line in intraday.warnings if "entry window" in line][0])
 
 <!-- output -->
 ```text
-3 of 12 orders were outside the MIS entry window, each session's open to 14:50 (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-08-25 15:15 IST
+8 of 57 orders were outside the MIS entry window, each session's open to 15:00 from 2025-11-03 to 2026-07-31; 14:50 from 2026-08-03 to 2026-11-11 (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-02-20 15:15 IST
 ```
 
 The same holds for every rule you set yourself: the entry window (`entry_from`, `entry_until`), the daily loss limit, `cooldown`, `max_positions`, a drawdown halt and size caps. An order refused or skipped for any other reason, such as not enough cash, a delivery short or a share that costs more than the money for the order, is one you did not plan for. You do not have to look for those: the run then ends with one `OrdersNotPlacedWarning` that Python prints under your output, for example:

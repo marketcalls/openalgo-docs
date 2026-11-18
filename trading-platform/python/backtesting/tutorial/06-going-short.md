@@ -4,7 +4,7 @@ Every trade so far bought first and sold later, to gain when the price rises. In
 
 ## Shorts are intraday only
 
-In the Indian cash market you can sell shares you do not own only intraday, as MIS: the short must be bought back the same day. A short cannot be held overnight in delivery (CNC), because at settlement you would have to deliver shares you do not have. So on 5-minute bars, where the engine trades MIS, a short is allowed and is squared off by 15:00 like any intraday position. To hold a short overnight, traders use futures.
+In the Indian cash market you can sell shares you do not own only intraday, as MIS: the short must be bought back the same day. A short cannot be held overnight in delivery (CNC), because at settlement you would have to deliver shares you do not have. So on 5-minute bars, where the engine trades MIS, a short is allowed and is squared off before the close like any intraday position. To hold a short overnight, traders use futures.
 
 ## Short the opening range breakdown
 
@@ -41,8 +41,8 @@ class OpeningRangeBreakdown(bt.Strategy):
                 self.traded_today = True
 
 
-# Run the backtest on SBIN 5-minute bars, 1 August to 11 November 2026, with Rs 1,00,000.
-result = bt.backtest(OpeningRangeBreakdown, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+# Run the backtest on SBIN 5-minute bars, 1 November 2025 to 11 November 2026, with Rs 1,00,000.
+result = bt.backtest(OpeningRangeBreakdown, client, start="2025-11-01", end="2026-11-11", capital=100_000)
 
 # Print the summary.
 print(result.summary())   # net profit, return, drawdown and trades
@@ -50,16 +50,17 @@ print(result.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 336.53
-Return       : 0.34%
-Max drawdown : -3.58%
-Trades       : 23 (57% won)
-Overfitting  : too few trades to judge (23 closed, 30 needed)
+Net profit   : Rs -22,386.66
+Return       : -22.39%
+Max drawdown : -23.28%
+Trades       : 110 (39% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
 ```
 
-* `self.sell()` while holding nothing opens a short. The engine squares it off at 15:00 by buying the shares back.
+* `self.sell()` while holding nothing opens a short. The engine squares it off at that date's square-off time (15:00 from 3 August 2026, 15:10 before) by buying the shares back.
 * For a short, the stop-loss is above the selling price: the trade loses when the price rises.
-* The short side made a small profit, Rs 336.53 from 23 trades, over the same three months in which the long side of lesson 5 lost Rs 4,572.32.
+* The short side lost too: Rs 22,386.66 from 110 trades over the year, about Rs 8,450 of it in charges, while the long side of lesson 5 lost Rs 22,163.96. Run on August to November 2026 alone, it made a small profit, Rs 336.53 from 23 trades: three months were too short to show how it does.
+* As in lesson 5, the Overfitting line judges nothing for a run that lost money ([Overfitting checks](../results-and-reports.md#overfitting-checks)).
 
 ## What happens to a delivery short
 
@@ -117,7 +118,7 @@ Every sell was refused, because you cannot sell shares in delivery that you do n
 
 `self.target(qty=80)` means "be long 80 shares", and `self.target(qty=-80)` means "be short 80 shares". The engine works out the order: if you are short 80 and ask to be long 80, it buys 160 in one order, 80 to close the short and 80 to open the long. If you already hold the target, it does nothing.
 
-This strategy takes both sides of the opening range: long after a close above the range, short after a close below it, and it flips when the price later breaks the other side. A flip needs time, so it watches until 14:30. 80 shares of SBIN cost about Rs 85,000 in these months, inside the Rs 1,00,000.
+This strategy takes both sides of the opening range: long after a close above the range, short after a close below it, and it flips when the price later breaks the other side. A flip needs time, so it watches until 14:30. 80 shares of SBIN cost between about Rs 75,000 and Rs 99,000 over this year, so this run starts with Rs 1,50,000: with Rs 1,00,000, its losses would leave too little cash for 80 shares, and from February 2026 the engine would refuse most of its orders (reject code `margin`).
 
 <!-- requires-server -->
 <!-- continues -->
@@ -139,8 +140,8 @@ class LongOrShort(bt.Strategy):
                 self.target(qty=-80)  # be short 80 shares (sells a long first)
 
 
-# Run it and print the summary.
-result = bt.backtest(LongOrShort, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+# Run it with Rs 1,50,000 and print the summary.
+result = bt.backtest(LongOrShort, client, start="2025-11-01", end="2026-11-11", capital=150_000)
 print(result.summary())   # net profit, return, drawdown and trades
 # The fills of 17 August 2026, a day the strategy flipped from short to long.
 fills = result.fills[["time", "side", "quantity_units", "price_rupees", "reason"]]
@@ -149,10 +150,10 @@ print(fills[fills["time"].dt.strftime("%Y-%m-%d") == "2026-08-17"].to_string(ind
 
 <!-- output -->
 ```text
-Net profit   : Rs -3,910.25
-Return       : -3.91%
-Max drawdown : -10.74%
-Trades       : 75 (48% won)
+Net profit   : Rs -31,440.54
+Return       : -20.96%
+Max drawdown : -23.31%
+Trades       : 301 (43% won)
 Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
                      time side  quantity_units  price_rupees    reason
 2026-08-17 10:20:00+05:30 SELL            80.0       1054.55     entry
@@ -161,7 +162,7 @@ Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustnes
 2026-08-17 15:00:00+05:30 SELL            80.0       1063.05 scheduler
 ```
 
-On 17 August SBIN first broke below its opening range, so the strategy sold 80 shares short (`entry`). Later the price closed above the range high: the next fill bought back the 80 short shares (`signal`) and bought 80 more to open the long (`entry`), at the same price. The long was squared off at 15:00 (`scheduler`). Both sides lost a little that day: a flip pays only when the second break runs further than the first. Over the three months the strategy made 75 trades and lost Rs 3,910.25.
+On 17 August SBIN first broke below its opening range, so the strategy sold 80 shares short (`entry`). Later the price closed above the range high: the next fill bought back the 80 short shares (`signal`) and bought 80 more to open the long (`entry`), at the same price. The long was squared off at 15:00 (`scheduler`). Both sides lost a little that day: a flip pays only when the second break runs further than the first. Over the year the strategy made 301 trades and lost Rs 31,440.54, about Rs 22,930 of it in charges: the flips add trades, and each one pays intraday charges.
 
 ## More options
 

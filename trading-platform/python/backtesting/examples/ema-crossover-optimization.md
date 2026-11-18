@@ -8,7 +8,7 @@ The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashbo
 
 * **Strategy:** buy when the fast EMA (exponential moving average) crosses above the slow EMA, sell when it crosses back below. CNC (delivery), long only, all the capital, Rs 1,00,000.
 * **Grid:** fast 10, 15, 20 or 25 days, slow 40, 50 or 60 days: 12 pairs, ranked by net profit.
-* **Data:** RELIANCE (NSE) daily bars. The search uses 1 January 2021 to 31 December 2024; the check uses 1 January 2025 to 11 November 2026.
+* **Data:** RELIANCE (NSE) daily bars from 1 January 2021 to 11 November 2026, almost six years, in two parts. The search uses the first four years, 1 January 2021 to 31 December 2024 (the in-sample part). The check uses the 22 months after them, 1 January 2025 to 11 November 2026: the out-of-sample part, dates the search never saw, kept back only to test its winner.
 
 Save the code as a file (for example `tune_ema.py`) and run it with `python tune_ema.py`. The optimizer runs the backtests in helper processes that each read your file, so the lines that start the search sit under `if __name__ == "__main__":`, which runs them only in your own run.
 
@@ -73,7 +73,7 @@ Trades       : 2 (50% won)
 Overfitting  : too few trades to judge (2 closed, 30 needed)
 ```
 
-The search picked 25 and 60, the only one of the 12 pairs that made money on 2021 to 2024, and only Rs 1,714 at that. On 2025 and 2026, which it never saw, the same pair made Rs 959 in 2 trades. That beats the original 20 and 50, which lost Rs 7,757 on those dates, but a pair that wins narrowly while its neighbours all lose is a weak choice: the best pair of the past is partly luck. The max drawdown is the largest fall of the account from its highest value.
+The search picked 25 and 60, the only one of the 12 pairs that made money on 2021 to 2024, and only Rs 1,714 at that. On 2025 and 2026, which it never saw, the same pair made Rs 959 in 2 trades. That beats the original 20 and 50, which lost Rs 7,757 on those dates, but a pair that wins narrowly while its neighbours all lose is a weak choice: the best pair of the past is partly luck. The max drawdown is the largest fall of the account from its highest value. Two trades are far too few for the Overfitting line to judge, and none of its checks can see that the pair was picked as the best of 12; testing it on dates the search did not see is the check that can ([Overfitting checks](../results-and-reports.md#overfitting-checks)).
 
 ## Try this
 

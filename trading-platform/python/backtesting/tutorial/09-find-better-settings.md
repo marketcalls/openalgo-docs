@@ -99,7 +99,7 @@ Every pair made money on these years, and the cells next to the winner (Rs 42,56
 
 ## Check it on later dates
 
-The best pair is the one that fitted 2021 to 2024 best, and part of that fit is luck. The honest test is a period the optimizer never saw: 2025 and 2026. Run the best pair there, and the original 20 and 50 next to it. Add this to the end of the file:
+The best pair is the one that fitted 2021 to 2024 best, and part of that fit is luck. The honest test is a period the optimizer never saw: 2025 and 2026. This is the **out-of-sample** part of one study of almost six years: the search had the four years 2021 to 2024 (the in-sample part), and the 22 months after them, 1 January 2025 to 11 November 2026, were kept back for this test only. Run the best pair there, and the original 20 and 50 next to it. Add this to the end of the file:
 
 <!-- continues -->
 <!-- requires-server -->

@@ -184,22 +184,27 @@ class TooBig(EmaCrossover):
             self.exit()
 
 
-# Run it over the first sessions of November 2026 and list its orders.
-too_big = bt.backtest(TooBig, client, start="2026-11-01", end="2026-11-11", capital=100_000)
+# Run it over a year of 15-minute bars, then show the orders rejected for margin.
+too_big = bt.backtest(TooBig, client, start="2025-11-01", end="2026-11-11", capital=100_000)
 orders = too_big.orders  # every order, with its status and reject code
-print(orders[["time", "side", "quantity_units", "status", "reject_code"]].to_string(index=False))
+refused = orders[orders["reject_code"] == "margin"]  # only the rows rejected for margin
+print(len(refused), "of", len(orders), "orders were rejected for margin. The first three:")
+print(refused[["time", "side", "quantity_units", "status", "reject_code"]].head(3).to_string(index=False))
 ```
 
 <!-- output -->
 ```text
+45 of 53 orders were rejected for margin. The first three:
                      time side  quantity_units   status reject_code
-2026-11-05 09:30:00+05:30  BUY           200.0 Rejected      margin
+2025-11-07 13:15:00+05:30  BUY           200.0 Rejected      margin
+2025-11-12 09:30:00+05:30  BUY           200.0 Rejected      margin
+2025-11-14 09:30:00+05:30  BUY           200.0 Rejected      margin
 ```
 
-The buy needed about Rs 2,00,000 of margin, twice the free cash, so it was rejected. With `self.buy(qty=200, leverage=5)` it would block a fifth of that and fill. Python also prints one warning at the end of the run:
+Each buy needed about Rs 2,00,000 of margin, twice the free cash, so all 45 were rejected and the strategy did not trade once in the year. The other 8 orders came at or after the cut-off for new intraday positions (`entry_window`). With `self.buy(qty=200, leverage=5)` each buy would block a fifth of that and fill. Python also prints one warning at the end of the run:
 
 ```text
-OrdersNotPlacedWarning: 1 of 1 order was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+OrdersNotPlacedWarning: 45 orders were rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
 ```
 
 ## Whole shares or part shares?

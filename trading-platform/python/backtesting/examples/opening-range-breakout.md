@@ -8,10 +8,10 @@ The code runs on your OpenAlgo server: put the API key from your OpenAlgo dashbo
 
 * **Range:** the high and low of the first three 5-minute bars, 09:15 to 09:30. A bar is one period of prices, here 5 minutes.
 * **Entry:** buy when a bar closes above the range; sell short (sell first, buy back later, to gain from a fall) when one closes below it. One trade a day.
-* **Exit:** the stop-loss (an exit that limits a trade's loss) at the other side of the range, or the square-off (the forced close of intraday positions) at 15:00.
+* **Exit:** the stop-loss (an exit that limits a trade's loss) at the other side of the range, or the square-off (the forced close of intraday positions): at 15:10 until 31 July 2026, at 15:00 from 3 August 2026.
 * **Size:** all the capital, Rs 1,00,000, no leverage.
 * **Product:** MIS (intraday: every position is closed before the session ends), long and short.
-* **Data:** SBIN (NSE) 5-minute bars from 1 August to 11 November 2026.
+* **Data:** SBIN (NSE) 5-minute bars from 1 November 2025 to 11 November 2026, a year of sessions.
 
 ## The code
 
@@ -51,8 +51,8 @@ class OpeningRangeBreakout(bt.Strategy):
                 self.traded_today = True
 
 
-# Run the backtest from 1 August to 11 November 2026 with Rs 1,00,000.
-result = bt.backtest(OpeningRangeBreakout, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+# Run the backtest from 1 November 2025 to 11 November 2026 with Rs 1,00,000.
+result = bt.backtest(OpeningRangeBreakout, client, start="2025-11-01", end="2026-11-11", capital=100_000)
 
 # Print the summary.
 print(result.summary())  # net profit, return, drawdown and trades
@@ -64,17 +64,21 @@ print(result.trade_list()["exit_reason"].value_counts().to_string())
 
 <!-- output -->
 ```text
-Net profit   : Rs -5,161.10
-Return       : -5.16%
-Max drawdown : -10.58%
-Trades       : 62 (45% won)
+Net profit   : Rs -37,526.74
+Return       : -37.53%
+Max drawdown : -38.51%
+Trades       : 241 (38% won)
 Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
 exit_reason
-scheduler    46
-leg_sl       16
+scheduler    165
+leg_sl        76
 ```
 
-`exit_reason` says how a trade ended: 16 hit the stop-loss (`leg_sl`) and 46 were closed by the 15:00 square-off (`scheduler`). The engine applied the NSE intraday rules by itself: no new entry after 14:50, square-off at 15:00, intraday charges and slippage. The max drawdown is the largest fall of the account from its highest value.
+`exit_reason` says how a trade ended: 76 hit the stop-loss (`leg_sl`) and 165 were closed by the square-off (`scheduler`). The engine applied the NSE intraday rules by itself, intraday charges and slippage included. Its times follow the date: no new entry from 15:00 and square-off at 15:10 until 31 July 2026, then 14:50 and 15:00 from 3 August 2026, when NSE changed them. The max drawdown is the largest fall of the account from its highest value.
+
+Over the year the strategy lost Rs 37,526.74: about Rs 19,700 on the trades themselves and Rs 17,820 in charges, because it trades almost every day with all the capital. It lost money in every month but August 2026. Run on August to November 2026 alone, it loses about 5 percent, which looks like a small setback; the year shows a breakout taken every day, either way, does not pay its intraday costs on SBIN. That is why a test needs a long stretch of data: a few months cannot show how a strategy does through a year.
+
+The Overfitting line judges nothing here: its checks need a run that made money, and the trade reshuffle only reports ([Overfitting checks](../results-and-reports.md#overfitting-checks)).
 
 ## Try this
 

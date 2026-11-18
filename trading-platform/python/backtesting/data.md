@@ -195,15 +195,15 @@ print(own.assumptions["timestamps"])  # how the dates of the bars were read
 SBIN: naive midnight timestamps read as IST session dates (daily bars need no tz=)
 ```
 
-**Intraday bars** carry a clock time, and there the engine does not guess: a wrong guess would move every bar by 5 hours 30 minutes, the gap between Indian time and UTC. The intraday bars of `client.history` come with the Indian time zone attached, so they need nothing. Times without a zone, as most spreadsheets hold them, stop the run with a message that says what to pass. This block removes the zone from SBIN's 15-minute bars of October 2026 to show it:
+**Intraday bars** carry a clock time, and there the engine does not guess: a wrong guess would move every bar by 5 hours 30 minutes, the gap between Indian time and UTC. The intraday bars of `client.history` come with the Indian time zone attached, so they need nothing. Times without a zone, as most spreadsheets hold them, stop the run with a message that says what to pass. This block removes the zone from a year of SBIN's 15-minute bars, 1 November 2025 to 11 November 2026, to show it:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
 from openalgo.backtest.errors import ConfigError
 
-# SBIN's 15-minute bars of October 2026, with the time zone removed as in a spreadsheet
-bars15 = client.history(symbol="SBIN", exchange="NSE", interval="15m", start_date="2026-10-01", end_date="2026-10-30")
+# A year of SBIN's 15-minute bars, with the time zone removed as in a spreadsheet
+bars15 = client.history(symbol="SBIN", exchange="NSE", interval="15m", start_date="2025-11-01", end_date="2026-11-11")
 sheet15 = bars15.tz_localize(None)  # the same clock times, without "+05:30"
 
 
@@ -257,7 +257,7 @@ For names the engine cannot match (such as `o`, `h`, `l`, `c`) or bars stamped a
 ## How far back you can go
 
 * **Daily bars:** brokers usually serve years of them; the daily runs on these pages start in 2021.
-* **Intraday bars** (1-minute, 5-minute, 15-minute): most brokers keep a limited history. Download longer histories into Historify on your OpenAlgo server and run with `source="db"`.
+* **Intraday bars** (1-minute, 5-minute, 15-minute): how far back depends on your broker. Some serve years of them (the intraday runs on these pages use one year, from 1 November 2025); others keep a limited history only. Download longer histories into Historify on your OpenAlgo server and run with `source="db"`.
 * **Futures and options:** your broker serves a contract's history only while it trades. Historify keeps expired contracts you downloaded.
 * **Charges** are built in from 1 July 2020. See [Backtest older years](how-to.md#backtest-older-years) to go further back.
 

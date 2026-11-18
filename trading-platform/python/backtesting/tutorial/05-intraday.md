@@ -3,7 +3,7 @@
 So far every trade was held for days or weeks. In this lesson you buy and sell within the same day, on 5-minute bars, with a popular intraday strategy: the opening range breakout. You will learn what MIS and square-off mean, and how to take entries only in the morning.
 
 * **MIS** is the intraday product: a position bought as MIS must be closed the same day. It is the opposite of CNC (delivery), which you held overnight in the earlier lessons.
-* **Square-off** is the forced close of every MIS position near the end of the session. Your broker does it if you do not, and so does the engine: for NSE stocks it accepts no new entries from 14:50 and squares off whatever is still open at 15:00 (the times in force since 3 August 2026).
+* **Square-off** is the forced close of every MIS position near the end of the session. Your broker does it if you do not, and so does the engine: for NSE stocks it accepts no new entries from 14:50 and squares off whatever is still open at 15:00 (the times in force since 3 August 2026; before that, 15:00 and 15:10). It uses the times of each date.
 
 The engine picks MIS by itself when the bars are shorter than a day.
 
@@ -12,8 +12,8 @@ The engine picks MIS by itself when the bars are shorter than a day.
 * **Opening range:** the highest high and the lowest low of the first 15 minutes, 09:15 to 09:30: the first three 5-minute bars of the day.
 * **Entry:** buy when a 5-minute bar closes above the range high. Only in the morning, before 11:00, and only one trade a day.
 * **Stop-loss:** at the range low.
-* **Exit:** the stop-loss, or the square-off at 15:00.
-* **Data:** SBIN 5-minute bars from 1 August to 11 November 2026, with Rs 1,00,000.
+* **Exit:** the stop-loss, or the square-off: 15:10 until 31 July 2026, 15:00 from 3 August 2026.
+* **Data:** SBIN 5-minute bars from 1 November 2025 to 11 November 2026, a year, with Rs 1,00,000.
 
 ## The code
 
@@ -51,8 +51,8 @@ class OpeningRangeBreakout(bt.Strategy):
                 self.traded_today = True
 
 
-# Run the backtest on SBIN 5-minute bars, 1 August to 11 November 2026, with Rs 1,00,000.
-result = bt.backtest(OpeningRangeBreakout, client, start="2026-08-01", end="2026-11-11", capital=100_000)
+# Run the backtest on SBIN 5-minute bars, 1 November 2025 to 11 November 2026, with Rs 1,00,000.
+result = bt.backtest(OpeningRangeBreakout, client, start="2025-11-01", end="2026-11-11", capital=100_000)
 
 # Print the summary.
 print(result.summary())   # net profit, return, drawdown and trades
@@ -60,16 +60,16 @@ print(result.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs -4,572.32
-Return       : -4.57%
-Max drawdown : -10.93%
-Trades       : 27 (41% won)
-Overfitting  : too few trades to judge (27 closed, 30 needed)
+Net profit   : Rs -22,163.96
+Return       : -22.16%
+Max drawdown : -25.15%
+Trades       : 102 (34% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
 ```
 
 ## Line by line
 
-* `interval = "5m"` asks for 5-minute bars. Because they are intraday bars of a stock, the engine trades MIS and squares off at 15:00 without being told.
+* `interval = "5m"` asks for 5-minute bars. Because they are intraday bars of a stock, the engine trades MIS and squares off at that date's time without being told.
 * `bar.close_time` is the time the bar closed. `.strftime("%H:%M")` turns it into text such as `"09:30"`, which is easy to compare.
 * `self.high[-3:]` is the highs of the last three bars (`[-3:]` means "the last three"), and `max(...)` picks the largest.
 * `self.traded_today` is a note the strategy keeps for itself: `True` once it has traded today, so it trades at most once a day.
@@ -77,8 +77,10 @@ Overfitting  : too few trades to judge (27 closed, 30 needed)
 
 ## What happened
 
-* The strategy bought on the 27 mornings SBIN broke above its opening range, and lost Rs 4,572.32 over these three months. 8 trades were sold at the stop-loss and 19 at the 15:00 square-off; 41 percent of them made money.
+* The strategy bought on the 102 mornings SBIN broke above its opening range, and lost Rs 22,163.96 over the year: about Rs 14,180 on the trades and Rs 7,990 in charges. 36 trades were sold at the stop-loss and 66 at the square-off; 34 percent of them made money. It lost money in ten of the twelve full months.
+* A test of only August to November 2026 closes 27 trades and loses about 4.6 percent, which looks like a bad quarter. The year shows it is how this strategy usually does. That is why you test on a long stretch of data.
 * A losing result is still a useful one: you learned it without risking money. The next lesson tries the other side of the range.
+* The Overfitting line judges nothing here: its checks need a run that made money. See [Overfitting checks](../results-and-reports.md#overfitting-checks).
 * Each order was decided at a bar's close and filled at the next bar's open, with intraday charges and slippage.
 * When your OpenAlgo server has 1-minute bars for the whole period, the engine checks the stop on them, so a stop is hit at the minute the price reaches it.
 
@@ -92,7 +94,7 @@ Overfitting  : too few trades to judge (27 closed, 30 needed)
 
 ## What you learned
 
-* Intraday bars (`"5m"`) make the engine trade MIS, which accepts no new entries from 14:50 and squares off everything at 15:00.
+* Intraday bars (`"5m"`) make the engine trade MIS, which accepts no new entries from 14:50 and squares off everything at 15:00 (15:00 and 15:10 before 3 August 2026).
 * `bar.close_time` tells you the time of day, so you can trade only in a part of the session.
 * A strategy keeps its own notes in `self`, such as the range and whether it has traded today.
 
