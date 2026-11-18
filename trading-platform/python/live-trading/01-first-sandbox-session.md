@@ -106,8 +106,9 @@ Read it line by line:
 * **Stops**: the rule for stop-losses: an entry with `stop=` gets its stop at the broker as soon as it fills.
 * **Charges modelled with**: the cost model for brokerage and taxes (`costs="zerodha"` by default, as in a backtest), because the broker's trade book does not report charges. OpenAlgo's sandbox charges nothing, so the modelled charges show what a live trade would pay.
 * **Warning: the test alert was not delivered**: the call gave no Telegram user, so alerts appear only on this screen. Fine in sandbox mode; a live session needs them ([Alerts](05-alerts.md)).
+* **Warning: charges ...**: not in the banner above, but in yours on a day after the SDK's charge rates were last checked against their sources. It is a long line that starts `Warning: charges: the NSE_EQ_INTRADAY rates of cost schedule IN-2026-04-01 used for 2026-11-16 are verified only up to an earlier date, so the charges may be off.` (from a run on 16 November 2026) and goes on with the notes on those rates. It means only that the modelled charges may be slightly off; the session trades as usual.
 * **Warning: the clock ...**: with some brokers the session cannot compare your computer's clock with the exchange's. Bars are cut by your computer's clock, so keep it synchronised with internet time.
-* **The countdown**: 10 seconds to stop before anything is sent. Ctrl+C now ends the session with no order placed.
+* **The countdown**: 10 seconds to stop before anything is sent. Ctrl+C now ends the session with no order placed. (After a restart that resumed a position, Ctrl+C here is the safe stop and, by default, sells that position: see [Stopping a Session](02-stopping-a-session.md#ctrlc-the-safe-stop).)
 
 ## While it runs
 

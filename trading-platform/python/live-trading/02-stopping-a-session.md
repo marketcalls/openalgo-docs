@@ -21,7 +21,8 @@ If a position is still open after 60 seconds (the broker keeps rejecting the sal
 
 A few details:
 
-* **During the 10-second countdown**, Ctrl+C ends the session before any order is sent. During the checks before the banner it stops Python with `KeyboardInterrupt`: nothing was started.
+* **During the 10-second countdown** of a fresh start, nothing has been sent yet: Ctrl+C ends the session with no order placed. On a [restart](06-restarts-and-results.md#restart-run-the-same-script-again) that resumed positions, the countdown is no longer a free exit: Ctrl+C there is the safe stop above, so with `on_stop="flatten"` (the default) it sells the resumed positions at market, and with `on_stop="keep"` it leaves them open with their stops.
+* **During the checks before the banner**, Ctrl+C stops Python with `KeyboardInterrupt`: no order was sent.
 * **Run `bt.live` from your main program**, not from a thread: Ctrl+C reaches only Python's main thread, so `bt.live` refuses to start anywhere else (`LiveError`).
 * On Windows, Ctrl+Break is a safe stop too; on Linux and macOS so is the stop signal a service manager sends (SIGTERM).
 

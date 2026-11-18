@@ -25,7 +25,7 @@ Run a strategy in sandbox mode for several days, compare what it did with its ba
 
 ## What you need
 
-1. **A running OpenAlgo server**, version 1.0.0.36 or later, logged in to your broker ([Limits](08-limits.md#your-openalgo-server) says why that version). See [Getting Started](../../../getting-started/README.md) to install it.
+1. **A running OpenAlgo server**, version 2.0.2.6 or later, logged in to your broker ([Limits](08-limits.md#your-openalgo-server) says why that version). See [Getting Started](../../../getting-started/README.md) to install it.
 2. **Your API key**, from the API Key page of your OpenAlgo dashboard. The code on these pages writes `OPENALGO_API_KEY` where your key goes.
 3. **Python 3.12 or newer, and openalgo 2.3.0:**
 

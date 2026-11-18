@@ -124,7 +124,13 @@ After the switch changes, every order would go to the other mode's book: a sale 
 FEED DEAD: no tick on any instrument for 10 s: entries are locked until the feed has ticked for a whole minute again; REST quotes of SBIN NSE every 2 s keep the targets and the daily loss watched
 ```
 
-Check OpenAlgo's WebSocket server and your broker login. When prices flow again, the lock lifts by itself. A single quiet symbol (an option that does not trade for a while) is not a dead feed: its position is priced by quote, and nothing is locked.
+Check OpenAlgo's WebSocket server and your broker login. When prices flow again, the lock lifts by itself.
+
+A single quiet symbol (an option that does not trade for a while) is not a dead feed **while another instrument of the session ticks**: its position is priced by quote, and nothing is locked. A session whose instruments are all options, such as one strategy on one bought option, has nothing else to tell a quiet market from a dead feed: 10 seconds without a price from the feed lock its entries and send its open positions to quotes, as above. Its start banner warns so:
+
+```text
+Warning: every instrument of the session is an option: a quiet market cannot be told from a dead feed, so a long quiet spell locks entries and asks for REST quotes
+```
 
 **A reconciliation mismatch.** At 10:16 another program sold the 10 SBIN the session held:
 

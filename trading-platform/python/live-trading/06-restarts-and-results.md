@@ -45,7 +45,7 @@ EmaCrossover: resumed 10 SBIN NSE, stop 26111136724000 confirmed at the broker
 Funds available: Rs 10,000,000.00
 ```
 
-The second line counts the starts of the day; the third names each position it resumed, and its stop. The rest of the banner and the countdown follow as usual.
+The second line counts the starts of the day; the third names each position it resumed, and its stop. The rest of the banner and the countdown follow as usual, with one difference: a Ctrl+C during this countdown is the safe stop, not a free exit. With the default `on_stop="flatten"` it sells the resumed positions at market; with `on_stop="keep"` it leaves them with their stops ([Stopping a Session](02-stopping-a-session.md#ctrlc-the-safe-stop)).
 
 The session refuses to start, with a `LiveError` and nothing sent, when OpenAlgo's books and the journal disagree in a way no trade explains: a position on one of its symbols that the journal does not know, or a position in the journal that the broker no longer holds. Check the account in OpenAlgo, close or keep the position by hand, then start again.
 
@@ -161,7 +161,8 @@ Everything in the result:
 | `mode_breach` | What the session saw when OpenAlgo's mode changed, else `None` |
 | `warnings` | Everything you should know, the mode first |
 | `paths` | The journal, the day's log and the event file |
-| `flat` | `True` only when the session ended with nothing open |
+| `unconfirmed_legs` | The positions the close could not confirm, in words: OpenAlgo's books and the session disagreed on them, or no read of the books confirmed them. A warning names each too; check them in OpenAlgo |
+| `flat` | `True` only when the session ended with nothing open and no position in `unconfirmed_legs` |
 
 ## The day across restarts
 

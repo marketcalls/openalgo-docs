@@ -8,9 +8,13 @@ What to know before a live session: the OpenAlgo server you need, a limit of the
 
 ## Your OpenAlgo server
 
-**Use OpenAlgo 1.0.0.36 or later** ([released 31 October 2025](../../../change-log/release/version-1.0.0.36-launched.md)). The builds from 23 September to 27 October 2025 (versions 1.0.0.33 to 1.0.0.35) answered every Telegram alert as sent without sending it. The session's test alert would then pass, and a live session would trade with no alert ever reaching your phone.
+**Use OpenAlgo 2.0.2.6 or later** ([released 23 September 2026](../../../change-log/release/version-2.0.2.6-released.md)). Older servers break a session in three ways:
 
-OpenAlgo streams order updates (fills, rejections, cancellations) as they happen from [version 2.0.1.6](../../../change-log/release/version-2.0.1.6-released.md) (24 July 2026), for the brokers that send them. The session follows its orders on that stream. On an older server, or with a broker whose updates OpenAlgo does not stream, it reads each order's status instead, about once a second from 2 seconds after sending it, and confirms fills from the trade book: it learns of a fill a little later. Keep OpenAlgo up to date.
+* **A freeze quantity of 1.** From version 1.0.0.41 to 2.0.2.5, OpenAlgo's symbol details give a freeze quantity of 1 unit for every symbol it has no freeze figure for: every share on NSE and BSE, and every BFO, MCX and CDS contract. The session takes it as the exchange's limit (its banner shows `SBIN: freeze quantity 1`) and rejects every entry above one unit (`freeze_qty`): the first lesson's buy of 10 shares is never sent.
+* **No freeze quantity.** Before 1.0.0.41, OpenAlgo gives none. For index futures and options (NIFTY, BANKNIFTY, SENSEX and the other indices) the session then uses the SDK's own table of freeze quantities, with a warning in its banner. For stock futures and options it knows no limit, so it cannot keep a position below the exchange's, and the stop or the exit of a larger position, each one order, is rejected by the exchange.
+* **Telegram.** The builds from 23 September to 27 October 2025 (versions 1.0.0.33 to 1.0.0.35) answered every Telegram alert as sent without sending it. The session's test alert would then pass, and a live session would trade with no alert ever reaching your phone. [Version 1.0.0.36](../../../change-log/release/version-1.0.0.36-launched.md) (31 October 2025) was the first release with the fix.
+
+OpenAlgo streams order updates (fills, rejections, cancellations) as they happen, for the brokers that send them. The session follows its orders on that stream. With a broker whose updates OpenAlgo does not stream, it reads each order's status instead, about once a second from 2 seconds after sending it, and confirms fills from the trade book: it learns of a fill a little later. Keep OpenAlgo up to date.
 
 ## NSE stock options during a cooling-off
 
@@ -32,6 +36,6 @@ The session's stop on an option is a stop-limit order with its limit 5 percent b
 
 ## What you learned
 
-* Use OpenAlgo 1.0.0.36 or later, and keep it up to date for real-time order updates.
+* Use OpenAlgo 2.0.2.6 or later: older servers give the session a wrong freeze quantity, or none.
 * Stock options in a cooling-off can refuse every sale below a floor: the session cannot avoid it.
 * A live session trades intraday MIS, one order at a time per symbol, below the freeze quantity, one session per account.
