@@ -1736,6 +1736,33 @@ response = client.whatsapp(
 )
 ```
 
+### Ping Example
+
+`client.ping()` checks that the API key is valid and returns the broker OpenAlgo is logged in to. It is new in openalgo 2.3.0, which is being released; a live session (`bt.live`) calls it at the start to learn the broker's name.
+
+```python
+response = client.ping()
+print(response)
+```
+
+**Ping Response**
+
+```json
+{
+  "data": {
+    "broker": "zerodha",
+    "message": "pong"
+  },
+  "status": "success"
+}
+```
+
+An unknown API key, or a broker session that was logged out, is answered by OpenAlgo with HTTP 403, which the SDK returns as an error:
+
+```
+{'status': 'error', 'message': 'HTTP 403: {"message":"Invalid openalgo apikey","status":"error"}\n', 'code': 403, 'error_type': 'http_error'}
+```
+
 ### Funds Example
 
 ```python
