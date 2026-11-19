@@ -1,7 +1,7 @@
 # Recording Ticks
 
-{% hint style="warning" %}
-**Being released.** These pages describe openalgo 2.3.0, which is being released. Live trading (`bt.live`) and tick recording (`bt.record`) are new in it; with an earlier version `bt.live` raises `NotImplementedError`. Run `pip install -U openalgo` once 2.3.0 is out.
+{% hint style="info" %}
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
 {% endhint %}
 
 A **tick** is one price update from OpenAlgo's live feed: a trade, a new best price. Brokers keep one-minute candles of the past, but not the ticks: once the day is over, they cannot be fetched again. `bt.record` saves every tick of the instruments you name, in the order they arrived, so that a day can be studied or replayed later.

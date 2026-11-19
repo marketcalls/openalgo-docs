@@ -141,7 +141,7 @@ Every pair made money over these years, and the profit mostly fell as the averag
 ## Is the best a lucky pick?
 
 {% hint style="info" %}
-The overfitting figures of `bt.optimize` come with openalgo 2.3.0, which is being released. Run `pip install -U openalgo` once 2.3.0 is out.
+The overfitting figures of `bt.optimize` are new in openalgo 2.3.0: run `pip install -U openalgo` to update.
 {% endhint %}
 
 Try enough settings and one will look good by luck alone. From the backtests it already ran, every sweep also measures how far its best row may be luck; nothing runs again.

@@ -1,7 +1,7 @@
 # Stopping a Session
 
-{% hint style="warning" %}
-**Being released.** These pages describe openalgo 2.3.0, which is being released. Live trading (`bt.live`) and tick recording (`bt.record`) are new in it; with an earlier version `bt.live` raises `NotImplementedError`. Run `pip install -U openalgo` once 2.3.0 is out.
+{% hint style="info" %}
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
 {% endhint %}
 
 A session ends by itself after the day's square-off. To stop it earlier you press **Ctrl+C**. This lesson shows what Ctrl+C does with open positions, how to keep them instead, what a second Ctrl+C does, and the one rule of live trading: never close or change a position by hand while a session runs.

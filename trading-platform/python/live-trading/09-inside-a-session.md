@@ -1,7 +1,7 @@
 # Inside a Session
 
-{% hint style="warning" %}
-**Being released.** These pages describe openalgo 2.3.0, which is being released. Live trading (`bt.live`) and tick recording (`bt.record`) are new in it; with an earlier version `bt.live` raises `NotImplementedError`. Run `pip install -U openalgo` once 2.3.0 is out.
+{% hint style="info" %}
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
 {% endhint %}
 
 This lesson looks inside a running session: when your strategy decides and when the protection acts, why a decision is never redrawn, why the bars are built from live prices, how the session hears about its orders, how it exits, and how it trails a stop.

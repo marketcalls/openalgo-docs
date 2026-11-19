@@ -1,7 +1,7 @@
 # Backtesting
 
 {% hint style="warning" %}
-**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.2.1 or later: run `pip install -U openalgo` to update. MAE and MFE, slippage and the trading cost, the fill and delay settings that test a strategy against worse fills, the robustness checks, the optimizer's overfitting figures and walk-forward come with openalgo 2.3.0, which is being released; with 2.2.1 those columns, metrics, charts, settings and checks are not there yet.
+**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.3.0 or later: run `pip install -U openalgo` to update. MAE and MFE, slippage and the trading cost, the fill and delay settings that test a strategy against worse fills, the robustness checks, the optimizer's overfitting figures and walk-forward are new in 2.3.0.
 {% endhint %}
 
 ## What is a backtest?
@@ -90,7 +90,7 @@ Overfitting  : too few trades to judge (11 closed, 30 needed)
 * [Common Tasks](how-to.md): short recipes for the common tasks, each with a small example.
 * [The Tearsheet](tearsheet.md): the full HTML report of a backtest, section by section, with screenshots.
 * [Metrics Explained](metrics-explained.md): what every figure of a backtest means, in plain words, with the values of a real run.
-* [Live Trading](../live-trading/README.md): run the same strategy class on today's prices through OpenAlgo, in sandbox mode first (openalgo 2.3.0, being released).
+* [Live Trading](../live-trading/README.md): run the same strategy class on today's prices through OpenAlgo, in sandbox mode first (openalgo 2.3.0 or later).
 
 The reference pages explain every option:
 

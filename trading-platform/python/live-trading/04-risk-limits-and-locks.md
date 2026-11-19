@@ -1,7 +1,7 @@
 # Risk Limits and Locks
 
-{% hint style="warning" %}
-**Being released.** These pages describe openalgo 2.3.0, which is being released. Live trading (`bt.live`) and tick recording (`bt.record`) are new in it; with an earlier version `bt.live` raises `NotImplementedError`. Run `pip install -U openalgo` once 2.3.0 is out.
+{% hint style="info" %}
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
 {% endhint %}
 
 A live session never trades without limits. This lesson covers the money limits you set (capital, the daily loss of each strategy and of the whole account), the **kill switch**, and the **locks**: the session's own brakes, which stop new entries when something is wrong.

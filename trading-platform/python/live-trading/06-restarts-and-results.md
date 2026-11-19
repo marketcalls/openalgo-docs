@@ -1,7 +1,7 @@
 # Restarts and Results
 
-{% hint style="warning" %}
-**Being released.** These pages describe openalgo 2.3.0, which is being released. Live trading (`bt.live`) and tick recording (`bt.record`) are new in it; with an earlier version `bt.live` raises `NotImplementedError`. Run `pip install -U openalgo` once 2.3.0 is out.
+{% hint style="info" %}
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
 {% endhint %}
 
 A session writes down everything it does, so that a crash costs as little as possible and a restart the same day picks up where it stopped. This lesson shows where those files are, what happens when the program or the computer stops, how to restart, and what the result holds.

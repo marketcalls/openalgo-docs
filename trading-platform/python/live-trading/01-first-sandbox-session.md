@@ -1,7 +1,7 @@
 # Your First Sandbox Session
 
-{% hint style="warning" %}
-**Being released.** These pages describe openalgo 2.3.0, which is being released. Live trading (`bt.live`) and tick recording (`bt.record`) are new in it; with an earlier version `bt.live` raises `NotImplementedError`. Run `pip install -U openalgo` once 2.3.0 is out.
+{% hint style="info" %}
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
 {% endhint %}
 
 In this lesson you run the EMA crossover of the [backtesting tutorial](../backtesting/tutorial/01-first-backtest.md) on today's prices, in **sandbox mode**: OpenAlgo simulates every order at real market prices, and nothing reaches your broker. You start the session, watch it trade, stop it with Ctrl+C and read the result.

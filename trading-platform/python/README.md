@@ -1738,7 +1738,7 @@ response = client.whatsapp(
 
 ### Ping Example
 
-`client.ping()` checks that the API key is valid and returns the broker OpenAlgo is logged in to. It is new in openalgo 2.3.0, which is being released; a live session (`bt.live`) calls it at the start to learn the broker's name.
+`client.ping()` checks that the API key is valid and returns the broker OpenAlgo is logged in to. It is new in openalgo 2.3.0; a live session (`bt.live`) calls it at the start to learn the broker's name.
 
 ```python
 response = client.ping()

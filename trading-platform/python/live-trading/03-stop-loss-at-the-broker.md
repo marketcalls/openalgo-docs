@@ -1,7 +1,7 @@
 # Stop-Loss at the Broker
 
-{% hint style="warning" %}
-**Being released.** These pages describe openalgo 2.3.0, which is being released. Live trading (`bt.live`) and tick recording (`bt.record`) are new in it; with an earlier version `bt.live` raises `NotImplementedError`. Run `pip install -U openalgo` once 2.3.0 is out.
+{% hint style="info" %}
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
 {% endhint %}
 
 In a backtest the engine checks the stop-loss itself. In a live session your **broker holds it**, as a real order, so it protects the position even if your computer, your internet or the session stops. This lesson shows how the stop is placed, how a trailing stop moves it, how targets work, what the session does when the broker rejects a stop or an exit, and what changes when an entry has no stop.

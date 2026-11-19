@@ -1,7 +1,7 @@
 # Audit a Session
 
-{% hint style="warning" %}
-**Being released.** These pages describe openalgo 2.3.0, which is being released. Live trading (`bt.live`) and tick recording (`bt.record`) are new in it; with an earlier version `bt.live` raises `NotImplementedError`. Run `pip install -U openalgo` once 2.3.0 is out.
+{% hint style="info" %}
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
 {% endhint %}
 
 A session keeps its own records of what it did, and OpenAlgo keeps its books: the order book, the trade book and the position book. To **audit** a session is to set one against the other. When they agree, the session did exactly what it says it did. This lesson lists what to check, gives a short script that checks it, and shows the audit of a real sandbox session.

@@ -323,6 +323,49 @@ most trades in one day: 1
 
 Over the year the breakout traded 585 times, up to 7 times on one day, and lost Rs 55,635.04: most of its trades met the 0.3 percent stop first, and the charges of so many trades add up. Held to one entry a day it traded 239 times and lost Rs 30,417.73. Fewer entries cut the charges, but the rule still loses: a limit on entries changes how often you trade, not whether the rule has an edge. For a few entries a day, count them in `self.state` the same way. A live session's breakout behaves the same: see [Commodities on MCX](../live-trading/11-commodities-on-mcx.md#entries-repeat).
 
+## Enter the moment a level is touched
+
+The breakout above waits for a bar to close above the level. To buy the moment the price trades through it, even by one tick, rest a buy stop at the level: `self.buy(trigger_price=...)` without a `price` is a stop order (SL-M) that waits until the price reaches the trigger. This one buys SBIN one tick above the 5-minute bar that just closed, with the same stop and target as before:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# Buy the moment the price trades one tick (Rs 0.05) above the bar that just closed
+class TouchBreakout(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "5m"
+
+    # on_bar: while flat, rest a buy stop one tick above this bar's high
+    def on_bar(self, bar):
+        if self.position.is_flat:
+            self.cancel_all()  # the last bar's buy stop, if the price never reached it
+            self.buy(trigger_price=bar.high + 0.05, stop=bt.pct(0.3), target=bt.pct(0.5))
+
+
+# Run it over the same year, then list the first three buy stops that triggered
+touch = bt.backtest(TouchBreakout, client, start="2025-11-01", end="2026-11-11", capital=100_000)
+orders = touch.orders  # every order: its type, trigger, status and average fill
+filled = orders[(orders["order_type"] == "SL-M") & (orders["status"] == "Filled")]
+print(touch.summary())
+print(filled[["decided_at", "trigger_rupees", "average_fill_rupees"]].head(3).to_string(index=False))
+```
+
+<!-- output -->
+```text
+Net profit   : Rs -88,509.96
+Return       : -88.51%
+Max drawdown : -88.52%
+Trades       : 1443 (33% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+               decided_at  trigger_rupees  average_fill_rupees
+2025-11-03 09:20:00+05:30          946.25               946.45
+2025-11-03 09:40:00+05:30          943.75               943.95
+2025-11-03 10:40:00+05:30          948.75               948.95
+```
+
+It traded 1,443 times in the year and lost 88.51 percent: buying on every touch of the last bar's high, with a stop this tight, enters far more often than the close-based breakout above (585 trades) and pays the stop and the charges each time. A touch is a faster entry, not a better rule; test the rule first. The three rows show each trigger and its fill: Rs 946.25 filled at Rs 946.45, the run's modelled slippage of Rs 0.20.
+
+Each buy stop is decided at a bar's close and rests from the next bar. It triggers as soon as a trade reaches the trigger, inside the bar: a backtest checks it on one-minute bars, so it catches the touch within the 5-minute bar, and fills it at the trigger with the run's slippage (or at the open, when a bar gaps above it). While the strategy stays flat, each bar cancels the last buy stop and rests a new one at the new level; strategy orders can be cancelled, not changed. In a live session the buy stop rests at your broker as an SL-M order and the exchange triggers it; a stop-limit replaces it on NFO and BFO options, which take no SL-M. Two things to know: a fast breakout can fill several ticks above the trigger, since an SL-M fills at market once triggered, and in a live session the moment between the cancel and the new order is a gap in which a touch can be missed. The entry window still applies (no new MIS entry after its cut-off).
+
 ## Read the warning about orders not placed
 
 When the engine refuses or skips orders you did not plan for, the run goes on without them, and at the end Python prints one `OrdersNotPlacedWarning` that counts them and gives the most common reason. A short on daily bars is the usual cause, because a delivery (CNC) short is not allowed:

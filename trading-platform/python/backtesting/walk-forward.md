@@ -3,7 +3,7 @@
 A [sweep](optimization.md) picks the best settings on the whole history and then shows them on that same history, so of course they look good: you chose them with hindsight. **Walk-forward testing** repeats the search the way you would have lived through it. It picks the settings on the years before, trades them on the next stretch the search never saw, moves forward and does it again. Joining the traded stretches gives one equity curve made only of trading on prices the search had not seen.
 
 {% hint style="info" %}
-`bt.walk_forward` comes with openalgo 2.3.0, which is being released. Run `pip install -U openalgo` once 2.3.0 is out.
+`bt.walk_forward` is new in openalgo 2.3.0: run `pip install -U openalgo` to update.
 {% endhint %}
 
 ## How it works
@@ -75,11 +75,11 @@ if __name__ == "__main__":
 WalkForwardResult(5 folds, objective 'net_profit', efficiency 0.25, 40% of folds profitable)
      in_sample_start in_sample_end out_of_sample_start out_of_sample_end  fast  slow  net_profit  trades
 fold
-1         2021-01-01    2022-11-14          2022-11-15        2023-08-30     5    30    -7463.78     4.0
-2         2021-10-21    2023-08-30          2023-08-31        2024-06-20     5    30    25289.76     3.0
-3         2022-08-08    2024-06-20          2024-06-21        2025-04-04     5    50   -10835.12     3.0
-4         2023-05-30    2025-04-04          2025-04-07        2026-01-22    20    30    24180.38     1.0
-5         2024-03-13    2026-01-22          2026-01-23        2026-11-11    20    50   -13874.13     2.0
+1         2021-01-01    2022-11-14          2022-11-15        2023-08-30     5    30    -7463.78       4
+2         2021-10-21    2023-08-30          2023-08-31        2024-06-20     5    30    25289.76       3
+3         2022-08-08    2024-06-20          2024-06-21        2025-04-04     5    50   -10835.12       3
+4         2023-05-30    2025-04-04          2025-04-07        2026-01-22    20    30    24180.38       1
+5         2024-03-13    2026-01-22          2026-01-23        2026-11-11    20    50   -13874.13       2
 Net profit out of sample : Rs 17,297.11
 Efficiency               : 0.25
 Folds that made money    : 40%

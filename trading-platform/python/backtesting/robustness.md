@@ -10,7 +10,7 @@ A backtest shows what a strategy would have done on one stretch of history. **Ov
 The robustness checks test each of these, so you can catch overfitting at the backtest stage, before any money is at risk. This page shows how to run them and how to read what they say.
 
 {% hint style="info" %}
-The full set of checks, `bt.robustness` and `bt.walk_forward` come with openalgo 2.3.0, which is being released. Run `pip install -U openalgo` once 2.3.0 is out.
+The full set of checks, `bt.robustness` and `bt.walk_forward` are new in openalgo 2.3.0: run `pip install -U openalgo` to update.
 {% endhint %}
 
 ## How to read a verdict
@@ -178,7 +178,7 @@ RobustnessReport(MacdCrossover: 7 passed, 6 failed, 2 not judged, 2 informationa
    p = 0.463: 92 of 200 permuted runs at or above the run's sharpe of 0.55
  6 noise                passed
    median sharpe 0.52 keeps 94.9% of the run's 0.55; 100.0% of noise runs profitable;
-   the run at the 66.0% percentile
+   the run above 66.0% of the noise runs and not above their 95th percentile 0.62
  7 shifted              not judged
    n/a
  8 other_markets        passed
