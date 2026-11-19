@@ -281,9 +281,9 @@ How to read them:
 
 * Passing proves nothing on its own.
 * A failure says the edge did not hold up under that check: it may be fitted to the past, or too small to tell apart from the luck of the run's own trades. It is not proof that the strategy is overfitted.
-* None of these four can see a strategy picked as the best of many settings tried. If you chose the settings with [Optimization](optimization.md), test them on dates the search did not see.
+* None of these four can see a strategy picked as the best of many settings tried. If you chose the settings with [Optimization](optimization.md), test them on dates the search did not see: [Walk-Forward](walk-forward.md) does that for you.
 
-`result.robustness()` runs the full set of checks, with charts and an HTML report.
+`result.robustness()` runs the full set of seventeen checks, the ones that can see a pick from many settings among them, with charts and an HTML report: see [Robustness and Overfitting](robustness.md).
 
 ## Warnings
 

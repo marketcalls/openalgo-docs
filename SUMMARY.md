@@ -306,6 +306,7 @@
     * [Metrics Explained](trading-platform/python/backtesting/metrics-explained.md)
     * [Metric Definitions](trading-platform/python/backtesting/metric-definitions.md)
     * [Optimization](trading-platform/python/backtesting/optimization.md)
+    * [Robustness and Overfitting](trading-platform/python/backtesting/robustness.md)
     * [Walk-Forward](trading-platform/python/backtesting/walk-forward.md)
     * [Support Functions](trading-platform/python/backtesting/support-functions/README.md)
       * [Session Calendar](trading-platform/python/backtesting/support-functions/calendar.md)
