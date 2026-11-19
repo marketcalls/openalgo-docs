@@ -82,7 +82,7 @@ Trades      : 0 closed
 Gross P&L   : Rs 12.00
 Charges     : Rs 3.45 (modelled)
 Net P&L     : Rs 8.55
-Slippage    : n/a (no backtest to compare with)
+Slippage    : Rs 2.50 better than the backtest
 Rejected    : 0 orders
 Unprotected : 3 s without a stop at the broker
 Reconcile   : 0 mismatches
@@ -110,10 +110,12 @@ Two presses in quick succession, before the session has read OpenAlgo's books, s
 
 ## Never close or change a position by hand while a session runs
 
-While a session runs, it holds a stop at your broker and sends its own exits (the strategy's sale, a target, the 15:00 square-off). It compares its positions with OpenAlgo's books every 30 seconds, and 3 seconds after each fill. A sale by hand between two of those checks is unknown to it, so:
+While a session runs, it holds a stop at your broker and sends its own exits (the strategy's sale, a target, the 15:00 square-off). It compares its positions with OpenAlgo's books every 30 seconds, and 3 seconds after each fill: its own, and any other fill on a symbol it trades that OpenAlgo's order stream reports. So a sale by hand is seen within seconds: once two comparisons in a row show it, the session takes the sale as closing its position, cuts its stop down (or cancels it), locks the strategy's new entries and alerts you ([Risk Limits and Locks](04-risk-limits-and-locks.md#the-locks) shows a run). It never trades to undo it.
 
-* Its next exit can sell the same shares again. You would then have sold more than you held: a short position you never wanted. When the next check sees the difference, the session locks new entries and alerts you, but it sends nothing to undo it.
-* Its stop is still at the broker, for shares you no longer hold. If the price falls to it, it sells them again.
+Those few seconds are still a risk, and so is a broker whose order updates OpenAlgo does not stream, where the sale waits for the next 30-second check. Until the session has seen the sale:
+
+* Its next exit can sell the same shares again. You would then have sold more than you held: a short position you never wanted.
+* Its stop is still at the broker, for shares you no longer hold. If the price falls to it, it sells them again, with the same result.
 * If you cancel its stop by hand, the session sees a stop that ended without its asking, and places it again.
 
 To close a position yourself:

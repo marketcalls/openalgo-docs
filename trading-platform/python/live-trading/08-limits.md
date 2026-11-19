@@ -29,10 +29,17 @@ The session's stop on an option is a stop-limit order with its limit 5 percent b
 * **No position above the freeze quantity.** One stop order and one exit order must cover a position, and the exchange takes no single order above the instrument's freeze quantity, so an entry or add that would pass it is rejected (`freeze_qty`). The start banner shows each instrument's freeze quantity.
 * **One session per OpenAlgo account.** Run all the strategies of an account in one `bt.live` call.
 * **No watchdog.** If the program stops, nothing watches the targets, the trailing stop or the daily loss until you restart it; the stop at your broker protects the position meanwhile ([Restarts and Results](06-restarts-and-results.md#when-the-session-stops-unexpectedly)).
-* **Slippage is not measured.** The daily summary's Slippage line reads `n/a`.
+* **Slippage counts market orders only.** The daily summary's Slippage line sets each MARKET fill against the price a backtest fills the same order at ([Your First Sandbox Session](01-first-sandbox-session.md#stop-it-with-ctrlc)). The fills of the stop at the broker and of LIMIT orders are not in it, and a MARKET fill with no bar to compare it with (a Ctrl+C sale before the next minute's first trade) is counted as not compared.
 * **The computer's clock.** Bars are cut by your computer's clock. Through some brokers' feeds (zerodha's among them) the session cannot compare that clock with the exchange's, and the banner warns so: keep the clock synchronised with internet time.
 * **fivepaisa** cannot be used for live trading: its trade book names each trade by an order number its orders do not carry, so a fill cannot be matched to its order. The session's checks refuse it.
-* **No public replay of recorded ticks.** `bt.record` saves them; 2.3.0 has no public function to read them back.
+* **pocketful and mstock** can be used, with a warning. The session matches each trade in the trade book to its order by the order number, and that their trade books carry the same numbers as their orders has not been checked yet. The start banner (and `result.warnings`) says so; from a run against a simulated OpenAlgo server logged in to pocketful:
+
+```text
+Warning: bt.live trades through pocketful, but the session matches the trade book's trades to its orders by order ID, and that the two IDs agree has not been checked for pocketful: watch the RECONCILE alerts, which name a fill the session could not match to its order
+```
+
+* **Unchecked candle times.** The SDK has checked how only some brokers (zerodha among them) stamp the time of their one-minute candles. With the others, pocketful and mstock included, the banner also warns `the timestamp convention of broker 'pocketful' is not verified in the broker table; this series passed the session calendar check`. It means the session compared the candles' times with the trading calendar (the market's hours, Indian time) and found them in place, so it goes on: there is nothing to do.
+* **No replay of recorded ticks yet.** `bt.record` saves them and `bt.read_ticks` reads a day back as a table ([Recording Ticks](07-recording-ticks.md#read-the-ticks-back)), but 2.3.0 cannot yet run a backtest or a session on them.
 
 ## What you learned
 

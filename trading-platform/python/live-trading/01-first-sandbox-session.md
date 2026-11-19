@@ -20,7 +20,7 @@ The strategy is lesson 1's EMA crossover with three changes:
 * `qty=10`: a fixed 10 shares. Start small, even in sandbox mode.
 * `stop=bt.pct(1)`: a stop-loss 1 percent below the buying price. A **stop-loss** is an order that sells if the price falls to a set level. In a live session your broker holds it as a real order ([Stop-Loss at the Broker](03-stop-loss-at-the-broker.md)).
 
-Backtest it on one-minute bars first, for example `bt.backtest(EmaCrossover, client, start="2026-11-02", end="2026-11-11", capital=100_000)`, to see how often it trades.
+Backtest it on one-minute bars first, over a year: `bt.backtest(EmaCrossover, client, start="2025-11-01", end="2026-11-11", capital=100_000)`. From 1 November 2025 to 11 November 2026 it made 850 trades and lost Rs 11,748.82 after charges: a one-minute crossover trades often, and its charges and many small losses add up. It is used here to show how a session works, not as a strategy to trade.
 
 ## The code
 
@@ -134,7 +134,7 @@ Trades      : 1 closed
 Gross P&L   : Rs 12.00
 Charges     : Rs 8.70 (modelled)
 Net P&L     : Rs 3.30
-Slippage    : n/a (no backtest to compare with)
+Slippage    : Rs 2.50 better than the backtest (1 MARKET fill not compared: no bar of its decision)
 Rejected    : 0 orders
 Unprotected : 7 s without a stop at the broker
 Reconcile   : 0 mismatches
@@ -145,7 +145,7 @@ SessionResult(SANDBOX 2026-11-11, broker zerodha, stopped by ctrl_c, 1 closed tr
 * **EXIT**: the sale. `risk_exit` marks an exit the session made by itself, here for Ctrl+C; a sale your strategy asks for with `self.exit()` reads `exit`.
 * **Trades**: round trips closed today (a buy and the sale that closed it).
 * **Gross P&L, Charges, Net P&L**: the profit before charges, the modelled charges, and what is left. The sale earned Rs 12.00 (10 shares, Rs 1.20 each); the charges took Rs 8.70.
-* **Slippage**: not measured in 2.3.0.
+* **Slippage**: the gap between the price an order got and the price you expected. The session sets each fill of a MARKET order (an order to trade at once, at the going price) against the price a backtest of the same one-minute bars fills the same order at (the open of the bar after the decision, worse by the backtest's modelled slippage), times the shares. Here the buy filled Rs 2.50 better than the backtest, for the 10 shares. The Ctrl+C sale is not compared: the session ended before the next minute's first trade, so it had no bar to compare it with. A Slippage line that reads `worse` day after day means your backtests expect better fills than you get.
 * **Rejected**: orders the broker or OpenAlgo refused.
 * **Unprotected**: the seconds a position had no confirmed stop at the broker: here from the buy's fill until the broker confirmed the stop, and from the stop's cancel until the sale filled. A few seconds per trade is normal.
 * **Reconcile**: how often the session's position disagreed with OpenAlgo's books ([Risk Limits and Locks](04-risk-limits-and-locks.md#the-locks)).

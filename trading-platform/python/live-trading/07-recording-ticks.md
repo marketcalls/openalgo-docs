@@ -52,12 +52,46 @@ Stop.STOP_AT
 * It opens its own connection to the feed, so it never takes over another program's subscriptions. It can run beside a `bt.live` session: start it in a second terminal.
 * If ticks cannot be written (a full disk), it stops and raises `LiveError`, naming the files kept. It also raises `LiveError` when the feed does not connect, or when another recording is using the same cache folder.
 
-openalgo 2.3.0 records the ticks and keeps them; it has no public function yet to read them back.
+## Read the ticks back
+
+`bt.read_ticks` reads a recorded day back as one table (a pandas DataFrame), one row per tick, in the exact order the ticks arrived. It needs no OpenAlgo server, so you can run it on any later day, in a new script:
+
+```python
+# Load the backtesting engine (bt).
+import openalgo.backtest as bt
+
+# Read back the ticks recorded on 11 November 2026, in the order they arrived.
+ticks = bt.read_ticks("2026-11-11")
+
+# How many ticks there are, and the first five.
+print(len(ticks))
+print(ticks.head().to_string())
+```
+
+From the recording above (the simulated feed sent each tick's trade time and the day's volume so far):
+
+```text
+600
+  exchange symbol             exchange_time                  receive_time  exchange_time_given     ltp     volume
+0      NSE   SBIN 2026-11-11 15:25:00+05:30 2026-11-11 15:25:00.500+05:30                 True   820.0  1204000.0
+1      NSE   INFY 2026-11-11 15:25:00+05:30 2026-11-11 15:25:00.500+05:30                 True  1500.0   845000.0
+2      NSE   SBIN 2026-11-11 15:25:01+05:30 2026-11-11 15:25:01.500+05:30                 True   820.0  1204025.0
+3      NSE   INFY 2026-11-11 15:25:01+05:30 2026-11-11 15:25:01.500+05:30                 True  1500.0   845010.0
+4      NSE   SBIN 2026-11-11 15:25:02+05:30 2026-11-11 15:25:02.500+05:30                 True   820.0  1204050.0
+```
+
+* `exchange_time`: when the trade happened, as the feed gave it (Indian time). Where the feed gave none, it is the receive time, and `exchange_time_given` is `False`. Some brokers' feeds (zerodha's among them) give the OpenAlgo server's own clock as the trade time, so there it is not the exchange's time even where `exchange_time_given` is `True` (the clock warning of [the first lesson](01-first-sandbox-session.md#what-you-see-when-it-starts)).
+* `receive_time`: when the recording took the tick: the order a live session would have seen the ticks in.
+* `ltp`: the last traded price, in rupees. `volume`: the day's traded volume so far, where the feed sent it; an `"ltp"` recording has no `volume` column. A `"depth"` recording adds `bid` and `ask`.
+* `bt.read_ticks("2026-11-11", [{"exchange": "NSE", "symbol": "SBIN"}])` reads one instrument only, and `cache_dir=` reads from the folder you recorded to.
+* A recording still running is left out until it ends, and one a crash stopped until the next recording of the day finishes its files; `ticks.attrs["left_out"]` lists their recording numbers.
+* A day with nothing recorded raises `DataError`, naming the folder it looked in. So does an instrument you name that was not recorded that day, and a damaged file (named). A day that is not a date, instruments it cannot use, or a `cache_dir` that is not an absolute path raise `ConfigError`.
 
 ## What you learned
 
 * `bt.record(client, instruments, until="15:30")` saves every tick of a day, which a broker cannot give you later.
 * It writes to disk every second, uses its own feed connection, and can run beside a live session.
+* `bt.read_ticks(day)` reads a recorded day back as a table, in the order the ticks arrived.
 
 ## Next
 

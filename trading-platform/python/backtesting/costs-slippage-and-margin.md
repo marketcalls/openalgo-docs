@@ -157,6 +157,67 @@ Charges      : Rs 3,328.25
 
 Over 22 fills, the default slippage lowered the profit by about Rs 1,000. What it cost the fills themselves is `result.metrics["total_slippage"]`: Rs 706.85 for the first run. The profit differs by more because, with no slippage, five of the trades could buy one more share each. Keep it on: real fills are never exactly at the open.
 
+## Would it survive worse fills, or late orders?
+
+A backtest fills each order at the next bar's open, just after the strategy decided. Real fills can come at a worse price, and a real order can be late (a script that started late, a signal you acted on the next day). Two settings of `bt.backtest` test that without changing the strategy (both come with openalgo 2.3.0, which is being released):
+
+* `fill=` sets the price an order fills at: `"next_open"` (the default), or another price of the next bar: its close (`"next_close"`), the middle of its high and low (`"next_mid"`), or the average of its open, high, low and close (`"next_ohlc4"`). The same names ending in `_2` (`"next_close_2"` and so on) average that price with the bar after it. Slippage is added as usual; an order at a set price (a limit or a stop-loss) still fills at that price.
+* `delay_entries=` holds each order that opens or adds to a position, and `delay_exits=` each one that reduces or closes it, for that many more bars before it can fill. A reversal (a sell that turns a long into a short) counts as an exit; for a short strategy, the entry is the sell. The stop-loss, target and trailing stop of a trade, and the engine's own exits (such as the intraday square-off), are never held. An order whose delay would end after the run's last bar, or (for an intraday order) at its session's close, is rejected with the reject code `delay_past_close`.
+
+Every order filled at the next day's close instead of its open:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+# The same strategy, each order filled at the next day's close instead of its open.
+at_close = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+                       fill="next_close")
+print_summary(at_close)
+```
+
+<!-- output -->
+```text
+Net profit   : Rs 38,476.71
+Return       : 38.48%
+Max drawdown : -32.42%
+Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
+Charges      : Rs 3,174.79
+```
+
+Every buy and every sell one day late:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+# The same strategy, each buy and sell held one more day before it can fill.
+late = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+                   delay_entries=1, delay_exits=1)
+print_summary(late)
+```
+
+<!-- output -->
+```text
+Net profit   : Rs 42,017.30
+Return       : 42.02%
+Max drawdown : -31.64%
+Trades       : 10 (40% won)
+Overfitting  : too few trades to judge (10 closed, 30 needed)
+Charges      : Rs 2,905.05
+```
+
+The late run closed 10 trades, not 11. Its buy decided on 27 April 2023 was sized at that day's close, and by the time it could fill the price had risen by more than the 2 percent of cash kept back, so the order needed more money than the account had and was rejected (reject code `margin`). Python prints a warning about it at the end of the run:
+
+```text
+OrdersNotPlacedWarning: 1 order was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+```
+
+`late.orders` lists one more rejected order: a buy decided on 11 November 2026, the run's last day, whose one-day delay would have ended after the last bar (reject code `delay_past_close`). That is the delay working, so Python does not warn about it; `late.warnings` names it.
+
+How to read the two runs against the first (Rs 53,941.09): filled at the close, the crossover kept about 71 percent of its profit; a day late, about 78 percent, and both drawdowns were a little deeper. Its edge does not hang on getting the exact open. A strategy whose profit vanishes one bar late, or at the bar's close instead of its open, has an edge too thin to trade: real fills and real delays would take all of it. For more ways to tell a real edge from a lucky one, see the [overfitting checks](results-and-reports.md#overfitting-checks).
+
+A held order is waiting, not yet a position: `self.position.is_flat` stays `True` until it fills. The crossover buys only on the day the EMAs cross, so it cannot buy twice; a strategy that buys on every bar while it is flat would buy again while its first buy waits, so it should also check that `self.orders` (the orders still waiting) is empty.
+
 ## How much money does a trade block?
 
 **Margin** is the money blocked in your account while a position is open. An order that needs more than your free cash is rejected with the reject code `margin`.

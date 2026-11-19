@@ -377,6 +377,13 @@ print(opt.best)  # the best pair
 
 Do not trust the single best pair: among many, one looks good by luck. Check it on later years the sweep did not see (`start="2025-01-01"`): those years are the test part of a study over 2021 to 2026. `workers=1` runs in one process, which works anywhere, a notebook included. Lesson: [Find Better Settings](tutorial/09-find-better-settings.md).
 
+## Test against worse fills and late orders
+
+* **Worse fills:** `bt.backtest(..., fill="next_close")` fills every market order at the next bar's close instead of its open; a limit or stop-loss keeps its price (also `"next_mid"`, `"next_ohlc4"` and the `_2` versions averaged with the bar after).
+* **Late orders:** `bt.backtest(..., delay_entries=1, delay_exits=1)` holds every order that opens a position, and every one that closes it, one more bar before it can fill; the stop-loss and target are never held.
+
+A strategy whose profit vanishes one bar late, or at the bar's close instead of its open, has an edge too thin to trade. Both runs of the SBIN crossover, and how to read them: [Costs, Slippage and Margin](costs-slippage-and-margin.md#would-it-survive-worse-fills-or-late-orders); more checks: [Overfitting checks](results-and-reports.md#overfitting-checks).
+
 ## Use your own data
 
 Pass a DataFrame of bars with `data=` instead of the client. Here the bars come from `client.history`. Fetch them from earlier than the day the test starts, so the EMAs are ready on it, and say where the test starts with `start=`. Such bars need nothing more, intraday ones included (`client.history` gives their times with the Indian time zone); intraday times without a time zone, as in a spreadsheet, need `tz="Asia/Kolkata"`, to say they are Indian time:
