@@ -1,7 +1,7 @@
 # Backtesting
 
 {% hint style="warning" %}
-**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.2.1 or later: run `pip install -U openalgo` to update. MAE and MFE, slippage and the trading cost come with openalgo 2.3.0, which is being prepared; with 2.2.1 those columns, metrics and charts are not there yet.
+**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.2.1 or later: run `pip install -U openalgo` to update. MAE and MFE, slippage and the trading cost, the robustness checks and walk-forward come with openalgo 2.3.0, which is being prepared; with 2.2.1 those columns, metrics, charts and checks are not there yet.
 {% endhint %}
 
 ## What is a backtest?
@@ -101,6 +101,8 @@ The reference pages explain every option:
 * [Data](data.md): OpenAlgo history, your own data, quality checks, splits and bonuses.
 * [Results and Reports](results-and-reports.md) and [Metric Definitions](metric-definitions.md): every table, figure and the tearsheet.
 * [Optimization](optimization.md): parameter sweeps.
+* [Robustness and Overfitting](robustness.md): seventeen checks that help you catch a strategy fitted to the past.
+* [Walk-Forward](walk-forward.md): pick the settings on the past, trade them on the next stretch, and repeat.
 * [Support Functions](support-functions/README.md): the calendar, cost calculator, reference data, resampling and metrics on their own.
 
 ## Speed and repeatable results
@@ -115,7 +117,6 @@ The following are part of the design but not built. Each raises `NotImplementedE
 
 * `bt.live` in openalgo 2.2.1: trading a strategy through OpenAlgo comes with openalgo 2.3.0.
 * `fill="close"` (filling at the decision bar's close).
-* Walk-forward optimization (`bt.walk_forward`).
 * Several strategies in one run, pairs (`pair_long`, `pair_short`), the portfolio runner `bt.rebalance` (to rebalance today, call `self.rebalance` inside a strategy, as in [Equal-Weight Rebalancing](examples/rebalancing.md)), and strategies declared on a `universe`.
 * Condition strategies on a futures underlying, and other intervals of a futures series (`self.data[underlying, "15m"]`).
 * The combined rules `combined_stop`, `combined_target`, `lock_profit` and `trail_sl_to_entry`, and `after_risk_exit="allow_reentry"`, which only they would use.
