@@ -140,6 +140,10 @@ Every pair made money over these years, and the profit mostly fell as the averag
 
 ## Is the best a lucky pick?
 
+{% hint style="info" %}
+The overfitting figures of `bt.optimize` come with openalgo 2.3.0, which is being released. Run `pip install -U openalgo` once 2.3.0 is out.
+{% endhint %}
+
 Try enough settings and one will look good by luck alone. From the backtests it already ran, every sweep also measures how far its best row may be luck; nothing runs again.
 
 <!-- continues -->
@@ -151,7 +155,7 @@ if __name__ == "__main__":
     print("Neighbourhood           :", nb.verdict)
     print(f"Neighbours making money : {nb.summary['profitable_share']:.0%}")
     print(f"Median neighbour keeps  : {nb.summary['median_ratio']:.0%}")
-    print(f"Weakest quarter keeps   : {nb.summary['low_ratio']:.0%}")
+    print(f"25th percentile keeps   : {nb.summary['low_ratio']:.0%}")  # the neighbour a quarter of them fall below
     print("Warnings                :", sweep.warnings or "none")  # "or": none when the list is empty
 
     # Two figures corrected for the number of settings tried.
@@ -168,18 +172,20 @@ if __name__ == "__main__":
 Neighbourhood           : passed
 Neighbours making money : 100%
 Median neighbour keeps  : 67%
-Weakest quarter keeps   : 62%
+25th percentile keeps   : 62%
 Warnings                : none
 Deflated Sharpe ratio   : 0.88
 Overfitting probability : 0.28
 Open sweep.html in your browser
 ```
 
-* **The neighbourhood** applies the [parameter neighbourhood](robustness.md#the-searching-checks) rule to the best row. Its neighbours are the settings one step away in the grid: fast 5 and slow 30 sit in a corner, so they have three (fast 5 with slow 50, fast 10 with slow 30, fast 10 with slow 50). The rule passes when the weakest quarter of the neighbours (their 25th percentile) still makes money and the median one keeps at least half of the best's figure. Here all three made money and the median kept 67 percent of the best's net profit: the best sits on a slope of good settings, not on a lone spike.
+* **The neighbourhood** applies the [parameter neighbourhood](robustness.md#the-searching-checks) rule to the best row. Its neighbours are the settings one step away in the grid: fast 5 and slow 30 sit in a corner, so they have three (fast 5 with slow 50, fast 10 with slow 30, fast 10 with slow 50). The rule passes when about three quarters of the neighbours or more make money (the neighbour at the 25th percentile, with a quarter of them below it, is above break-even) and the median one (the middle one) keeps at least half of the best's figure. Here all three made money and the median kept 67 percent of the best's net profit: the best sits on a slope of good settings, not on a lone spike.
 * **The warnings:** when the best fails that rule, `sweep.warnings` holds a line that starts "The best combination (...) looks like a lone spike, not a plateau" and says to prefer a setting inside a plateau. This sweep has none.
-* **The deflated Sharpe ratio:** the best of 9 tries tends to show a higher Sharpe ratio than the strategy really has, because luck helped to pick it. This figure corrects for that: it is the probability, from 0 to 1, that the best setting's true Sharpe ratio is above what the best of 9 tries would show with no edge at all. Near 1 the best stands out from luck; near 0.5 or below it does not. Here it is 0.88. The more settings you try, the higher the bar.
+* **The deflated Sharpe ratio:** the best of 9 tries tends to show a higher Sharpe ratio than the strategy really has, because luck helped to pick it. This figure corrects for that: it is the probability, from 0 to 1, that the best setting's true Sharpe ratio is above what the best of 9 tries would show with no edge at all. Near 1 the best stands out from luck; near 0.5 or below it does not. Here it is 0.88, between the two: the best probably stands out from luck, but not clearly. The more settings you try, the higher the bar.
 * **The overfitting probability** (the probability of backtest overfitting): the sweep cuts the 1,453 trading days into 16 blocks and takes every way of choosing half of them as "the past", 12,870 ways. In each, it finds the best setting on that half and ranks it on the other half. The figure is the share of ways in which the past's best landed in the bottom half. Here it is 0.28. Near 0.5 or above, the search picked settings that did not hold up across the years. A figure near 0 does not prove the settings hold: every half comes from the same years, so a setting that rode one long trend ranks well in all of them.
 * `sweep.overfitting` gives both figures with what they rest on: the best's Sharpe ratio per day, the one the best of the tries would show by luck, the settings tried, the days, the blocks and the splits.
+
+Passing proves nothing on its own: the [walk-forward](walk-forward.md#an-example) of this same sweep earned about a quarter of what its picks promised, so these figures are not a reason to trade the best row.
 
 `sweep.tearsheet("sweep.html", x="fast", y="slow")` writes these figures to one page that opens in your browser. `x` and `y` name the two parameters to draw (the first two swept when you leave them out); any other parameter is held at its best value. The page starts with the net profit of every setting as a heatmap and as a surface, the best one outlined:
 

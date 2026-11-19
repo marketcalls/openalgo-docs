@@ -3,7 +3,7 @@
 A [sweep](optimization.md) picks the best settings on the whole history and then shows them on that same history, so of course they look good: you chose them with hindsight. **Walk-forward testing** repeats the search the way you would have lived through it. It picks the settings on the years before, trades them on the next stretch the search never saw, moves forward and does it again. Joining the traded stretches gives one equity curve made only of trading on prices the search had not seen.
 
 {% hint style="info" %}
-`bt.walk_forward` comes with openalgo 2.3.0, which is being released. Run `pip install -U openalgo` to update.
+`bt.walk_forward` comes with openalgo 2.3.0, which is being released. Run `pip install -U openalgo` once 2.3.0 is out.
 {% endhint %}
 
 ## How it works
@@ -139,7 +139,7 @@ Too few trades to judge: the stitched out-of-sample runs closed 13 trades, 30 ne
 * `anchored=False`: `True` starts every in-sample window on the first day.
 * `in_sample=0.7`: the share of each fold searched, above 0 and below 1.
 * `objective="net_profit"`: the figure each fold picks by, any [metric](metric-definitions.md) name such as `"sharpe"`; the highest is always picked.
-* Parameter ranges named after the strategy's parameters (`fast=(5, 10, 20)`, or `bt.param` values on the class), and `params=` to hold a parameter at one value, as in [Optimization](optimization.md#how-do-i-choose-the-values-to-try).
+* Parameter ranges named after the strategy's parameters (`fast=(5, 10, 20)`, or `bt.param` values on the class), and `params=` to hold a parameter at one value, as in [Optimization](optimization.md#how-do-i-choose-the-values-to-try) (unlike `bt.robustness`, where `params=` is the chosen setting and its range is still searched). A parameter given both a range and a `params=` value raises a `ConfigError`.
 * `workers=` and `progress=print`, as in a sweep.
 * Every other keyword is a `bt.backtest` argument, the same for every window.
 

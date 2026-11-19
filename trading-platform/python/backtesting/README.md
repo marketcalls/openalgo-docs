@@ -1,7 +1,7 @@
 # Backtesting
 
 {% hint style="warning" %}
-**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.2.1 or later: run `pip install -U openalgo` to update. MAE and MFE, slippage and the trading cost, the robustness checks and walk-forward come with openalgo 2.3.0, which is being prepared; with 2.2.1 those columns, metrics, charts and checks are not there yet.
+**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.2.1 or later: run `pip install -U openalgo` to update. MAE and MFE, slippage and the trading cost, the robustness checks, the optimizer's overfitting figures and walk-forward come with openalgo 2.3.0, which is being released; with 2.2.1 those columns, metrics, charts and checks are not there yet.
 {% endhint %}
 
 ## What is a backtest?

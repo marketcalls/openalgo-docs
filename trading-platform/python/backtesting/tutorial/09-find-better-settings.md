@@ -54,6 +54,7 @@ if __name__ == "__main__":
         EmaCrossover, client, start="2021-01-01", end="2024-12-31", capital=100_000,
         fast=(10, 15, 20, 25),  # the fast lengths to try
         slow=(40, 50, 60),  # the slow lengths to try
+        workers=2,  # backtests run at once; leave it out to use every CPU core
     )
     # opt.table has one row per pair: sort by net profit, highest first, and show five.
     top = opt.table.sort_values("net_profit", ascending=False).head(5)

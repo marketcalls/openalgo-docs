@@ -52,6 +52,7 @@ if __name__ == "__main__":
     opt = bt.optimize(
         EmaCrossover, client, start="2021-01-01", end="2024-12-31", capital=100_000,
         fast=(10, 15, 20, 25), slow=(40, 50, 60),
+        workers=2,  # backtests run at once; leave it out to use every CPU core
     )
     print("Best on 2021-24:", opt.best)
 

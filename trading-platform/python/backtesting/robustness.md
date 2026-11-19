@@ -1,6 +1,6 @@
 # Robustness and Overfitting
 
-A backtest shows what a strategy would have done on one stretch of history. **Overfitting** is fitting a strategy's rules and settings so closely to that stretch that they pick up its noise: the random ups and downs that will not come again. An overfitted strategy looks its best on the very prices it was fitted to, and those prices will not come again. That is why a good backtest can still lose money live:
+A backtest shows what a strategy would have done on one stretch of history. **Overfitting** is fitting a strategy's rules and settings so closely to that stretch that they pick up its noise: the random ups and downs that will not come again. An overfitted strategy looks its best on the very prices it was fitted to, and from now on it will trade other prices. That is why a good backtest can still lose money live:
 
 * **Settings picked as the best of many tries.** Try a hundred pairs of EMA lengths and one will look good by luck alone. The best row of a sweep is the best fit to the past, not a forecast.
 * **Too few trades.** Eleven trades in six years can come out well or badly by chance. The fewer the trades, the harder it is to tell a real edge from luck.
@@ -10,7 +10,7 @@ A backtest shows what a strategy would have done on one stretch of history. **Ov
 The robustness checks test each of these, so you can catch overfitting at the backtest stage, before any money is at risk. This page shows how to run them and how to read what they say.
 
 {% hint style="info" %}
-The full set of checks, `bt.robustness` and `bt.walk_forward` come with openalgo 2.3.0, which is being released. Run `pip install -U openalgo` to update.
+The full set of checks, `bt.robustness` and `bt.walk_forward` come with openalgo 2.3.0, which is being released. Run `pip install -U openalgo` once 2.3.0 is out.
 {% endhint %}
 
 ## How to read a verdict
@@ -19,10 +19,10 @@ Each check asks one question, states a pass rule and gives one of four verdicts:
 
 * **passed:** the strategy did not fail this test. Passing proves nothing on its own: an overfitted strategy can pass some checks.
 * **failed:** the edge did not hold up under this check. It may be fitted to the past, or too small to tell apart from luck. A failure is a warning, not proof that the strategy is overfitted.
-* **not judged:** there was too little to judge (too few trades, not enough history, no other symbols named), and the check says why. "Not judged" never counts as a pass.
+* **not judged:** there was too little to judge (too few trades, not enough history, no other symbols named), or the run made no money, so it has no edge to judge; the check says why. "Not judged" never counts as a pass.
 * **informational:** the check shows its figures but judges nothing: the trade reshuffle until you give it a limit, and the noise-robust optimization, which shows which settings hold up rather than judging yours.
 
-Only some checks can see settings that you picked as the best of many tries: **out of sample** and **walk-forward** (given parameter ranges, they repeat the search on part of the history and test the winner on the rest), the **parameter neighbourhood**, the **noise-robust optimization**, and the optimizer's [deflated Sharpe ratio and probability of backtest overfitting](optimization.md#is-the-best-a-lucky-pick). The other checks judge the settings you give them, not the search that chose them. If you chose the settings with a sweep, run those four.
+Only some checks can see settings that you picked as the best of many tries: **out of sample** and **walk-forward** (given parameter ranges, they repeat the search on part of the history and test the winner on the rest), the **parameter neighbourhood**, the **noise-robust optimization**, and the optimizer's [deflated Sharpe ratio and probability of backtest overfitting](optimization.md#is-the-best-a-lucky-pick) (the **Sharpe ratio** is the return per unit of day-to-day ups and downs). The other checks judge the settings you give them, not the search that chose them. If you chose the settings with a sweep, run those four.
 
 ## The quick checks on every backtest
 
@@ -91,7 +91,7 @@ Nothing to re-fit: give ranges named after the strategy's parameters (fast=range
 
 None of the seventeen checks could judge this strategy, and that is the first thing they tell you:
 
-* Thirteen checks need at least 30 closed trades, and this run closed 11 in almost six years. With so few trades, no test can tell the crossover's profit apart from luck. The profit may be real, but this backtest cannot show it.
+* Thirteen checks stopped at the minimum of 30 closed trades (three of the other four need 30 too, once they have what the next bullets name), and this run closed 11 in almost six years. With so few trades, no test can tell the crossover's profit apart from luck. The profit may be real, but this backtest cannot show it.
 * **Shifted bars** needs bars finer than the strategy's own, to build the days with other start and end times.
 * **Other markets** needs the symbols to try, named with `others=`.
 * **Walk-forward** and the **noise-robust optimization** search the strategy's settings, so they need ranges of values to try (the next example gives them).
@@ -149,7 +149,10 @@ if __name__ == "__main__":
     # One line per check: its number, its name and its verdict, then the figure it judged.
     # report.verdicts is a table with a row per check; iterrows() gives each row in turn.
     for number, row in report.verdicts.iterrows():
+        # An f-string (f"...") fills in each {...}; :>2 and :<20 pad the number and the
+        # name to 2 and 20 characters, so the columns line up.
         print(f"{number:>2} {row['check']:<20} {row['verdict']}")
+        # The figure, wrapped at 86 characters and indented by 3 spaces.
         print(textwrap.fill(row["figure"], width=86, initial_indent="   ", subsequent_indent="   "))
 
     # The HTML report, with a chart or a table for every check.
@@ -211,7 +214,7 @@ Open macd_robustness.html in your browser
 
 The checks run about 1,300 backtests here, two at a time; the whole report took about 70 seconds on the desktop these pages were made on. Like [a parameter sweep](optimization.md#why-must-a-sweep-run-from-a-file), it must run from a `.py` file: with `workers=1` it runs in your own process, notebooks included, more slowly.
 
-With `progress=print` the checks first print their plan: which checks run, how many backtests they need, and an estimate of the time. For this run it read (the times differ from one computer to another):
+With `progress=print` the checks first print their plan: which checks run, how many backtests they need, and an estimate of the time. For this run it read (a **session** is a trading day; the times differ from one computer to another):
 
 ```text
 bt.robustness: 17 checks of 17 for MacdCrossover (out_of_sample, random_out_of_sample, walk_forward, vs_random, permutation, noise, shifted, other_markets, stress, reshuffle, resample, random_exits, variance, delayed, liquidity, parameters, noise_optimization), 200 runs each from seed 0, on 52 closed trades over 1,453 sessions. The trade-list checks read the run's trade list; the bar and searching checks rerun the backtest 1,338 times or fewer on generated bars, other symbols or the run's own bars with one setting changed, or the run's own bars over parameter combinations or windows of the run (out_of_sample 11, walk_forward 50, vs_random 600, permutation 200, noise 200, other_markets 4, stress 400, delayed 8, liquidity 6, parameters 9, noise_optimization 459), each an ordinary backtest of the same kernel. The checks share 600 of the runs listed, which read the same generated bars, so the total counts each once. The searching checks share 9 of their runs, the same combinations on the same bars, so the total counts each once. The backtest took 0.36 s. A rerun on generated bars took 0.07 s, making its bars and measuring it included; in 2 worker processes the reruns should take about 50.2 s. That many reruns suit the condition form (entry_when, exit_when), which runs without a Python call per bar.
@@ -221,15 +224,16 @@ The last sentence suggests the [condition form](writing-strategies.md#can-i-writ
 
 ## Reading the MACD report
 
-The checks measure the **Sharpe ratio** unless you choose another figure with `objective=`: the return per unit of day-to-day ups and downs. The run's Sharpe ratio was 0.55.
+The checks measure the Sharpe ratio unless you choose another figure with `objective=`. The run's Sharpe ratio was 0.55.
 
 **What held up.** The result does not hang on one exact detail:
 
-* **Parameter neighbourhood:** all 8 settings around fast 12 and slow 26 made money, and the median one matched the chosen Sharpe ratio. The chosen setting sits on a plateau, not on a lone spike.
-* **Noise:** with every price of every bar moved a little, all 200 noisy histories made money, and their median kept 94.9 percent of the Sharpe ratio.
+* **Parameter neighbourhood:** all 8 settings around fast 12 and slow 26 made money. The **median** one (the middle one, with as many settings above it as below) matched the chosen Sharpe ratio, and the one at the 25th **percentile** (a quarter of the settings below it) kept 93.4 percent of it. The chosen setting sits on a plateau, not on a lone spike.
+* **Noise:** with the prices of every bar moved a little at random, all 200 noisy histories made money, and their median kept 94.9 percent of the Sharpe ratio.
 * **Delayed orders** and **liquidity:** entering one bar late still made Rs 26,556, and every other fill price made money.
 * **Out of sample:** searched on the first 70 percent of the sessions alone, the best setting (fast 12, slow 20) made money on the last 30 percent it never saw, keeping 76.5 percent of its Sharpe ratio.
 * **Other markets** passed at its limit: 2 of the 4 other banks made money.
+* **Synthetic stress:** 83 of the 400 noisy and shuffled histories were harsher than the real one (a deeper fall, a longer wait for a new high or a deeper drop below the 200-day average), and the strategy made money on them about as often as on all of them: under the weakest rule, 96.6 percent of the harsh histories made money against 95.0 percent of all of them.
 
 **What did not.** The edge is small next to luck:
 
@@ -238,7 +242,7 @@ The checks measure the **Sharpe ratio** unless you choose another figure with `o
 * **Random out of sample, trade resample** and **variance:** a few long trends paid for many small losses, so the result depends on which trades and which sessions you count. With 30 percent of the sessions set aside at random, the set-aside part kept half the Sharpe ratio in only 36 percent of the draws (the rule asks for 80). Drawn at random from its own trades, 27.5 percent of the paths did not make money; with 5 fewer winners in every 100 trades, about half did not.
 * **Walk-forward:** picking the best setting on each stretch of the past and trading it on the next lost Rs 32 over the five stretches together, and the pick moved a lot from one stretch to the next.
 
-**Not judged and informational.** Shifted bars needs bars finer than daily, and randomized exits needs a stop-loss or target to vary; this strategy has neither. The trade reshuffle shows that, put in other orders, the same closed trades fell more than 42.4 percent in 5 percent of the orders, about twice the 21.8 percent of their real order. The noise-robust optimization picked fast 12 and slow 20 on the noisy histories, the same setting that is best on the real prices, and found it on a plateau.
+**Not judged and informational.** Shifted bars needs bars finer than daily, and randomized exits needs a stop-loss or target to vary; this strategy has neither. The trade reshuffle shows that, put in other orders, the same closed trades fell more than 42.4 percent from a peak (a **drawdown**) in 5 percent of the orders, about twice the 21.8 percent of their real order. The noise-robust optimization picked fast 12 and slow 20 on the noisy histories, the same setting that is best on the real prices, and found it on a plateau.
 
 None of this proves the strategy is overfitted. It says that its 47 percent return ([the example](examples/macd-crossover.md)) is not enough on its own to trust: the strategy is robust to small changes, but its edge over luck, and over simply holding the stock, is not shown. Compare it with NIFTY ([Compare with NIFTY](tutorial/08-compare-with-nifty.md)), test it on more symbols and years, and run it in sandbox mode ([Live Trading](../live-trading/README.md)) before you trade it with money.
 
@@ -279,7 +283,7 @@ These run the strategy again on other prices: shuffled, noisy, stressed, or anot
 * **Permutation test** (`permutation`): *Could the edge come from the price path's distribution alone?* Builds new price histories from the same moves in another order: each bar's move stays whole, every bar stays a valid candle, and the overnight gaps are shuffled as one more set. Passes when at most 5 percent of the shuffled histories reach the strategy's figure (p at most 0.05). A failure says the strategy did about as well on prices with the same ups and downs in a random order, so its rules may not be what made the money.
 * **Noise** (`noise`): *Does it survive small changes to every bar?* Moves the prices of every bar at random (each price with a set chance), by up to a fifth of the bar's average true range (its typical range over the last 14 bars), and runs the strategy on each noisy history. Passes when the median noisy run keeps at least half of the figure, at least 80 percent of the noisy runs make money, and the real run is not above 95 percent of them. A failure says the strategy is tuned to the exact prices of the past.
 * **Other markets** (`other_markets`): *Does the logic hold on related symbols?* Runs the strategy unchanged on the symbols you name in `others=` (on the strategy's exchange, or as `("SYMBOL", "EXCHANGE")` pairs). Passes when at least half of them make money. Not judged without `others=`. A failure says the rules may fit one stock's history only.
-* **Synthetic stress** (`stress`): *Does it hold through shocks history did not have?* From the noisy and shuffled histories it keeps the harsh ones: a fall, a recovery time or a drop below the 200-day average at least half as bad again as the real one's, or day-to-day moves little like the real ones. Passes when, under every rule that keeps enough histories, the strategy makes money on the harsh histories at least half as often as on all of them. A failure says it breaks in rough markets.
+* **Synthetic stress** (`stress`): *Does it hold through shocks history did not have?* From the noisy and shuffled histories it keeps the harsh ones: a fall, a recovery time or a drop below the 200-day average at least half as bad again as the real one's. A fourth rule, day-to-day moves little like the real ones, is added with `stress={"rules": ["drawdown", "recovery", "below_average", "correlation"]}`. Passes when, under every rule that keeps enough histories, the strategy makes money on the harsh histories at least half as often as on all of them. A failure says it breaks in rough markets.
 
 ### The checks that change one thing
 
@@ -296,10 +300,10 @@ These search the strategy's settings over ranges of values: give the ranges as k
 
 * **Out of sample** (`out_of_sample`): *Does it work on bars the search never saw?* Searches the ranges on the first 70 percent of the sessions, then runs the best setting once on the last 30 percent. Passes when that last part makes money and keeps at least half of the first part's figure (a total such as the net profit is compared per year). Without ranges it splits your run as it is. A failure says the best settings of the past did not carry over to the next years.
 * **Walk-forward** (`walk_forward`): *Does it hold when re-fitted through time?* Does the out-of-sample test five times, each time a little later in history, and joins the five tested stretches into one equity curve. Passes when that curve makes money, its walk-forward efficiency (the tested stretches' figure per year over the searched ones') is at least 0.5, and at least 60 percent of the stretches make money. [Walk-Forward](walk-forward.md) explains it with an example.
-* **Parameter neighbourhood** (`parameters`): *A plateau, or one lucky spike?* Runs every setting of the ranges (without ranges, each number parameter 10 percent lower and higher, so 20 gives 18, 20 and 22) and looks at the neighbours of the chosen setting, one step away. Passes when the weakest quarter of the neighbours still makes money (their 25th percentile) and the median neighbour keeps half the chosen figure. A failure says the chosen setting is a lone spike: the settings next to it do much worse.
+* **Parameter neighbourhood** (`parameters`): *A plateau, or one lucky spike?* Runs every setting of the ranges (without ranges, each number parameter 10 percent lower and higher, so 20 gives 18, 20 and 22) and looks at the neighbours of the chosen setting, one step away. Passes when about three quarters of the neighbours or more make money (the neighbour at the 25th percentile is above break-even) and the median neighbour keeps half the chosen figure. A failure says the chosen setting is a lone spike: the settings next to it do much worse.
 * **Noise-robust optimization** (`noise_optimization`): *Which settings hold across noisy histories?* Runs every setting of the ranges on 50 noisy histories and scores each by its median result. It names the best setting by that score and applies the neighbourhood rule to it. It is informational: it shows which settings hold up rather than judging yours. When its choice differs from the plain best setting, the plain best may owe its lead to the exact prices of the past.
 
-The chosen setting is the run's own: the class's values, or the ones you give in `params=` (`params={"fast": 12, "slow": 26}`). To check the best setting of a sweep inside the grid it came from, pass the sweep's ranges and `params=sweep.best`.
+The chosen setting is the run's own: the class's values, or the ones you give in `params=` (`params={"fast": 12, "slow": 26}`). To check the best setting of a sweep inside the grid it came from, pass the sweep's ranges and `params=sweep.best` (in `bt.walk_forward`, `params=` instead holds a parameter at one value, which it does not search).
 
 ## Settings
 
@@ -329,6 +333,6 @@ Every setting is a keyword of `bt.robustness` or `result.robustness`:
 
 * **Futures:** the trade-list checks work on a futures strategy; the checks that rerun a futures series raise `NotImplementedError` (each roll changes the contract), with a message that says what to do instead.
 * **Shifted bars on a daily strategy:** run it on intraday base bars, for example `base="1m"`, so the check can move the day's boundaries.
-* **Fixed signals:** for a strategy made by `bt.from_arrays`, whose entries are fixed in advance, the noise and permutation tests, synthetic stress and the strategy-on-shuffled-bars runs of versus random are not judged: on other bars it would trade the same days.
+* **Fixed signals:** for a strategy made by `bt.from_arrays`, whose entries are fixed in advance, the noise and permutation tests, synthetic stress, shifted bars and the strategy-on-shuffled-bars runs of versus random are not judged: on other bars it would trade the same days, and its arrays hold one decision per bar of the run, which shifted bars do not keep.
 * **A sweep's own checks:** `bt.optimize` gives the neighbourhood of its best setting, the deflated Sharpe ratio and the probability of backtest overfitting from the sweep it already ran: see [Optimization](optimization.md#is-the-best-a-lucky-pick).
 * **Walk-forward on its own:** [Walk-Forward](walk-forward.md).
