@@ -138,17 +138,70 @@ slow
 
 Every pair made money over these years, and the profit mostly fell as the averages got slower. Neighbouring cells agree, which is a better sign than one lone high number surrounded by poor ones.
 
+## Is the best a lucky pick?
+
+Try enough settings and one will look good by luck alone. From the backtests it already ran, every sweep also measures how far its best row may be luck; nothing runs again.
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+if __name__ == "__main__":
+    # The best setting's neighbours: the settings one step away from it in the grid.
+    nb = sweep.neighbourhood
+    print("Neighbourhood           :", nb.verdict)
+    print(f"Neighbours making money : {nb.summary['profitable_share']:.0%}")
+    print(f"Median neighbour keeps  : {nb.summary['median_ratio']:.0%}")
+    print(f"Weakest quarter keeps   : {nb.summary['low_ratio']:.0%}")
+    print("Warnings                :", sweep.warnings or "none")  # "or": none when the list is empty
+
+    # Two figures corrected for the number of settings tried.
+    print(f"Deflated Sharpe ratio   : {sweep.deflated_sharpe:.2f}")
+    print(f"Overfitting probability : {sweep.overfitting_probability:.2f}")
+
+    # The heatmap page: fast across, slow down.
+    path = sweep.tearsheet("sweep.html", x="fast", y="slow")
+    print("Open", path, "in your browser")
+```
+
+<!-- output -->
+```text
+Neighbourhood           : passed
+Neighbours making money : 100%
+Median neighbour keeps  : 67%
+Weakest quarter keeps   : 62%
+Warnings                : none
+Deflated Sharpe ratio   : 0.88
+Overfitting probability : 0.28
+Open sweep.html in your browser
+```
+
+* **The neighbourhood** applies the [parameter neighbourhood](robustness.md#the-searching-checks) rule to the best row. Its neighbours are the settings one step away in the grid: fast 5 and slow 30 sit in a corner, so they have three (fast 5 with slow 50, fast 10 with slow 30, fast 10 with slow 50). The rule passes when the weakest quarter of the neighbours (their 25th percentile) still makes money and the median one keeps at least half of the best's figure. Here all three made money and the median kept 67 percent of the best's net profit: the best sits on a slope of good settings, not on a lone spike.
+* **The warnings:** when the best fails that rule, `sweep.warnings` holds a line that starts "The best combination (...) looks like a lone spike, not a plateau" and says to prefer a setting inside a plateau. This sweep has none.
+* **The deflated Sharpe ratio:** the best of 9 tries tends to show a higher Sharpe ratio than the strategy really has, because luck helped to pick it. This figure corrects for that: it is the probability, from 0 to 1, that the best setting's true Sharpe ratio is above what the best of 9 tries would show with no edge at all. Near 1 the best stands out from luck; near 0.5 or below it does not. Here it is 0.88. The more settings you try, the higher the bar.
+* **The overfitting probability** (the probability of backtest overfitting): the sweep cuts the 1,453 trading days into 16 blocks and takes every way of choosing half of them as "the past", 12,870 ways. In each, it finds the best setting on that half and ranks it on the other half. The figure is the share of ways in which the past's best landed in the bottom half. Here it is 0.28. Near 0.5 or above, the search picked settings that did not hold up across the years. A figure near 0 does not prove the settings hold: every half comes from the same years, so a setting that rode one long trend ranks well in all of them.
+* `sweep.overfitting` gives both figures with what they rest on: the best's Sharpe ratio per day, the one the best of the tries would show by luck, the settings tried, the days, the blocks and the splits.
+
+`sweep.tearsheet("sweep.html", x="fast", y="slow")` writes these figures to one page that opens in your browser. `x` and `y` name the two parameters to draw (the first two swept when you leave them out); any other parameter is held at its best value. The page starts with the net profit of every setting as a heatmap and as a surface, the best one outlined:
+
+<figure><img src="../../../.gitbook/assets/backtest-optimize-heatmap.png" alt="The top of the sweep's heatmap page: the title EmaCrossover with 9 combinations and objective net_profit, a heatmap of the net profit for fast 5, 10 and 20 across and slow 30, 50 and 100 down with fast 5 slow 30 outlined at 98,375.98, the same grid drawn as a surface of green columns, and tiles for 9 combinations, the best setting, the best objective and the evaluation path"><figcaption><p>The heatmap page: the net profit of every setting</p></figcaption></figure>
+
+Below come the neighbourhood, with its verdict and a chart of the neighbours' net profits, and the overfitting figures:
+
+<figure><img src="../../../.gitbook/assets/backtest-optimize-overfitting.png" alt="The Overfitting section of the heatmap page: six tiles, deflated Sharpe 0.879 (a probability), best Sharpe 0.0459 per session, by luck 0.0146 (the best of the tries), tries 9 combinations, overfitting 0.280 (a probability) and splits 12,870 of 16 blocks"><figcaption><p>The deflated Sharpe ratio and the probability of backtest overfitting</p></figcaption></figure>
+
+The tiles give the Sharpe ratios per trading day, not per year: the best setting's (0.0459), and the one the best of 9 tries would show by luck (0.0146). A chart under them shows how the past's best ranked in each of the 12,870 splits, and the Notes at the end of the page explain each figure.
+
 ## Should I trade the best values?
 
-Not without a further test. The best row is the best fit to the past, not a forecast, and with enough combinations one will look good by luck. Prefer values whose neighbours in the grid also did well, keep the number of parameters small, and check the chosen values on years the sweep did not see. The [lesson on finding better settings](tutorial/09-find-better-settings.md) and [Tuning a Strategy](examples/ema-crossover-optimization.md) do this step by step: they optimize on 2021 to 2024 and check the winner on 2025 and 2026. Walk-forward testing, which automates this, is [planned](walk-forward.md).
+Not without a further test. The best row is the best fit to the past, not a forecast, and with enough combinations one will look good by luck. Prefer values whose neighbours in the grid also did well, keep the number of parameters small, and check the chosen values on years the sweep did not see. The [lesson on finding better settings](tutorial/09-find-better-settings.md) and [Tuning a Strategy](examples/ema-crossover-optimization.md) do this step by step: they optimize on 2021 to 2024 and check the winner on 2025 and 2026. [Walk-Forward](walk-forward.md) automates this, and [Robustness and Overfitting](robustness.md) runs seventeen checks on the settings you chose.
 
 ## More options
 
 * **Your own objective:** `objective=profit_per_drawdown`, a function that takes a result and returns a number, defined with `def` at the top level of the file (not a `lambda`).
-* **Lower is better:** `maximize=False` picks the lowest objective, for a figure such as `"ulcer_index"`.
+* **Lower is better:** `maximize=False` picks the lowest objective, for a figure such as `"ulcer_index"` (the neighbourhood is then not judged).
 * **Values on the class:** `fast = bt.param(20, (5, 10, 20))`; values named in the call replace them.
 * **A benchmark:** with `benchmark=`, `objective="alpha"` or `"information_ratio"` ranks against it.
-* **The result:** `.table`, `.best`, `.select(**params)`, `.heatmap(x, y)`, `.objective`, `.plan` (the line reported before the sweep) and `.path`.
+* **The result:** `.table`, `.best`, `.select(**params)`, `.heatmap(x, y)`, `.objective`, `.plan` (the line reported before the sweep) and `.path`; and the overfitting figures `.neighbourhood`, `.warnings`, `.deflated_sharpe`, `.overfitting_probability`, `.overfitting` and `.tearsheet(path, x=, y=)`.
 * **Progress:** `progress=print` prints the plan line (combinations, processes, time estimate) before the sweep starts.
 * **Faster sweeps:** a [condition strategy](writing-strategies.md#can-i-write-the-rules-as-conditions) makes no Python call per bar and sweeps much faster.
 * **Notebooks:** with the `cloudpickle` package installed, a class defined in a notebook can go to the workers.
