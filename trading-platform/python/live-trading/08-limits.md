@@ -39,6 +39,7 @@ Warning: bt.live trades through pocketful, but the session matches the trade boo
 ```
 
 * **Unchecked candle times.** The SDK has checked how only some brokers (zerodha among them) stamp the time of their one-minute candles. With the others, pocketful and mstock included, the banner also warns `the timestamp convention of broker 'pocketful' is not verified in the broker table; this series passed the session calendar check`. It means the session compared the candles' times with the trading calendar (the market's hours, Indian time) and found them in place, so it goes on: there is nothing to do.
+* **Silver mini and silver micro on MCX** are refused with a `ReferenceDataError` before anything is sent: the SDK's tables have no freeze quantity for them, and OpenAlgo configures none ([Commodities on MCX](11-commodities-on-mcx.md#what-230-cannot-trade-on-mcx-yet)).
 * **No replay of recorded ticks yet.** `bt.record` saves them and `bt.read_ticks` reads a day back as a table ([Recording Ticks](07-recording-ticks.md#read-the-ticks-back)), but 2.3.0 cannot yet run a backtest or a session on them.
 
 ## What you learned
@@ -46,3 +47,7 @@ Warning: bt.live trades through pocketful, but the session matches the trade boo
 * Use OpenAlgo 2.0.2.6 or later: older servers give the session a wrong freeze quantity, or none.
 * Stock options in a cooling-off can refuse every sale below a floor: the session cannot avoid it.
 * A live session trades intraday MIS, one order at a time per symbol, below the freeze quantity, one session per account.
+
+## Next lesson
+
+[Inside a Session](09-inside-a-session.md): when the strategy decides and the protection acts, why nothing repaints, and how the session handles its orders, from a real sandbox session.

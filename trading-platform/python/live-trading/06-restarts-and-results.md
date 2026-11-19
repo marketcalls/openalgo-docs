@@ -26,6 +26,13 @@ A crash, a power cut or a closed terminal ends the program where it stands. What
 * the stop at the broker still works, and your broker still squares off MIS positions near the close;
 * fills that happen meanwhile are not lost: the session finds them in OpenAlgo's books when it restarts.
 
+What a restart can pick up is what the session saved. It writes each order to the journal before sending it, and saves each strategy's state (its positions, its stops, the trailing stop's highest price, its daily figures and `self.state`) before each order it sends, after every minute's bar, and once more when a Ctrl+C ends the session. So:
+
+* **After a crash**, at most the last minute of the trailing stop's progress can be lost: a new high reached since the last save is not known at the restart, and the trail goes on from the high saved before it. **After a Ctrl+C** nothing is lost.
+* **Prices while the program is down do not move the trailing stop.** At the restart the bars it missed only bring the indicators up to date: no decision is taken on them, and no high of theirs moves the trail.
+* **While it is down, only the stop at the broker protects the position**: no trailing, no targets, no loss limits.
+* **To stop on purpose and carry a position on**, start with `on_stop="keep"`: Ctrl+C then leaves the position with its stop at the broker, and running the script again resumes it with its trailing stop. With the default `on_stop="flatten"`, Ctrl+C sells it ([Stopping a Session](02-stopping-a-session.md#keep-the-positions-on_stopkeep)).
+
 ## Restart: run the same script again
 
 Start the same script again, the same day. Before it trades, the session:
@@ -48,6 +55,43 @@ Funds available: Rs 10,000,000.00
 The second line counts the starts of the day; the third names each position it resumed, and its stop. The rest of the banner and the countdown follow as usual, with one difference: a Ctrl+C during this countdown is the safe stop, not a free exit. With the default `on_stop="flatten"` it sells the resumed positions at market; with `on_stop="keep"` it leaves them with their stops ([Stopping a Session](02-stopping-a-session.md#ctrlc-the-safe-stop)).
 
 The session refuses to start, with a `LiveError` and nothing sent, when OpenAlgo's books and the journal disagree in a way no trade explains: a position on one of its symbols that the journal does not know, or a position in the journal that the broker no longer holds. Check the account in OpenAlgo, close or keep the position by hand, then start again.
+
+## A crash and a restart in a real session
+
+From a sandbox session on MCX on 19 November 2026 ([Inside a Session](09-inside-a-session.md) describes its strategies): at 18:30:46 the program was ended on purpose, as a crash would end it, while CrudeBigTrend held one lot of crude oil (100 barrels, bought at 7,701) with its trailing stop moved up to 7,765. OpenAlgo's books eight seconds before:
+
+```text
+orders in the book: 8
+WORKING 26111962641261 CRUDEOIL18DEC26FUT SELL 100 SL-M trigger 7765.0
+POSITION CRUDEOIL18DEC26FUT 100 avg 7701.0 ltp 7789.0
+```
+
+The same script, started again at once, printed:
+
+```text
+OpenAlgo is in SANDBOX mode: orders are simulated
+Restarted: start 4 of the day
+CrudeBigTrend: resumed 100 CRUDEOIL18DEC26FUT MCX, stop 26111962641261 confirmed at the broker
+Funds available: Rs 9,921,817.85
+```
+
+* The restart found the stop still working at the broker, the same order with the same trigger, and kept it. It sent nothing while it restarted: OpenAlgo's book held the same 8 orders before and after, and the session was trading again at 18:31:01.
+* `start 4 of the day` counts every start of the day, the earlier sessions of that evening included.
+* At 18:40 the strategy's own exit closed the lot, cancelling the resumed stop first:
+
+```text
+EXIT: SELL 100 CRUDEOIL18DEC26FUT MCX at 7785.00 (exit, order 26111967201224)
+```
+
+## A restart needs the same names on the same contracts
+
+A restart finds each strategy's saved state by its class name. Under one name, the restart expects the same contract and the same capital as before; when either differs, it refuses that strategy before anything is sent. From a run against a simulated OpenAlgo server: the first lesson's script ran until Ctrl+C at 10:20, then the same script with `"INFY"` in place of `"SBIN"` was started the same day:
+
+```text
+LiveError: EmaCrossover: the engine refused its saved state (the saved live state is of another session (instruments [("SBIN", "NSE")], the session's [("INFY", "NSE")]): restore it into a session of the same day and instruments): the restart cannot resume it. Check its positions in OpenAlgo
+```
+
+The same refusal met the sandbox session on MCX on 19 November 2026, when a class name used earlier that evening for crude oil mini was given the crude oil contract. When you change a strategy's contract or its capital during a day, give the class a new name, such as `CrudeBigTrend` instead of reusing `CrudeTrend`. The old name's saved state stays in the journal, unused.
 
 ## The result
 
@@ -190,6 +234,8 @@ The daily summary (`result.summary`, `summary_text()`) counts the whole trading 
 * The journal in `.openalgo/live/<account>` records every order before it is sent; a restart reads it.
 * While the program is down, the stop at your broker protects an open position; targets, trailing and the daily loss wait for the restart.
 * Running the same script again the same day resumes the positions with their stops, and the banner says so.
+* The state is saved before each order, every minute and at a Ctrl+C: a crash can lose at most a minute of the trailing stop's progress, a Ctrl+C nothing.
+* A restart needs each class name on the same contract with the same capital: rename the class when you change them during a day.
 * `result.summary` covers the whole day; `result.results` holds each strategy's backtest-style `Result` for this start.
 
 ## Next lesson

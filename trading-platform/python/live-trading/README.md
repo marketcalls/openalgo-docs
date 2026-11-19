@@ -39,7 +39,7 @@ pip install -U openalgo
 
 * A `bt.Strategy` class that decides in `on_bar`, as in a backtest, on one symbol (`symbol` and `exchange` in the class). Several strategies can run in one session, as a list, each on its own symbol.
 * **Intraday only**: bars of a minute or more within the day (`"1m"`, `"5m"`, `"15m"`), built from OpenAlgo's live price feed, and the **MIS** product. MIS is the intraday product: every MIS position is closed the same day. The session stops new entries and closes what is open at the exchange's MIS times (for NSE stocks, no new entries from 14:50 and the **square-off**, the forced close, at 15:00).
-* Stocks, a futures contract named by its symbol (such as `NIFTY23NOV26FUT` on NFO), and bought options.
+* Stocks, a futures contract named by its symbol (such as `NIFTY23NOV26FUT` on NFO, or `CRUDEOILM18DEC26FUT` on MCX: see [Commodities on MCX](11-commodities-on-mcx.md)), and bought options.
 * A stop-loss (`stop=`), targets (`target=`, `targets=`), a trailing stop (`trail=`) and a breakeven stop (`breakeven=`). The stop-loss is held by your broker as a real order ([Stop-Loss at the Broker](03-stop-loss-at-the-broker.md)).
 * The risk settings of a backtest: `max_daily_loss` (required), `drawdown_halt`, `cooldown`, `max_positions`, `entry_from`, `entry_until`, `square_off`, plus `account_max_daily_loss` for all strategies together ([Risk Limits and Locks](04-risk-limits-and-locks.md)).
 
@@ -72,3 +72,6 @@ Arguments of `bt.backtest` that mean nothing live (`data`, `start`, `end`, `slip
 6. [Restarts and Results](06-restarts-and-results.md): a crash and a restart on the same day, and everything in the result.
 7. [Recording Ticks](07-recording-ticks.md): keep the live prices with `bt.record`, and read them back with `bt.read_ticks`.
 8. [Limits](08-limits.md): the OpenAlgo server version you need, and what 2.3.0 cannot do yet.
+9. [Inside a Session](09-inside-a-session.md): when the strategy decides and the protection acts, why nothing repaints, why bars are built from live prices, how order updates arrive, how exits and trailing stops work, from a real sandbox session on MCX.
+10. [Audit a Session](10-audit-a-session.md): check the session's orders, fills and stops against OpenAlgo's books with a short script.
+11. [Commodities on MCX](11-commodities-on-mcx.md): crude oil and gold futures in a live session: contracts, lots, the evening hours and the banner's warnings.
