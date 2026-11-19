@@ -225,6 +225,7 @@ At the top, a header links to each section and has an **Export PDF** button (you
 | Distribution | How the daily returns spread: a histogram and a box plot |
 | Metrics | Every figure in one table you can sort, with the benchmark's beside it |
 | Trades | The trade figures, the trading cost (charges plus slippage), the MAE and MFE of the trades as tiles, histograms and scatter charts, the trade list of `result.trade_list()` (sort it by any column, page by page), the charges by component and the R-multiples of trades opened with a stop-loss |
+| Overfitting checks | The four [quick checks](#overfitting-checks) of the closed trades, each with its figure, rule and verdict |
 | Notes | How the figures were worked out, every setting the run used and every warning |
 
 What to look at first: the Overview tiles for the return and the max drawdown, the cumulative return chart in Performance (did the account grow steadily, or in one lucky stretch?), the drawdown chart in Risk (how deep and how long were the bad patches?), the trade list in Trades, and the warnings at the end of Notes. Under a tile, a second figure is the benchmark's, measured the same way, when the run has a benchmark. Hover over a chart to read its values.
@@ -234,7 +235,7 @@ What to look at first: the Overview tiles for the return and the max drawdown, t
 | `mode=` | What the page holds |
 |---|---|
 | `"full"` (the default) | Every section |
-| `"basic"` | The Overview, the cumulative return and period returns, the drawdown chart and the worst drawdowns, the monthly heatmap and the yearly returns, the trades, the trading cost, the MAE and MFE histograms and the charges, and the Notes |
+| `"basic"` | The Overview, the cumulative return and period returns, the drawdown chart and the worst drawdowns, the monthly heatmap and the yearly returns, the trades, the trading cost, the MAE and MFE histograms and the charges, the overfitting checks, and the Notes |
 | `"metrics"` | Every figure with its value and definition, and the settings the run used |
 | `"charts"` | Every chart and nothing else, the MAE and MFE histograms and scatter charts included |
 

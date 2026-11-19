@@ -54,7 +54,7 @@ Open sbin.html in your browser
 
 Open `sbin.html` with a double-click, or drag it into your browser. Everything is inside the one file: it opens without an internet connection, and you can email it or keep it with your notes. It holds the results and the settings of the run, never your API key.
 
-The page has eight numbered sections, one under the other. The rest of this page shows each of them for this run. To learn what a figure means, see [Metrics Explained](metrics-explained.md).
+The page has nine numbered sections, one under the other. The rest of this page shows each of them for this run. To learn what a figure means, see [Metrics Explained](metrics-explained.md).
 
 ## The header and the Overview
 
@@ -229,7 +229,7 @@ Open sbin_basic.html in your browser
 | `mode=` | What the page holds |
 |---|---|
 | `"full"` (the default) | Every section |
-| `"basic"` | The Overview, the cumulative return and the returns by horizon, the drawdown chart and the worst drawdowns, the monthly heatmap and the yearly returns, the trades, the trading cost, the MAE and MFE histograms and the charges, and the Notes |
+| `"basic"` | The Overview, the cumulative return and the returns by horizon, the drawdown chart and the worst drawdowns, the monthly heatmap and the yearly returns, the trades, the trading cost, the MAE and MFE histograms and the charges, the overfitting checks, and the Notes |
 | `"metrics"` | Every figure with its value and definition, and the settings the run used |
 | `"charts"` | Every chart and nothing else, the MAE and MFE histograms and scatter charts included |
 
@@ -241,7 +241,8 @@ Open sbin_basic.html in your browser
 4. **The annual returns:** did the strategy make money in most years, or in one or two?
 5. **The trade list:** did the profit come from many trades or from a few?
 6. **The MAE and MFE charts:** did the losers end near your stop, and did the winners keep most of their best open profit?
-7. **The warnings** at the end of the Notes.
+7. **The overfitting checks:** with 30 or more closed trades, did the quick checks hold up? Before you trust the figures, run the [full set](robustness.md).
+8. **The warnings** at the end of the Notes.
 
 ## More options
 

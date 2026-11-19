@@ -292,7 +292,7 @@ These run the strategy again on its own bars with one detail changed.
 
 ### The searching checks
 
-These search the strategy's settings, so they need ranges of values: give them as keywords named after the parameters (`fast=(8, 12, 16)`), or declare them on the class with `bt.param`. They are the checks that can see settings picked as the best of many tries.
+These search the strategy's settings over ranges of values: give the ranges as keywords named after the parameters (`fast=(8, 12, 16)`), or declare them on the class with `bt.param`. Walk-forward and the noise-robust optimization need ranges; out of sample and the parameter neighbourhood also run without them, as described below. With ranges, these are the checks that can see settings picked as the best of many tries.
 
 * **Out of sample** (`out_of_sample`): *Does it work on bars the search never saw?* Searches the ranges on the first 70 percent of the sessions, then runs the best setting once on the last 30 percent. Passes when that last part makes money and keeps at least half of the first part's figure (a total such as the net profit is compared per year). Without ranges it splits your run as it is. A failure says the best settings of the past did not carry over to the next years.
 * **Walk-forward** (`walk_forward`): *Does it hold when re-fitted through time?* Does the out-of-sample test five times, each time a little later in history, and joins the five tested stretches into one equity curve. Passes when that curve makes money, its walk-forward efficiency (the tested stretches' figure per year over the searched ones') is at least 0.5, and at least 60 percent of the stretches make money. [Walk-Forward](walk-forward.md) explains it with an example.
