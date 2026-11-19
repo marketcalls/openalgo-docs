@@ -106,6 +106,16 @@ print(trades[columns].to_string(float_format="%.2f"))
 
 # Each time a position had no confirmed stop at the broker, and why.
 print(result.unprotected[["from", "to", "seconds", "reason"]].to_string())
+
+# The strategy's Result adds up to its trades. f"..." fills each {value} into the text,
+# and :,.2f writes it with commas and 2 decimals.
+r = result.results["EmaCrossover"]
+print(f"Result net profit : Rs {r.metrics['net_profit']:,.2f}")
+print(f"Trades' net P&L   : Rs {trades['net_pnl'].sum():,.2f}")
+
+# The day's contract note, whose charges the Result pays.
+columns = ["date", "fills", "charged_total", "posted", "adjustment"]
+print(r.contract_notes[columns].to_string())
 ```
 
 From a run of this code against a simulated OpenAlgo server, with Ctrl+C at 10:20, the second block printed:
@@ -117,7 +127,7 @@ Trades      : 1 closed
 Gross P&L   : Rs 12.00
 Charges     : Rs 8.70 (modelled)
 Net P&L     : Rs 3.30
-Slippage    : n/a (no backtest to compare with)
+Slippage    : Rs 2.50 better than the backtest (1 MARKET fill not compared: no bar of its decision)
 Rejected    : 0 orders
 Unprotected : 7 s without a stop at the broker
 Reconcile   : 0 mismatches
@@ -132,11 +142,18 @@ trade
                        from                        to  seconds            reason
 0 2026-11-11 10:12:02+05:30 2026-11-11 10:12:05+05:30      3.0  stop unconfirmed
 1 2026-11-11 10:20:01+05:30 2026-11-11 10:20:05+05:30      4.0           exiting
+Result net profit : Rs 3.59
+Trades' net P&L   : Rs 3.59
+         date  fills  charged_total  posted  adjustment
+0  2026-11-11      2           8.41     8.7       -0.29
 ```
 
 * **The orders**: the buy, the stop the broker held (an SL-M sell, triggered at 809.35) and cancelled at Ctrl+C, and the sale.
 * **The trade list**: the trades as a backtest lists them. Its times are the minutes of the session's bars; `result.fills` has the second each fill was heard (10:12:02 and 10:20:04 here).
 * **Unprotected**: the 7 seconds of the summary, in two windows: 3 seconds from the buy's fill until the broker confirmed the stop, and 4 seconds from the stop's cancel at Ctrl+C until the sale filled.
+* **The Result adds up**: the strategy's `Result` settles its day as a backtest does, so its net profit (Rs 3.59) is its trades' net P&L, plus the value of any position still open less its charges.
+* **Two charges figures**: the daily summary adds each fill's modelled charges, rounded to the paisa, so the day's figure adds up across restarts: Rs 8.70, the `posted` column. The `Result` pays the day's contract note instead, which rounds STT and stamp duty once for the whole note, as your broker does: Rs 8.41 (`charged_total`). The `adjustment` (Rs -0.29) is that rounding, and the only difference between the summary's Net P&L (Rs 3.30) and the Result's net profit (Rs 3.59).
+* **Slippage**: the buy filled Rs 2.50 better than a backtest of the same bars; the Ctrl+C sale is not compared, because the session ended before the next minute's first trade ([the first lesson](01-first-sandbox-session.md#stop-it-with-ctrlc) explains the line).
 
 Everything in the result:
 
@@ -148,8 +165,8 @@ Everything in the result:
 | `stopped_by` | `"session_end"`, `"ctrl_c"`, `"mode_breach"` or `"error"` |
 | `restarts` | How many times the session of this day and mode was started before this start |
 | `strategies` | The strategy names, in the order given |
-| `results` | Each strategy's backtest `Result`, by name: its trades, metrics and tearsheet (`result.results["EmaCrossover"].tearsheet("session.html")`), for this start of the session |
-| `summary`, `summary_text()` | The day's figures over every start of the day, as the daily summary |
+| `results` | Each strategy's backtest `Result`, by name: its trades, metrics, contract notes and tearsheet (`result.results["EmaCrossover"].tearsheet("session.html")`), for this start of the session; its net profit adds up to its trades |
+| `summary`, `summary_text()` | The day's figures over every start of the day, as the daily summary; `summary.slippage` is in rupees (negative when live did better than the backtest, `None` when no fill could be compared) |
 | `orders` | Every order the session placed through OpenAlgo |
 | `fills` | Every fill, with where the session heard of it |
 | `drift` | Each of the broker's one-minute candles against the bar the session built from the live prices |

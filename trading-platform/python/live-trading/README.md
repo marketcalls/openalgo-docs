@@ -70,5 +70,5 @@ Arguments of `bt.backtest` that mean nothing live (`data`, `start`, `end`, `slip
 4. [Risk Limits and Locks](04-risk-limits-and-locks.md): capital, the daily loss limits, the kill switch, and the locks that stop new entries.
 5. [Alerts](05-alerts.md): every alert on your phone through OpenAlgo's Telegram bot, and what each asks you to do.
 6. [Restarts and Results](06-restarts-and-results.md): a crash and a restart on the same day, and everything in the result.
-7. [Recording Ticks](07-recording-ticks.md): keep the live prices with `bt.record`.
+7. [Recording Ticks](07-recording-ticks.md): keep the live prices with `bt.record`, and read them back with `bt.read_ticks`.
 8. [Limits](08-limits.md): the OpenAlgo server version you need, and what 2.3.0 cannot do yet.

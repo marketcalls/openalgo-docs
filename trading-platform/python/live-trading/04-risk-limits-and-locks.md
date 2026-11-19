@@ -138,7 +138,9 @@ Warning: every instrument of the session is an option: a quiet market cannot be 
 RECONCILE MISMATCH: EmaCrossover SBIN NSE: the engine holds 10 units, OpenAlgo's books show 0; other orders 26111136960000: trades of other orders closed it at the broker: the engine takes them as its own and asks for a stop of the leg to be cancelled with them. Entries of the strategy are locked for the rest of the session
 ```
 
-The session found the sale in OpenAlgo's trade book, took it as closing its position, cancelled its own stop and locked the strategy's entries. It corrects only what can never add to a position: its own books, its own orders, its stop's quantity. It never trades to make the broker match it. Here no exit of the session came between the sale and the check; had one come, it would have sold the shares a second time. That is why you never close a position by hand while a session runs ([Stopping a Session](02-stopping-a-session.md#never-close-or-change-a-position-by-hand-while-a-session-runs)).
+The sale filled at 10:16:00. Another client's fill on a symbol the session trades makes it compare its books 3 seconds later, instead of at its next 30-second check: in this run the first comparison, at 10:16:04, saw the difference, and the second, at 10:16:08, confirmed it. The session then found the sale in OpenAlgo's trade book, took it as closing its position, cancelled its own stop and locked the strategy's entries. It corrects only what can never add to a position: its own books, its own orders, its stop's quantity. It never trades to make the broker match it.
+
+For those 8 seconds the stop at the broker still covered 10 shares that were already sold: had SBIN fallen to it, the stop would have sold them a second time, leaving you short, and so would an exit of the session sent before the first comparison (from it on, the session sends no exit for more shares than OpenAlgo's books show). That is why you never close a position by hand while a session runs ([Stopping a Session](02-stopping-a-session.md#never-close-or-change-a-position-by-hand-while-a-session-runs)).
 
 ## What you learned
 
