@@ -74,7 +74,7 @@ Nothing in the code is special to MCX but the symbols: the same classes, the sam
 * **Lots, counted in units.** A **lot** is the fixed quantity one contract trades in. `lots=1` buys one lot, and the session's lines and results count **units**: a crude oil mini lot is 10 units (10 barrels), so its buy reads `BUY 10 CRUDEOILM18DEC26FUT`; a gold mini lot is 100 units (100 grams). `qty=` takes units, a whole number of lots.
 * **What a rupee is worth.** Crude oil is priced per barrel, so a rise of Re 1 makes Rs 10 on a crude oil mini lot, and Rs 100 on a crude oil lot of 100 barrels. Gold mini is priced per 10 grams, so Re 1 on its price is Rs 10 on a lot of 100 grams.
 * **Start with the mini contracts.** Crude oil mini is a tenth of crude oil, and gold mini a tenth of gold (1 kg): small lots for your first sessions.
-* **Not on its expiry day.** On 19 November 2026 the November crude oil contract (`CRUDEOIL19NOV26FUT`) expired, so the session traded the December contracts. Choose a contract that does not expire today; a futures backtest, for the same reason, rolls to the next contract a day before the last trading day by default ([Futures](../backtesting/futures.md#what-happens-when-the-contract-expires)).
+* **Not on its expiry day.** On 19 November 2026 the November crude oil contract (`CRUDEOIL19NOV26FUT`) expired, so the session traded the December contracts. Choose a contract that does not expire today; a futures backtest that names the underlying, for the same reason, rolls to the next contract one session before the last trading day by default ([Futures](../backtesting/futures.md#what-happens-when-the-contract-expires)).
 
 ## The evening hours
 
@@ -104,21 +104,22 @@ Warning: GOLDM04DEC26FUT: OpenAlgo has no freeze quantity configured for GOLDM, 
 Warning: the clock against the exchange cannot be checked through zerodha's feed (its last trade time is the OpenAlgo server's own clock): keep this computer's clock synchronised
 ```
 
-The lines that are new on MCX:
+The lines to read on MCX:
 
 * **`entries until 23:25 IST, square-off 23:35 IST`**: the evening times of the day, as above.
 * **`freeze quantity none`, then `OpenAlgo has no freeze quantity configured for CRUDEOILM, so the reference tables' 10000 is used`**: the **freeze quantity** is the largest single order the exchange takes. OpenAlgo configures none for MCX, so the first line shows none; the session then uses the figure of the SDK's reference tables, 10,000 units, and keeps every order under it.
 * **`MCX trades today ... not confirmed by an exchange document`**: the engine's MCX holiday list and hours for the year are not checked against an MCX document yet. Check on the MCX website that the exchange is open and closes when the banner says.
-* **`charges: the MCX_FUT rates ... are verified only up to an earlier date`**: the modelled charges may be slightly off; the session trades as usual (the same warning as for NSE in [the first lesson](01-first-sandbox-session.md#what-you-see-when-it-starts)).
-* **`the local clock cannot be measured against OpenAlgo's server, which runs on this computer (127.0.0.1)`**: with OpenAlgo on the same computer, its clock is this computer's own, so the session checks the clock against the times of the feed's prices instead. Keep the clock synchronised with internet time.
 
-Before the banner, Python also prints a `ReferenceDataWarning` for each contract, after a file name and line number:
+Two more lines are not about MCX: the charges warning (the same as for NSE in [the first lesson](01-first-sandbox-session.md#what-you-see-when-it-starts): the modelled charges may be slightly off, and the session trades as usual), and `the local clock cannot be measured against OpenAlgo's server, which runs on this computer (127.0.0.1)`, which comes from running OpenAlgo on the same computer as the session: its clock is this computer's own, so the session checks the clock against the times of the feed's prices instead. Keep the clock synchronised with internet time.
+
+Before the banner, Python also prints two `ReferenceDataWarning`s for each contract, each after a file name and line number, and an `UnverifiedScheduleWarning` for the charges. The two for crude oil mini:
 
 ```text
 ReferenceDataWarning: reference data: mcx_contracts[CRUDEOILM MCX] 2025-01-01 to open (builtin, unverified) is unverified (source: No MCX document read; terms of the 2025 contracts (MCX/TRD/479/2024) carried forward). Confirm it against the exchange circular, or override it with a user file or a symbol-master snapshot.
+ReferenceDataWarning: reference data: mcx_contracts[CRUDEOILM MCX] 2025-01-01 to open (builtin, unverified) was last checked on 2026-03-31 and is being used for 2026-11-19. The exchange may have changed it since: update openalgo, or supply a user file or a symbol-master snapshot.
 ```
 
-The contract's terms in the SDK's tables (its lot size, tick and freeze quantity among them) are carried forward from an earlier MCX circular and not yet checked for this contract. The session takes the lot size and the tick from OpenAlgo itself, and the rest from these tables.
+The contract's terms in the SDK's tables (its lot size, tick and freeze quantity among them) are carried forward from an earlier MCX circular and not yet checked for this contract. The session takes the lot size and the tick from OpenAlgo itself, and the rest from these tables. The user file or snapshot the warnings offer does not reach `bt.live` or `bt.backtest` in 2.3.0: both read the SDK's own tables.
 
 ## Entries repeat
 
@@ -126,7 +127,7 @@ GoldBreakout buys whenever it is flat and a bar closes above the highest high of
 
 ## What 2.3.0 cannot trade on MCX yet
 
-* **Silver mini and silver micro** (`SILVERM`, `SILVERMIC`): the SDK's tables have no freeze quantity for them, and OpenAlgo configures none, so `bt.live` stops before anything is sent with `ReferenceDataError: No 'mcx_contracts' reference row covers underlying=SILVERM, exchange=MCX on ... with a freeze_qty value`. A later version adds them.
+* **Silver mini and silver micro** (`SILVERM`, `SILVERMIC`): the SDK's tables have no freeze quantity for them, and OpenAlgo configures none, so they are refused in backtests and live sessions alike: `bt.live` stops before anything is sent, and `bt.backtest` before it runs, with `ReferenceDataError: No 'mcx_contracts' reference row covers underlying=SILVERM, exchange=MCX on ... with a freeze_qty value`. The error suggests a user file for `load_tables`, but neither run reads one. A backtest can take the contract's terms you give it with `instrument=` ([Reference Data](../backtesting/support-functions/reference-data.md)); `bt.live` takes no `instrument=`. A later version adds them.
 * **A series of contracts** (`underlying = "CRUDEOIL"` with an expiry rule): name the contract instead, as above ([What openalgo 2.3.0 refuses](README.md#what-openalgo-230-refuses)).
 * **Positions held overnight** (NRML): a session trades MIS only, closed before the evening close.
 
@@ -135,7 +136,7 @@ GoldBreakout buys whenever it is flat and a bar closes above the highest high of
 * Name the MCX contract as the symbol; `lots=1` buys one lot, and every quantity is in units (10 barrels, 100 grams).
 * On 19 November 2026 MCX traded until 23:55: entries until 23:25, square-off at 23:35, from the engine's calendar.
 * The banner warns that OpenAlgo has no freeze quantity for MCX (the reference tables' is used) and that the MCX holiday data is not confirmed.
-* Silver mini and micro are refused in 2.3.0; avoid a contract on its expiry day.
+* Silver mini and micro are refused in backtests and live sessions alike in 2.3.0; avoid a contract on its expiry day.
 
 ## Back to the start
 

@@ -292,14 +292,16 @@ To trade at most once a day, remember the day of the last entry in `self.state`,
 <!-- requires-server -->
 <!-- continues -->
 ```python
-# The same breakout, at most one entry a day
+# The same breakout, at most one entry a day. OncePerDay(Breakout) copies Breakout (its
+# symbol, interval and init) and changes only on_bar.
 class OncePerDay(Breakout):
+    # on_bar: the breakout rule, but only on a day with no entry yet
     def on_bar(self, bar):
         today = str(bar.time.date())  # the day of this bar, as text such as "2026-11-11"
         if self.state.get("entered_on") == today:  # already entered today: do nothing more
             return
         if self.position.is_flat and bar.close > self.high12[-2]:
-            self.buy(stop=bt.pct(0.3), target=bt.pct(0.5))
+            self.buy(stop=bt.pct(0.3), target=bt.pct(0.5))  # the same stop and target as before
             self.state["entered_on"] = today  # remember the day of this entry
 
 
@@ -621,16 +623,18 @@ from openalgo.backtest import metrics
 
 # The second strategy: the MACD crossover on INFY, daily bars
 class InfyMacd(bt.Strategy):
-    symbol, exchange, interval = "INFY", "NSE", "D"
+    symbol, exchange, interval = "INFY", "NSE", "D"  # INFY on NSE, daily bars
 
+    # init runs before the first bar: it sets up the MACD
     def init(self):
         self.macd, self.signal, _ = self.I(ta.macd, self.close)  # MACD and signal lines; "_" drops the third
 
+    # on_bar runs at the close of every bar: it decides whether to buy or sell
     def on_bar(self, bar):
-        if self.position.is_flat and self.macd.crossed_above(self.signal):
-            self.buy()
-        elif self.position.is_long and self.macd.crossed_below(self.signal):
-            self.exit()
+        if self.position.is_flat and self.macd.crossed_above(self.signal):  # no shares, MACD just rose above its signal
+            self.buy()  # buy with all the capital at the next day's open
+        elif self.position.is_long and self.macd.crossed_below(self.signal):  # holding, MACD just fell below its signal
+            self.exit()  # sell all the shares at the next day's open
 
 
 # Backtest it over the same years, on its own capital
@@ -642,6 +646,9 @@ capitals = {"EmaCrossover": 100_000, "InfyMacd": 100_000}
 equity = metrics.combine_equity({name: run.equity["equity_rupees"] for name, run in runs.items()}, opening_wealth=capitals)
 trades = pd.concat([run.performance.trades for run in runs.values()])
 together = metrics.analyse(equity, trades=trades, opening_wealth=sum(capitals.values()), exchanges="NSE")
+
+# Print each strategy's net profit, then the two together. In f"{name:<13}", :<13 pads
+# the name with spaces to 13 characters, so the colons line up.
 for name, run in runs.items():
     print(f"{name:<13}: Rs {run.metrics['net_profit']:,.2f}")
 print(f"Together     : Rs {together.metrics['net_profit']:,.2f}, max drawdown {together.metrics['max_drawdown']:.2%}")

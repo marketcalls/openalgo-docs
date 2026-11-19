@@ -12,7 +12,7 @@ The examples are real. They come from a sandbox session on MCX on 19 November 20
 * **CrudeBigTrend**: the EMA 9 and EMA 21 crossover on crude oil (`CRUDEOIL18DEC26FUT`, 100 barrels a lot), 1-minute bars, a stop-loss 0.5 percent below that trails 0.5 percent below the highest price.
 * **GoldBreakout**: gold mini (`GOLDM04DEC26FUT`), 5-minute bars: buy when a bar closes above the highest high of the 12 bars before it, with a stop-loss and a target.
 
-Times are Indian time (IST) to the millisecond, from the session's own log and event stream ([where the session keeps its files](06-restarts-and-results.md#where-the-session-keeps-its-files)). [Commodities on MCX](11-commodities-on-mcx.md) shows the code of such a session.
+Times are Indian time (IST) to the millisecond, from the session's own log and event stream ([where the session keeps its files](06-restarts-and-results.md#where-the-session-keeps-its-files)). [Commodities on MCX](11-commodities-on-mcx.md) shows the code of the first session that evening.
 
 ## When things happen
 
@@ -44,7 +44,7 @@ A signal **repaints** when it appears on a chart and then changes or vanishes as
 
 What can differ is the bar itself. The session builds each bar from the prices of the live feed, which sends price updates rather than every trade; your broker builds its 1-minute candle from every trade at the exchange. A few seconds after each close the session reads the broker's candle of that minute, records the difference (`result.drift`, and a `drift` line in the event stream), and from then on the strategy's history holds the broker's candle for that minute, so small differences do not add up. The decision already taken on the session's bar stands.
 
-In the sandbox session on MCX on 19 November 2026, from 17:06 to 18:30 the session checked 233 minutes against the broker's candles. On the two crude oil contracts, whose prices move in steps of Re 1 (the **tick**), the median difference was nothing on the open, the high and the low and Rs 2 on the close; in 85 minutes out of 100 no price differed by more than Rs 6; the volume differed by a median of 32 barrels. Gold mini's prices differed more, by up to Rs 39.
+In the sandbox session on MCX on 19 November 2026, from 17:06 to 18:30 the session checked 233 one-minute bars of its contracts against the broker's candles. On the two crude oil contracts, whose prices move in steps of Re 1 (the **tick**), the median difference was nothing on the open, the high and the low and Rs 2 on the close; in 85 minutes out of 100 no price differed by more than Rs 6, and the largest difference was Rs 15; the volume differed by a median of 32 in the broker's volume figures. Gold mini's prices differed more, by up to Rs 39.
 
 So a backtest on the broker's candles can disagree with a session about a crossover decided by a hair: when the two lines are a tick apart at the close, one bar can cross and the other not. Fast settings, such as EMA 3 and 5, decide by a hair most often. A backtest of the bars the session decided on takes the same decisions as the session; the SDK's tests check that it does.
 
@@ -52,8 +52,8 @@ So a backtest on the broker's candles can disagree with a session about a crosso
 
 The broker's history still has its part: its candles give the strategy's warm-up (the bars before today its indicators need), the minutes of today before the session started, and the check of every bar above. The bar that closes now comes from the live prices because:
 
-* **It is ready at the close.** The broker's candle of the minute that just closed comes seconds later (the session asks for it 2, 4 and 7 seconds after the close), and until the broker has finished it, it can still change. A decision on the live bar comes one second after the close.
-* **History requests are limited.** OpenAlgo paces your broker's history requests to about 3 a second for the whole server. A request for every symbol every minute would use that up as soon as a session trades a few symbols.
+* **It is ready at the close.** The broker's candle of the minute that just closed comes seconds later: the session asks for it first 2 seconds after the close, then at 4 and 7 seconds while it is missing, and until the broker has finished it, it can still change. A decision on the live bar comes one second after the close.
+* **Every symbol's candle is wanted at the same moment.** All of a session's bars close together, on the minute. The session reads history at most 2 requests a second, under OpenAlgo's pace of about 3 a second for the whole server, which your other scripts share. Deciding on candles, a session of 10 symbols would read its last candle about 5 seconds after its first, and later still when a candle needs the retries at 4 and 7 seconds: the more symbols a session trades, the later its decisions would come.
 * **The live prices are needed anyway.** Targets, the trailing stop and the daily loss limits are checked on every price, so the session follows the live feed whether or not it builds its bars from it.
 * **It keeps deciding when history is slow.** The candle checks run on their own; a slow answer from your broker's history delays the check, never a decision.
 
@@ -61,18 +61,13 @@ The broker's history still has its part: its candles give the strategy's warm-up
 
 ## How the session hears about its orders
 
-OpenAlgo streams every change of an order (accepted, filled, cancelled, rejected) as it happens, for the brokers that send them, and the session follows its orders on that stream. In the sandbox session on MCX on 19 November 2026 every order update came from the stream: each fill, each stop resting at the broker, each cancel. `result.fills` says where the session heard of each fill, in its `source` column: `stream`, `poll` (it asked OpenAlgo for the order's status) or `reconcile` (it found the fill in OpenAlgo's books).
+The session follows its orders on OpenAlgo's order stream, asks for an order's status when the stream is silent ([Limits](08-limits.md#your-openalgo-server)), and compares its positions with OpenAlgo's books every 30 seconds and 3 seconds after each fill ([Stopping a Session](02-stopping-a-session.md#never-close-or-change-a-position-by-hand-while-a-session-runs)). `result.fills` says where the session heard of each fill, in its `source` column: `stream`, `poll` (it asked OpenAlgo for the order's status), `reconcile` (it found the fill in OpenAlgo's books) or `external` (a fill of an order the session did not place, which it adopted, such as a sale by hand).
 
-The session does not rely on the stream alone:
-
-* **It compares its positions with OpenAlgo's books** every 30 seconds, and 3 seconds after each fill. From 17:20 to 18:30 it read the books 141 times and compared the position of each of its three strategies each time: 423 comparisons, none differing.
-* **It asks for an order's status when the stream is silent:** once a second for an order the stream has not spoken of 2 seconds after it was sent, and for a market order still working; every 30 seconds for a resting stop; and once for every order it follows after the stream drops and comes back.
+In the sandbox session on MCX on 19 November 2026 every order update came from the stream: each fill, each stop resting at the broker, each cancel. From 17:20 to 18:30 the session read OpenAlgo's books 141 times and compared the position of each of its three strategies each time: 423 comparisons, none differing.
 
 ## An exit cancels the stop first
 
-For every exit (the strategy's `self.exit()`, a target, a daily loss limit, the square-off, Ctrl+C) the session first cancels the stop at the broker, waits for the broker to confirm the cancel, and only then sends the sale. So the stop and the sale can never both fill: the session never sells more than it holds. The short time between the cancel and the sale's fill has no stop; the session counts it in the Unprotected line of the daily summary.
-
-From a sandbox session on MCX on 19 November 2026, CrudeFast's exit, from its event stream:
+Every exit (the strategy's `self.exit()`, a target, a daily loss limit, the square-off, Ctrl+C) cancels the stop at the broker first, waits for the cancel's confirmation and only then sells, so the stop and the sale never both fill ([Stop-Loss at the Broker](03-stop-loss-at-the-broker.md#targets-and-the-daily-loss-watched-on-every-price)). The time between the cancel and the sale's fill counts in the Unprotected line of the daily summary. From a sandbox session on MCX on 19 November 2026, CrudeFast's exit, from its event stream:
 
 | Time (IST) | What happened |
 |---|---|
@@ -87,7 +82,7 @@ The lot was without a stop for about a quarter of a second.
 
 When a trailing stop moves, the session modifies the stop order already at the broker; it never places a second one. So at no moment are there two stops, or none.
 
-In the sandbox session on MCX on 19 November 2026, CrudeBigTrend bought one lot of crude oil (100 barrels) at 7,701 at 17:24, with `stop=bt.pct(0.5)` and `trail=bt.trail_pct(0.5)`. The stop started 0.5 percent below the buying price, at 7,662. The trail keeps it 0.5 percent of the buying price (about Rs 38.50) below the highest price since the buy, and never moves it down. These are CrudeBigTrend's lines on the session's screen, from a sandbox session on MCX on 19 November 2026:
+In the sandbox session on MCX on 19 November 2026, CrudeBigTrend bought one lot of crude oil (100 barrels) at 7,701 at 17:24, with `stop=bt.pct(0.5)` and `trail=bt.trail_pct(0.5)`. The stop started 0.5 percent below the buying price, at 7,662. Once the price was 0.5 percent above the buying price the trail took over, which is why its first move was to 7,701, the buying price. From then on it keeps the stop 0.5 percent of the buying price (about Rs 38.50) below the highest price since the buy, and never moves it down. These are CrudeBigTrend's lines on the session's screen (the lines of the other strategies between them left out), from a sandbox session on MCX on 19 November 2026:
 
 ```text
 ENTRY: BUY 100 CRUDEOIL18DEC26FUT MCX at 7701.00 (entry, order 26111962641149)
@@ -104,7 +99,7 @@ STOP MOVED: CrudeBigTrend: stop of CRUDEOIL18DEC26FUT MCX moved to 7765.00 (orde
 ## What you learned
 
 * Decisions come at each bar's close plus one second; between closes the stop at the broker and the session's checks on every price protect the position.
-* The strategy decides on closed bars only and a decision is never redrawn. The session's bars can differ from the broker's candles by a tick or so, which `result.drift` records.
+* The strategy decides on closed bars only and a decision is never redrawn. The session's bars can differ from the broker's candles by a few ticks, which `result.drift` records.
 * The bar closing now comes from the live prices; the broker's candles give the warm-up and check every bar.
 * Order updates come from OpenAlgo's order stream, checked against OpenAlgo's books every 30 seconds and after each fill.
 * An exit cancels the stop first, then sells; a trailing stop is one order, modified.
