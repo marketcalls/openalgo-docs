@@ -247,6 +247,80 @@ Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustnes
 
 For short only, use `self.sell(qty=50)` to enter and `self.exit()` to buy back. Lesson: [Go Short](tutorial/06-going-short.md).
 
+## Does my strategy trade only once a day?
+
+Not unless you tell it to. A rule is checked at every bar: whenever the strategy is flat and the rule holds, it enters again, as many times a day as that happens. A breakout shows it well. This one buys SBIN when a 5-minute bar closes above the highest high of the 12 bars before it, with a stop-loss and a target:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# A breakout on 5-minute bars (intraday, MIS)
+class Breakout(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "5m"
+
+    # init: the highest high of the last 12 bars, this bar included
+    def init(self):
+        self.high12 = self.I(ta.highest, self.high, 12)
+
+    # on_bar: [-2] is the value at the bar before this one, so the 12 bars before it
+    def on_bar(self, bar):
+        if self.position.is_flat and bar.close > self.high12[-2]:
+            self.buy(stop=bt.pct(0.3), target=bt.pct(0.5))  # stop 0.3 percent below, target 0.5 percent above
+
+
+# Run it on a year of 5-minute bars, then count the trades entered on each day
+breakout = bt.backtest(Breakout, client, start="2025-11-01", end="2026-11-11", capital=100_000)
+per_day = breakout.trade_list()["entry_time"].dt.date.value_counts()  # trades per day, by entry date
+print(breakout.summary())
+print("most trades in one day:", per_day.max())
+```
+
+<!-- output -->
+```text
+Net profit   : Rs -55,635.04
+Return       : -55.64%
+Max drawdown : -55.72%
+Trades       : 585 (34% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+most trades in one day: 7
+```
+
+After each stop or target the strategy is flat again, and the next bar that breaks out buys again. The level it watches is a rolling one: it moves as old bars leave the 12-bar window, so it can be lower an hour later. The stop and the target are set once, from each buying price. The buy is a market order decided at the bar's close (filled at the next bar's open in a backtest, sent at once in a live session), not an order waiting at the level.
+
+To trade at most once a day, remember the day of the last entry in `self.state`, a dict the strategy keeps (in a live session it is saved and comes back after a restart):
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# The same breakout, at most one entry a day
+class OncePerDay(Breakout):
+    def on_bar(self, bar):
+        today = str(bar.time.date())  # the day of this bar, as text such as "2026-11-11"
+        if self.state.get("entered_on") == today:  # already entered today: do nothing more
+            return
+        if self.position.is_flat and bar.close > self.high12[-2]:
+            self.buy(stop=bt.pct(0.3), target=bt.pct(0.5))
+            self.state["entered_on"] = today  # remember the day of this entry
+
+
+# Run it over the same year
+once = bt.backtest(OncePerDay, client, start="2025-11-01", end="2026-11-11", capital=100_000)
+print(once.summary())
+print("most trades in one day:", once.trade_list()["entry_time"].dt.date.value_counts().max())
+```
+
+<!-- output -->
+```text
+Net profit   : Rs -30,417.73
+Return       : -30.42%
+Max drawdown : -31.88%
+Trades       : 239 (32% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+most trades in one day: 1
+```
+
+Over the year the breakout traded 585 times, up to 7 times on one day, and lost Rs 55,635.04: most of its trades met the 0.3 percent stop first, and the charges of so many trades add up. Held to one entry a day it traded 239 times and lost Rs 30,417.73. Fewer entries cut the charges, but the rule still loses: a limit on entries changes how often you trade, not whether the rule has an edge. For a few entries a day, count them in `self.state` the same way. A live session's breakout behaves the same: see [Commodities on MCX](../live-trading/11-commodities-on-mcx.md#entries-repeat).
+
 ## Read the warning about orders not placed
 
 When the engine refuses or skips orders you did not plan for, the run goes on without them, and at the end Python prints one `OrdersNotPlacedWarning` that counts them and gives the most common reason. A short on daily bars is the usual cause, because a delivery (CNC) short is not allowed:
@@ -532,6 +606,57 @@ rebalance orders: 69
 ```
 
 A rebalance trims and tops up holdings but never closes one, so the run has no closed trades (the summary counts the holdings still open): read `result.orders` and `result.final_positions`. Lesson: [Rebalance a Portfolio](tutorial/10-portfolio-rebalancing.md).
+
+## Backtest several strategies together
+
+`bt.backtest` runs one strategy class at a time in openalgo 2.3.0. To see several strategies as one account, backtest each on its own capital, then add their equity curves and their trades. Here the EMA crossover on SBIN joins a MACD crossover on INFY, each with Rs 1,00,000:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# The tools that measure equity curves, and pandas to join tables
+import pandas as pd
+from openalgo.backtest import metrics
+
+
+# The second strategy: the MACD crossover on INFY, daily bars
+class InfyMacd(bt.Strategy):
+    symbol, exchange, interval = "INFY", "NSE", "D"
+
+    def init(self):
+        self.macd, self.signal, _ = self.I(ta.macd, self.close)  # MACD and signal lines; "_" drops the third
+
+    def on_bar(self, bar):
+        if self.position.is_flat and self.macd.crossed_above(self.signal):
+            self.buy()
+        elif self.position.is_long and self.macd.crossed_below(self.signal):
+            self.exit()
+
+
+# Backtest it over the same years, on its own capital
+infy = bt.backtest(InfyMacd, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+
+# Add the two equity curves and join the two trade lists, then measure them as one
+runs = {"EmaCrossover": result, "InfyMacd": infy}
+capitals = {"EmaCrossover": 100_000, "InfyMacd": 100_000}
+equity = metrics.combine_equity({name: run.equity["equity_rupees"] for name, run in runs.items()}, opening_wealth=capitals)
+trades = pd.concat([run.performance.trades for run in runs.values()])
+together = metrics.analyse(equity, trades=trades, opening_wealth=sum(capitals.values()), exchanges="NSE")
+for name, run in runs.items():
+    print(f"{name:<13}: Rs {run.metrics['net_profit']:,.2f}")
+print(f"Together     : Rs {together.metrics['net_profit']:,.2f}, max drawdown {together.metrics['max_drawdown']:.2%}")
+```
+
+<!-- output -->
+```text
+EmaCrossover : Rs 53,941.09
+InfyMacd     : Rs -11,554.49
+Together     : Rs 42,386.60, max drawdown -24.55%
+```
+
+Together the two made Rs 42,386.60 on Rs 2,00,000: SBIN's gain less INFY's loss. Their largest fall together, 24.55 percent, was smaller than either's alone (29.35 percent for SBIN and 40.22 percent for INFY, each on its own capital), because the two did not fall at the same times.
+
+What this cannot show: the two runs never share their cash, so a buy one strategy makes never leaves the other short of money, as it would in one account; and no limit covers them together, such as a loss limit for the whole account. In a live session one `bt.live` call runs several strategies in one account, with `account_max_daily_loss` for all of them ([Risk Limits and Locks](../live-trading/04-risk-limits-and-locks.md#several-strategies-and-the-accounts-limit)). More on measuring equity curves: [metrics](support-functions/metrics.md#several-strategies).
 
 ## Export everything to a spreadsheet or CSV
 
