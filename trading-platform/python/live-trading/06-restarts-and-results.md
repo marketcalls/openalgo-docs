@@ -166,7 +166,7 @@ Everything in the result:
 | `restarts` | How many times the session of this day and mode was started before this start |
 | `strategies` | The strategy names, in the order given |
 | `results` | Each strategy's backtest `Result`, by name: its trades, metrics, contract notes and tearsheet (`result.results["EmaCrossover"].tearsheet("session.html")`), for this start of the session; its net profit adds up to its trades |
-| `summary`, `summary_text()` | The day's figures over every start of the day, as the daily summary; `summary.slippage` is in rupees (negative when live did better than the backtest, `None` when no fill could be compared) |
+| `summary`, `summary_text()` | The day's figures over every start of the day, as the daily summary; `summary.slippage` is in rupees (negative when live did better than the backtest, `None` when no fill could be compared), and `summary.slippage_not_compared` counts the MARKET fills with no bar to compare |
 | `orders` | Every order the session placed through OpenAlgo |
 | `fills` | Every fill, with where the session heard of it |
 | `drift` | Each of the broker's one-minute candles against the bar the session built from the live prices |
@@ -194,4 +194,4 @@ The daily summary (`result.summary`, `summary_text()`) counts the whole trading 
 
 ## Next lesson
 
-[Recording Ticks](07-recording-ticks.md): keep the live prices with `bt.record`.
+[Recording Ticks](07-recording-ticks.md): keep the live prices with `bt.record`, and read them back with `bt.read_ticks`.

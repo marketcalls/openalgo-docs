@@ -80,12 +80,12 @@ From the recording above (the simulated feed sent each tick's trade time and the
 4      NSE   SBIN 2026-11-11 15:25:02+05:30 2026-11-11 15:25:02.500+05:30                 True   820.0  1204050.0
 ```
 
-* `exchange_time`: when the trade happened, as the feed gave it (Indian time). Where the feed gave none, it is the receive time, and `exchange_time_given` is `False`.
+* `exchange_time`: when the trade happened, as the feed gave it (Indian time). Where the feed gave none, it is the receive time, and `exchange_time_given` is `False`. Some brokers' feeds (zerodha's among them) give the OpenAlgo server's own clock as the trade time, so there it is not the exchange's time even where `exchange_time_given` is `True` (the clock warning of [the first lesson](01-first-sandbox-session.md#what-you-see-when-it-starts)).
 * `receive_time`: when the recording took the tick: the order a live session would have seen the ticks in.
-* `ltp`: the last traded price, in rupees. `volume`: the day's traded volume so far, where the feed sent it. A `"depth"` recording adds `bid` and `ask`.
+* `ltp`: the last traded price, in rupees. `volume`: the day's traded volume so far, where the feed sent it; an `"ltp"` recording has no `volume` column. A `"depth"` recording adds `bid` and `ask`.
 * `bt.read_ticks("2026-11-11", [{"exchange": "NSE", "symbol": "SBIN"}])` reads one instrument only, and `cache_dir=` reads from the folder you recorded to.
-* A recording still running, or one a crash stopped, is left out until the next recording of the day finishes its files; `ticks.attrs["left_out"]` lists their numbers.
-* A day with nothing recorded raises `DataError`, naming the folder it looked in.
+* A recording still running is left out until it ends, and one a crash stopped until the next recording of the day finishes its files; `ticks.attrs["left_out"]` lists their recording numbers.
+* A day with nothing recorded raises `DataError`, naming the folder it looked in. So does an instrument you name that was not recorded that day, and a damaged file (named). A day that is not a date, instruments it cannot use, or a `cache_dir` that is not an absolute path raise `ConfigError`.
 
 ## What you learned
 

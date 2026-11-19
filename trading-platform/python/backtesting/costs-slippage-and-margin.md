@@ -162,7 +162,7 @@ Over 22 fills, the default slippage lowered the profit by about Rs 1,000. What i
 A backtest fills each order at the next bar's open, just after the strategy decided. Real fills can come at a worse price, and a real order can be late (a script that started late, a signal you acted on the next day). Two settings of `bt.backtest` test that without changing the strategy (both come with openalgo 2.3.0, which is being released):
 
 * `fill=` sets the price an order fills at: `"next_open"` (the default), or another price of the next bar: its close (`"next_close"`), the middle of its high and low (`"next_mid"`), or the average of its open, high, low and close (`"next_ohlc4"`). The same names ending in `_2` (`"next_close_2"` and so on) average that price with the bar after it. Slippage is added as usual; an order at a set price (a limit or a stop-loss) still fills at that price.
-* `delay_entries=` and `delay_exits=` hold each buy or sell the strategy decides for that many more bars before it can fill. A reversal (a sell that turns a long into a short) counts as an exit. The stop-loss, target and trailing stop of a trade, and the engine's own exits (such as the intraday square-off), are never held.
+* `delay_entries=` holds each order that opens or adds to a position, and `delay_exits=` each one that reduces or closes it, for that many more bars before it can fill. A reversal (a sell that turns a long into a short) counts as an exit; for a short strategy, the entry is the sell. The stop-loss, target and trailing stop of a trade, and the engine's own exits (such as the intraday square-off), are never held. An order whose delay would end after the run's last bar, or (for an intraday order) at its session's close, is rejected with the reject code `delay_past_close`.
 
 Every order filled at the next day's close instead of its open:
 
@@ -211,6 +211,8 @@ The late run closed 10 trades, not 11. Its buy decided on 27 April 2023 was size
 ```text
 OrdersNotPlacedWarning: 1 order was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
 ```
+
+`late.orders` lists one more rejected order: a buy decided on 11 November 2026, the run's last day, whose one-day delay would have ended after the last bar (reject code `delay_past_close`). That is the delay working, so Python does not warn about it; `late.warnings` names it.
 
 How to read the two runs against the first (Rs 53,941.09): filled at the close, the crossover kept about 71 percent of its profit; a day late, about 78 percent, and both drawdowns were a little deeper. Its edge does not hang on getting the exact open. A strategy whose profit vanishes one bar late, or at the bar's close instead of its open, has an edge too thin to trade: real fills and real delays would take all of it. For more ways to tell a real edge from a lucky one, see the [overfitting checks](results-and-reports.md#overfitting-checks).
 

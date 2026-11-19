@@ -38,8 +38,7 @@ The session's stop on an option is a stop-limit order with its limit 5 percent b
 Warning: bt.live trades through pocketful, but the session matches the trade book's trades to its orders by order ID, and that the two IDs agree has not been checked for pocketful: watch the RECONCILE alerts, which name a fill the session could not match to its order
 ```
 
-The same banner warns that the time convention of the broker's candles is not verified in the SDK's broker table, and adds that the candles passed the check against the trading calendar.
-
+* **Unchecked candle times.** The SDK has checked how only some brokers (zerodha among them) stamp the time of their one-minute candles. With the others, pocketful and mstock included, the banner also warns `the timestamp convention of broker 'pocketful' is not verified in the broker table; this series passed the session calendar check`. It means the session compared the candles' times with the trading calendar (the market's hours, Indian time) and found them in place, so it goes on: there is nothing to do.
 * **No replay of recorded ticks yet.** `bt.record` saves them and `bt.read_ticks` reads a day back as a table ([Recording Ticks](07-recording-ticks.md#read-the-ticks-back)), but 2.3.0 cannot yet run a backtest or a session on them.
 
 ## What you learned

@@ -379,8 +379,8 @@ Do not trust the single best pair: among many, one looks good by luck. Check it 
 
 ## Test against worse fills and late orders
 
-* **Worse fills:** `bt.backtest(..., fill="next_close")` fills every order at the next bar's close instead of its open (also `"next_mid"`, `"next_ohlc4"` and the `_2` versions averaged with the bar after).
-* **Late orders:** `bt.backtest(..., delay_entries=1, delay_exits=1)` holds every buy and sell one more bar before it can fill; the stop-loss and target are never held.
+* **Worse fills:** `bt.backtest(..., fill="next_close")` fills every market order at the next bar's close instead of its open; a limit or stop-loss keeps its price (also `"next_mid"`, `"next_ohlc4"` and the `_2` versions averaged with the bar after).
+* **Late orders:** `bt.backtest(..., delay_entries=1, delay_exits=1)` holds every order that opens a position, and every one that closes it, one more bar before it can fill; the stop-loss and target are never held.
 
 A strategy whose profit vanishes one bar late, or at the bar's close instead of its open, has an edge too thin to trade. Both runs of the SBIN crossover, and how to read them: [Costs, Slippage and Margin](costs-slippage-and-margin.md#would-it-survive-worse-fills-or-late-orders); more checks: [Overfitting checks](results-and-reports.md#overfitting-checks).
 
