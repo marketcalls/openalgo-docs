@@ -130,7 +130,6 @@ The strategy waited two years, until January 2023, for its 50-day EMA, and made 
 ## More options
 
 * Test a shorter period on the same bars: `start="2023-01-01"`. The bars before it still get the EMAs ready. Keep a daily test at least three years long, so it covers more than one kind of market.
-* Bars you download from another source, with no OpenAlgo server at all: see the [example on downloaded daily bars](../examples/yfinance-data.md).
-* Every format the engine reads (other column names, files, time zones): [Data](../data.md#your-own-data).
+* Bars from a file or another source, with no OpenAlgo server at all, and every format the engine reads (other column names, CSV and Parquet files, time zones): [Data](../data.md#your-own-data).
 
 **Next:** the [examples](../examples/README.md), real strategies to run and change.

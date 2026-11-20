@@ -21,7 +21,6 @@ Python may print a warning under the output, and the run is still complete. Dail
 | [Equal-Weight Rebalancing](rebalancing.md) | RELIANCE, HDFCBANK, INFY, TCS, NSE, CNC | Daily | Four stocks in equal parts, rebalanced every quarter, against NIFTY |
 | [Position Sizing](position-sizing.md) | RELIANCE, NSE, CNC | Daily | The EMA crossover with 10 percent of equity in each trade instead of all of it |
 | [Tuning a Strategy](ema-crossover-optimization.md) | RELIANCE, NSE, CNC | Daily | Find the best EMA lengths with `bt.optimize` and check them on later data |
-| [Backtest on yfinance Data](yfinance-data.md) | RELIANCE.NS | Daily | The EMA crossover on bars downloaded with yfinance, no server needed |
 
 ## Futures
 
