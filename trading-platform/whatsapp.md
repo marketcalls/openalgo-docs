@@ -200,7 +200,7 @@ In addition to the automatic order alerts, you can send arbitrary WhatsApp messa
 
 **Python SDK**
 
-The `whatsapp()` method ships in the `openalgo` package. OpenAlgo currently pins `openalgo==2.0.3`.
+The `whatsapp()` method ships in the `openalgo` package. OpenAlgo currently pins `openalgo==2.3.0`.
 
 ```python
 from openalgo import api
