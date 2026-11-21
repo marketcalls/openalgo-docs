@@ -1,7 +1,7 @@
 # Audit a Session
 
 {% hint style="info" %}
-**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`. The version id on every order, the master contract checks and `result.fill_comparison` are new in openalgo 2.4.0.
 {% endhint %}
 
 A session keeps its own records of what it did, and OpenAlgo keeps its books: the order book, the trade book and the position book. To **audit** a session is to set one against the other. When they agree, the session did exactly what it says it did. This lesson lists what to check, gives a short script that checks it, and shows the audit of a real sandbox session.
@@ -18,6 +18,7 @@ OpenAlgo's books hold the whole day. So does the session's **event stream**, the
 | At most one stop working, and a stop working exactly while a position is open | `result.summary` (the whole day) and `result.unprotected` (this start): each time a position had no confirmed stop | `client.orderbook()` and `client.positionbook()` |
 | The session's comparisons with OpenAlgo's books agreed | `reconcile` lines: each comparison; `mismatch` lines: each one that differed | |
 | The session's bars against the broker's candles | `drift` lines: each bar against the broker's candle | |
+| What placed each order, and how its fill compares with a backtest | `result.orders`' `version_id`, `result.versions` and `result.fill_comparison` ([The audit record](#the-audit-record)) | |
 
 The three book calls only read: they change nothing in OpenAlgo. Run the audit after the session has ended, so that nothing moves while you read.
 
@@ -176,6 +177,72 @@ The orders, fills, comparisons and bars are the whole day's: the buy of the firs
 
 The event stream is the account's file for the day, in sandbox and live mode alike. If you test a strategy in sandbox mode on a day you also trade it live, give the sandbox runs their own folder with `live_dir="..."` ([Restarts and Results](06-restarts-and-results.md#where-the-session-keeps-its-files)), so that each mode's audit reads only its own lines.
 
+## The audit record
+
+From openalgo 2.4.0 a session keeps three more records for an audit: which version of each strategy placed each order, a check of OpenAlgo's master contract before the start, and each fill set against the price a backtest of the session's own bars gives.
+
+### The strategy version on every order
+
+Every order the session sends carries its strategy's **version id**: 12 characters worked out from the strategy class's source code and its parameter values. The same code with the same settings gives the same id on every day, every restart and every computer; change one line of the class, or one parameter, and the id changes. So the id answers the first question of an audit: what exactly placed this order?
+
+* The start banner shows each strategy's id on its **Versions** line, and the daily summary's Strategies line repeats it: `Strategies  : EmaCrossover (version eb5c92ff0caa)`.
+* `result.orders` has a `version_id` column, the id on each order.
+* `result.versions` maps each strategy's name to its **run manifest**, as a backtest records one: the engine version, the strategy's module, name, source hash and parameter values, every setting the session used, and the versions of the reference tables and charges. It never holds your API key.
+* The journal keeps every start's versions. A restart the same day with changed code or settings is allowed: its banner says that the version changed, and the event `version_changed` in the event stream records both ids.
+* The `strategy` field that OpenAlgo receives with each order is still the plain class name. The version id is your own record of what placed the order, kept by the session.
+
+### OpenAlgo's master contract, checked before the start
+
+Before its banner, the session compares OpenAlgo's own data with the SDK's tables:
+
+* **The expiry of each futures and options contract**, as OpenAlgo's master contract gives it, against the SDK's reference tables. A disagreement refuses the start, naming both dates, because the expiry-day square-off depends on the right date. A missing expiry is a warning in the banner.
+* **The market holidays.** OpenAlgo's holiday list (one call, in every session) against the SDK's calendar for the session's exchanges, from today to the end of the year. A disagreement about today refuses the start: the session would trade a closed market, or sit out an open one. One about a later day is a warning in the banner and the event `calendar_disagrees`.
+
+A backtest with a client checks the expiry of each futures or options contract the server still lists in the same way, with a `ReferenceDataWarning` when the two disagree or the lookup fails.
+
+### Live fills against a backtest of the same bars
+
+`result.fill_comparison` sets each fill of the day, from every start, against the price a backtest of the session's own bars fills the same order at. The first block is the first lesson's script; add this block below it, in the same file:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# The audit record: each order with the version id of the strategy that placed it.
+columns = ["created", "purpose", "action", "price_type", "status", "version_id"]
+print(result.orders[columns].to_string())
+
+# Each fill against the price a backtest of the session's own bars fills the same order at.
+columns = ["purpose", "price_type", "live_price", "backtest_price", "difference", "rupees", "compared", "reason"]
+print(result.fill_comparison[columns].to_string())
+```
+
+From a run of this code against a simulated OpenAlgo server in which SBIN fell Rs 10 within a minute after the buy, through the stop at the broker, with Ctrl+C at 10:30, the daily summary has a Stop fills line:
+
+```text
+Slippage    : Rs 2.50 better than the backtest
+Stop fills  : Rs 12.00 worse than the backtest
+```
+
+and the block printed:
+
+```text
+                    created purpose action price_type  status    version_id
+0 2026-11-11 10:12:01+05:30   entry    BUY     MARKET  Filled  eb5c92ff0caa
+1 2026-11-11 10:12:03+05:30    stop   SELL       SL-M  Filled  eb5c92ff0caa
+  purpose price_type  live_price  backtest_price  difference  rupees  compared reason
+0   entry     MARKET      817.55          817.80       -0.25    -2.5      True
+1    stop       SL-M      807.95          809.15        1.20    12.0      True
+```
+
+The stop was an SL-M sell triggered at 809.35. A backtest of the same bars fills it at the trigger less its modelled slippage, 809.15; the simulated broker filled it at 807.95, Rs 1.20 a share worse, Rs 12.00 for the 10 shares: the Stop fills line. The buy filled Rs 0.25 a share better than the backtest's price, Rs 2.50 for the 10 shares: the Slippage line.
+
+* **purpose** says what the order was for: `entry`, `add`, `exit` (the strategy's own), `stop` (the stop at the broker), `target` (the session's exit at a target), `square_off`, `risk_exit`, or `hand` for a fill of an order placed by hand that the session took as its own.
+* **live_price** is the price the order filled at, and **backtest_price** the price a backtest of the session's bars fills it at: a MARKET order at the open of the bar after its decision, a target exit at its level, and a stop at its trigger (or at the open of a bar that opened beyond it), in the bar that reached it, each with the backtest's modelled slippage.
+* **difference** is in rupees per share, counted against you: above zero, the live fill was worse than the backtest's; below zero, better. **rupees** is the difference times the shares.
+* **compared** is `False` for a fill with nothing to compare, and **reason** says why: a LIMIT order (its fill depends on the order book, which a bar does not hold), a stop the price rule turned into a LIMIT order, an order placed by hand, or no bar to compare it with.
+
+The daily summary adds the compared rows up: the Slippage line the MARKET orders, and the Stop fills line, on a day a stop filled, the stops (`result.summary.slippage` and `result.summary.stop_slippage`). A Stop fills line that reads `worse` day after day means your backtests assume better stop fills than your broker gives.
+
 ## The audit of a real session
 
 From a sandbox session on MCX on 19 November 2026: checks of the same kind for crude oil mini (`CRUDEOILM18DEC26FUT`, the CrudeFast strategy of [Inside a Session](09-inside-a-session.md)), made by a separate audit script at 18:05 while the session ran, from OpenAlgo's books and the session's records. It prints PASS or FAIL for each check:
@@ -227,6 +294,7 @@ The third file, `result.paths["journal"]`, is the session's working record for a
 * The result's tables cover this start of the session only; the event stream and OpenAlgo's books cover the whole day.
 * Every order on the symbol should be the session's, every fill should match a trade, and a stop should work exactly while a position is open.
 * The log and the event stream (`result.paths`) hold the session's every step, with its time.
+* Every order carries its strategy's version id, the session checks OpenAlgo's expiries and holidays before it starts, and `result.fill_comparison` sets each fill against a backtest of the same bars.
 
 ## Next lesson
 

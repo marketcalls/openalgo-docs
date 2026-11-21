@@ -342,6 +342,8 @@
     * [Inside a Session](trading-platform/python/live-trading/09-inside-a-session.md)
     * [Audit a Session](trading-platform/python/live-trading/10-audit-a-session.md)
     * [Commodities on MCX](trading-platform/python/live-trading/11-commodities-on-mcx.md)
+    * [Several Strategies in One Session](trading-platform/python/live-trading/12-several-strategies-in-one-session.md)
+    * [Two Strategies on One Symbol](trading-platform/python/live-trading/13-two-strategies-on-one-symbol.md)
   * [Visualization](trading-platform/python/visualization/README.md)
     * [Correlation Heatmap](trading-platform/python/visualization/correlation-heatmap.md)
     * [NIFTY Open Interest](trading-platform/python/visualization/nifty-open-interest.md)

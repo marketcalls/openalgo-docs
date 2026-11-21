@@ -80,7 +80,9 @@ OpenAlgo is in SANDBOX mode: orders are simulated
 Funds available: Rs 10,000,000.00
 EmaCrossover: NSE:SBIN every 1m, capital Rs 100,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
 SBIN: freeze quantity none
+Versions: EmaCrossover eb5c92ff0caa
 Stops: an entry placed with stop= gets its stop at the broker as it fills; one placed without has none until a trail or breakeven sets one (allowed), and the session warns at the first such position
+Order rate: at most 8 order calls a second (place, modify and cancel together); stops and exits go first
 Charges modelled with: zerodha
 SANDBOX: OpenAlgo simulates the fills at its own prices; nothing reaches the broker
 Warning: the test alert was not delivered: this SANDBOX session runs without alerts, and a LIVE session will need them
@@ -103,7 +105,9 @@ Read it line by line:
 * **Funds available**: the cash OpenAlgo reports. In sandbox mode it is the sandbox's own funds, not your broker account's.
 * **The strategy line**: the symbol and bar interval, the capital and daily loss limit, and the MIS times: no new entries from 14:50, and the **square-off** (the forced close of every MIS position) at 15:00.
 * **Freeze quantity**: the largest single order the exchange takes for the symbol. A session never lets a position grow past it.
+* **Versions** (openalgo 2.4.0): the strategy's version id, 12 characters worked out from the class's code and its settings. Every order the session sends carries it, so you can always tell which code placed an order ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order)).
 * **Stops**: the rule for stop-losses: an entry with `stop=` gets its stop at the broker as soon as it fills.
+* **Order rate** (openalgo 2.4.0): the most order calls the session makes in any second, 8 by default, below OpenAlgo's limit of 10 ([Limits](08-limits.md#the-order-rate)).
 * **Charges modelled with**: the cost model for brokerage and taxes (`costs="zerodha"` by default, as in a backtest), because the broker's trade book does not report charges. OpenAlgo's sandbox charges nothing, so the modelled charges show what a live trade would pay.
 * **Warning: the test alert was not delivered**: the call gave no Telegram user, so alerts appear only on this screen. Fine in sandbox mode; a live session needs them ([Alerts](05-alerts.md)).
 * **Warning: charges ...**: not in the banner above, but in yours on a day after the SDK's charge rates were last checked against their sources. It is a long line that starts `Warning: charges: the NSE_EQ_INTRADAY rates of cost schedule IN-2026-04-01 used for 2026-11-16 are verified only up to an earlier date, so the charges may be off.` (from a run on 16 November 2026) and goes on with the notes on those rates. It means only that the modelled charges may be slightly off; the session trades as usual.
@@ -127,9 +131,9 @@ Keep the terminal open while the session runs, and stop it with Ctrl+C. Closing 
 At 10:20 Ctrl+C was pressed once. The session took no new entries, cancelled the stop at the broker, sold the 10 shares at market, waited until the position was closed, then printed the **daily summary** and returned the result:
 
 ```text
-EXIT: SELL 10 SBIN NSE at 818.75 (risk_exit, order 26111137204000)
+EXIT: SELL 10 SBIN NSE at 818.75 (risk_exit: Ctrl+C or a retried exit, order 26111137204000)
 DAILY SUMMARY: Session of 2026-11-11 (IST): SANDBOX mode, broker zerodha
-Strategies  : EmaCrossover
+Strategies  : EmaCrossover (version eb5c92ff0caa)
 Trades      : 1 closed
 Gross P&L   : Rs 12.00
 Charges     : Rs 8.70 (modelled)
@@ -142,7 +146,8 @@ End state   : flat
 SessionResult(SANDBOX 2026-11-11, broker zerodha, stopped by ctrl_c, 1 closed trades, net P&L Rs 3.30, 0 positions open)
 ```
 
-* **EXIT**: the sale. `risk_exit` marks an exit the session made by itself, here for Ctrl+C; a sale your strategy asks for with `self.exit()` reads `exit`.
+* **EXIT**: the sale, and why it was made. `risk_exit` marks an exit the session made by itself, here for Ctrl+C; a sale your strategy asks for with `self.exit()` reads `exit: strategy exit`, a target `exit: target level`, the stop at the broker `stop: stop level` and the 15:00 square-off `square_off: square-off time`.
+* **Strategies**: the strategies of the session, each with its version id.
 * **Trades**: round trips closed today (a buy and the sale that closed it).
 * **Gross P&L, Charges, Net P&L**: the profit before charges, the modelled charges, and what is left. The sale earned Rs 12.00 (10 shares, Rs 1.20 each); the charges took Rs 8.70.
 * **Slippage**: the gap between the price an order got and the price you expected. The session sets each fill of a MARKET order (an order to trade at once, at the going price) against the price a backtest of the same one-minute bars fills the same order at (the open of the bar after the decision, worse by the backtest's modelled slippage), times the shares. Here the buy filled Rs 2.50 better than the backtest, for the 10 shares. The Ctrl+C sale is not compared: the session ended before the next minute's first trade, so it had no bar to compare it with. A Slippage line that reads `worse` day after day means your backtests expect better fills than you get.
@@ -161,7 +166,8 @@ Left alone, the session trades until the end of the day. From 14:50 it takes no 
 * Leave open positions with their stops at Ctrl+C: `on_stop="keep"`. See [Stopping a Session](02-stopping-a-session.md).
 * Alerts on your phone: `alerts_to="your_openalgo_username"`. See [Alerts](05-alerts.md).
 * A trailing stop: `self.buy(qty=10, stop=bt.pct(1), trail=bt.trail_pct(0.5))`. See [Stop-Loss at the Broker](03-stop-loss-at-the-broker.md).
-* Several strategies in one session, and a loss limit for all of them: see [Risk Limits and Locks](04-risk-limits-and-locks.md).
+* Several strategies in one session, with limits for all of them: see [Several Strategies in One Session](12-several-strategies-in-one-session.md).
+* A daily trade cap, a daily profit target and an order value cap: see [Risk Limits and Locks](04-risk-limits-and-locks.md#daily-trade-and-profit-limits).
 
 ## What you learned
 

@@ -87,7 +87,7 @@ SBIN: freeze quantity none
 SANDBOX (EmaCrossover): BUY 10 SBIN NSE at 817.55 (entry, order 26111136722000)
 ```
 
-On the screen the same alert starts with its kind instead: `ENTRY: BUY 10 SBIN NSE at 817.55 (entry, order 26111136722000)`. The last message of the day is the daily summary, as in [the first lesson](01-first-sandbox-session.md#stop-it-with-ctrlc).
+On the screen the same alert starts with its kind instead: `ENTRY: BUY 10 SBIN NSE at 817.55 (entry, order 26111136722000)`. An EXIT alert also names why the position was closed (openalgo 2.4.0), such as `exit: target level`, `stop: stop level`, `square_off: square-off time` or `risk_exit: kill switch at the account daily loss limit`. The last message of the day is the daily summary, as in [the first lesson](01-first-sandbox-session.md#stop-it-with-ctrlc).
 
 ## Every alert, and what it asks of you
 

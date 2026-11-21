@@ -1,10 +1,10 @@
 # Risk Limits and Locks
 
 {% hint style="info" %}
-**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
+**New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`. The daily trade cap, the daily profit target and the order value cap are new in openalgo 2.4.0.
 {% endhint %}
 
-A live session never trades without limits. This lesson covers the money limits you set (capital, the daily loss of each strategy and of the whole account), the **kill switch**, and the **locks**: the session's own brakes, which stop new entries when something is wrong.
+A live session never trades without limits. This lesson covers the money limits you set (capital, the daily loss of each strategy and of the whole account), the daily trade and profit limits, the **kill switch**, and the **locks**: the session's own brakes, which stop new entries when something is wrong.
 
 ## Capital and the daily loss limit
 
@@ -15,11 +15,77 @@ Both are required by `bt.live`, in sandbox and live mode alike:
 
 A `max_daily_loss` set on the strategy class is not enough in a live session: the limit you pass to `bt.live` is the one used, and a class value that differs from it stops the start with a `ConfigError`.
 
-The other risk settings work as in a backtest, with the same defaults: `drawdown_halt`, `cooldown`, `max_positions`, `entry_from`, `entry_until` and `square_off` ([Orders and Risk](../backtesting/orders-and-risk.md)).
+The other risk settings work as in a backtest, with the same defaults: `drawdown_halt`, `cooldown`, `max_positions`, `entry_from`, `entry_until` and `square_off` ([Orders and Risk](../backtesting/orders-and-risk.md)). Each takes one value, or a dict by strategy class name ([Several Strategies in One Session](12-several-strategies-in-one-session.md)).
+
+## Daily trade and profit limits
+
+Three more limits for each strategy, each off unless you set it, as in a backtest ([Orders and Risk](../backtesting/orders-and-risk.md#how-do-i-limit-the-trades-of-a-day)):
+
+* `max_trades_per_day`: at most this many entries today. An entry is an order that opens a position from flat, or a reversal; adds and exits never count. An entry counts from the moment it is sent while it works, and for good once any part of it fills. At the cap, an entry is refused with `trade_limit` and a reversal is cut to its close. Nothing is exited.
+* `daily_profit_target`: rupees. When the strategy's profit today (its closed trades plus its open position, checked on every price, as the daily loss is) reaches it, the session exits every position of that strategy and takes no new entries for it for the rest of the day. Its trades record the exit reason `daily_profit_target`.
+* `max_order_value`: rupees. An entry or add worth more (its shares times its limit price, its trigger, or the last price for a market order) is refused with `order_value_limit` before it is sent. Exits are never refused.
+
+The first lesson's script with all three:
+
+<!-- requires-server -->
+```python
+# Load the backtesting engine (bt), the OpenAlgo client (api) and the indicators (ta).
+import openalgo.backtest as bt
+from openalgo import api, ta
+
+# Connect to your OpenAlgo server.
+client = api(api_key="OPENALGO_API_KEY", host="http://127.0.0.1:5000")
+
+
+# The strategy: the EMA crossover of the backtesting tutorial, on 1-minute bars.
+class EmaCrossover(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "1m"  # SBIN on NSE, 1-minute bars
+    fast = 20  # bars in the fast EMA
+    slow = 50  # bars in the slow EMA
+
+    # init runs once, before the first bar.
+    def init(self):
+        self.fast_ema = self.I(ta.ema, self.close, self.fast)  # 20-bar EMA of the closes
+        self.slow_ema = self.I(ta.ema, self.close, self.slow)  # 50-bar EMA of the closes
+
+    # on_bar runs at the close of every 1-minute bar and decides what to do.
+    def on_bar(self, bar):
+        if self.position.is_flat and self.fast_ema.crossed_above(self.slow_ema):
+            self.buy(qty=10, stop=bt.pct(1))  # buy 10 shares, with a stop-loss 1 percent below
+        elif self.position.is_long and self.fast_ema.crossed_below(self.slow_ema):
+            self.exit()  # sell all the shares
+
+
+# Trade it through OpenAlgo today, with three daily limits.
+result = bt.live(
+    EmaCrossover,
+    client,
+    capital=100_000,
+    max_daily_loss=2_000,
+    max_trades_per_day=3,  # at most 3 entries today
+    daily_profit_target=1_500,  # rupees: done for the day at this profit
+    max_order_value=20_000,  # rupees: no entry or add worth more
+)
+
+# Print the session's result in one line.
+print(result)
+```
+
+The start banner names the limits under the strategy's line, and the daily summary in its Limits line (from a run of this code against a simulated OpenAlgo server, with Ctrl+C at 10:20):
+
+```text
+EmaCrossover daily limits: at most 3 trades a day, profit target Rs 1,500.00, orders of at most Rs 20,000.00 each
+```
+
+```text
+Limits      : EmaCrossover at most 3 trades a day, profit target Rs 1,500.00, orders of at most Rs 20,000.00 each
+```
+
+A restart the same day keeps the day's trade counts and the profit target's lock: stopping and starting the script does not give the strategy a fresh day. The entries a cap refuses are in `result.orders` with their reject code, and `result.warnings` counts them once; they are the limit working, not an error.
 
 ## Several strategies and the account's limit
 
-One session runs every strategy of one OpenAlgo account: pass them as a list, each on its own symbol. A second `bt.live` for the same account, or the same OpenAlgo server, is refused at its checks while the first runs. `account_max_daily_loss` limits the loss of all the strategies together:
+One session runs every strategy of one OpenAlgo account: pass them as a list. Two strategies may even share a symbol ([Two Strategies on One Symbol](13-two-strategies-on-one-symbol.md)). A second `bt.live` for the same account, or the same OpenAlgo server, is refused at its checks while the first runs. `account_max_daily_loss` limits the loss of all the strategies together:
 
 <!-- requires-server -->
 ```python
@@ -69,26 +135,28 @@ result = bt.live(
 print(result)
 ```
 
-`class InfyCrossover(EmaCrossover)` makes a copy of the strategy with only the symbol changed. The start banner lists each strategy and the account's limit (from a run of this code against a simulated OpenAlgo server):
+`class InfyCrossover(EmaCrossover)` makes a copy of the strategy with only the symbol changed. The start banner lists each strategy, the version id of each ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order)) and the account's limit (from a run of this code against a simulated OpenAlgo server):
 
 ```text
 EmaCrossover: NSE:SBIN every 1m, capital Rs 100,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
 SBIN: freeze quantity none
 InfyCrossover: NSE:INFY every 1m, capital Rs 100,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
 INFY: freeze quantity none
+Versions: EmaCrossover eb5c92ff0caa, InfyCrossover 80a539947c70
 Stops: an entry placed with stop= gets its stop at the broker as it fills; one placed without has none until a trail or breakeven sets one (allowed), and the session warns at the first such position
 Account daily loss limit: Rs 3,000.00
+Order rate: at most 8 order calls a second (place, modify and cancel together); stops and exits go first
 ```
 
 ## The kill switch
 
-When the loss of all the strategies together reaches `account_max_daily_loss`, the session fires the **kill switch** for every strategy:
+When the loss of all the strategies together reaches `account_max_daily_loss`, or their profit together reaches `account_daily_profit_target`, the session fires the **kill switch** for every strategy:
 
 1. New entries are locked for the rest of the day, and entry orders still waiting are cancelled.
 2. Each position is closed through its exit (its stop cancelled first), but only when OpenAlgo's position book shows the broker holding at least the strategy's shares on the same side. If it shows fewer, the session sends nothing and reads the book again (every 2 seconds, then every 30 seconds once it has alerted), with an ERROR alert from the second read in a row that disagrees.
 3. An ERROR alert reports each strategy once it is flat.
 
-Only the account limit fires the kill switch. A difference between the session and OpenAlgo's books locks entries and alerts you, but never closes a position.
+The trades it closes record the exit reason `account_loss_limit` (or `account_profit_target`), and their EXIT alerts name the kill switch. Only the account's loss limit and profit target fire the kill switch; the account's trade cap, `account_max_trades_per_day`, only refuses further entries (`account_trade_limit`). [Several Strategies in One Session](12-several-strategies-in-one-session.md#the-accounts-limits-and-the-kill-switch) shows a run. A difference between the session and OpenAlgo's books locks entries and alerts you, but never closes a position.
 
 ## The locks
 
@@ -102,10 +170,13 @@ A lock stops **new entries** (and adds to a position). Exits, stops and targets 
 | Reconciliation | The session's position and OpenAlgo's books differ in two checks in a row | New entries of that strategy | The end of the session |
 | Exit failed | A sale rejected five times ([Stop-Loss at the Broker](03-stop-loss-at-the-broker.md#when-the-broker-rejects-an-exit)) | New entries of that strategy | The end of the session |
 | Daily loss | The strategy's `max_daily_loss` | New entries of that strategy | The next day |
+| Daily profit target | The strategy's `daily_profit_target` | New entries of that strategy | The next day |
 | Account daily loss | `account_max_daily_loss` | New entries of every strategy | The next day |
+| Account daily profit target | `account_daily_profit_target` | New entries of every strategy | The next day |
+| Closing order refused on a shared symbol | The broker refused a stop or an exit of a symbol two strategies share ([Two Strategies on One Symbol](13-two-strategies-on-one-symbol.md#when-the-broker-refuses-a-closing-order)) | New entries of that strategy | The end of the session |
 | Ctrl+C | The safe stop | New entries | The end of the session |
 
-`result.locks` lists the locks of the session, each with when it was set and when it lifted. A session restarted the same day locks again what lasts the day (reconciliation, exit failed, the daily loss limits).
+`result.locks` lists the locks of the session, each with when it was set and when it lifted. A session restarted the same day locks again what lasts the day (reconciliation, exit failed, the daily loss limits and profit targets). The trade caps are not locks: an entry over a cap is refused on its own (`trade_limit`, `account_trade_limit`), and the next day starts a new count.
 
 The output below comes from runs of the first lesson's script, with alerts on, against a simulated OpenAlgo server.
 
@@ -145,6 +216,7 @@ For those 8 seconds the stop at the broker still covered 10 shares that were alr
 ## What you learned
 
 * `capital` and `max_daily_loss` are required for every strategy; `account_max_daily_loss` limits all of them together and fires the kill switch.
+* `max_trades_per_day`, `daily_profit_target` and `max_order_value` limit a strategy's day; the account's trade cap and profit target limit all of them together.
 * Several strategies run in one session as a list, one session per OpenAlgo account.
 * Locks stop new entries; only a mode change and a silent OpenAlgo stop every order.
 * A mismatch with OpenAlgo's books locks entries and alerts you; the session never trades to fix it.

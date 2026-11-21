@@ -70,7 +70,7 @@ STOP MOVED: EmaCrossover: stop of SBIN NSE moved to 824.05 (order 26111136724000
 STOP MOVED: EmaCrossover: stop of SBIN NSE moved to 826.25 (order 26111136724000)
 STOP MOVED: EmaCrossover: stop of SBIN NSE moved to 828.40 (order 26111136724000)
 STOP MOVED: EmaCrossover: stop of SBIN NSE moved to 830.55 (order 26111136724000)
-EXIT: SELL 10 SBIN NSE at 834.65 (risk_exit, order 26111137804000)
+EXIT: SELL 10 SBIN NSE at 834.65 (risk_exit: Ctrl+C or a retried exit, order 26111137804000)
 ```
 
 * The stop started at 809.35, 1 percent below the buying price. Once SBIN was 0.5 percent above the buying price, the trail took over: the stop moved to 817.55, 0.5 percent below the highest price so far, and on up from there.
@@ -91,7 +91,7 @@ If the broker rejects the stop, the session sells the position at market at once
 ```text
 ENTRY: BUY 10 SBIN NSE at 817.55 (entry, order 26111136722000)
 REJECT: EmaCrossover: SELL 10 SBIN NSE (stop) order refused by OpenAlgo: trigger price out of range (intent 20261111-sandbox-1-EmaCrossover-o2)
-EXIT: SELL 10 SBIN NSE at 817.60 (risk_exit, order 26111136725000)
+EXIT: SELL 10 SBIN NSE at 817.60 (risk_exit: stop rejected, order 26111136725000)
 ```
 
 If the broker cancels a stop by itself (its risk checks, a new price band), the session places it again, once, and sends a REJECT alert naming it. If that stop also ends without filling, the session sells at market.
@@ -114,6 +114,15 @@ EmaCrossover SBIN NSE 10 units: stop 26111136987000 confirmed at the broker: it 
 
 The position is protected again by its stop. Read the broker's reason in the REJECT lines, fix it if you can (funds, a blocked symbol), and follow the alert: end the session first, then cancel the stop, then close the position by hand. The last line is the session's closing line for the position left open, after a second Ctrl+C.
 
+## Two rules for orders in a live session
+
+Two orders that a backtest accepts are refused in a live session, in sandbox and live mode alike, because at the broker they would rest beside the position's stop, both on the closing side, and both could fill:
+
+* **`reverse=True` works live only on a MARKET order.** A reversal sent as a resting order (`reverse=True` with `price=` or `trigger_price=`) is refused before it reaches the broker, with the reject code `venue` and a warning: a short of 10 with a resting buy of 20 could fill beside the stop and end long 20 instead of long 10. Send the reversal as a market order (`self.buy(qty=20, reverse=True)` with no price), or, to reverse at a price, exit and enter separately.
+* **A take-profit goes in `target=` (or `targets=`).** A resting LIMIT, SL or SL-M order on the closing side of an open position whose stop already closes it is refused, with the reject code `venue` and a warning: the stop and that order could both fill and open the other side. With `target=`, the session watches the price itself, cancels the stop first and only then sells, as above.
+
+The strategy sees the refusal in `on_order` before its next decision, and `result.warnings` says what to do. A backtest still fills both, so a strategy that relies on them backtests well and then has these orders refused live: check `result.warnings` of your first sandbox sessions.
+
 ## Entries without a stop
 
 An entry without `stop=` is allowed in sandbox and live mode alike: `self.buy(qty=10)`. The start banner's Stops line states the rule, and the first position opened without a stop at the broker prints a warning at once:
@@ -131,6 +140,7 @@ The warning is in `result.warnings` too. Such a position has nothing at the brok
 * A trailing stop or breakeven moves the broker's stop by modifying it, at most once every 5 seconds and by at least 0.25 percent.
 * Targets and the daily loss are watched on every price; an exit always cancels the stop first.
 * A rejected stop is replaced by a sale at market; a rejected exit is tried five times, then the stop is placed again and an alert tells you what to do.
+* Live, `reverse=True` works only on a MARKET order, and a take-profit goes in `target=`, never in a resting order beside the stop.
 
 ## Next lesson
 

@@ -127,7 +127,7 @@ GoldBreakout buys whenever it is flat and a bar closes above the highest high of
 
 ## What 2.3.0 cannot trade on MCX yet
 
-* **Silver mini and silver micro** (`SILVERM`, `SILVERMIC`): the SDK's tables have no freeze quantity for them, and OpenAlgo configures none, so they are refused in backtests and live sessions alike: `bt.live` stops before anything is sent, and `bt.backtest` before it runs, with `ReferenceDataError: No 'mcx_contracts' reference row covers underlying=SILVERM, exchange=MCX on ... with a freeze_qty value`. The error suggests a user file for `load_tables`, but neither run reads one. A backtest can take the contract's terms you give it with `instrument=` ([Reference Data](../backtesting/support-functions/reference-data.md)); `bt.live` takes no `instrument=`. A later version adds them.
+* **Silver mini and silver micro** (`SILVERM`, `SILVERMIC`): the SDK's tables have no freeze quantity for them, and OpenAlgo configures none, so they are refused in backtests and live sessions alike: `bt.live` stops before anything is sent, and `bt.backtest` before it runs, with `ReferenceDataError: No 'mcx_contracts' reference row covers underlying=SILVERM, exchange=MCX on ... with a freeze_qty value`. The error suggests a user file for `load_tables`, but neither run reads one. A backtest can take the contract's terms you give it with `instrument=` ([Reference Data](../backtesting/support-functions/reference-data.md)); `bt.live` takes no `instrument=`. openalgo 2.4.0 adds them: its contract table has their freeze quantity, 600 kg per order, from MCX's circulars, so both can be backtested and traded live.
 * **A series of contracts** (`underlying = "CRUDEOIL"` with an expiry rule): name the contract instead, as above ([What openalgo 2.3.0 refuses](README.md#what-openalgo-230-refuses)).
 * **Positions held overnight** (NRML): a session trades MIS only, closed before the evening close.
 
@@ -138,6 +138,6 @@ GoldBreakout buys whenever it is flat and a bar closes above the highest high of
 * The banner warns that OpenAlgo has no freeze quantity for MCX (the reference tables' is used) and that the MCX holiday data is not confirmed.
 * Silver mini and micro are refused in backtests and live sessions alike in 2.3.0; avoid a contract on its expiry day.
 
-## Back to the start
+## Next lesson
 
-[Live Trading](README.md): every lesson of this section.
+[Several Strategies in One Session](12-several-strategies-in-one-session.md): every per-strategy setting by name, the account's daily limits and the kill switch.

@@ -88,7 +88,7 @@ EXIT: SELL 100 CRUDEOIL18DEC26FUT MCX at 7785.00 (exit, order 26111967201224)
 A restart finds each strategy's saved state by its class name. Under one name, the restart expects the same contract and the same capital as before; when either differs, `bt.live` stops with a `LiveError` before anything is sent. From a run against a simulated OpenAlgo server: the first lesson's script ran until Ctrl+C at 10:20, then the same script with `"INFY"` in place of `"SBIN"` was started the same day:
 
 ```text
-LiveError: EmaCrossover: the engine refused its saved state (the saved live state is of another session (instruments [("SBIN", "NSE")], the session's [("INFY", "NSE")]): restore it into a session of the same day and instruments): the restart cannot resume it. Check its positions in OpenAlgo
+LiveError: EmaCrossover: its saved state is of SBIN on NSE, and this session trades INFY on NSE: the restart cannot resume it, and does not start it afresh, since a saved state may hold working orders. For a new instrument or contract, give the strategy class a new name (its state is saved under its name); to resume it, keep its symbol SBIN on NSE. Check its positions and orders in OpenAlgo
 ```
 
 The same refusal met the sandbox session on MCX on 19 November 2026, when a class name used earlier that evening for crude oil mini was given the crude oil contract. When you change a strategy's contract or its capital during a day, give the class a new name, such as `CrudeBigTrend` instead of reusing `CrudeTrend`, but only once the old strategy is flat. A new name starts afresh: it does not take over a position the old name still holds. After an `on_stop="keep"`, that position stays at the broker with only its stop: no trailing, no targets, no square-off by the session (your broker's own MIS square-off near the close still applies), and the new start's banner does not mention it (only its closing summary does, for example `earlier today: EmaCrossover (10 units of SBIN NSE open at its last save)` and `End state : not flat`). So close it first: run the old script once more and stop it with Ctrl+C, which with the default `on_stop="flatten"` resumes the position, cancels its stop and sells it ([Stopping a Session](02-stopping-a-session.md#ctrlc-the-safe-stop)). The old name's saved state then stays in the journal, flat and unused.
@@ -166,7 +166,7 @@ From a run of this code against a simulated OpenAlgo server, with Ctrl+C at 10:2
 
 ```text
 Session of 2026-11-11 (IST): SANDBOX mode, broker zerodha
-Strategies  : EmaCrossover
+Strategies  : EmaCrossover (version eb5c92ff0caa)
 Trades      : 1 closed
 Gross P&L   : Rs 12.00
 Charges     : Rs 8.70 (modelled)
@@ -181,7 +181,7 @@ End state   : flat
 1 2026-11-11 10:12:03+05:30       stop   SELL       SL-M        10         809.35  Canceled
 2 2026-11-11 10:20:03+05:30  risk_exit   SELL     MARKET        10           0.00    Filled
                      entry_time                 exit_time  quantity  entry_price  exit_price  gross_pnl
-trade                                                                                                  
+trade
 1     2026-11-11 10:12:00+05:30 2026-11-11 10:20:00+05:30     10.00       817.55      818.75      12.00
                        from                        to  seconds            reason
 0 2026-11-11 10:12:02+05:30 2026-11-11 10:12:05+05:30      3.0  stop unconfirmed
@@ -210,8 +210,11 @@ Everything in the result:
 | `restarts` | How many times the session of this day and mode was started before this start |
 | `strategies` | The strategy names, in the order given |
 | `results` | Each strategy's backtest `Result`, by name: its trades, metrics, contract notes and tearsheet (`result.results["EmaCrossover"].tearsheet("session.html")`), for this start of the session; its net profit adds up to its trades |
-| `summary`, `summary_text()` | The day's figures over every start of the day, as the daily summary; `summary.slippage` is in rupees (negative when live did better than the backtest, `None` when no fill could be compared), and `summary.slippage_not_compared` counts the MARKET fills with no bar to compare |
-| `orders` | Every order the session placed through OpenAlgo |
+| `portfolio` | The strategies as one account, for this start of the session: summary, metrics and the combined tearsheet ([Several Strategies in One Session](12-several-strategies-in-one-session.md#the-strategies-as-one-account-resultportfolio); openalgo 2.4.0) |
+| `versions` | Each strategy's run manifest by name: what its version id was worked out from ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order); openalgo 2.4.0) |
+| `summary`, `summary_text()` | The day's figures over every start of the day, as the daily summary; `summary.slippage` is in rupees (negative when live did better than the backtest, `None` when no fill could be compared), and `summary.slippage_not_compared` counts the MARKET fills with no bar to compare; `summary.stop_slippage` is the same for the fills of the stops at the broker |
+| `orders` | Every order the session placed through OpenAlgo, with the strategy and its version id |
+| `fill_comparison` | Each fill of the day against the price a backtest of the session's bars fills the same order at ([Audit a Session](10-audit-a-session.md#live-fills-against-a-backtest-of-the-same-bars); openalgo 2.4.0) |
 | `fills` | Every fill, with where the session heard of it |
 | `drift` | Each of the broker's one-minute candles against the bar the session built from the live prices |
 | `unprotected` | Each time a position had no confirmed stop at the broker, and why |

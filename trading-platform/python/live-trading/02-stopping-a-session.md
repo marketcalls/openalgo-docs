@@ -77,7 +77,7 @@ The output below comes from a run of this code against a simulated OpenAlgo serv
 ```text
 EmaCrossover SBIN NSE 10 units: stop 26111136724000 confirmed at the broker: it protects the position, so cancel the stop before any sale by hand
 DAILY SUMMARY: Session of 2026-11-11 (IST): SANDBOX mode, broker zerodha
-Strategies  : EmaCrossover
+Strategies  : EmaCrossover (version eb5c92ff0caa)
 Trades      : 0 closed
 Gross P&L   : Rs 12.00
 Charges     : Rs 3.45 (modelled)
