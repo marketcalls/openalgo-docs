@@ -111,10 +111,10 @@ The trades it closes record the exit reason `account_loss_limit` or `account_pro
 From a run of this code against a simulated OpenAlgo server in which SBIN rose fast after the buy, and the account's profit target was set to Rs 100 so that it fired within minutes:
 
 ```text
-ENTRY: BUY 10 SBIN NSE at 817.55 (entry, order 26111136722000)
+ENTRY: EmaCrossover BUY 10 SBIN NSE at 817.55 (entry, order 26111136722000)
 ERROR: the account's daily profit Rs 101.00 is at or past its target Rs 100.00: every strategy's entries are locked for the day and the kill switch exits every strategy's position
 ERROR: kill switch (account_profit): InfyCrossover is flat in INFY NSE, flat at the broker too; its entries stay locked for the day
-EXIT: SELL 10 SBIN NSE at 827.65 (risk_exit: kill switch at the account daily profit target, order 26111137379000)
+EXIT: EmaCrossover SELL 10 SBIN NSE at 827.65 (risk_exit: kill switch at the account daily profit target, order 26111137379000)
 ERROR: kill switch (account_profit): EmaCrossover is flat in SBIN NSE, flat at the broker too; its entries stay locked for the day
 ```
 
@@ -145,7 +145,7 @@ From the same run as the banner, with Ctrl+C at 10:20:
 ```text
 Net profit   : Rs 3.59
 Return       : 0.00%
-Max drawdown : -0.00%
+Max drawdown : 0.00%
 Trades       : 1 (100% won)
 Overfitting  : each strategy's own trades below; none of the account's trades together
   EmaCrossover  : too few trades to judge (1 closed, 30 needed)

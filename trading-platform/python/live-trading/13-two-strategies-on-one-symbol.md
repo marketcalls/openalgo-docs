@@ -77,13 +77,13 @@ SBIN is subscribed to once, and every price, bar and broker candle of it reaches
 From the same run, in which SBIN fell sharply after 10:00 and then rose, with Ctrl+C at 10:35:
 
 ```text
-ENTRY: BUY 10 SBIN NSE at 811.95 (entry, order 26111136302000)
-ENTRY: BUY 10 SBIN NSE at 818.90 (entry, order 26111137442000)
-EXIT: SELL 10 SBIN NSE at 820.10 (exit: target level, order 26111137558000)
-EXIT: SELL 10 SBIN NSE at 825.50 (risk_exit: Ctrl+C or a retried exit, order 26111138104000)
+ENTRY: RsiDip BUY 10 SBIN NSE at 811.95 (entry, order 26111136302000)
+ENTRY: EmaTrend BUY 10 SBIN NSE at 818.90 (entry, order 26111137442000)
+EXIT: RsiDip SELL 10 SBIN NSE at 820.10 (exit: target level, order 26111137558000)
+EXIT: EmaTrend SELL 10 SBIN NSE at 825.50 (risk_exit: Ctrl+C or a retried exit, order 26111138104000)
 ```
 
-The lines name the order, not the strategy. To see which strategy placed each order, add this block below the script, in the same file:
+In a session of several strategies, each ENTRY and EXIT line names the strategy whose order filled, right after the kind. To see every order of the session, the stops at the broker included, add this block below the script, in the same file:
 
 <!-- requires-server -->
 <!-- continues -->
@@ -176,7 +176,7 @@ From a run of this code against a simulated OpenAlgo server in which the broker 
 ```text
 ERROR: EmaTrend: the risk_exit order o3 of SBIN NSE was refused for margin by the broker (Insufficient margin: required 8,170.00, available 0.00); it has no stop working, and nothing is sent again for it until OpenAlgo's books agree with the strategies; EmaTrend's entries are locked. The broker may not hold these units: end the session, check the position book and close by hand
 REJECT: EmaTrend: SELL 10 SBIN NSE (risk_exit) order refused by OpenAlgo: Insufficient margin: required 8,170.00, available 0.00 (intent 20261111-sandbox-1-EmaTrend-o3)
-EXIT: SELL 10 SBIN NSE at 825.60 (risk_exit: Ctrl+C or a retried exit, order 26111138106000)
+EXIT: EmaTrend SELL 10 SBIN NSE at 825.60 (risk_exit: Ctrl+C or a retried exit, order 26111138106000)
 ```
 
 The ERROR line comes first: EmaTrend's position is held, it has no stop working (Ctrl+C had cancelled it to make way for the sale), and its entries are locked. The REJECT line is the refusal itself. In this run the broker did hold the 10 shares, so the next read of OpenAlgo's books agreed with the strategies, and only then did the session send the sale again; it filled (the EXIT line).
