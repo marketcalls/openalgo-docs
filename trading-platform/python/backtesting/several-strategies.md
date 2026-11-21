@@ -101,7 +101,7 @@ EmaCrossover : return 315.64%, max drawdown -21.98%, trades 13
 InfyMacd     : return 98.92%, max drawdown -28.18%, trades 53
 ```
 
-`pf.strategy("EmaCrossover")` has everything a backtest of one strategy has: its trade list, its metrics, its warnings and its own tearsheet. Its return is on its own capital, Rs 1,00,000, and the strategies' net profits add up to the account's. Whenever the account never refuses an order (the next sections say when it does), each strategy's figures are exactly those of a backtest of it alone.
+`pf.strategy("EmaCrossover")` has everything a backtest of one strategy has: its trade list, its metrics, its warnings and its own tearsheet. Its return is on its own capital, Rs 1,00,000, and the strategies' net profits add up to the account's. Whenever the account does not limit them (the next section says when it does), each strategy's figures are exactly those of a backtest of it alone.
 
 The account's maximum drawdown can be smaller than either strategy's, because the account is measured on the money of both: a fall of one strategy is softened by the other when the two do not fall at the same time.
 
@@ -324,11 +324,13 @@ InfyIntraday  account_loss_gate    10
 {'scheduler': 132, 'signal': 86, 'account_loss_limit': 25}
 ```
 
+The second table counts the refused entries by strategy and code; a code missing from it refused nothing in this run.
+
 * `trade_limit`: entries a strategy wanted after its own cap for the day.
 * `account_trade_limit`: entries refused because the two strategies together had reached the account's cap.
 * `account_loss_gate`: entries after the account's loss limit fired, until the next day. The trades the limit closed show the exit reason `account_loss_limit`; `scheduler` is the 15:00 square-off and `signal` the strategy's own exit.
 
-These refusals are the limits working as you asked, so Python prints no warning about them: `limited.warnings` counts them, and `limited.refused` lists the account's (`account_trade_limit`, `account_loss_gate` and the entries its loss limit cancelled). Each limit is named in the run's assumptions (`print(limited)`).
+These refusals are the limits working as you asked, so Python prints no warning about them: `limited.warnings` counts them, and `limited.refused` lists the account's (`account_trade_limit`, `account_loss_gate` and the entries its loss limit cancelled). Each limit is named in the run's assumptions (`limited.assumptions`, and each strategy's own in `limited.strategy(name).assumptions`).
 
 A limit changes how often a strategy trades, not whether its rule has an edge: test the strategies without limits first.
 
