@@ -23,7 +23,7 @@ Three more limits for each strategy, each off unless you set it, as in a backtes
 
 * `max_trades_per_day`: at most this many entries today. An entry is an order that opens a position from flat, or a reversal; adds and exits never count. An entry counts from the moment it is sent while it works, and for good once any part of it fills. At the cap, an entry is refused with `trade_limit` and a reversal is cut to its close. Nothing is exited.
 * `daily_profit_target`: rupees. When the strategy's profit today (its closed trades plus its open position, checked on every price, as the daily loss is) reaches it, the session exits every position of that strategy and takes no new entries for it for the rest of the day. Its trades record the exit reason `daily_profit_target`.
-* `max_order_value`: rupees. An entry or add worth more (its shares times its limit price, its trigger, or the last price for a market order) is refused with `order_value_limit` before it is sent. Exits are never refused.
+* `max_order_value`: rupees. An entry or add worth more (its shares times its limit price, its trigger, or the last bar's close for a market order; with no bar yet, a market entry is refused) is refused with `order_value_limit` before it is sent. Exits are never refused.
 
 The first lesson's script with all three:
 
@@ -160,20 +160,20 @@ The trades it closes record the exit reason `account_loss_limit` (or `account_pr
 
 ## The locks
 
-A lock stops **new entries** (and adds to a position). Exits, stops and targets go on, except under the first two locks, which stop every order.
+A lock stops **new entries** (and adds to a position). Exits, stops and targets go on, except under the first two locks, which stop every order, and under a closing order refused on a shared symbol, where they wait for a read of OpenAlgo's books that agrees.
 
 | Lock | When | What it stops | Until |
 |---|---|---|---|
 | Mode change | OpenAlgo's analyzer switch changes during the session, or its semi-auto mode is turned on | Every order of the session (entries, exits, stops, changes, cancels) and every read of the books | The session ends: Ctrl+C, or five minutes after the exchange's close |
 | OpenAlgo not answering | An order call timed out or its connection dropped | Every order; the session asks OpenAlgo every 2 seconds while a stop or an exit waits, with an ERROR alert after 10 seconds | OpenAlgo answers again |
 | Dead feed | No price for any instrument for 10 seconds while the market is open | New entries of every strategy; prices of open positions are read by quote every 2 seconds, so stops, targets and the daily loss stay watched | One whole minute of prices after the feed returns |
-| Reconciliation | The session's position and OpenAlgo's books differ in two checks in a row | New entries of that strategy | The end of the session |
+| Reconciliation | The session's position and OpenAlgo's books differ in two checks in a row | New entries of that strategy (on a shared symbol, of every strategy on it, whose exits also wait until the books agree) | The end of the session |
 | Exit failed | A sale rejected five times ([Stop-Loss at the Broker](03-stop-loss-at-the-broker.md#when-the-broker-rejects-an-exit)) | New entries of that strategy | The end of the session |
 | Daily loss | The strategy's `max_daily_loss` | New entries of that strategy | The next day |
 | Daily profit target | The strategy's `daily_profit_target` | New entries of that strategy | The next day |
 | Account daily loss | `account_max_daily_loss` | New entries of every strategy | The next day |
 | Account daily profit target | `account_daily_profit_target` | New entries of every strategy | The next day |
-| Closing order refused on a shared symbol | The broker refused a stop or an exit of a symbol two strategies share ([Two Strategies on One Symbol](13-two-strategies-on-one-symbol.md#when-the-broker-refuses-a-closing-order)) | New entries of that strategy | The end of the session |
+| Closing order refused on a shared symbol | The broker refused a stop or an exit of a symbol two strategies share ([Two Strategies on One Symbol](13-two-strategies-on-one-symbol.md#when-the-broker-refuses-a-closing-order)) | New entries of that strategy; its exits and its stop wait until a read of OpenAlgo's books agrees | The end of the session |
 | Ctrl+C | The safe stop | New entries | The end of the session |
 
 `result.locks` lists the locks of the session, each with when it was set and when it lifted. A session restarted the same day locks again what lasts the day (reconciliation, exit failed, the daily loss limits and profit targets). The trade caps are not locks: an entry over a cap is refused on its own (`trade_limit`, `account_trade_limit`), and the next day starts a new count.

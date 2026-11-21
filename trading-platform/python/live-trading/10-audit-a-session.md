@@ -188,7 +188,7 @@ Every order the session sends carries its strategy's **version id**: 12 characte
 * The start banner shows each strategy's id on its **Versions** line, and the daily summary's Strategies line repeats it: `Strategies  : EmaCrossover (version eb5c92ff0caa)`.
 * `result.orders` has a `version_id` column, the id on each order.
 * `result.versions` maps each strategy's name to its **run manifest**, as a backtest records one: the engine version, the strategy's module, name, source hash and parameter values, every setting the session used, and the versions of the reference tables and charges. It never holds your API key.
-* The journal keeps every start's versions. A restart the same day with changed code or settings is allowed: its banner says that the version changed, and the event `version_changed` in the event stream records both ids.
+* The journal keeps every start's versions. A restart the same day with changed code or parameters is allowed: its banner says that the version changed, and the event `version_changed` in the event stream records both ids.
 * The `strategy` field that OpenAlgo receives with each order is still the plain class name. The version id is your own record of what placed the order, kept by the session.
 
 ### OpenAlgo's master contract, checked before the start

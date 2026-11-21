@@ -211,7 +211,7 @@ Everything in the result:
 | `strategies` | The strategy names, in the order given |
 | `results` | Each strategy's backtest `Result`, by name: its trades, metrics, contract notes and tearsheet (`result.results["EmaCrossover"].tearsheet("session.html")`), for this start of the session; its net profit adds up to its trades |
 | `portfolio` | The strategies as one account, for this start of the session: summary, metrics and the combined tearsheet ([Several Strategies in One Session](12-several-strategies-in-one-session.md#the-strategies-as-one-account-resultportfolio); openalgo 2.4.0) |
-| `versions` | Each strategy's run manifest by name: what its version id was worked out from ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order); openalgo 2.4.0) |
+| `versions` | Each strategy's run manifest by name: its code, its parameters and every setting the session used, of which the code and parameters make its version id ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order); openalgo 2.4.0) |
 | `summary`, `summary_text()` | The day's figures over every start of the day, as the daily summary; `summary.slippage` is in rupees (negative when live did better than the backtest, `None` when no fill could be compared), and `summary.slippage_not_compared` counts the MARKET fills with no bar to compare; `summary.stop_slippage` is the same for the fills of the stops at the broker |
 | `orders` | Every order the session placed through OpenAlgo, with the strategy and its version id |
 | `fill_comparison` | Each fill of the day against the price a backtest of the session's bars fills the same order at ([Audit a Session](10-audit-a-session.md#live-fills-against-a-backtest-of-the-same-bars); openalgo 2.4.0) |

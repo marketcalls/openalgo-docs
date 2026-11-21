@@ -133,7 +133,7 @@ InfyMacd            98921.35      23.86
 * `pf.correlation` compares the strategies' daily returns. Two strategies with a correlation near 0 rarely lose on the same days, which is what makes running them together smoother than either alone.
 * `pf.contribution` gives each strategy's net profit and its share of the account's, in percent. It also has the strategy's profit or loss during the account's worst drawdown, its margin when the account's margin was highest, and the orders the account refused it.
 * `pf.account` is the account itself, one row per bar: its value (`equity_rupees`), its free cash, the margin its positions block and the day's loss. `pf.equity` is its value alone.
-* `pf.trade_list()`, `pf.orders`, `pf.fills` and the other tables of a `Result` hold every strategy's rows in one table, with a `strategy` column.
+* `pf.orders`, `pf.fills` and the other tables of a `Result` hold every strategy's rows in one table, with a `strategy` column; `pf.trade_list()` is indexed by strategy and trade number.
 
 ## When does the account refuse an order?
 
@@ -328,7 +328,7 @@ The second table counts the refused entries by strategy and code; a code missing
 
 * `trade_limit`: entries a strategy wanted after its own cap for the day.
 * `account_trade_limit`: entries refused because the two strategies together had reached the account's cap.
-* `account_loss_gate`: entries after the account's loss limit fired, until the next day. The trades the limit closed show the exit reason `account_loss_limit`; `scheduler` is the 15:00 square-off and `signal` the strategy's own exit.
+* `account_loss_gate`: entries after the account's loss limit fired, until the next day. The trades the limit closed show the exit reason `account_loss_limit`; `scheduler` is the intraday square-off and `signal` the strategy's own exit.
 
 These refusals are the limits working as you asked, so Python prints no warning about them: `limited.warnings` counts them, and `limited.refused` lists the account's (`account_trade_limit`, `account_loss_gate` and the entries its loss limit cancelled). Each limit is named in the run's assumptions (`limited.assumptions`, and each strategy's own in `limited.strategy(name).assumptions`).
 
@@ -363,7 +363,7 @@ Each strategy's own page, `pf.strategy(name).tearsheet()`, is exactly the page o
 
 ## More options
 
-* **Settings for each strategy:** `capital`, `product`, `base`, `max_daily_loss`, `after_risk_exit`, `max_positions`, `drawdown_halt`, `cooldown`, `entry_from`, `entry_until`, `square_off`, `max_trades_per_day`, `daily_profit_target` and `max_order_value` take one value for every strategy, or a dict by class name that names every strategy: `capital={"EmaCrossover": 1_50_000, "InfyMacd": 50_000}`. A class attribute of the same name still wins.
+* **Settings for each strategy:** `capital`, `product`, `base`, `max_daily_loss`, `after_risk_exit`, `max_positions`, `drawdown_halt`, `cooldown`, `entry_from`, `entry_until`, `square_off`, `max_trades_per_day`, `daily_profit_target` and `max_order_value` take one value for every strategy, or a dict by class name that names every strategy: `capital={"EmaCrossover": 1_50_000, "InfyMacd": 50_000}`. A class attribute the class can also set (`product`, `max_daily_loss`, `drawdown_halt`, `cooldown`, `entry_from`, `entry_until`, `square_off`, `max_trades_per_day`, `daily_profit_target`, `max_order_value`), such as `entry_until = "14:30"`, still wins over the argument; `capital`, `base`, `after_risk_exit` and `max_positions` are set only in the call.
 * **Parameters:** `params={"EmaCrossover": {"fast": 10, "slow": 30}}` sets one strategy's parameters; a strategy left out keeps its own.
 * **Your own data:** `data=` takes a dict of bars by symbol, and each strategy gets the bars of the symbol it trades ([Data](data.md#your-own-data)).
 * **Several exchanges:** an NSE strategy, an NFO futures strategy and an MCX strategy can share one account; each keeps its own exchange's sessions and bars.

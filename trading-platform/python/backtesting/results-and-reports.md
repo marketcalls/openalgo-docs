@@ -383,7 +383,7 @@ The figures are fractions (0.6283 is 62.83 percent). Read it like this: the real
 | `strategies`, `strategy(name)`, `results` | The strategy names, and each strategy's own `Result`, measured on its own capital, with everything this page describes |
 | `summary()`, `metrics`, `performance`, `equity`, `returns`, `metrics_table()`, `monte_carlo()` | The same as for one strategy, for the account: all the strategies together, on the account's money |
 | `account` | The account at every bar: its value, free cash, margin and the day's loss |
-| `trade_list()`, `trades`, `orders`, `fills`, `events`, `risk_events`, `costs`, `contract_notes`, `final_positions` | Every strategy's table in one, with a `strategy` column |
+| `trade_list()`, `trades`, `orders`, `fills`, `events`, `risk_events`, `costs`, `contract_notes`, `final_positions` | Every strategy's table in one, with a `strategy` column (`trade_list()` is indexed by strategy and trade number instead) |
 | `refused` | The orders the account refused, with the strategy, the time and the reason |
 | `net_positions` | For a stock two strategies traded, what a broker would hold: their shares together at every change |
 | `correlation`, `contribution` | How the strategies' daily returns moved together, and each strategy's part in the account's profit |

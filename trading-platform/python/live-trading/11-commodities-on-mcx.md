@@ -125,10 +125,10 @@ The contract's terms in the SDK's tables (its lot size, tick and freeze quantity
 
 GoldBreakout buys whenever it is flat and a bar closes above the highest high of the 12 bars before it. After its stop or its target closes a trade, it can buy again at the next bar that breaks out, as many times a day as the rule holds; the level it watches moves as old bars leave the 12-bar window. Its stop and target are set once, from the buying price, and its buy is a market order at the bar's close, not an order waiting at the level. To trade once a day, or a few times, see [Does my strategy trade only once a day?](../backtesting/how-to.md#does-my-strategy-trade-only-once-a-day).
 
-## What 2.3.0 cannot trade on MCX yet
+## What openalgo 2.4.0 cannot trade on MCX yet
 
 * **Silver mini and silver micro** (`SILVERM`, `SILVERMIC`): the SDK's tables have no freeze quantity for them, and OpenAlgo configures none, so they are refused in backtests and live sessions alike: `bt.live` stops before anything is sent, and `bt.backtest` before it runs, with `ReferenceDataError: No 'mcx_contracts' reference row covers underlying=SILVERM, exchange=MCX on ... with a freeze_qty value`. The error suggests a user file for `load_tables`, but neither run reads one. A backtest can take the contract's terms you give it with `instrument=` ([Reference Data](../backtesting/support-functions/reference-data.md)); `bt.live` takes no `instrument=`. openalgo 2.4.0 adds them: its contract table has their freeze quantity, 600 kg per order, from MCX's circulars, so both can be backtested and traded live.
-* **A series of contracts** (`underlying = "CRUDEOIL"` with an expiry rule): name the contract instead, as above ([What openalgo 2.3.0 refuses](README.md#what-openalgo-230-refuses)).
+* **A series of contracts** (`underlying = "CRUDEOIL"` with an expiry rule): name the contract instead, as above ([What openalgo 2.4.0 refuses](README.md#what-openalgo-240-refuses)).
 * **Positions held overnight** (NRML): a session trades MIS only, closed before the evening close.
 
 ## What you learned

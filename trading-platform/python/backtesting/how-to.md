@@ -321,7 +321,7 @@ Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustnes
 most trades in one day: 1
 ```
 
-Over the year the breakout traded 585 times, up to 7 times on one day, and lost Rs 55,635.04: most of its trades met the 0.3 percent stop first, and the charges of so many trades add up. Held to one entry a day it traded 239 times and lost Rs 30,417.73. Fewer entries cut the charges, but the rule still loses: a limit on entries changes how often you trade, not whether the rule has an edge. For a few entries a day, count them in `self.state` the same way. From openalgo 2.4.0, `max_trades_per_day = 1` on the class does the same in one line: see [Limit the trades of a day](#limit-the-trades-of-a-day). A live session's breakout behaves the same: see [Commodities on MCX](../live-trading/11-commodities-on-mcx.md#entries-repeat).
+Over the year the breakout traded 585 times, up to 7 times on one day, and lost Rs 55,635.04: most of its trades met the 0.3 percent stop first, and the charges of so many trades add up. Held to one entry a day it traded 239 times and lost Rs 30,417.73. Fewer entries cut the charges, but the rule still loses: a limit on entries changes how often you trade, not whether the rule has an edge. For a few entries a day, count them in `self.state` the same way. From openalgo 2.4.0, `max_trades_per_day = 1` on the class does much the same in one line (it counts only entries that work or fill): see [Limit the trades of a day](#limit-the-trades-of-a-day). A live session's breakout behaves the same: see [Commodities on MCX](../live-trading/11-commodities-on-mcx.md#entries-repeat).
 
 ## Enter the moment a level is touched
 

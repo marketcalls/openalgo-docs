@@ -136,8 +136,8 @@ SessionResult(SANDBOX 2026-11-11, broker zerodha, stopped by ctrl_c, 2 closed tr
 A broker nets a long and a short of one symbol into one smaller position, which would hide both strategies' positions from every check the session makes. So on a shared symbol, the strategies stay on one side:
 
 * While one strategy holds SBIN long, or has a buy working, another strategy's entry that would make it short (a sell from flat, or a reversal) is refused with the reject code `group_other_side`. The same holds the other way round.
-* The strategy sees the refusal in `on_order`, and `result.warnings` says what to do: exit first, or trade the other side in its own session on another account.
-* While one strategy's reversal is working, the other strategies' entries wait (the lock `group_reversing`).
+* The strategy sees the refusal in `on_order` ([Writing Strategies](../backtesting/writing-strategies.md#more-options)), and `result.warnings` says what to do: exit first, or trade the other side in its own session on another account.
+* While another strategy's reversal is working, every entry of the other strategies on the symbol is refused (the lock `group_reversing`, seen in `on_order` as `live_lock`); nothing is queued to be sent later. It lifts once the reversal has filled or ended: decide again on a later bar.
 * Exits are never refused.
 
 A backtest of the same two strategies lets them hold opposite sides, with a warning that a live session would refuse the later entry ([Two strategies on one symbol](../backtesting/several-strategies.md#two-strategies-on-one-symbol)).
@@ -164,10 +164,10 @@ Two rules hold on every symbol, shared or not, and in sandbox and live mode alik
 
 ## When the broker refuses a closing order
 
-On a shared symbol, when the broker refuses a strategy's stop or exit, the session does not try again. A broker that refuses to close shares (often with a margin message) may not hold the shares the strategy believes it holds: a sale by hand, or a difference the session has not seen yet. Sending the sale again, selling at market or placing the stop again could open a position on the other side. So the session:
+On a shared symbol, when the broker refuses a strategy's stop or exit, the session does not try again until a read of OpenAlgo's books agrees with the strategies. A broker that refuses to close shares (often with a margin message) may not hold the shares the strategy believes it holds: a sale by hand, or a difference the session has not seen yet. Sending the sale again, selling at market or placing the stop again could open a position on the other side. So the session:
 
 1. holds the position: no market exit, no stop placed again and no retry;
-2. locks that strategy's entries for the rest of the session (the lock `margin_on_close`);
+2. locks that strategy's entries for the rest of the session (the lock `margin_on_close`; a restart does not keep it);
 3. reads OpenAlgo's books at once, to compare the strategies' shares with the broker's;
 4. sends one ERROR alert that names the position, the order, the broker's reason and whether a stop still works, and says what to do.
 
@@ -181,14 +181,15 @@ EXIT: EmaTrend SELL 10 SBIN NSE at 825.60 (risk_exit: Ctrl+C or a retried exit, 
 
 The ERROR line comes first: EmaTrend's position is held, it has no stop working (Ctrl+C had cancelled it to make way for the sale), and its entries are locked. The REJECT line is the refusal itself. In this run the broker did hold the 10 shares, so the next read of OpenAlgo's books agreed with the strategies, and only then did the session send the sale again; it filled (the EXIT line).
 
-When it happens to you, do what the alert says: end the session (Ctrl+C, and a second Ctrl+C if it does not end), check SBIN in OpenAlgo's position book, cancel any stop the closing lines still name, and close by hand. The session's own exits (the square-off, the kill switch, Ctrl+C) go again only after a book read agrees with the strategies, and your broker's MIS square-off near the close is the backstop. A symbol traded by one strategy alone keeps the rules of [Stop-Loss at the Broker](03-stop-loss-at-the-broker.md#when-the-broker-rejects-an-exit): a refused exit is tried again, up to five times.
+When it happens to you, do what the alert says: end the session (Ctrl+C, and a second Ctrl+C if it does not end) and wait until it has ended and printed its daily summary, since until then it may still send the held sale once a read agrees. Then check SBIN in OpenAlgo's position book, cancel any stop still named in the lines it printed for positions left open ([A second Ctrl+C](02-stopping-a-session.md#a-second-ctrlc)), and close what is left by hand. The session's own exits (the square-off, the kill switch, Ctrl+C) go again only after a book read agrees with the strategies, and your broker's MIS square-off near the close is the backstop. A symbol traded by one strategy alone keeps the rules of [Stop-Loss at the Broker](03-stop-loss-at-the-broker.md#when-the-broker-rejects-an-exit): a refused exit is sent again after 1, 2, 5 and 10 seconds, five attempts in all.
 
 ## Never trade a shared symbol by hand
 
 The rule of [Stopping a Session](02-stopping-a-session.md#never-close-or-change-a-position-by-hand-while-a-session-runs) matters even more here. A sale by hand of SBIN while the session runs changes the net position of two strategies at once, and the session has to decide whose shares you sold:
 
 * When OpenAlgo's trade book shows the sale, the session shares it out among the strategies it closes, the most recently opened position first, cuts or cancels each one's stop to what it still holds, locks the entries of every strategy on the symbol and alerts you, naming the share each strategy took. Whose profit your sale lands in is decided by that rule, not by you.
-* A difference no trade explains, or a position on the other side of the strategies, locks every strategy on the symbol and alerts you to end the session and close by hand. Nothing is sent to fix it.
+* A difference no trade explains locks every strategy on the symbol and alerts you to end the session and close by hand. Nothing is sent to fix it.
+* When OpenAlgo shows the symbol on the other side of the strategies (short while they are long, say), the session also cancels every strategy's stop on it, since a stop would only add to that position, and sends one ERROR alert for the symbol. Nothing then protects the position at the broker: end the session and close it by hand at once.
 * Until the session has seen your sale, each strategy's stop is still at the broker for shares you no longer hold: a fall to it would sell them a second time.
 
 To close a shared position yourself: end the session first, then cancel the stops its closing lines name, then close the position in OpenAlgo.

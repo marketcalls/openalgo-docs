@@ -105,7 +105,7 @@ Read it line by line:
 * **Funds available**: the cash OpenAlgo reports. In sandbox mode it is the sandbox's own funds, not your broker account's.
 * **The strategy line**: the symbol and bar interval, the capital and daily loss limit, and the MIS times: no new entries from 14:50, and the **square-off** (the forced close of every MIS position) at 15:00.
 * **Freeze quantity**: the largest single order the exchange takes for the symbol. A session never lets a position grow past it.
-* **Versions** (openalgo 2.4.0): the strategy's version id, 12 characters worked out from the class's code and its settings. Every order the session sends carries it, so you can always tell which code placed an order ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order)).
+* **Versions** (openalgo 2.4.0): the strategy's version id, 12 characters worked out from the class's source code and its parameter values; the arguments you pass to `bt.live`, such as `capital`, do not change it (`result.versions` records them). Every order the session sends carries it, so you can always tell which code placed an order ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order)).
 * **Stops**: the rule for stop-losses: an entry with `stop=` gets its stop at the broker as soon as it fills.
 * **Order rate** (openalgo 2.4.0): the most order calls the session makes in any second, 8 by default, below OpenAlgo's limit of 10 ([Limits](08-limits.md#the-order-rate)).
 * **Charges modelled with**: the cost model for brokerage and taxes (`costs="zerodha"` by default, as in a backtest), because the broker's trade book does not report charges. OpenAlgo's sandbox charges nothing, so the modelled charges show what a live trade would pay.

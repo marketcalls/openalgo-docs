@@ -18,12 +18,12 @@ OpenAlgo streams order updates (fills, rejections, cancellations) as they happen
 
 ## The order rate
 
-OpenAlgo accepts at most 10 order calls a second by default (placing, changing and cancelling orders counted together). A session sends at most `max_orders_per_second` of them in any second, 8 by default, leaving 2 for orders you place yourself on the same server:
+OpenAlgo accepts at most 10 order calls a second by default (placing, changing and cancelling orders counted together). A session sends at most `max_orders_per_second` of them in any second, 8 by default, leaving 2 for orders you place yourself on the same server, on symbols the session does not trade (never trade a session's symbol by hand while it runs: [Stopping a Session](02-stopping-a-session.md#never-close-or-change-a-position-by-hand-while-a-session-runs)):
 
 * A call beyond the limit waits its turn. Stops and exits go first, then entries and adds.
 * A call that has waited 2 seconds writes the event `order_throttled` and sends one alert per session start.
 * An entry or add that has waited 5 seconds is not sent, with the reason `order_rate`; an exit is never dropped.
-* An entry still waiting when its strategy's entries are locked (a profit target, the kill switch, Ctrl+C) is withdrawn, not placed.
+* An entry still waiting when its strategy's entries are locked, for any reason (a profit target, the kill switch, Ctrl+C, a dead feed, a reconciliation mismatch), is withdrawn, not placed.
 
 Give a higher figure only when your OpenAlgo server is set to accept more: for a server set to 20 order calls a second, `bt.live(..., max_orders_per_second=18)`. The start banner's Order rate line shows the figure.
 
@@ -34,7 +34,7 @@ Besides the daily loss limit, each strategy can have a trade cap, a profit targe
 | Setting | What it does | Refused with |
 |---|---|---|
 | `max_trades_per_day` | At most this many entries today for the strategy; nothing is exited | `trade_limit` |
-| `daily_profit_target` | At this profit today the strategy exits and takes no new entries for the day | |
+| `daily_profit_target` | At this profit today the strategy exits and takes no new entries for the day | `daily_profit_gate` |
 | `max_order_value` | An entry or add worth more is refused before it is sent; exits never are | `order_value_limit` |
 | `account_max_trades_per_day` | At most this many entries today for all strategies together | `account_trade_limit` |
 | `account_daily_profit_target` | At this profit today, together, the kill switch stops every strategy for the day | |
@@ -49,8 +49,8 @@ The session's stop on an option is a stop-limit order with its limit 5 percent b
 
 ## What openalgo 2.4.0 does not do yet
 
-* **Intraday MIS only.** No daily bars, no CNC or NRML positions held overnight, and the other strategies listed in [What openalgo 2.3.0 refuses](README.md#what-openalgo-230-refuses).
-* **One order at a time per symbol.** While an order of a symbol is working (other than its resting stop), a new entry or add on that symbol is rejected (reject code `live_in_flight`), and the strategy sees the rejection in `on_order`. A strategy that rests two limit entries on one symbol has the second rejected.
+* **Intraday MIS only.** No daily bars, no CNC or NRML positions held overnight, and the other strategies listed in [What openalgo 2.4.0 refuses](README.md#what-openalgo-240-refuses).
+* **One order at a time per strategy and symbol.** While a strategy's order of a symbol is working (other than its resting stop), a new entry or add of that strategy on that symbol is rejected (reject code `live_in_flight`), and the strategy sees the rejection in `on_order`. A strategy that rests two limit entries on one symbol has the second rejected.
 * **No position above the freeze quantity.** One stop order and one exit order must cover a position, and the exchange takes no single order above the instrument's freeze quantity, so an entry or add that would pass it is rejected (`freeze_qty`). The start banner shows each instrument's freeze quantity.
 * **One session per OpenAlgo account.** Run all the strategies of an account in one `bt.live` call.
 * **No watchdog.** If the program stops, nothing watches the targets, the trailing stop or the daily loss until you restart it; the stop at your broker protects the position meanwhile ([Restarts and Results](06-restarts-and-results.md#when-the-session-stops-unexpectedly)).
@@ -64,7 +64,6 @@ Warning: bt.live trades through pocketful, but the session matches the trade boo
 ```
 
 * **Unchecked candle times.** The SDK has checked how only some brokers (zerodha among them) stamp the time of their one-minute candles. With the others, pocketful and mstock included, the banner also warns `the timestamp convention of broker 'pocketful' is not verified in the broker table; this series passed the session calendar check`. It means the session compared the candles' times with the trading calendar (the market's hours, Indian time) and found them in place, so it goes on: there is nothing to do.
-* **Silver mini and silver micro on MCX** are refused by openalgo 2.3.0, which has no freeze quantity for them. openalgo 2.4.0 trades and backtests them, with a freeze quantity of 600 kg per order from MCX's circulars ([Commodities on MCX](11-commodities-on-mcx.md#what-230-cannot-trade-on-mcx-yet)).
 * **No replay of recorded ticks yet.** `bt.record` saves them and `bt.read_ticks` reads a day back as a table ([Recording Ticks](07-recording-ticks.md#read-the-ticks-back)), but openalgo cannot yet run a backtest or a session on them.
 
 ## What you learned

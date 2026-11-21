@@ -35,7 +35,7 @@ pip install -U openalgo
 
 4. **For live mode, alerts on your phone**: OpenAlgo's Telegram bot, linked to your OpenAlgo user ([Alerts](05-alerts.md)). A live session does not start without them.
 
-## What openalgo 2.3.0 runs live
+## What openalgo 2.4.0 runs live
 
 * A `bt.Strategy` class that decides in `on_bar`, as in a backtest, on one symbol (`symbol` and `exchange` in the class). Several strategies can run in one session, as a list, each on its own symbol; from openalgo 2.4.0 two or more may share a symbol ([Two Strategies on One Symbol](13-two-strategies-on-one-symbol.md)).
 * **Intraday only**: bars of a minute or more within the day (`"1m"`, `"5m"`, `"15m"`), built from OpenAlgo's live price feed, and the **MIS** product. MIS is the intraday product: every MIS position is closed the same day. The session stops new entries and closes what is open at the exchange's MIS times (for NSE stocks, no new entries from 14:50 and the **square-off**, the forced close, at 15:00).
@@ -43,7 +43,7 @@ pip install -U openalgo
 * A stop-loss (`stop=`), targets (`target=`, `targets=`), a trailing stop (`trail=`) and a breakeven stop (`breakeven=`). The stop-loss is held by your broker as a real order ([Stop-Loss at the Broker](03-stop-loss-at-the-broker.md)).
 * The risk settings of a backtest: `max_daily_loss` (required), `drawdown_halt`, `cooldown`, `max_positions`, `entry_from`, `entry_until`, `square_off`, plus `account_max_daily_loss` for all strategies together ([Risk Limits and Locks](04-risk-limits-and-locks.md)). From openalgo 2.4.0 also `max_trades_per_day`, `daily_profit_target` and `max_order_value` for each strategy, `account_max_trades_per_day` and `account_daily_profit_target` for all of them, each per-strategy setting by class name, and `max_orders_per_second` ([Several Strategies in One Session](12-several-strategies-in-one-session.md)).
 
-## What openalgo 2.3.0 refuses
+## What openalgo 2.4.0 refuses
 
 These raise `NotImplementedError` before anything is sent to OpenAlgo, with a message that says what to do instead:
 

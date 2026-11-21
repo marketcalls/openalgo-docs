@@ -121,7 +121,7 @@ Two orders that a backtest accepts are refused in a live session, in sandbox and
 * **`reverse=True` works live only on a MARKET order.** A reversal sent as a resting order (`reverse=True` with `price=` or `trigger_price=`) is refused before it reaches the broker, with the reject code `venue` and a warning: a short of 10 with a resting buy of 20 could fill beside the stop and end long 20 instead of long 10. Send the reversal as a market order (`self.buy(qty=20, reverse=True)` with no price), or, to reverse at a price, exit and enter separately.
 * **A take-profit goes in `target=` (or `targets=`).** A resting LIMIT, SL or SL-M order on the closing side of an open position whose stop already closes it is refused, with the reject code `venue` and a warning: the stop and that order could both fill and open the other side. With `target=`, the session watches the price itself, cancels the stop first and only then sells, as above.
 
-The strategy sees the refusal in `on_order` before its next decision, and `result.warnings` says what to do. A backtest still fills both, so a strategy that relies on them backtests well and then has these orders refused live: check `result.warnings` of your first sandbox sessions.
+The strategy sees the refusal in `on_order` before its next decision ([Writing Strategies](../backtesting/writing-strategies.md#more-options)), and `result.warnings` says what to do. A backtest still fills both, so a strategy that relies on them backtests well and then has these orders refused live: check `result.warnings` of your first sandbox sessions.
 
 ## Entries without a stop
 

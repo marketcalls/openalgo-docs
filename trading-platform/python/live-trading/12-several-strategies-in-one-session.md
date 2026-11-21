@@ -62,7 +62,7 @@ result = bt.live(
 print(result)
 ```
 
-The settings that take a dict by class name: `capital`, `max_daily_loss`, `params`, `after_risk_exit`, `max_positions`, `drawdown_halt`, `cooldown`, `entry_from`, `entry_until`, `square_off`, `max_trades_per_day`, `daily_profit_target` and `max_order_value`. A dict must name every strategy of the session and no other: a name missing or misspelt stops the call before anything is sent, with a `ConfigError` that names it. A class attribute of the same name, such as `entry_until = "14:30"` in the class, still wins over the argument. `params` alone may leave a strategy out, which then keeps its own settings.
+The settings that take a dict by class name: `capital`, `max_daily_loss`, `params`, `after_risk_exit`, `max_positions`, `drawdown_halt`, `cooldown`, `entry_from`, `entry_until`, `square_off`, `max_trades_per_day`, `daily_profit_target` and `max_order_value`. A dict must name every strategy of the session and no other: a name missing or misspelt stops the call before anything is sent, with a `ConfigError` that names it. A class attribute the class can also set (`product`, `max_daily_loss`, `drawdown_halt`, `cooldown`, `entry_from`, `entry_until`, `square_off`, `max_trades_per_day`, `daily_profit_target`, `max_order_value`), such as `entry_until = "14:30"`, still wins over the argument; `capital`, `base`, `after_risk_exit` and `max_positions` are set only in the call. A `max_daily_loss` in the class must equal the call's, or the session refuses to start. `params` alone may leave a strategy out, which then keeps its own settings.
 
 The `account_` settings are for all the strategies together. [Risk Limits and Locks](04-risk-limits-and-locks.md) explains each strategy's own limits.
 
@@ -86,7 +86,7 @@ Order rate: at most 8 order calls a second (place, modify and cancel together); 
 ```
 
 * Each strategy has its line, with its own capital, daily loss limit and last entry time, then a line of its daily limits (`at most 5 trades a day`), and each symbol's freeze quantity.
-* **Versions**: each strategy's version id, the record of exactly what code and settings placed its orders ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order)).
+* **Versions**: each strategy's version id, the record of exactly what code and parameters placed its orders ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order)).
 * **Account daily loss limit**, **Account trade cap** and **Account daily profit target**: the limits for both strategies together.
 * **Order rate**: the most order calls the session makes in any second ([Limits](08-limits.md#the-order-rate)).
 
@@ -100,7 +100,7 @@ The account has three limits of its own, each off unless you set it:
 | `account_daily_profit_target` | Their profit today, together, reaches it | Fires the kill switch |
 | `account_max_trades_per_day` | Their entries today, together, reach it | Refuses every further entry (`account_trade_limit`); nothing is closed |
 
-The day's loss or profit is the strategies' trades closed today plus their open positions, before charges, checked on every price from the live feed. The **kill switch** stops the whole account for the day:
+The day's loss or profit is the strategies' trades closed today plus their open positions, before charges (after them with `risk_basis="net"`), checked on every price from the live feed. The **kill switch** stops the whole account for the day:
 
 1. New entries of every strategy are locked for the rest of the day, and entry orders still waiting are cancelled.
 2. Each position is closed through its exit (its stop at the broker cancelled first), once OpenAlgo's position book shows the broker holding the strategy's shares. If it shows fewer, the session sends nothing and reads the book again, with an ERROR alert.

@@ -57,7 +57,7 @@ The broker's history still has its part: its candles give the strategy's warm-up
 * **The live prices are needed anyway.** Targets, the trailing stop and the daily loss limits are checked on every price, so the session follows the live feed whether or not it builds its bars from it.
 * **It keeps deciding when history is slow.** The candle checks run on their own; a slow answer from your broker's history delays the check, never a decision.
 
-`bars="candles"`, decisions on the broker's candles, is refused in openalgo 2.3.0 ([What openalgo 2.3.0 refuses](README.md#what-openalgo-230-refuses)).
+`bars="candles"`, decisions on the broker's candles, is refused in openalgo 2.3.0 ([What openalgo 2.4.0 refuses](README.md#what-openalgo-240-refuses)).
 
 ## How the session hears about its orders
 

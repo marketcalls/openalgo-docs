@@ -250,7 +250,7 @@ sbin_charts.html
 | `report.scatter` | A table, with the columns named by `x=` and `y=` | `group=` names a column whose values get their own colour and a legend |
 | `report.heatmap` | A table of numbers, rows by columns | none |
 
-Every block also takes `title=` (charts and tables need one), `subtitle=`, `width=` (`"full"`, `"half"` or `"third"`) and `percent=True`, which shows fractions as percents (0.0764 as 7.64%). A chart draws at most six lines, groups or bar series (`report.MAX_SERIES`).
+Every block also takes `title=` (charts and tables need one), `subtitle=`, `width=` (`"full"`, `"half"` or `"third"`) and, on charts, tables and tiles, `percent=True`, which shows fractions as percents (0.0764 as 7.64%). A chart draws at most six lines, groups or bar series (`report.MAX_SERIES`).
 
 ## Tables, tiles and text
 
@@ -392,7 +392,7 @@ print(pf.tearsheet("portfolio_custom.html", layout=layout))
 portfolio_custom.html
 ```
 
-Here `p` is the portfolio result, so `p.account` is the account's table. A layout written for one strategy's `Result` works on the combined page when its functions only read what both have, such as `trade_list()`, `equity`, `metrics` and `performance`.
+Here `p` is the portfolio result, so `p.account` is the account's table. A layout written for one strategy's `Result` works on the combined page when its functions only read what both have, such as `trade_list()`, `metrics` and `performance`. `equity` differs: a table with an `equity_rupees` column on a `Result`, the account's series on a portfolio result.
 
 ## Every option
 
@@ -406,7 +406,7 @@ Here `p` is the portfolio result, so `p.account` is the account's table. A layou
 | `theme` | `report.Layout` | A `report.Theme`, or `None` for the page's own colours |
 | `subtitle`, `after`, `printed` | `report.section` | A line under the heading, the section it follows, and whether Export PDF prints it |
 | `light`, `dark`, `series` | `report.Theme` | The page's colours in each look, and the colours of several series |
-| `title`, `subtitle`, `width`, `percent` | every block | Its title, a line under it, `"full"`, `"half"` or `"third"` of a row, and fractions shown as percents |
+| `title`, `subtitle`, `width` | every block | Its title, a line under it, `"full"`, `"half"` or `"third"` of a row, and fractions shown as percents |
 
 `layout=` works in the same way in `result.tearsheet()`, `pf.tearsheet()` and `report.tearsheet(performance, path, layout=...)`, the tearsheet of figures you computed yourself with `metrics.analyse` ([Metrics](support-functions/metrics.md)); there the functions receive the object you passed. With a layout, choose the starting page with `base=` and leave `mode=` out: a layout with a mode other than `"full"` raises a `ConfigError` that says so.
 
