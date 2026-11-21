@@ -250,3 +250,5 @@ Open sbin_basic.html in your browser
 * Without a path, `result.tearsheet()` returns the page as text instead of writing a file.
 * A tearsheet of figures you computed yourself: `openalgo.backtest.report.tearsheet(performance, path)`. See [Metrics](support-functions/metrics.md).
 * Every table behind the tearsheet, as pandas DataFrames: [Results and Reports](results-and-reports.md).
+* **Your own tearsheet** (openalgo 2.4.0): `result.tearsheet(path, layout=...)` hides the sections you do not need, adds charts and tables of your own, puts the sections in your order and sets the colours. The page above stays the default. See [Custom Tearsheets](custom-tearsheets.md).
+* **Several strategies on one account** (openalgo 2.4.0): the result of `bt.backtest([...])` writes one combined page for the account, with a Strategies section, a Portfolio section and a trade list naming each trade's strategy. See [The combined tearsheet](several-strategies.md#the-combined-tearsheet).

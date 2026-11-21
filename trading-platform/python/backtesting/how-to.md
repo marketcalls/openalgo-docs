@@ -321,7 +321,7 @@ Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustnes
 most trades in one day: 1
 ```
 
-Over the year the breakout traded 585 times, up to 7 times on one day, and lost Rs 55,635.04: most of its trades met the 0.3 percent stop first, and the charges of so many trades add up. Held to one entry a day it traded 239 times and lost Rs 30,417.73. Fewer entries cut the charges, but the rule still loses: a limit on entries changes how often you trade, not whether the rule has an edge. For a few entries a day, count them in `self.state` the same way. A live session's breakout behaves the same: see [Commodities on MCX](../live-trading/11-commodities-on-mcx.md#entries-repeat).
+Over the year the breakout traded 585 times, up to 7 times on one day, and lost Rs 55,635.04: most of its trades met the 0.3 percent stop first, and the charges of so many trades add up. Held to one entry a day it traded 239 times and lost Rs 30,417.73. Fewer entries cut the charges, but the rule still loses: a limit on entries changes how often you trade, not whether the rule has an edge. For a few entries a day, count them in `self.state` the same way. From openalgo 2.4.0, `max_trades_per_day = 1` on the class does the same in one line: see [Limit the trades of a day](#limit-the-trades-of-a-day). A live session's breakout behaves the same: see [Commodities on MCX](../live-trading/11-commodities-on-mcx.md#entries-repeat).
 
 ## Enter the moment a level is touched
 
@@ -417,7 +417,7 @@ print(result.tearsheet("sbin_ema.html"))  # writes the report and prints its fil
 sbin_ema.html
 ```
 
-The page has a bar of section links and a light and dark switch at the top, then the sections Overview, Performance, Risk, Monthly, Distribution, Metrics, Trades and Notes. Look first at the cumulative return chart, the worst drawdowns and the trade list. `mode="basic"` gives a shorter report. Lesson: [Read the Results](tutorial/02-read-the-results.md); every part of the report: [Results and Reports](results-and-reports.md#the-html-tearsheet).
+The page has a bar of section links and a light and dark switch at the top, then the sections Overview, Performance, Risk, Monthly, Distribution, Metrics, Trades and Notes. Look first at the cumulative return chart, the worst drawdowns and the trade list. `mode="basic"` gives a shorter report, and a [custom tearsheet](#make-a-custom-tearsheet) the sections you choose. Lesson: [Read the Results](tutorial/02-read-the-results.md); every part of the report: [Results and Reports](results-and-reports.md#the-html-tearsheet).
 
 ## Use NIFTY as the benchmark
 
@@ -654,16 +654,11 @@ A rebalance trims and tops up holdings but never closes one, so the run has no c
 
 ## Backtest several strategies together
 
-`bt.backtest` runs one strategy class at a time in openalgo 2.3.0. To see several strategies as one account, backtest each on its own capital, then add their equity curves and their trades. Here the EMA crossover on SBIN joins a MACD crossover on INFY, each with Rs 1,00,000:
+Give `bt.backtest` a list of strategy classes (openalgo 2.4.0): they run together on one account, each with its own capital, and the result holds each strategy's figures and the account's. Here the EMA crossover on SBIN joins a MACD crossover on INFY, each with Rs 1,00,000:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
-# The tools that measure equity curves, and pandas to join tables
-import pandas as pd
-from openalgo.backtest import metrics
-
-
 # The second strategy: the MACD crossover on INFY, daily bars
 class InfyMacd(bt.Strategy):
     symbol, exchange, interval = "INFY", "NSE", "D"  # INFY on NSE, daily bars
@@ -675,38 +670,84 @@ class InfyMacd(bt.Strategy):
     # on_bar runs at the close of every bar: it decides whether to buy or sell
     def on_bar(self, bar):
         if self.position.is_flat and self.macd.crossed_above(self.signal):  # no shares, MACD just rose above its signal
-            self.buy()  # buy with all the capital at the next day's open
+            self.buy()  # buy with all of this strategy's capital at the next day's open
         elif self.position.is_long and self.macd.crossed_below(self.signal):  # holding, MACD just fell below its signal
             self.exit()  # sell all the shares at the next day's open
 
 
-# Backtest it over the same years, on its own capital
-infy = bt.backtest(InfyMacd, client, start="2021-01-01", end="2026-11-11", capital=100_000)
+# Run both on one account: a list of classes, Rs 1,00,000 for each
+pf = bt.backtest([EmaCrossover, InfyMacd], client, start="2021-01-01", end="2026-11-11", capital=100_000)
+print(pf.summary())  # the account: both strategies together
 
-# Add the two equity curves and join the two trade lists, then measure them as one
-runs = {"EmaCrossover": result, "InfyMacd": infy}
-capitals = {"EmaCrossover": 100_000, "InfyMacd": 100_000}
-equity = metrics.combine_equity({name: run.equity["equity_rupees"] for name, run in runs.items()}, opening_wealth=capitals)
-trades = pd.concat([run.performance.trades for run in runs.values()])
-together = metrics.analyse(equity, trades=trades, opening_wealth=sum(capitals.values()), exchanges="NSE")
-
-# Print each strategy's net profit, then the two together. In f"{name:<13}", :<13 pads
-# the name with spaces to 13 characters, so the colons line up.
-for name, run in runs.items():
-    print(f"{name:<13}: Rs {run.metrics['net_profit']:,.2f}")
-print(f"Together     : Rs {together.metrics['net_profit']:,.2f}, max drawdown {together.metrics['max_drawdown']:.2%}")
+# Each strategy's own return, on its own capital. In f"{name:<13}", :<13 pads the name to 13 characters.
+for name in pf.strategies:
+    print(f"{name:<13}: {pf.strategy(name).metrics['total_return']:.2%}")
 ```
 
 <!-- output -->
 ```text
-EmaCrossover : Rs 53,941.09
-InfyMacd     : Rs -11,554.49
-Together     : Rs 42,386.60, max drawdown -24.55%
+Net profit   : Rs 4,14,556.58
+Return       : 207.28%
+Max drawdown : -16.34%
+Trades       : 66 (41% won), 2 still open
+Overfitting  : each strategy's own trades below; none of the account's trades together
+  EmaCrossover : too few trades to judge (13 closed, 30 needed)
+  InfyMacd     : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational
+EmaCrossover : 315.64%
+InfyMacd     : 98.92%
 ```
 
-Together the two made Rs 42,386.60 on Rs 2,00,000: SBIN's gain less INFY's loss. Their largest fall together, 24.55 percent, was smaller than either's alone (29.35 percent for SBIN and 40.22 percent for INFY, each on its own capital), because the two did not fall at the same times.
+The summary is the account's, on Rs 2,00,000 (the two capitals together). Its Overfitting line checks each strategy's own trades, never the two strategies' trades together. `pf.strategy("InfyMacd")` is the full `Result` of one strategy, with its trade list and tearsheet, and `pf.tearsheet("portfolio.html")` writes one report for the account.
 
-What this cannot show: the two runs never share their cash, so a buy one strategy makes never leaves the other short of money, as it would in one account; and no limit covers them together, such as a loss limit for the whole account. In a live session one `bt.live` call runs several strategies in one account, with `account_max_daily_loss` for all of them ([Risk Limits and Locks](../live-trading/04-risk-limits-and-locks.md#several-strategies-and-the-accounts-limit)). More on measuring equity curves: [metrics](support-functions/metrics.md#several-strategies).
+The two strategies share the account's cash: an order its strategy can pay for but the account cannot is refused (`account_margin`). With the default account, the sum of the capitals, that happens only when other strategies' open losses have used up the account's free cash; `account_capital=` models an account with less money than its strategies together. Two strategies may also trade the same stock, each keeping its own position. More: [Several Strategies on One Account](several-strategies.md); in a live session: [Several Strategies in One Session](../live-trading/12-several-strategies-in-one-session.md).
+
+## Limit the trades of a day
+
+Daily limits (openalgo 2.4.0) stop a strategy for the rest of the day. `max_trades_per_day` caps the entries of a session day, and `daily_profit_target` closes every position and stops new entries once the day's profit reaches it:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+# The 15-minute crossover, at most one entry a day and done for the day after a profit of Rs 1,000
+limited = bt.backtest(IntradayEma, client, start="2025-11-01", end="2026-11-11", capital=100_000,
+                      max_trades_per_day=1, daily_profit_target=1_000)
+print(limited.summary())
+print(limited.trade_list()["exit_reason"].value_counts().to_dict())  # daily_profit_target: closed by the target
+```
+
+<!-- output -->
+```text
+Net profit   : Rs -16,008.88
+Return       : -16.01%
+Max drawdown : -17.81%
+Trades       : 72 (44% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+{'scheduler': 43, 'daily_profit_target': 16, 'signal': 13}
+```
+
+An entry over the cap is rejected with `trade_limit` and one after the target with `daily_profit_gate`, both in `result.orders`; the cap never closes a position. `max_order_value=50_000` refuses an entry or add worth more than Rs 50,000 (`order_value_limit`), and never an exit. Each can be a class attribute instead. Lesson: [Orders and Risk](orders-and-risk.md#how-do-i-limit-the-trades-of-a-day); for several strategies, the account's own trade cap, profit target and loss limit: [Daily limits](several-strategies.md#daily-limits-for-each-strategy-and-for-the-account).
+
+## Make a custom tearsheet
+
+The built-in tearsheet stays the default. A layout (openalgo 2.4.0) changes it: hide sections, add your own charts, and set the order and colours:
+
+<!-- requires-server -->
+<!-- continues -->
+```python
+from openalgo.backtest import report  # the tearsheet's pieces
+
+# The full page without Monthly and Distribution, plus a chart of how long each trade was held
+holding = report.section("Holding time", report.histogram(lambda r: r.trade_list()["days_held"], title="Days held per trade"))
+layout = report.Layout(hide=("monthly", "distribution"), sections=(holding,))
+print(result.tearsheet("sbin_custom.html", layout=layout))
+```
+
+<!-- output -->
+```text
+sbin_custom.html
+```
+
+`lambda r: ...` is a small function that takes the result and returns the data to draw, so the same layout works for every run. Every option, each with an example: [Custom Tearsheets](custom-tearsheets.md).
 
 ## Export everything to a spreadsheet or CSV
 

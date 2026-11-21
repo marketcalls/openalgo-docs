@@ -122,7 +122,7 @@ trade
 * `mae` (maximum adverse excursion) is the lowest the trade's profit stood at while it was open, before charges: zero or negative. Trade 1 was at worst Rs 594 down.
 * `mfe` (maximum favourable excursion) is the highest: zero or positive. Trade 1 was at best Rs 50,044.50 up but closed Rs 27,000 up: it gave back almost half. A winner that gives back most of its best open profit says the exits are late.
 * `mae_pct` and `mfe_pct` are the same in percent of the trade's capital at work (entry price x the most shares held). Compare `mae_pct` with your stop-loss. With no stop, nothing closed trade 2 earlier: it fell 8.54 percent and closed at that loss when the EMAs crossed back.
-* Only prices the trade could have seen while it was open count: the high and low of each day it was held through, and its own fill prices. In live trading (`bt.live`, not available yet) the same engine works these figures out from the ticks it receives, so a trade there can show a smaller MAE or MFE when the broker's feed did not show every price.
+* Only prices the trade could have seen while it was open count: the high and low of each day it was held through, and its own fill prices. In live trading ([`bt.live`](../live-trading/README.md)) the same engine works these figures out from the ticks it receives, so a trade there can show a smaller MAE or MFE when the broker's feed did not show every price.
 * `slippage` is what slippage cost the trade's buy and sell, in rupees. It is already in the prices and in the P&L, so it is shown, never taken off again.
 
 `result.metrics` sums these up (`average_mae`, `average_mfe`, `edge_ratio`, `profit_kept`, `trading_cost` and more), and the tearsheet draws them: see [The Tearsheet](tearsheet.md#trades).
@@ -374,6 +374,24 @@ percentile
 
 The figures are fractions (0.6283 is 62.83 percent). Read it like this: the real run made 53.94 percent. With its days reshuffled, the middle (50th percentile) return was 62.83 percent and the middle drawdown 32.64 percent, but one path in twenty lost 31.29 percent or more. Results this spread out need a long test before you trust them. The tearsheet does not draw this study; call `result.monte_carlo()` for it.
 
+## Several strategies in one result
+
+`bt.backtest([EmaCrossover, InfyMacd], client, ...)`, a list of strategies run together on one account (openalgo 2.4.0), returns a **portfolio result** (`bt.PortfolioResult`) instead of a `Result`. It holds:
+
+| Member | What it holds |
+|---|---|
+| `strategies`, `strategy(name)`, `results` | The strategy names, and each strategy's own `Result`, measured on its own capital, with everything this page describes |
+| `summary()`, `metrics`, `performance`, `equity`, `returns`, `metrics_table()`, `monte_carlo()` | The same as for one strategy, for the account: all the strategies together, on the account's money |
+| `account` | The account at every bar: its value, free cash, margin and the day's loss |
+| `trade_list()`, `trades`, `orders`, `fills`, `events`, `risk_events`, `costs`, `contract_notes`, `final_positions` | Every strategy's table in one, with a `strategy` column |
+| `refused` | The orders the account refused, with the strategy, the time and the reason |
+| `net_positions` | For a stock two strategies traded, what a broker would hold: their shares together at every change |
+| `correlation`, `contribution` | How the strategies' daily returns moved together, and each strategy's part in the account's profit |
+| `assumptions`, `warnings`, `manifest` | The account's settings and every strategy's, in words; what you should know; the record of the run |
+| `tearsheet(path)`, `to_csv(folder)`, `to_excel(path)` | The combined HTML report, and every table saved |
+
+[Several Strategies on One Account](several-strategies.md) shows each of them on a real run.
+
 ## More options
 
 * **Every table:** `result.trade_list()` (the closed trades as a trader reads them), `result.trades` (the same trades in the engine's own columns: `entry_units`, `net_pnl_rupees`, `initial_risk_rupees`, `mae_rupees`, `mfe_rupees`, `mae_pct`, `mfe_pct`, `slippage_rupees` and more), `fills`, `orders`, `positions` (each change of a position), `equity`, `returns`, `events` and `risk_events`, `final_positions`, `stale_marks`, `costs` (each fill's charges, item by item), `contract_notes`, `skipped` (orders sized to zero), `settlements` and `rolls` (futures), `r_summary`, `gross_pnl` and `to_dataframes()`. Times are IST; columns ending in `_ts` are the same instants in UTC nanoseconds; prices are rupees; quantities are units, never lots.
@@ -381,7 +399,7 @@ The figures are fractions (0.6283 is 62.83 percent). Read it like this: the real
 * **The series behind the figures:** `result.performance` has `drawdown`, `drawdown_details(top=5)`, `monthly_returns`, `rolling`, `horizons` (the last 1, 3 and 6 months, 1, 3 and 5 years), `losing_streaks`, `cost_breakdown` and, with a benchmark, `benchmark_comparison("year")`. See [Metrics](support-functions/metrics.md).
 * **How the figures are measured:** from your capital and the open of the first bar; drawdowns are zero or negative; returns are per trading session, annualised with the real number of NSE sessions in each year (not a fixed 252); CAGR uses 365.25 calendar days a year and is not given for runs shorter than 28 days; net figures are after every charge; trade figures count closed trades only; the risk-free rate is 0 (pass one to [`metrics.analyse`](support-functions/metrics.md)); a figure the data cannot define is NaN.
 * **Other benchmarks:** `benchmark=("SENSEX", "BSE_INDEX")`, or a pandas Series of your own closes. A day without a benchmark close stays missing; it is never filled from a neighbouring day.
-* **The tearsheet:** without a path, `result.tearsheet()` returns the HTML as text. It reads in full with scripts turned off in the browser (the theme switch, sorting and paging then do nothing). `openalgo.backtest.report.tearsheet(performance, path)` renders figures you computed yourself.
+* **The tearsheet:** `layout=` makes a [custom tearsheet](custom-tearsheets.md), with the sections, charts and colours you choose. Without a path, `result.tearsheet()` returns the HTML as text. It reads in full with scripts turned off in the browser (the theme switch, sorting and paging then do nothing). `openalgo.backtest.report.tearsheet(performance, path)` renders figures you computed yourself.
 * **Monte Carlo options:** `resample="trades"` reshuffles the closed trades instead of the days; `bust=-0.30` and `goal=0.25` add the share of paths that fell 30 percent or gained 25 percent. See [Metrics](support-functions/metrics.md#monte-carlo).
 * **R-multiples:** for trades opened with a stop-loss, `result.trades` has `initial_risk_rupees` (what the stop would have lost) and `r_multiple` (the trade's net P&L in units of that risk), and `result.r_summary` sums them up.
 * **Where a run ends:** at the earliest of `end`, the close of the last bar in the data and the present; a warning names the end used. A position still open is reported open, valued at the last close. `bt.backtest(now="2026-11-11 12:00")` fixes the present, to replay a day as it stood at noon.

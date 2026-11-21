@@ -1,6 +1,6 @@
 # Orders and Risk
 
-This page shows how a strategy buys and sells, and how to protect a trade with a stop-loss, a target or a trailing stop. It then covers the intraday square-off, a daily loss limit, and why an order can be rejected.
+This page shows how a strategy buys and sells, and how to protect a trade with a stop-loss, a target or a trailing stop. It then covers the intraday square-off, the daily limits (a loss limit, a trade cap and a profit target), and why an order can be rejected.
 
 ## The strategy this page builds on
 
@@ -309,6 +309,48 @@ Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustnes
 
 `daily_loss_limit` is a trade closed by the limit. Here the result was worse than without it: a loss limit caps a bad day, it does not pick better trades. The day's loss counts the trades closed that session plus the open position's loss.
 
+## How do I limit the trades of a day?
+
+Three more daily limits (new in openalgo 2.4.0), each off unless you set it, on the class or as a `bt.backtest` argument of the same name:
+
+* `max_trades_per_day`: at most this many entries in a session day. An **entry** is an order that opens a position from flat, or a reversal; adds, exits, stops and targets never count. An entry at the cap is rejected with `trade_limit`, and a reversal at the cap is cut to its close: the position is closed and the new side is not opened. Nothing is ever exited by the cap.
+* `daily_profit_target`: rupees. When the day's profit (measured as the daily loss is: the trades closed that session plus the open position) reaches it, the engine closes every position (exit reason `daily_profit_target`) and refuses new entries with `daily_profit_gate` until the next session: a good day is banked.
+* `max_order_value`: rupees. An entry or an add worth more (its shares times its limit price, its trigger, or the last close for a market order) is rejected with `order_value_limit`. Exits are never refused, so a position can always be closed.
+
+The intraday crossover, at most two entries a day, and done for the day after a profit of Rs 1,000:
+
+<!-- continues -->
+<!-- requires-server -->
+```python
+# The intraday crossover with two daily limits.
+class Capped(Intraday):
+    max_trades_per_day = 2  # at most 2 entries a day
+    daily_profit_target = 1_000  # rupees: stop for the day once the day's profit reaches it
+
+
+# Run it over the same year, count how the trades ended and why orders were refused.
+capped = bt.backtest(Capped, client, start="2025-11-01", end="2026-11-11", capital=100_000)
+print(capped.summary())
+print(capped.trade_list()["exit_reason"].value_counts().to_dict())
+refused = capped.orders[capped.orders["status"] == "Rejected"]  # the orders the engine refused
+print(refused["reject_code"].value_counts().to_dict())
+```
+
+<!-- output -->
+```text
+Net profit   : Rs -16,690.98
+Return       : -16.69%
+Max drawdown : -18.48%
+Trades       : 73 (44% won)
+Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
+{'scheduler': 43, 'daily_profit_target': 16, 'signal': 14}
+{'entry_window': 10}
+```
+
+In the second line, `daily_profit_target` counts the trades the profit target closed. The last line counts the refused orders by their code: `trade_limit` for an entry over the cap, `daily_profit_gate` for an entry after the target was reached that day, and `entry_window` for an entry after the 14:50 cut-off. A code that is missing refused nothing in this run. Refusals by a limit you set are the limit working, so Python prints no warning about them; `result.warnings` counts them once, and the limits are named in the run's assumptions (`print(capped)`). As with the loss limit, a cap changes how often the strategy trades, not whether its rule has an edge.
+
+For several strategies on one account, the same limits work for each strategy, and the account has its own trade cap, profit target and loss limit for all of them together: see [Daily limits for each strategy and for the account](several-strategies.md#daily-limits-for-each-strategy-and-for-the-account).
+
 ## Can I sell short?
 
 A **short** sells first and buys back later, to gain from a fall. Use `self.sell()` to open it and `self.exit()` to buy it back, or `self.target(qty=-50)` to be short 50 shares in one call.
@@ -357,7 +399,7 @@ print([line for line in intraday.warnings if "entry window" in line][0])
 8 of 57 orders were outside the MIS entry window, each session's open to 15:00 from 2025-11-03 to 2026-07-31; 14:50 from 2026-08-03 to 2026-11-11 (entry_from to entry_until), and were not placed, as the window intends (reject_code 'entry_window' in result.orders), the first decided at 2026-02-20 15:15 IST
 ```
 
-The same holds for every rule you set yourself: the entry window (`entry_from`, `entry_until`), the daily loss limit, `cooldown`, `max_positions`, a drawdown halt and size caps. An order refused or skipped for any other reason, such as not enough cash, a delivery short or a share that costs more than the money for the order, is one you did not plan for. You do not have to look for those: the run then ends with one `OrdersNotPlacedWarning` that Python prints under your output, for example:
+The same holds for every rule you set yourself: the entry window (`entry_from`, `entry_until`), the daily loss limit, the daily trade cap, profit target and order value cap, `cooldown`, `max_positions`, a drawdown halt and size caps. An order refused or skipped for any other reason, such as not enough cash, a delivery short or a share that costs more than the money for the order, is one you did not plan for. You do not have to look for those: the run then ends with one `OrdersNotPlacedWarning` that Python prints under your output, for example:
 
 ```text
 OrdersNotPlacedWarning: 1 of 106 orders was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
@@ -374,6 +416,9 @@ The codes you will meet most:
 | `product_rule` | A CNC sell that would open a short, or an order for an index |
 | `tick` | A limit or trigger price that is not a whole number of ticks |
 | `daily_loss_gate` | An entry after the daily loss limit was hit, until the next session |
+| `trade_limit` | An entry after `max_trades_per_day` entries that day |
+| `daily_profit_gate` | An entry after the daily profit target was reached, until the next session |
+| `order_value_limit` | An entry or add worth more than `max_order_value` |
 
 ## What do the exit reasons mean?
 
@@ -386,7 +431,8 @@ Every closed trade has an `exit_reason` in `result.trade_list()` (and every fill
 | `leg_target` | A target |
 | `scheduler` | The intraday square-off |
 | `eod` | An intraday position closed at the session's last close, because no bar came at or after the square-off |
-| `daily_loss_limit`, `drawdown_halt`, `time_exit` | A strategy risk rule |
+| `daily_loss_limit`, `daily_profit_target`, `drawdown_halt`, `time_exit` | A strategy risk rule |
+| `account_loss_limit`, `account_profit_target` | The account's daily loss limit or profit target, in a run of [several strategies](several-strategies.md#daily-limits-for-each-strategy-and-for-the-account) |
 | `roll`, `expiry` | A futures roll to the next contract, or a contract settled at expiry (see [Futures](futures.md)) |
 
 ## More options
@@ -405,4 +451,4 @@ Every closed trade has an `exit_reason` in `result.trade_list()` (and every fill
 * **Fill timing:** a market order fills at the next base bar's open (with 1-minute data, the next minute); an order placed by a timer fills at the open the timer ran at.
 * **Scale-in limits:** `max_adds`, `max_position`, `min_spacing`, `max_risk` and `allow_averaging_down` cap the adds of a strategy that buys again while long; a breach is rejected with `scale_in_limit`.
 * **More risk rules:** `drawdown_halt`, `cooldown`, `max_positions`, `max_hold`, `entry_from` and `risk_basis="net"`; `on_risk_event(self, event)` is called when one fires.
-* **Rarer reject codes:** `quantity_rule` (not whole lots), `freeze_qty` (above the exchange's freeze quantity), `market_closed` (the fill would fall in a later session), `cooldown`, `max_positions`, `halted` (after `drawdown_halt`), `reverse_not_allowed`, `scale_in_limit`, `instrument_unknown`.
+* **Rarer reject codes:** `quantity_rule` (not whole lots), `freeze_qty` (above the exchange's freeze quantity), `market_closed` (the fill would fall in a later session), `cooldown`, `max_positions`, `halted` (after `drawdown_halt`), `reverse_not_allowed`, `scale_in_limit`, `instrument_unknown`; and in a run of [several strategies](several-strategies.md) on one account, `account_margin` (the account's free cash did not cover the order), `account_loss_gate`, `account_profit_gate` and `account_trade_limit` (the account's daily limits).

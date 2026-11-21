@@ -1,7 +1,7 @@
 # Backtesting
 
 {% hint style="warning" %}
-**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.3.0 or later: run `pip install -U openalgo` to update. MAE and MFE, slippage and the trading cost, the fill and delay settings that test a strategy against worse fills, the robustness checks, the optimizer's overfitting figures and walk-forward are new in 2.3.0.
+**Preview.** The backtesting engine (`openalgo.backtest`) is new in OpenAlgo Python SDK 2.1.0. It is a preview: names and arguments may still change in later releases. These pages describe openalgo 2.3.0 or later: run `pip install -U openalgo` to update. MAE and MFE, slippage and the trading cost, the fill and delay settings that test a strategy against worse fills, the robustness checks, the optimizer's overfitting figures and walk-forward are new in 2.3.0. Several strategies on one account, the daily trade and profit limits, the order value cap and custom tearsheets are new in 2.4.0.
 {% endhint %}
 
 ## What is a backtest?
@@ -100,6 +100,8 @@ The reference pages explain every option:
 * [Futures](futures.md): futures by underlying, the roll, mark to market and settlement.
 * [Data](data.md): OpenAlgo history, your own data, quality checks, splits and bonuses.
 * [Results and Reports](results-and-reports.md) and [Metric Definitions](metric-definitions.md): every table, figure and the tearsheet.
+* [Several Strategies on One Account](several-strategies.md): a list of strategies in one backtest, the account's figures, two strategies on one stock, and daily limits for each strategy and for the account (openalgo 2.4.0).
+* [Custom Tearsheets](custom-tearsheets.md): choose the tearsheet's sections, add your own charts and tables, and set its colours (openalgo 2.4.0).
 * [Optimization](optimization.md): parameter sweeps.
 * [Robustness and Overfitting](robustness.md): seventeen checks that help you catch a strategy fitted to the past.
 * [Walk-Forward](walk-forward.md): pick the settings on the past, trade them on the next stretch, and repeat.
@@ -117,7 +119,7 @@ The following are part of the design but not built. Each raises `NotImplementedE
 
 * `bt.live` in openalgo 2.2.1: trading a strategy through OpenAlgo comes with openalgo 2.3.0.
 * `fill="close"` (filling at the decision bar's close). `fill="next_close"`, the next bar's close, is available from 2.3.0.
-* Several strategies in one run, pairs (`pair_long`, `pair_short`), the portfolio runner `bt.rebalance` (to rebalance today, call `self.rebalance` inside a strategy, as in [Equal-Weight Rebalancing](examples/rebalancing.md)), and strategies declared on a `universe`.
+* Pairs (`pair_long`, `pair_short`), the portfolio runner `bt.rebalance` (to rebalance today, call `self.rebalance` inside a strategy, as in [Equal-Weight Rebalancing](examples/rebalancing.md)), and strategies declared on a `universe`.
 * Condition strategies on a futures underlying, and other intervals of a futures series (`self.data[underlying, "15m"]`).
 * The combined rules `combined_stop`, `combined_target`, `lock_profit` and `trail_sl_to_entry`, and `after_risk_exit="allow_reentry"`, which only they would use.
 * `cooldown` and `max_hold` given as a time (such as `"30m"`); give them in bars.
