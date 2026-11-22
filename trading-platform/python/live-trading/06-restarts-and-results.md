@@ -48,7 +48,7 @@ From a run against a simulated OpenAlgo server: the first lesson's session bough
 OpenAlgo is in SANDBOX mode: orders are simulated
 Restarted: start 2 of the day
 EmaCrossover: resumed 10 SBIN NSE, stop 26111136724000 confirmed at the broker
-Funds available: Rs 10,000,000.00
+Funds available: Rs 1,00,00,000.00
 ```
 
 The second line counts the starts of the day; the third names each position it resumed, and its stop. The rest of the banner and the countdown follow as usual, with one difference: a Ctrl+C during this countdown is the safe stop, not a free exit. With the default `on_stop="flatten"` it sells the resumed positions at market; with `on_stop="keep"` it leaves them with their stops ([Stopping a Session](02-stopping-a-session.md#ctrlc-the-safe-stop)).

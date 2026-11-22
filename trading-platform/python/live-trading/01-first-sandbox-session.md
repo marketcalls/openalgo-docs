@@ -77,8 +77,8 @@ The session first checks everything it needs (the API key, the broker login, fun
 
 ```text
 OpenAlgo is in SANDBOX mode: orders are simulated
-Funds available: Rs 10,000,000.00
-EmaCrossover: NSE:SBIN every 1m, capital Rs 100,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
+Funds available: Rs 1,00,00,000.00
+EmaCrossover: NSE:SBIN every 1m, capital Rs 1,00,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
 SBIN: freeze quantity none
 Versions: EmaCrossover eb5c92ff0caa
 Stops: an entry placed with stop= gets its stop at the broker as it fills; one placed without has none until a trail or breakeven sets one (allowed), and the session warns at the first such position

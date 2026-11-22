@@ -138,9 +138,9 @@ print(result)
 `class InfyCrossover(EmaCrossover)` makes a copy of the strategy with only the symbol changed. The start banner lists each strategy, the version id of each ([Audit a Session](10-audit-a-session.md#the-strategy-version-on-every-order)) and the account's limit (from a run of this code against a simulated OpenAlgo server):
 
 ```text
-EmaCrossover: NSE:SBIN every 1m, capital Rs 100,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
+EmaCrossover: NSE:SBIN every 1m, capital Rs 1,00,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
 SBIN: freeze quantity none
-InfyCrossover: NSE:INFY every 1m, capital Rs 100,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
+InfyCrossover: NSE:INFY every 1m, capital Rs 1,00,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
 INFY: freeze quantity none
 Versions: EmaCrossover eb5c92ff0caa, InfyCrossover 80a539947c70
 Stops: an entry placed with stop= gets its stop at the broker as it fills; one placed without has none until a trail or breakeven sets one (allowed), and the session warns at the first such position

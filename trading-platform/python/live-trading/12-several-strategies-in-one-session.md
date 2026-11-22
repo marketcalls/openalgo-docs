@@ -71,7 +71,7 @@ The `account_` settings are for all the strategies together. [Risk Limits and Lo
 From a run of this code against a simulated OpenAlgo server, the banner names each strategy with its own settings, then the account's:
 
 ```text
-EmaCrossover: NSE:SBIN every 1m, capital Rs 100,000.00, daily loss limit Rs 2,000.00, entries until 14:30 IST, square-off 15:00 IST
+EmaCrossover: NSE:SBIN every 1m, capital Rs 1,00,000.00, daily loss limit Rs 2,000.00, entries until 14:30 IST, square-off 15:00 IST
 EmaCrossover daily limits: at most 5 trades a day
 SBIN: freeze quantity none
 InfyCrossover: NSE:INFY every 1m, capital Rs 50,000.00, daily loss limit Rs 1,000.00, entries until 14:00 IST, square-off 15:00 IST

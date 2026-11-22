@@ -78,8 +78,8 @@ SANDBOX (EmaCrossover): Test alert from bt.live: the alerts of this session reac
 
 ```text
 SANDBOX (EmaCrossover): OpenAlgo is in SANDBOX mode: orders are simulated
-Funds available: Rs 10,000,000.00
-EmaCrossover: NSE:SBIN every 1m, capital Rs 100,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
+Funds available: Rs 1,00,00,000.00
+EmaCrossover: NSE:SBIN every 1m, capital Rs 1,00,000.00, daily loss limit Rs 2,000.00, entries until 14:50 IST, square-off 15:00 IST
 SBIN: freeze quantity none
 ```
 
