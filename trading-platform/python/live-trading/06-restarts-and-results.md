@@ -243,4 +243,4 @@ The daily summary (`result.summary`, `summary_text()`) counts the whole trading 
 
 ## Next lesson
 
-[Recording Ticks](07-recording-ticks.md): keep the live prices with `bt.record`, and read them back with `bt.read_ticks`.
+[Recording and Replaying Ticks](07-recording-ticks.md): keep the live prices with `bt.record`, read them back with `bt.read_ticks`, and replay a recorded day in a backtest.

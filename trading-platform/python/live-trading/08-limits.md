@@ -64,7 +64,7 @@ Warning: bt.live trades through pocketful, but the session matches the trade boo
 ```
 
 * **Unchecked candle times.** The SDK has checked how only some brokers (zerodha among them) stamp the time of their one-minute candles. With the others, pocketful and mstock included, the banner also warns `the timestamp convention of broker 'pocketful' is not verified in the broker table; this series passed the session calendar check`. It means the session compared the candles' times with the trading calendar (the market's hours, Indian time) and found them in place, so it goes on: there is nothing to do.
-* **No replay of recorded ticks yet.** `bt.record` saves them and `bt.read_ticks` reads a day back as a table ([Recording Ticks](07-recording-ticks.md#read-the-ticks-back)), but openalgo cannot yet run a backtest or a session on them.
+* **No tick-by-tick replay yet.** A recorded day can be backtested on 1-minute bars made from its ticks ([Replay a recorded day in a backtest](07-recording-ticks.md#replay-a-recorded-day-in-a-backtest)), but openalgo cannot yet match orders against each recorded tick, or run a live session on recorded ticks.
 
 ## What you learned
 

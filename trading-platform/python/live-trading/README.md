@@ -76,7 +76,7 @@ Arguments of `bt.backtest` that mean nothing live (`data`, `start`, `end`, `slip
 4. [Risk Limits and Locks](04-risk-limits-and-locks.md): capital, the daily loss limits, the kill switch, and the locks that stop new entries.
 5. [Alerts](05-alerts.md): every alert on your phone through OpenAlgo's Telegram bot, and what each asks you to do.
 6. [Restarts and Results](06-restarts-and-results.md): a crash and a restart on the same day, and everything in the result.
-7. [Recording Ticks](07-recording-ticks.md): keep the live prices with `bt.record`, and read them back with `bt.read_ticks`.
+7. [Recording and Replaying Ticks](07-recording-ticks.md): keep the live prices with `bt.record`, read them back with `bt.read_ticks`, and replay a recorded day in a backtest.
 8. [Limits](08-limits.md): the OpenAlgo server version you need, the order rate, and what openalgo cannot do yet.
 9. [Inside a Session](09-inside-a-session.md): when the strategy decides and the protection acts, why nothing repaints, why bars are built from live prices, how order updates arrive, how exits and trailing stops work, from a real sandbox session on MCX.
 10. [Audit a Session](10-audit-a-session.md): check the session's orders, fills and stops against OpenAlgo's books with a short script, and read the audit record: the version on every order and each fill against a backtest of the same bars.

@@ -337,7 +337,7 @@
     * [Risk Limits and Locks](trading-platform/python/live-trading/04-risk-limits-and-locks.md)
     * [Alerts](trading-platform/python/live-trading/05-alerts.md)
     * [Restarts and Results](trading-platform/python/live-trading/06-restarts-and-results.md)
-    * [Recording Ticks](trading-platform/python/live-trading/07-recording-ticks.md)
+    * [Recording and Replaying Ticks](trading-platform/python/live-trading/07-recording-ticks.md)
     * [Limits](trading-platform/python/live-trading/08-limits.md)
     * [Inside a Session](trading-platform/python/live-trading/09-inside-a-session.md)
     * [Audit a Session](trading-platform/python/live-trading/10-audit-a-session.md)

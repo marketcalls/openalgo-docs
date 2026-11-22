@@ -1,4 +1,4 @@
-# Recording Ticks
+# Recording and Replaying Ticks
 
 {% hint style="info" %}
 **New in openalgo 2.3.0.** Live trading (`bt.live`) and tick recording (`bt.record`, `bt.read_ticks`) need openalgo 2.3.0 or later: run `pip install -U openalgo`. With an earlier version `bt.live` raises `NotImplementedError`.
@@ -87,11 +87,81 @@ From the recording above (the simulated feed sent each tick's trade time and the
 * A recording still running is left out until it ends, and one a crash stopped until the next recording of the day finishes its files; `ticks.attrs["left_out"]` lists their recording numbers.
 * A day with nothing recorded raises `DataError`, naming the folder it looked in. So does an instrument you name that was not recorded that day, and a damaged file (named). A day that is not a date, instruments it cannot use, or a `cache_dir` that is not an absolute path raise `ConfigError`.
 
+## Replay a recorded day in a backtest
+
+To test a strategy on a day you recorded, make its ticks into 1-minute bars with pandas and give them to `bt.backtest` as your own data. It needs no OpenAlgo server, so you can replay the day as often as you like, with any strategy:
+
+```python
+# Load the backtesting engine (bt) and the indicators (ta).
+import openalgo.backtest as bt
+from openalgo import ta
+
+# Read back the SBIN ticks recorded on 11 November 2026, in the order they arrived.
+ticks = bt.read_ticks("2026-11-11", [{"exchange": "NSE", "symbol": "SBIN"}])
+prices = ticks.set_index("exchange_time")
+
+# One-minute bars: the open, high, low and close of the price, stamped at the minute's start.
+bars = prices["ltp"].resample("1min").ohlc()
+# The feed sends the day's volume so far: each minute's volume is what it added.
+bars["volume"] = prices["volume"].diff().clip(lower=0).resample("1min").sum()
+bars = bars.dropna()
+print(len(bars), "bars")
+print(bars.head(3).to_string())
+
+
+# The strategy: buy 100 shares when the 5-minute EMA crosses above the 10-minute one,
+# and sell when it crosses back below.
+class ReplayEma(bt.Strategy):
+    symbol, exchange, interval = "SBIN", "NSE", "1m"
+
+    def init(self):
+        self.fast = self.I(ta.ema, self.close, 5)
+        self.slow = self.I(ta.ema, self.close, 10)
+
+    def on_bar(self, bar):
+        if self.position.is_flat and self.fast.crossed_above(self.slow):
+            self.buy(qty=100)
+        elif self.position.is_long and self.fast.crossed_below(self.slow):
+            self.exit()
+
+
+# Backtest it on the recorded day's bars: no OpenAlgo server is needed.
+replay = bt.backtest(ReplayEma, data={"SBIN": bars}, start="2026-11-11", end="2026-11-11",
+                     capital=100_000)
+print(replay.summary())
+print(replay.trade_list()[["entry_time", "entry_price", "exit_time", "exit_price", "net_pnl"]].to_string(index=False))
+```
+
+From a recording of SBIN on a simulated feed, one tick a second from 09:15 to 15:30, whose price swings 3 rupees each way around Rs 820 every two hours:
+
+```text
+375 bars
+                             open    high     low   close  volume
+exchange_time
+2026-11-11 09:15:00+05:30  820.00  820.15  820.00  820.15  2950.0
+2026-11-11 09:16:00+05:30  820.15  820.30  820.15  820.30  3000.0
+2026-11-11 09:17:00+05:30  820.30  820.45  820.30  820.45  3000.0
+Net profit   : Rs 443.67
+Return       : 0.44%
+Max drawdown : -0.09%
+Trades       : 1 (100% won)
+Overfitting  : too few trades to judge (1 closed, 30 needed)
+               entry_time  entry_price                 exit_time  exit_price  net_pnl
+2026-11-11 12:52:00+05:30        817.4 2026-11-11 13:52:00+05:30       822.6   443.67
+```
+
+* `bars` holds one row a minute, stamped at the minute's start, which is how the engine reads your own bars. A minute without a tick has no bar.
+* `volume`: the feed sends the day's volume so far, so each minute's volume is what it added. An `"ltp"` recording has no `volume` column: leave that line out.
+* The strategy's first decision comes a little after 11:20: its 10-bar EMA needs 128 bars to warm up, and the recording holds only the day's own bars. Record from the open, or the strategy may make no decision at all; the run then warns `WarmUpWarning` and names the bars it needs. To decide from the open, put earlier days' 1-minute bars (from Historify, say) before the recorded ones.
+* This replays the day's bars, not each tick: stops, targets and orders at a level are checked on the 1-minute bars, as in any backtest. Matching orders against every recorded tick is not in openalgo 2.4.0.
+* The bars follow `exchange_time`. On a feed whose trade times are the OpenAlgo server's own clock (see `exchange_time` above), they follow that clock.
+
 ## What you learned
 
 * `bt.record(client, instruments, until="15:30")` saves every tick of a day, which a broker cannot give you later.
 * It writes to disk every second, uses its own feed connection, and can run beside a live session.
 * `bt.read_ticks(day)` reads a recorded day back as a table, in the order the ticks arrived.
+* A recorded day made into 1-minute bars replays in `bt.backtest`, with no server; record from the open so the indicators can warm up.
 
 ## Next
 
