@@ -8,6 +8,14 @@
 
 A backtest runs a trading strategy on past prices to show what it would have done. You write the rules once in Python (when to buy, when to sell), and OpenAlgo replays years of real prices from your broker through them, with Indian charges, slippage and session times applied to every trade. You see the profit, the worst fall along the way and every trade before you risk any money.
 
+## How it fits together
+
+<figure><img src="../../../.gitbook/assets/openalgo-backtest-live-architecture.png" alt="The architecture of OpenAlgo backtesting and live trading. At the top, one OpenAlgo server box holds Historify, the history API, the WebSocket feed, funds and books, the order API and the sandbox; it connects through the broker API to the broker server's OMS and RMS, which connects to the exchanges NSE, BSE, NFO, BFO, MCX and CDS. Below, the OpenAlgo Python SDK: the data layer takes history, the feed and your own data; the strategies, the fund and the risk layer work with the engine in the Rust kernel; the live session sends orders to OpenAlgo's order API and reconciles with its funds and books; the engine's results go to the reports and the journal"><figcaption><p>bt.backtest and bt.live share one Rust engine; OpenAlgo connects it to your broker</p></figcaption></figure>
+
+Your OpenAlgo server supplies the data: your broker's candles through the history API, the history you have stored in Historify, and live ticks through its WebSocket feed. You can also backtest your own DataFrames or CSV files, with no server at all.
+
+Inside the SDK, `bt.backtest` and `bt.live` drive the same engine, written in Rust. Your strategy decides in `on_bar`; the engine fills its orders with Indian charges, slippage and margin; and the fund keeps one account when several strategies run together. A backtest ends in a `Result` (a `PortfolioResult` for several strategies) with its tearsheet. A live session sends the same orders to OpenAlgo's order API instead ([Live Trading](../live-trading/README.md)).
+
 ## What you need
 
 1. **A running OpenAlgo server**, logged in to your broker. See [Getting Started](../../../getting-started/README.md) to install it.

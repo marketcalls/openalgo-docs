@@ -10,6 +10,12 @@ You wrote a strategy and backtested it on past prices. Live trading runs **the s
 
 A **session** is one run of `bt.live`. It trades until the end of the trading day, or until you press **Ctrl+C**, and then returns a result: the trades, the day's profit or loss, and what happened along the way.
 
+## How a live session fits together
+
+<figure><img src="../../../.gitbook/assets/openalgo-backtest-live-architecture.png" alt="The architecture of OpenAlgo backtesting and live trading. At the top, one OpenAlgo server box holds Historify, the history API, the WebSocket feed, funds and books, the order API and the sandbox; it connects through the broker API to the broker server's OMS and RMS, which connects to the exchanges NSE, BSE, NFO, BFO, MCX and CDS. Below, the OpenAlgo Python SDK: the data layer takes history, the feed and your own data; the strategies, the fund and the risk layer work with the engine in the Rust kernel; the live session sends orders to OpenAlgo's order API and reconciles with its funds and books; the engine's results go to the reports and the journal"><figcaption><p>bt.backtest and bt.live share one Rust engine; OpenAlgo connects it to your broker</p></figcaption></figure>
+
+A live session runs your strategy on the same engine as a backtest, on bars it builds from OpenAlgo's WebSocket ticks. Each order passes the session's risk checks and goes to OpenAlgo's order API. In sandbox (analyzer) mode OpenAlgo's sandbox fills the orders and holds the stop-loss. In live mode OpenAlgo sends them through your broker's API to its order and risk systems (OMS and RMS) and on to the exchange, and the stop-loss rests at your broker as a real order. The session checks its positions against OpenAlgo's funds and books every 30 seconds.
+
 ## Sandbox first
 
 OpenAlgo has two modes, chosen by its **analyzer switch**:
