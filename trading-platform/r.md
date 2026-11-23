@@ -193,7 +193,7 @@ response <- client$optionsorder(
   offset = "ATM",
   option_type = "CE",
   action = "BUY",
-  quantity = 75,
+  quantity = 65,
   price_type = "MARKET",
   product = "NRML",
   splitsize = 0
@@ -227,7 +227,7 @@ response <- client$optionsorder(
   offset = "ITM4",
   option_type = "PE",
   action = "BUY",
-  quantity = 75,
+  quantity = 65,
   price_type = "MARKET",
   product = "NRML",
   splitsize = 0
@@ -261,7 +261,7 @@ response <- client$optionsorder(
   offset = "OTM5",
   option_type = "CE",
   action = "BUY",
-  quantity = 75,
+  quantity = 65,
   price_type = "MARKET",
   product = "NRML",
   splitsize = 0
@@ -296,10 +296,10 @@ response <- client$optionsmultiorder(
   exchange = "NSE_INDEX",
   expiry_date = "25NOV25",
   legs = list(
-    list(offset = "OTM6", option_type = "CE", action = "BUY", quantity = 75),
-    list(offset = "OTM6", option_type = "PE", action = "BUY", quantity = 75),
-    list(offset = "OTM4", option_type = "CE", action = "SELL", quantity = 75),
-    list(offset = "OTM4", option_type = "PE", action = "SELL", quantity = 75)
+    list(offset = "OTM6", option_type = "CE", action = "BUY", quantity = 65),
+    list(offset = "OTM6", option_type = "PE", action = "BUY", quantity = 65),
+    list(offset = "OTM4", option_type = "CE", action = "SELL", quantity = 65),
+    list(offset = "OTM4", option_type = "PE", action = "SELL", quantity = 65)
   )
 )
 print(response)
@@ -365,9 +365,9 @@ response <- client$optionsmultiorder(
   underlying = "NIFTY",
   exchange = "NSE_INDEX",
   legs = list(
-    list(offset = "ITM2", option_type = "CE", action = "BUY", quantity = 75,
+    list(offset = "ITM2", option_type = "CE", action = "BUY", quantity = 65,
          expiry_date = "30DEC25"),
-    list(offset = "OTM2", option_type = "CE", action = "SELL", quantity = 75,
+    list(offset = "OTM2", option_type = "CE", action = "SELL", quantity = 65,
          expiry_date = "25NOV25")
   )
 )
@@ -1161,7 +1161,7 @@ chain <- client$optionchain(
         "prev_close": 496.8,
         "volume": 1195800,
         "oi": 0,
-        "lotsize": 75,
+        "lotsize": 65,
         "tick_size": 0.05
       },
       "pe": {
@@ -1176,7 +1176,7 @@ chain <- client$optionchain(
         "prev_close": 215.95,
         "volume": 1832700,
         "oi": 0,
-        "lotsize": 75,
+        "lotsize": 65,
         "tick_size": 0.05
       }
     },
@@ -1194,7 +1194,7 @@ chain <- client$optionchain(
         "prev_close": 433.2,
         "volume": 2994000,
         "oi": 0,
-        "lotsize": 75,
+        "lotsize": 65,
         "tick_size": 0.05
       },
       "pe": {
@@ -1209,7 +1209,7 @@ chain <- client$optionchain(
         "prev_close": 251.9,
         "volume": 3745350,
         "oi": 0,
-        "lotsize": 75,
+        "lotsize": 65,
         "tick_size": 0.05
       }
     }
@@ -1251,7 +1251,7 @@ print(response)
     "freeze_qty": 1800,
     "id": 57900,
     "instrumenttype": "FUT",
-    "lotsize": 75,
+    "lotsize": 65,
     "name": "NIFTY",
     "strike": 0,
     "symbol": "NIFTY30DEC25FUT",
@@ -1281,7 +1281,7 @@ print(response)
       "expiry": "30-DEC-25",
       "freeze_qty": 1800,
       "instrumenttype": "CE",
-      "lotsize": 75,
+      "lotsize": 65,
       "name": "NIFTY",
       "strike": 26000,
       "symbol": "NIFTY30DEC2526000CE",
@@ -1295,7 +1295,7 @@ print(response)
       "expiry": "29-DEC-26",
       "freeze_qty": 1800,
       "instrumenttype": "CE",
-      "lotsize": 75,
+      "lotsize": 65,
       "name": "NIFTY",
       "strike": 26000,
       "symbol": "NIFTY29DEC2626000CE",
@@ -1332,7 +1332,7 @@ print(response)
   "status": "success",
   "symbol": "NIFTY30DEC2525950CE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -1359,7 +1359,7 @@ print(response)
   "status": "success",
   "symbol": "NIFTY30DEC2526100PE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -1386,7 +1386,7 @@ print(response)
   "status": "success",
   "symbol": "NIFTY30DEC2526150CE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -1899,7 +1899,7 @@ response <- client$margin(positions = list(
     action = "BUY",
     product = "NRML",
     pricetype = "MARKET",
-    quantity = "75"
+    quantity = "65"
   ),
   list(
     symbol = "NIFTY25NOV2525500CE",
@@ -1907,7 +1907,7 @@ response <- client$margin(positions = list(
     action = "SELL",
     product = "NRML",
     pricetype = "MARKET",
-    quantity = "75"
+    quantity = "65"
   )
 ))
 print(response)
@@ -2590,7 +2590,7 @@ print(response)
       "symbol": "NIFTY04SEP2624500CE",
       "exchange": "NFO",
       "action": "SELL",
-      "qty": 75,
+      "qty": 65,
       "product": "NRML",
       "pricetype": "MARKET",
       "price": 0.0,
@@ -2598,7 +2598,7 @@ print(response)
       "placed_at": "2026-08-30T03:50:11.610224+00:00",
       "filled_at": "2026-08-30T03:50:12.004881+00:00",
       "avg_fill_price": 142.35,
-      "filled_qty": 75,
+      "filled_qty": 65,
       "reject_reason": null
     }
   ]

@@ -255,7 +255,7 @@ else
     
     /* Order Parameters */
     trade_mode = ParamList("Trade Mode", "BUY|SELL", 0);
-    LotSize = Param("Lot Size", 75, 1, 10000, 1);
+    LotSize = Param("Lot Size", 65, 1, 10000, 1);
     quantity = Param("Quantity (Lots)", 1, 0, 100) * LotSize;
     pricetype = ParamList("Order Type", "MARKET|LIMIT|SL|SL-M", 0);
     product = ParamList("Product", "NRML|MIS", 0);
@@ -1057,7 +1057,7 @@ exchange = ParamList("Exchange","NFO|BFO|MCX",0);
 Symbol = ParamStr("Underlying Symbol(Data Vendor Symbol)","NIFTY"); // Amibroker Symbol - Data Vendors Symbol
 iInterval= Param("Strike Interval",50,1,10000,1);
 StrikeCalculation = Paramlist("Strike Calculation","PREVOPEN|PREVCLOSE|TODAYSOPEN",0);
-LotSize = Param("Lot Size",75,1,10000,1);
+LotSize = Param("Lot Size",65,1,10000,1);
 
 ATMoffsetCE = Param("ATM CE Offset",0,-40,40,1);
 ITMoffsetCE = Param("ITM CE Offset",-2,-40,-1,1);

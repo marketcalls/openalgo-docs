@@ -122,7 +122,7 @@ const response = await client.optionsOrder({
     offset: "ATM",
     optionType: "CE",
     action: "BUY",
-    quantity: 75,
+    quantity: 65,
     priceType: "MARKET",
     product: "NRML",
     splitSize: 0
@@ -156,7 +156,7 @@ const response = await client.optionsOrder({
     offset: "ITM4",
     optionType: "PE",
     action: "BUY",
-    quantity: 75,
+    quantity: 65,
     priceType: "MARKET",
     product: "NRML",
     splitSize: 0
@@ -190,7 +190,7 @@ const response = await client.optionsOrder({
     offset: "OTM5",
     optionType: "CE",
     action: "BUY",
-    quantity: 75,
+    quantity: 65,
     priceType: "MARKET",
     product: "NRML",
     splitSize: 0
@@ -225,10 +225,10 @@ const response = await client.optionsMultiOrder({
     exchange: "NSE_INDEX",
     expiryDate: "25NOV25",
     legs: [
-        { offset: "OTM6", optionType: "CE", action: "BUY", quantity: 75 },
-        { offset: "OTM6", optionType: "PE", action: "BUY", quantity: 75 },
-        { offset: "OTM4", optionType: "CE", action: "SELL", quantity: 75 },
-        { offset: "OTM4", optionType: "PE", action: "SELL", quantity: 75 }
+        { offset: "OTM6", optionType: "CE", action: "BUY", quantity: 65 },
+        { offset: "OTM6", optionType: "PE", action: "BUY", quantity: 65 },
+        { offset: "OTM4", optionType: "CE", action: "SELL", quantity: 65 },
+        { offset: "OTM4", optionType: "PE", action: "SELL", quantity: 65 }
     ]
 });
 console.log(response);
@@ -294,8 +294,8 @@ const response = await client.optionsMultiOrder({
     underlying: "NIFTY",
     exchange: "NSE_INDEX",
     legs: [
-        { offset: "ITM2", optionType: "CE", action: "BUY", quantity: 75, expiryDate: "30DEC25" },
-        { offset: "OTM2", optionType: "CE", action: "SELL", quantity: 75, expiryDate: "25NOV25" }
+        { offset: "ITM2", optionType: "CE", action: "BUY", quantity: 65, expiryDate: "30DEC25" },
+        { offset: "OTM2", optionType: "CE", action: "SELL", quantity: 65, expiryDate: "25NOV25" }
     ]
 });
 console.log(response);
@@ -822,7 +822,7 @@ console.log(response);
                 "prev_close": 496.8,
                 "volume": 1195800,
                 "oi": 0,
-                "lotsize": 75,
+                "lotsize": 65,
                 "tick_size": 0.05
             },
             "pe": {
@@ -837,7 +837,7 @@ console.log(response);
                 "prev_close": 215.95,
                 "volume": 1832700,
                 "oi": 0,
-                "lotsize": 75,
+                "lotsize": 65,
                 "tick_size": 0.05
             }
         },
@@ -855,7 +855,7 @@ console.log(response);
                 "prev_close": 433.2,
                 "volume": 2994000,
                 "oi": 0,
-                "lotsize": 75,
+                "lotsize": 65,
                 "tick_size": 0.05
             },
             "pe": {
@@ -870,7 +870,7 @@ console.log(response);
                 "prev_close": 251.9,
                 "volume": 3745350,
                 "oi": 0,
-                "lotsize": 75,
+                "lotsize": 65,
                 "tick_size": 0.05
             }
         }
@@ -900,7 +900,7 @@ console.log(response);
     "freeze_qty": 1800,
     "id": 57900,
     "instrumenttype": "FUT",
-    "lotsize": 75,
+    "lotsize": 65,
     "name": "NIFTY",
     "strike": 0,
     "symbol": "NIFTY30DEC25FUT",
@@ -930,7 +930,7 @@ console.log(response);
       "expiry": "30-DEC-25",
       "freeze_qty": 1800,
       "instrumenttype": "CE",
-      "lotsize": 75,
+      "lotsize": 65,
       "name": "NIFTY",
       "strike": 26000,
       "symbol": "NIFTY30DEC2526000CE",
@@ -965,7 +965,7 @@ console.log(response);
   "status": "success",
   "symbol": "NIFTY30DEC2525950CE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -992,7 +992,7 @@ console.log(response);
   "status": "success",
   "symbol": "NIFTY30DEC2526100PE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -1019,7 +1019,7 @@ console.log(response);
   "status": "success",
   "symbol": "NIFTY30DEC2526150CE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -1234,7 +1234,7 @@ const response = await client.margin({
             action: "BUY",
             product: "NRML",
             priceType: "MARKET",
-            quantity: "75"
+            quantity: "65"
         },
         {
             symbol: "NIFTY25NOV2525500CE",
@@ -1242,7 +1242,7 @@ const response = await client.margin({
             action: "SELL",
             product: "NRML",
             priceType: "MARKET",
-            quantity: "75"
+            quantity: "65"
         }
     ]
 });

@@ -148,7 +148,7 @@ response, err := client.OptionsOrder(
     "ATM",          // offset
     "CE",           // optionType
     "BUY",          // action
-    75,             // quantity
+    65,             // quantity
     "MARKET",       // priceType
     "NRML",         // product
     0,              // splitSize
@@ -186,7 +186,7 @@ response, err := client.OptionsOrder(
     "ITM4",         // offset
     "PE",           // optionType
     "BUY",          // action
-    75,             // quantity
+    65,             // quantity
     "MARKET",       // priceType
     "NRML",         // product
     0,              // splitSize
@@ -219,10 +219,10 @@ To place Iron Condor options order (Same Expiry)
 
 ```go
 legs := []openalgo.OptionsLeg{
-    {Offset: "OTM6", OptionType: "CE", Action: "BUY", Quantity: "75"},
-    {Offset: "OTM6", OptionType: "PE", Action: "BUY", Quantity: "75"},
-    {Offset: "OTM4", OptionType: "CE", Action: "SELL", Quantity: "75"},
-    {Offset: "OTM4", OptionType: "PE", Action: "SELL", Quantity: "75"},
+    {Offset: "OTM6", OptionType: "CE", Action: "BUY", Quantity: "65"},
+    {Offset: "OTM6", OptionType: "PE", Action: "BUY", Quantity: "65"},
+    {Offset: "OTM4", OptionType: "CE", Action: "SELL", Quantity: "65"},
+    {Offset: "OTM4", OptionType: "PE", Action: "SELL", Quantity: "65"},
 }
 
 response, err := client.OptionsMultiOrder(
@@ -295,8 +295,8 @@ To place Diagonal Spread options order (Different Expiry)
 
 ```go
 legs := []openalgo.OptionsLeg{
-    {Offset: "ITM2", OptionType: "CE", Action: "BUY", Quantity: "75", ExpiryDate: "30DEC25"},
-    {Offset: "OTM2", OptionType: "CE", Action: "SELL", Quantity: "75", ExpiryDate: "25NOV25"},
+    {Offset: "ITM2", OptionType: "CE", Action: "BUY", Quantity: "65", ExpiryDate: "30DEC25"},
+    {Offset: "OTM2", OptionType: "CE", Action: "SELL", Quantity: "65", ExpiryDate: "25NOV25"},
 }
 
 response, err := client.OptionsMultiOrder(
@@ -839,7 +839,7 @@ fmt.Println(response)
                 "prev_close": 496.8,
                 "volume": 1195800,
                 "oi": 0,
-                "lotsize": 75,
+                "lotsize": 65,
                 "tick_size": 0.05
             },
             "pe": {
@@ -854,7 +854,7 @@ fmt.Println(response)
                 "prev_close": 215.95,
                 "volume": 1832700,
                 "oi": 0,
-                "lotsize": 75,
+                "lotsize": 65,
                 "tick_size": 0.05
             }
         }
@@ -885,7 +885,7 @@ fmt.Println(response)
     "freeze_qty": 1800,
     "id": 57900,
     "instrumenttype": "FUT",
-    "lotsize": 75,
+    "lotsize": 65,
     "name": "NIFTY",
     "strike": 0,
     "symbol": "NIFTY30DEC25FUT",
@@ -919,7 +919,7 @@ fmt.Println(response)
       "expiry": "30-DEC-25",
       "freeze_qty": 1800,
       "instrumenttype": "CE",
-      "lotsize": 75,
+      "lotsize": 65,
       "name": "NIFTY",
       "strike": 26000,
       "symbol": "NIFTY30DEC2526000CE",
@@ -952,7 +952,7 @@ fmt.Println(response)
   "status": "success",
   "symbol": "NIFTY30DEC2525950CE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -977,7 +977,7 @@ fmt.Println(response)
   "status": "success",
   "symbol": "NIFTY30DEC2526100PE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -1002,7 +1002,7 @@ fmt.Println(response)
   "status": "success",
   "symbol": "NIFTY30DEC2526150CE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -1219,7 +1219,7 @@ positions := []openalgo.MarginPosition{
         Action:    "BUY",
         Product:   "NRML",
         PriceType: "MARKET",
-        Quantity:  "75",
+        Quantity:  "65",
     },
     {
         Symbol:    "NIFTY25NOV2525500CE",
@@ -1227,7 +1227,7 @@ positions := []openalgo.MarginPosition{
         Action:    "SELL",
         Product:   "NRML",
         PriceType: "MARKET",
-        Quantity:  "75",
+        Quantity:  "65",
     },
 }
 

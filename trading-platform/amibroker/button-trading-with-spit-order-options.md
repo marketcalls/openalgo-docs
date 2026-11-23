@@ -25,7 +25,7 @@ exchange   = ParamList("Exchange","NFO|BFO|MCX",0);
 Symbol     = ParamStr("Underlying Symbol(Data Vendor Symbol)","NIFTY");
 iInterval  = Param("Strike Interval",50,1,10000,1);
 StrikeCalculation = Paramlist("Strike Calculation","TODAYSOPEN",0);
-LotSize    = Param("Lot Size",75,1,10000,1);
+LotSize    = Param("Lot Size",65,1,10000,1);
 
 ATMoffsetCE = Param("ATM CE Offset",0,-40,40,1);
 ITMoffsetCE = Param("ITM CE Offset",-2,-40,-1,1);

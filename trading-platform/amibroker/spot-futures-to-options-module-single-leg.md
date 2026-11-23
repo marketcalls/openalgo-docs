@@ -214,7 +214,7 @@ else
     PE_offset = ParamStr("PE Offset", "ATM");   /* ATM, ITM1, ITM2, OTM1, OTM2, etc. */
     
     /* Order Settings */
-    LotSize = Param("Lot Size", 75, 1, 10000, 1);
+    LotSize = Param("Lot Size", 65, 1, 10000, 1);
     quantity = Param("Quantity (Lots)", 1, 0, 100) * LotSize;
     pricetype = ParamList("Order Type", "MARKET", 0);
     product = ParamList("Product", "NRML|MIS", 0);
@@ -729,7 +729,7 @@ exchange = ParamList("Exchange","NFO|BFO|MCX",0);
 Symbol = ParamStr("Underlying Symbol","NIFTY");
 iInterval= Param("Strike Interval",50,1,10000,1);
 StrikeCalculation = Paramlist("Strike Calculation","PREVOPEN|PREVCLOSE|TODAYSOPEN",0);
-LotSize = Param("Lot Size",25,1,10000,1);
+LotSize = Param("Lot Size",65,1,10000,1);
 
 offsetCE = Param("CE Offset",0,-40,40,1);
 offsetPE = Param("PE Offset",0,-40,40,1);

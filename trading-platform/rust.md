@@ -140,7 +140,7 @@ let response = client.options_order(
     "ATM",          // offset
     "CE",           // option_type
     "BUY",          // action
-    "75",           // quantity
+    "65",           // quantity
     "MARKET",       // pricetype
     "NRML",         // product (options accept MIS or NRML only)
     Some("28OCT25"),// expiry_date (Option<&str>, DDMMMYY)
@@ -175,7 +175,7 @@ let response = client.options_order(
     "ITM4",         // offset
     "PE",           // option_type
     "BUY",          // action
-    "75",           // quantity
+    "65",           // quantity
     "MARKET",       // pricetype
     "NRML",         // product
     Some("28OCT25"),// expiry_date
@@ -208,10 +208,10 @@ To place Iron Condor options order (Same Expiry)
 use openalgo::OptionsLeg;
 
 let legs = vec![
-    OptionsLeg::new("OTM6", "CE", "BUY", "75"),
-    OptionsLeg::new("OTM6", "PE", "BUY", "75"),
-    OptionsLeg::new("OTM4", "CE", "SELL", "75"),
-    OptionsLeg::new("OTM4", "PE", "SELL", "75"),
+    OptionsLeg::new("OTM6", "CE", "BUY", "65"),
+    OptionsLeg::new("OTM6", "PE", "BUY", "65"),
+    OptionsLeg::new("OTM4", "CE", "SELL", "65"),
+    OptionsLeg::new("OTM4", "PE", "SELL", "65"),
 ];
 
 let response = client.options_multi_order(
@@ -764,7 +764,7 @@ println!("{:?}", response);
                 "prev_close": 496.8,
                 "volume": 1195800,
                 "oi": 0,
-                "lotsize": 75,
+                "lotsize": 65,
                 "tick_size": 0.05
             },
             "pe": {
@@ -779,7 +779,7 @@ println!("{:?}", response);
                 "prev_close": 215.95,
                 "volume": 1832700,
                 "oi": 0,
-                "lotsize": 75,
+                "lotsize": 65,
                 "tick_size": 0.05
             }
         }
@@ -806,7 +806,7 @@ println!("{:?}", response);
     "freeze_qty": 1800,
     "id": 57900,
     "instrumenttype": "FUT",
-    "lotsize": 75,
+    "lotsize": 65,
     "name": "NIFTY",
     "strike": 0,
     "symbol": "NIFTY30DEC25FUT",
@@ -836,7 +836,7 @@ println!("{:?}", response);
       "expiry": "30-DEC-25",
       "freeze_qty": 1800,
       "instrumenttype": "CE",
-      "lotsize": 75,
+      "lotsize": 65,
       "name": "NIFTY",
       "strike": 26000,
       "symbol": "NIFTY30DEC2526000CE",
@@ -874,7 +874,7 @@ println!("{:?}", response);
   "status": "success",
   "symbol": "NIFTY30DEC2525950CE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -904,7 +904,7 @@ println!("{:?}", response);
   "status": "success",
   "symbol": "NIFTY30DEC2526100PE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -934,7 +934,7 @@ println!("{:?}", response);
   "status": "success",
   "symbol": "NIFTY30DEC2526150CE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -1125,8 +1125,8 @@ println!("{:?}", response);
 use openalgo::MarginPosition;
 
 let positions = vec![
-    MarginPosition::new("NIFTY25NOV2525000CE", "NFO", "BUY", "NRML", "MARKET", "75"),
-    MarginPosition::new("NIFTY25NOV2525500CE", "NFO", "SELL", "NRML", "MARKET", "75"),
+    MarginPosition::new("NIFTY25NOV2525000CE", "NFO", "BUY", "NRML", "MARKET", "65"),
+    MarginPosition::new("NIFTY25NOV2525500CE", "NFO", "SELL", "NRML", "MARKET", "65"),
 ];
 
 let response = client.margin(positions).await?;

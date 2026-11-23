@@ -48,7 +48,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/strategy/orders \
       "symbol": "NIFTY04SEP2624500CE",
       "exchange": "NFO",
       "action": "SELL",
-      "qty": 75,
+      "qty": 65,
       "product": "NRML",
       "pricetype": "MARKET",
       "price": 0.0,
@@ -57,7 +57,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/strategy/orders \
       "placed_at": "2026-08-30T03:50:11.610224+00:00",
       "filled_at": "2026-08-30T03:50:12.004881+00:00",
       "avg_fill_price": 142.35,
-      "filled_qty": 75,
+      "filled_qty": 65,
       "reject_reason": null
     }
   ]

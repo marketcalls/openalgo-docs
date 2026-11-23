@@ -150,7 +150,7 @@ Now you can start creating workflows.
     "action": "SELL",
     "pricetype": "MARKET",
     "product": "MIS",
-    "quantity": "75"
+    "quantity": "65"
 }
 ```
 
@@ -164,7 +164,7 @@ Now you can start creating workflows.
   * action: "SELL" for the short straddle.
   * pricetype: "MARKET" for a market order.
   * product: "MIS" for intraday trading.
-  * quantity: Total units, not lots. Set it to a whole multiple of the contract lot size. The example uses "75", one NIFTY lot at the time of writing. Confirm the current lot size before you go live.
+  * quantity: Total units, not lots. Set it to a whole multiple of the contract lot size. The example uses "65", one NIFTY lot at the time of writing. Confirm the current lot size before you go live.
 
 **4. Add the Second HTTP Request Node (SELL NIFTY Put Option)**
 
@@ -179,7 +179,7 @@ Now you can start creating workflows.
     "action": "SELL",
     "pricetype": "MARKET",
     "product": "MIS",
-    "quantity": "75"
+    "quantity": "65"
 }
 ```
 

@@ -289,7 +289,7 @@ else
     expiry_leg2 = ParamStr("Expiry Date Leg2 (DDMMMYY)", "30DEC25");
     
     /* Lot Size */
-    LotSize = Param("Lot Size", 75, 1, 10000, 1);
+    LotSize = Param("Lot Size", 65, 1, 10000, 1);
     
     /* ========== BUY SIGNAL LEG CONFIGURATION ========== */
     /* Leg 1 (Buy Signal) */

@@ -526,7 +526,7 @@ Places an option order by strike offset rather than by resolved symbol.
 | `SplitSize`    | No       | 0        | Split into chunks of this size, 0 for no split     |
 
 ```
-=oa_optionsorder("MyStrategy", "NIFTY", "NSE_INDEX", "25AUG26", "ATM", "CE", "BUY", 75)
+=oa_optionsorder("MyStrategy", "NIFTY", "NSE_INDEX", "25AUG26", "ATM", "CE", "BUY", 65)
 ```
 
 ---

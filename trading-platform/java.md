@@ -522,7 +522,7 @@ System.out.println("Status: " + response.get("status").getAsString());
     "name": "NIFTY",
     "exchange": "NFO",
     "instrumenttype": "FUT",
-    "lotsize": 75,
+    "lotsize": 65,
     "expiry": "30-DEC-25",
     "freeze_qty": 1800
   }
@@ -547,7 +547,7 @@ System.out.println("Status: " + response.get("status").getAsString());
       "symbol": "NIFTY30DEC2526000CE",
       "exchange": "NFO",
       "expiry": "30-DEC-25",
-      "lotsize": 75
+      "lotsize": 65
     }
   ]
 }
@@ -622,7 +622,7 @@ System.out.println("Symbol: " + response.get("symbol").getAsString());
   "status": "success",
   "symbol": "NIFTY30DEC2525950CE",
   "exchange": "NFO",
-  "lotsize": 75,
+  "lotsize": 65,
   "tick_size": 5,
   "freeze_qty": 1800,
   "underlying_ltp": 25966.4
@@ -699,7 +699,7 @@ positions.add(Map.of(
     "action", "BUY",
     "product", "NRML",
     "pricetype", "MARKET",
-    "quantity", "75"
+    "quantity", "65"
 ));
 positions.add(Map.of(
     "symbol", "NIFTY25NOV2525500CE",
@@ -707,7 +707,7 @@ positions.add(Map.of(
     "action", "SELL",
     "product", "NRML",
     "pricetype", "MARKET",
-    "quantity", "75"
+    "quantity", "65"
 ));
 
 JsonObject response = client.margin(positions);
@@ -738,7 +738,7 @@ JsonObject response = client.optionsorder(
     "ATM",        // offset
     "CE",         // optionType
     "BUY",        // action
-    75            // quantity
+    65            // quantity
 );
 System.out.println("Status: " + response.get("status").getAsString());
 System.out.println("OrderId: " + response.get("orderid").getAsString());
@@ -769,7 +769,7 @@ Map<String, Object> leg1 = new HashMap<>();
 leg1.put("offset", "ATM");
 leg1.put("option_type", "CE");
 leg1.put("action", "BUY");
-leg1.put("quantity", 75);
+leg1.put("quantity", 65);
 leg1.put("product", "NRML");
 legs.add(leg1);
 
@@ -778,7 +778,7 @@ Map<String, Object> leg2 = new HashMap<>();
 leg2.put("offset", "OTM1");
 leg2.put("option_type", "CE");
 leg2.put("action", "SELL");
-leg2.put("quantity", 75);
+leg2.put("quantity", 65);
 leg2.put("product", "NRML");
 legs.add(leg2);
 

@@ -42,7 +42,7 @@ SQUAREOFF_MINUTE = 15         # 15 for 3:15 PM
 MAX_STRADDLES_PER_DAY = 3     # Daily limit on rolling straddles
 ROLLING_THRESHOLD_PCT = 0.4   # Threshold for rolling (in percent, e.g. 0.4 means 0.4%)
 
-LOT_SIZE = 75
+LOT_SIZE = 65
 STRATEGY = "rolling_straddle"
 SYMBOL = "NIFTY"
 EXPIRY = "19JUN25"
@@ -157,7 +157,7 @@ except (KeyboardInterrupt, SystemExit):
 | `SQUAREOFF_MINUTE`      | Minute to force square-off all legs               | `15`        |
 | `MAX_STRADDLES_PER_DAY` | Max straddles allowed per day                     | `3`         |
 | `EXPIRY`                | Expiry date for all option legs (OpenAlgo format) | `"19JUN25"` |
-| `LOT_SIZE`              | Number of options per leg (NIFTY = 75 as of 2025) | `75`        |
+| `LOT_SIZE`              | Number of options per leg (NIFTY = 65 as of 2026) | `65`        |
 
 ***
 
