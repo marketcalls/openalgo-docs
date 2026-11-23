@@ -53,23 +53,23 @@ print(end.round(2).to_string(index=False))
 
 <!-- output -->
 ```text
-Net profit   : Rs 79,625.79
-Return       : 79.63%
-Max drawdown : -24.91%
+Net profit   : Rs 77,394.46
+Return       : 77.39%
+Max drawdown : -24.94%
 Trades       : no closed trades (4 still open)
 Overfitting  : too few trades to judge (0 closed, 30 needed)
 Benchmark    : 80.63% return (NIFTY)
-Orders       : 87
+Orders       : 85
   symbol  quantity_units  value_rupees  weight_pct
-    INFY            38.0       43890.0       24.43
-     ITC           153.0       43605.0       24.28
-RELIANCE            33.0       44068.2       24.53
-    SBIN            41.0       43509.2       24.22
+    INFY            38.0       43890.0       24.74
+     ITC           151.0       43035.0       24.26
+RELIANCE            33.0       44068.2       24.84
+    SBIN            40.0       42448.0       23.93
 ```
 
-* The four stocks made 79.63 percent, almost exactly NIFTY's 80.63 percent. The max drawdown, the largest fall of the portfolio from its highest value, was 24.91 percent.
+* The four stocks made 77.39 percent, a little less than NIFTY's 80.63 percent. The max drawdown, the largest fall of the portfolio from its highest value, was 24.94 percent.
 * `Trades: no closed trades (4 still open)`: a rebalance trims and tops up the holdings but never sells one out, so all four are still held at the end. Their profit is in the net profit, valued at the last day's close.
-* The first orders bought all four on 4 January 2021; every quarter after that, small sales and buys brought them back to 25 percent. That is 87 orders, fewer than 24 quarters x 4 stocks, because a change smaller than one share sends no order.
+* The first orders bought all four on 4 January 2021; every quarter after that, small sales and buys brought them back to 25 percent. That is 85 orders, fewer than 24 quarters x 4 stocks, because a change smaller than one share sends no order.
 * At the end each stock is close to 24.5 percent: 25 percent of the 98 percent invested, moved a little by the prices since the last rebalance in October 2026. `weight_pct` is the stock's value in percent of the whole portfolio, cash included.
 
 ## What you learned

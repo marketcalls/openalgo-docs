@@ -49,9 +49,9 @@ print(result.summary())   # net profit, return, drawdown, trades and NIFTY's ret
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 Benchmark    : 80.63% return (NIFTY)
@@ -59,9 +59,9 @@ Benchmark    : 80.63% return (NIFTY)
 
 ## What the summary says
 
-* **Net profit** (Rs 53,941.09) is what the strategy made after every charge. A position still open on the last day would count too, valued at that day's close; here the last trade had already closed.
-* **Return** (53.94 percent) is the net profit as a percent of the starting capital, Rs 1,00,000.
-* **Max drawdown** (-29.35 percent) is the largest fall of the account from its highest value to a later low. At its worst moment, the account was 29.35 percent below the best value it had reached. Ask yourself whether you would have kept the strategy running through that fall: if not, the profit at the end does not help you.
+* **Net profit** (Rs 53,485.86) is what the strategy made after every charge. A position still open on the last day would count too, valued at that day's close; here the last trade had already closed.
+* **Return** (53.49 percent) is the net profit as a percent of the starting capital, Rs 1,00,000.
+* **Max drawdown** (-29.42 percent) is the largest fall of the account from its highest value to a later low. At its worst moment, the account was 29.42 percent below the best value it had reached. Ask yourself whether you would have kept the strategy running through that fall: if not, the profit at the end does not help you.
 * **Trades** (11) counts the round trips: a buy and the sell that closed it. The **win rate** (36 percent won) is the share of trades that made money, here 4 of 11. A trend strategy often wins less than half its trades: many small losses, and a few large wins that pay for them. The profit matters more than how often you win.
 * **Overfitting** (too few trades to judge, 11 closed, 30 needed) is the engine's quick check of whether the profit could be luck, or fitted to the past it was tested on. It shuffles and redraws the closed trades, and it needs at least 30 of them to judge anything; with 11 it says so instead of guessing. [Overfitting checks](../results-and-reports.md#overfitting-checks) explains the four checks and how to read them.
 * **Benchmark** (80.63 percent) is what simply holding NIFTY 50 returned over the same dates. Here the index did better than the strategy; [Compare with NIFTY](08-compare-with-nifty.md) looks at that closely.
@@ -81,10 +81,10 @@ print(f"Return per year: {cagr:.2%}")
 
 <!-- output -->
 ```text
-Return per year: 7.64%
+Return per year: 7.59%
 ```
 
-The figures in `result.metrics` are plain numbers: a percent is kept as a fraction (0.0764 is 7.64 percent), and money is in rupees.
+The figures in `result.metrics` are plain numbers: a percent is kept as a fraction (0.0759 is 7.59 percent), and money is in rupees.
 
 ## Every figure at once
 
@@ -110,15 +110,15 @@ elapsed_days                                             Elapsed                
 sessions                                                Sessions                       1453      count
 missing_sessions                                Missing sessions                          0      count
 start_equity                                        Start equity                   100000.0     rupees
-end_equity                                            End equity                  153941.09     rupees
+end_equity                                            End equity                  153485.86     rupees
 net_cash_flows                                    Net cash flows                        0.0     rupees
-net_profit                                            Net profit                   53941.09     rupees
-total_return                                        Total return                   0.539411   fraction
-cagr                                                        CAGR                   0.076399   fraction
-volatility                                            Volatility                   0.199425   fraction
-sharpe                                              Sharpe ratio                   0.469393      ratio
-sortino                                            Sortino ratio                   0.669967      ratio
-calmar                                              Calmar ratio                   0.260288      ratio
+net_profit                                            Net profit                   53485.86     rupees
+total_return                                        Total return                   0.534859   fraction
+cagr                                                        CAGR                   0.075855   fraction
+volatility                                            Volatility                   0.199608   fraction
+sharpe                                              Sharpe ratio                   0.466617      ratio
+sortino                                            Sortino ratio                   0.665974      ratio
+calmar                                              Calmar ratio                   0.257865      ratio
 exposure                                                Exposure                    0.66139   fraction
 risk_free_rate                                    Risk-free rate                        0.0   fraction
 risk_free_per_session                      Risk-free per session                        0.0   fraction
@@ -126,15 +126,15 @@ sessions_per_year                              Sessions per year                
 annualisation_years                          Annualisation years               2021 to 2026       text
 annualisation_coverage                         Calendar coverage                    sourced       text
 annualisation_template_years                 Template-only years                                  text
-max_drawdown                                    Maximum drawdown                  -0.293518   fraction
-max_drawdown_amount                      Maximum drawdown amount                  -63956.96     rupees
+max_drawdown                                    Maximum drawdown                  -0.294166   fraction
+max_drawdown_amount                      Maximum drawdown amount                  -63967.44     rupees
 max_drawdown_peak                                  Drawdown peak  2026-02-23 15:30:00+05:30  timestamp
 max_drawdown_trough                              Drawdown trough  2026-09-08 15:30:00+05:30  timestamp
 max_drawdown_recovery                          Drawdown recovery                       None  timestamp
 max_drawdown_days                        Maximum drawdown length                      261.0       days
-longest_drawdown_days                           Longest drawdown                  902.84375       days
+longest_drawdown_days                           Longest drawdown                  906.84375       days
 longest_drawdown_start                    Longest drawdown start  2021-11-04 19:15:00+05:30  timestamp
-longest_drawdown_end                        Longest drawdown end  2024-04-25 15:30:00+05:30  timestamp
+longest_drawdown_end                        Longest drawdown end  2024-04-29 15:30:00+05:30  timestamp
 longest_drawdown_recovered            Longest drawdown recovered                       True       flag
 ruined                                                    Ruined                      False       flag
 ruin_time                                                   Ruin                       None  timestamp
@@ -143,96 +143,96 @@ open_trades                                          Open trades                
 winning_trades                                    Winning trades                          4      count
 losing_trades                                      Losing trades                          7      count
 win_rate                                                Win rate                   0.363636   fraction
-average_win                                          Average win                 27746.2275     rupees
-average_loss                                        Average loss               -8149.117143     rupees
-profit_factor                                      Profit factor                   1.945608      ratio
-expectancy                                            Expectancy                4903.735455     rupees
-payoff_ratio                                        Payoff ratio                   3.404814      ratio
-largest_win                                          Largest win                   40455.82     rupees
-largest_loss                                        Largest loss                  -16999.48     rupees
+average_win                                          Average win                 27687.2875     rupees
+average_loss                                        Average loss                   -8180.47     rupees
+profit_factor                                      Profit factor                   1.934034      ratio
+expectancy                                            Expectancy                4862.350909     rupees
+payoff_ratio                                        Payoff ratio                    3.38456      ratio
+largest_win                                          Largest win                   40408.62     rupees
+largest_loss                                        Largest loss                  -16939.16     rupees
 max_consecutive_wins                            Consecutive wins                          1      count
 max_consecutive_losses                        Consecutive losses                          2      count
 average_holding_seconds                     Average holding time            11012072.727273    seconds
-gross_pnl                                              Gross P&L                    57264.0     rupees
-total_costs                                                Costs                    3322.91     rupees
-net_pnl                                                  Net P&L                   53941.09     rupees
-cost_share_of_gross_pnl                        Costs / gross P&L                   0.058028   fraction
-turnover                                                Turnover                  2832597.5     rupees
-turnover_ratio                                    Turnover ratio                  20.957028      ratio
+gross_pnl                                              Gross P&L                    57322.8     rupees
+total_costs                                                Costs                    3836.94     rupees
+net_pnl                                                  Net P&L                   53485.86     rupees
+cost_share_of_gross_pnl                        Costs / gross P&L                   0.066936   fraction
+turnover                                                Turnover                  2828322.3     rupees
+turnover_ratio                                    Turnover ratio                  20.968942      ratio
 average_mae                                          Average MAE                  -0.051022   fraction
 average_mfe                                          Average MFE                   0.205575   fraction
-worst_mae                                              Worst MAE                  -16607.55     rupees
+worst_mae                                              Worst MAE                   -16503.1     rupees
 best_mfe                                                Best MFE                    80823.0     rupees
 edge_ratio                                            Edge ratio                   4.029161      ratio
-profit_kept                                          Profit kept                   0.520811   fraction
-closed_turnover                        Turnover of closed trades                  2832597.5     rupees
-total_slippage                                          Slippage                     706.85     rupees
-trading_cost                                        Trading cost                    4029.76     rupees
-trading_cost_share_of_gross_pnl         Trading cost / gross P&L                   0.070372   fraction
-trading_cost_bps                        Trading cost of turnover                  14.226377        bps
+profit_kept                                          Profit kept                   0.520931   fraction
+closed_turnover                        Turnover of closed trades                  2828322.3     rupees
+total_slippage                                          Slippage                      705.8     rupees
+trading_cost                                        Trading cost                    4542.74     rupees
+trading_cost_share_of_gross_pnl         Trading cost / gross P&L                   0.079248   fraction
+trading_cost_bps                        Trading cost of turnover                  16.061607        bps
 benchmark_total_return                          Benchmark return                   0.806287   fraction
 benchmark_sessions                            Benchmark sessions                       1453      count
-alpha                                                      Alpha                   0.015513   fraction
-beta                                                        Beta                   0.705091      ratio
-correlation                                          Correlation                   0.496418      ratio
-r_squared                                              R squared                   0.246431      ratio
-tracking_error                                    Tracking error                   0.178001   fraction
-information_ratio                              Information ratio                  -0.096353      ratio
-treynor_ratio                                      Treynor ratio                   0.132761      ratio
-smart_sharpe                                        Smart Sharpe                   0.500037      ratio
-smart_sortino                                      Smart Sortino                   0.713704      ratio
-adjusted_sortino                                Adjusted Sortino                   0.473738      ratio
-probabilistic_sharpe                        Probabilistic Sharpe                   0.869393   fraction
-probabilistic_sortino                      Probabilistic Sortino                   0.944569   fraction
-probabilistic_adjusted_sortino    Probabilistic adjusted Sortino                   0.871559   fraction
-autocorrelation                                  Autocorrelation                  -0.063412      ratio
-autocorrelation_penalty                  Autocorrelation penalty                   0.938718      ratio
-omega                                                Omega ratio                    1.10949      ratio
-gain_to_pain                                        Gain to pain                   0.495855      ratio
-risk_return_ratio                              Risk-return ratio                   0.029813      ratio
-risk_adjusted_return                        Return over exposure                   0.115513   fraction
-ulcer_index                                          Ulcer index                   0.158475   fraction
-ulcer_performance_index                  Ulcer performance index                   0.482089      ratio
-serenity_index                                    Serenity index                   0.344179      ratio
-recovery_factor                                  Recovery factor                   0.843397      ratio
-expected_return                                  Expected return                   0.000297   fraction
-average_session_return                    Average session return                   0.000378   fraction
-best_session                                        Best session                   0.089303   fraction
-worst_session                                      Worst session                  -0.142025   fraction
-best_month                                            Best month                    0.18084   fraction
-worst_month                                          Worst month                  -0.161543   fraction
-best_year                                              Best year                   0.267425   fraction
-worst_year                                            Worst year                  -0.135042   fraction
+alpha                                                      Alpha                   0.014953   fraction
+beta                                                        Beta                   0.705923      ratio
+correlation                                          Correlation                   0.496549      ratio
+r_squared                                              R squared                    0.24656      ratio
+tracking_error                                    Tracking error                   0.178114   fraction
+information_ratio                              Information ratio                  -0.098921      ratio
+treynor_ratio                                      Treynor ratio                   0.131941      ratio
+smart_sharpe                                        Smart Sharpe                   0.497133      ratio
+smart_sortino                                      Smart Sortino                   0.709528      ratio
+adjusted_sortino                                Adjusted Sortino                   0.470915      ratio
+probabilistic_sharpe                        Probabilistic Sharpe                   0.867993   fraction
+probabilistic_sortino                      Probabilistic Sortino                   0.943516   fraction
+probabilistic_adjusted_sortino    Probabilistic adjusted Sortino                   0.870152   fraction
+autocorrelation                                  Autocorrelation                  -0.063521      ratio
+autocorrelation_penalty                  Autocorrelation penalty                   0.938615      ratio
+omega                                                Omega ratio                   1.108808      ratio
+gain_to_pain                                        Gain to pain                   0.492132      ratio
+risk_return_ratio                              Risk-return ratio                   0.029637      ratio
+risk_adjusted_return                        Return over exposure                   0.114691   fraction
+ulcer_index                                          Ulcer index                   0.159329   fraction
+ulcer_performance_index                  Ulcer performance index                   0.476093      ratio
+serenity_index                                    Serenity index                   0.339349      ratio
+recovery_factor                                  Recovery factor                   0.836142      ratio
+expected_return                                  Expected return                   0.000295   fraction
+average_session_return                    Average session return                   0.000376   fraction
+best_session                                        Best session                   0.089512   fraction
+worst_session                                      Worst session                   -0.14233   fraction
+best_month                                            Best month                   0.180604   fraction
+worst_month                                          Worst month                  -0.161991   fraction
+best_year                                              Best year                   0.266953   fraction
+worst_year                                            Worst year                  -0.135782   fraction
 winning_sessions                                Winning sessions                        502      count
 losing_sessions                                  Losing sessions                        453      count
 session_win_rate                                Session win rate                   0.525654   fraction
-average_winning_session                  Average winning session                   0.011076   fraction
-average_losing_session                    Average losing session                  -0.011062   fraction
+average_winning_session                  Average winning session                   0.011082   fraction
+average_losing_session                    Average losing session                  -0.011076   fraction
 max_consecutive_winning_sessions    Consecutive winning sessions                          9      count
 max_consecutive_losing_sessions      Consecutive losing sessions                          7      count
 rolling_window_sessions                           Rolling window                        124      count
-skew                                                        Skew                  -0.620932      ratio
-kurtosis                                         Excess kurtosis                   15.57821      ratio
-value_at_risk                                Value at risk (95%)                  -0.018515   fraction
-expected_shortfall                 Expected shortfall (CVaR 95%)                  -0.029221   fraction
-conditional_drawdown                  Conditional drawdown (95%)                  -0.279333   fraction
-tail_ratio                                            Tail ratio                    1.14558      ratio
-outlier_win_ratio                              Outlier win ratio                   3.221468      ratio
-outlier_loss_ratio                            Outlier loss ratio                   3.076299      ratio
+skew                                                        Skew                  -0.621181      ratio
+kurtosis                                         Excess kurtosis                    15.6341      ratio
+value_at_risk                                Value at risk (95%)                  -0.018558   fraction
+expected_shortfall                 Expected shortfall (CVaR 95%)                  -0.029244   fraction
+conditional_drawdown                  Conditional drawdown (95%)                  -0.280042   fraction
+tail_ratio                                            Tail ratio                   1.144333      ratio
+outlier_win_ratio                              Outlier win ratio                   3.228566      ratio
+outlier_loss_ratio                            Outlier loss ratio                   3.076227      ratio
 win_loss_ratio                                    Win/loss ratio                   0.571429      ratio
-kelly_criterion                                  Kelly criterion                   0.176735   fraction
-risk_of_ruin                                        Risk of ruin                   0.036075   fraction
-cpc_index                                              CPC index                   2.408885      ratio
-common_sense_ratio                            Common sense ratio                    2.22885      ratio
+kelly_criterion                                  Kelly criterion                   0.175617   fraction
+risk_of_ruin                                        Risk of ruin                   0.037102   fraction
+cpc_index                                              CPC index                    2.38031      ratio
+common_sense_ratio                            Common sense ratio                   2.213178      ratio
 ```
 
 How to read the table:
 
-* The left column, `key`, is the figure's name in code: `result.metrics["sharpe"]` gives the Sharpe ratio, 0.469393. The figures come in groups, such as Run, Returns and risk, Drawdown and Trades; the table's `group` column says which group each row belongs to.
-* `unit` says how to read the value. A **fraction** is a percent written as a share of 1: a `total_return` of 0.539411 is 53.94 percent. **rupees** is money, **ratio** a plain number, **count** a whole number, **days** calendar days, **seconds** seconds, **bps** basis points (hundredths of a percent: a `trading_cost_bps` of 14.23 is 0.1423 percent), **timestamp** a time in IST (`None` when there is none, such as the recovery of a drawdown that has not recovered yet), **flag** True or False, and **text** words.
+* The left column, `key`, is the figure's name in code: `result.metrics["sharpe"]` gives the Sharpe ratio, 0.466617. The figures come in groups, such as Run, Returns and risk, Drawdown and Trades; the table's `group` column says which group each row belongs to.
+* `unit` says how to read the value. A **fraction** is a percent written as a share of 1: a `total_return` of 0.534859 is 53.49 percent. **rupees** is money, **ratio** a plain number, **count** a whole number, **days** calendar days, **seconds** seconds, **bps** basis points (hundredths of a percent: a `trading_cost_bps` of 16.06 is 0.1606 percent), **timestamp** a time in IST (`None` when there is none, such as the recovery of a drawdown that has not recovered yet), **flag** True or False, and **text** words.
 * The Benchmark group (beta, alpha and the others) is there because this run has `benchmark="NIFTY"`. Without a benchmark the table has 111 figures.
 * The Excursions and trading cost group (`average_mae` to `trading_cost_bps`) says how far the trades went against you and in your favour while they were open, and what charges and slippage cost them. [Metrics Explained](../metrics-explained.md#excursions-and-trading-cost) explains each of these figures.
-* `net_pnl` in the Trades group, Rs 53,941.09, equals `net_profit`. Each trade's charges include its share of the rounding on each day's contract note (STT and stamp duty are rounded to whole rupees there), so the trades add up to what your account made. The two differ only when a position is still open at the end of the run: `net_pnl` counts closed trades only.
+* `net_pnl` in the Trades group, Rs 53,485.86, equals `net_profit`. Each trade's charges include its share of the rounding on each day's contract note (STT and stamp duty are rounded to whole rupees there), so the trades add up to what your account made. The two differ only when a position is still open at the end of the run: `net_pnl` counts closed trades only.
 
 A fifth column, `definition`, says how each figure is worked out:
 
@@ -268,23 +268,23 @@ print(trades[columns].to_string(float_format="%.2f"))  # every row, with two dec
 ```text
                      entry_time                 exit_time  quantity  entry_price  exit_price   net_pnl
 trade
-1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30    270.00       356.95      456.95  26742.48
-2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30    246.00       503.15      460.20 -10846.92
-3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30    222.00       507.15      470.90  -8306.89
-4     2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30    217.00       487.85      535.85  10153.37
-5     2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30    204.00       567.95      565.60   -752.17
-6     2023-09-15 09:15:00+05:30 2023-10-19 09:15:00+05:30    191.00       599.50      569.65  -5966.78
-7     2023-12-07 09:15:00+05:30 2024-08-14 09:15:00+05:30    178.00       610.15      800.75  33633.24
-8     2024-11-05 09:15:00+05:30 2025-01-01 09:15:00+05:30    170.00       830.05      795.35  -6221.68
-9     2025-04-03 09:15:00+05:30 2026-03-30 09:15:00+05:30    174.00       770.20     1004.75  40455.82
-10    2026-04-27 09:15:00+05:30 2026-05-11 09:15:00+05:30    159.00      1111.20     1006.75 -16999.48
-11    2026-07-03 09:15:00+05:30 2026-09-08 09:15:00+05:30    150.00      1055.25     1004.65  -7949.90
+1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30    270.00       356.95      456.95  26695.28
+2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30    246.00       503.15      460.20 -10894.12
+3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30    222.00       507.15      470.90  -8354.09
+4     2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30    216.00       487.85      535.85  10059.21
+5     2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30    203.00       567.95      565.60   -795.96
+6     2023-09-15 09:15:00+05:30 2023-10-19 09:15:00+05:30    191.00       599.50      569.65  -6013.98
+7     2023-12-07 09:15:00+05:30 2024-08-14 09:15:00+05:30    178.00       610.15      800.75  33586.04
+8     2024-11-05 09:15:00+05:30 2025-01-01 09:15:00+05:30    170.00       830.05      795.35  -6268.88
+9     2025-04-03 09:15:00+05:30 2026-03-30 09:15:00+05:30    174.00       770.20     1004.75  40408.62
+10    2026-04-27 09:15:00+05:30 2026-05-11 09:15:00+05:30    158.00      1111.20     1006.75 -16939.16
+11    2026-07-03 09:15:00+05:30 2026-09-08 09:15:00+05:30    150.00      1055.25     1004.65  -7997.10
 ```
 
 * Each row is one trade: bought at `entry_time` and sold at `exit_time`, both in IST (`+05:30`). 09:15 is the market open, when every order of this daily strategy filled.
 * `quantity` is the number of shares bought: whole shares, as many as 98 percent of the account could pay for. Later trades bought fewer, because each share cost more.
 * The prices are per share, in rupees, and include slippage. `net_pnl` is the trade's profit or loss in rupees, after its own charges.
-* The first trade, bought in May 2021 at 356.95 and sold in December 2021 at 456.95, made Rs 26,742.48. A few long trends like that one paid for the many short losses.
+* The first trade, bought in May 2021 at 356.95 and sold in December 2021 at 456.95, made Rs 26,695.28. A few long trends like that one paid for the many short losses.
 * The table has more columns: `direction` (long or short), `product`, `gross_pnl` (before charges), `charges`, `return_pct` (the trade's return in percent), `bars_held` and `days_held` (how long it was held), `exit_reason` (why it was sold; `signal` is your own `self.exit()`), `mae` and `mfe` (the worst and the best the trade's profit stood at while it was open, in rupees before charges), `mae_pct` and `mfe_pct` (the same in percent) and `slippage` (what slippage cost the trade, already in its prices).
 
 ## The HTML report
@@ -355,7 +355,7 @@ Result(SBIN)
   fill: next_open
   quantity_mode: venue
   sizing: whole shares and whole lots; an order with no quantity is sized at the decision close and keeps 2 percent of its budget in cash for the move to the next open (the engine's cash buffer, the same in live trading), then takes off its estimated charges; bt.size sizers and target() keep no buffer, and rebalance keeps its own cash_buffer
-  costs: zerodha (contract-note rounding)
+  costs: standard (contract-note rounding)
   slippage: default table
   capital: 100000.0
   max_daily_loss: None
@@ -378,8 +378,8 @@ Result(SBIN)
   benchmark: NIFTY on NSE_INDEX: 1454 daily closes from the broker (zerodha, source='api'), 2020-12-31 to 2026-11-11
   indicator_checks: window tolerance 1e-06 (relative); ema(SBIN.close, 20): truncation passed at 4 cuts, warm-up 256 bars; ema(SBIN.close, 50): truncation passed at 4 cuts, warm-up 512 bars
   warm_up: automatic: no decision before start, nor for a symbol before every self.I indicator of it has closed its warm-up of bars (its window-stability length on the engine's reference bars, the same for any data and in live trading; bars before start count); ema(SBIN.close, 50) needs 512 D bars of SBIN; history before start: SBIN 512 strategy bars from 2018-12-10 to 2020-12-31 (asked from 2018-06-17); ready at start
-  gross P&L: 57264.00 (realized 57264.00)
-  charges: 3322.91; net P&L: 53941.09
+  gross P&L: 57322.80 (realized 57322.80)
+  charges: 3836.94; net P&L: 53485.86
   warning: SBIN: generic cash-equity instrument assumed (lot 1, tick 0.05)
   warning: charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2021-01-01 used for 2021-01-01 were never verified against their source, so the charges may be off. Until 2021-03-31 NSE charged EQ-series shares outside the NIFTY 50 and NIFTY Next 50 Rs 2.75 per lakh (NSE/FA/46225) and the shares of those two indices this standard rate. The engine does not know an index's members, so the row is unverified.
 ```

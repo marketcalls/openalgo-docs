@@ -57,14 +57,14 @@ print(f"Alpha        : {m['alpha']:.2%} a year")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 Benchmark    : 80.63% return (NIFTY)
 Beta         : 0.71
-Alpha        : 1.55% a year
+Alpha        : 1.50% a year
 ```
 
 ## What the numbers mean
@@ -74,7 +74,7 @@ Alpha        : 1.55% a year
 * **Beta** says how much the strategy moves with NIFTY. A beta of 1 moves one for one with the index; a beta of 0.5 moves about half as much. It is measured on daily returns.
 * **Alpha** is the return per year that the strategy earned beyond what its link to NIFTY (its beta) explains. Positive is better than the index for the risk taken, negative is worse.
 
-Here the strategy made 53.94 percent while simply holding NIFTY made 80.63 percent: over these six years the index did better. A beta of 0.71 means the strategy moved about 0.71 percent for each 1 percent move of NIFTY, because it holds a single stock and sits in cash between trades. The alpha of 1.55 percent a year says that, for the share of NIFTY's ups and downs it took, it did a little better than the index. Less profit in total, then, but not a worse strategy for the risk it carried.
+Here the strategy made 53.49 percent while simply holding NIFTY made 80.63 percent: over these six years the index did better. A beta of 0.71 means the strategy moved about 0.71 percent for each 1 percent move of NIFTY, because it holds a single stock and sits in cash between trades. The alpha of 1.50 percent a year says that, for the share of NIFTY's ups and downs it took, it did a little better than the index. Less profit in total, then, but not a worse strategy for the risk it carried.
 
 ## What you learned
 

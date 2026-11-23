@@ -67,14 +67,14 @@ if __name__ == "__main__":
 <!-- output -->
 ```text
 Best on 2021-24: {'fast': 25, 'slow': 60}
-Net profit   : Rs 959.21
-Return       : 0.96%
-Max drawdown : -14.83%
+Net profit   : Rs 864.81
+Return       : 0.86%
+Max drawdown : -14.90%
 Trades       : 2 (50% won)
 Overfitting  : too few trades to judge (2 closed, 30 needed)
 ```
 
-The search picked 25 and 60, the only one of the 12 pairs that made money on 2021 to 2024, and only Rs 1,714 at that. On 2025 and 2026, which it never saw, the same pair made Rs 959 in 2 trades. That beats the original 20 and 50, which lost Rs 7,757 on those dates, but a pair that wins narrowly while its neighbours all lose is a weak choice: the best pair of the past is partly luck. The max drawdown is the largest fall of the account from its highest value. Two trades are far too few for the Overfitting line to judge, and none of its checks can see that the pair was picked as the best of 12; testing it on dates the search did not see is the check that can ([Overfitting checks](../results-and-reports.md#overfitting-checks)).
+The search picked 25 and 60, the only one of the 12 pairs that made money on 2021 to 2024, and only Rs 1,116 at that. On 2025 and 2026, which it never saw, the same pair made Rs 865 in 2 trades. That beats the original 20 and 50, which lost Rs 7,969 on those dates, but a pair that wins narrowly while its neighbours all lose is a weak choice: the best pair of the past is partly luck. The max drawdown is the largest fall of the account from its highest value. Two trades are far too few for the Overfitting line to judge, and none of its checks can see that the pair was picked as the best of 12; testing it on dates the search did not see is the check that can ([Overfitting checks](../results-and-reports.md#overfitting-checks)).
 
 ## Try this
 

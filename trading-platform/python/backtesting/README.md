@@ -73,9 +73,9 @@ print(result.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -84,9 +84,9 @@ Overfitting  : too few trades to judge (11 closed, 30 needed)
 
 ## What the four numbers mean
 
-* **Net profit:** the strategy turned Rs 1,00,000 into Rs 1,53,941.09, after every charge (brokerage, STT, stamp duty, GST and the rest).
+* **Net profit:** the strategy turned Rs 1,00,000 into Rs 1,53,485.86, after every charge (brokerage, STT, stamp duty, GST and the rest).
 * **Return:** that profit as a percent of the starting capital.
-* **Max drawdown:** the largest fall of the account from its highest value to a later low. At its worst, the account was 29.35 percent below its best value so far.
+* **Max drawdown:** the largest fall of the account from its highest value to a later low. At its worst, the account was 29.42 percent below its best value so far.
 * **Trades:** 11 round trips (a buy and the sell that closed it), of which 36 percent, 4 trades, made money. A few long rises paid for the many small losses.
 
 [Lesson 2](tutorial/02-read-the-results.md) shows every trade, the full HTML report, and what the engine assumed for you (the product, fills, charges, slippage and sessions).

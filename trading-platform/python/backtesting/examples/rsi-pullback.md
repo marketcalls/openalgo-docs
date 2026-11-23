@@ -59,18 +59,18 @@ print(trades.head(3).to_string(index=False, float_format="%.2f"))
 
 <!-- output -->
 ```text
-Net profit   : Rs -9,406.77
-Return       : -9.41%
-Max drawdown : -29.72%
+Net profit   : Rs -9,737.17
+Return       : -9.74%
+Max drawdown : -29.93%
 Trades       : 7 (57% won)
 Overfitting  : too few trades to judge (7 closed, 30 needed)
                entry_time                 exit_time   net_pnl
-2021-05-17 09:15:00+05:30 2021-05-27 09:15:00+05:30   5898.19
-2022-01-25 09:15:00+05:30 2022-03-10 09:15:00+05:30   6715.52
-2022-04-12 09:15:00+05:30 2022-07-22 09:15:00+05:30 -14189.65
+2021-05-17 09:15:00+05:30 2021-05-27 09:15:00+05:30   5850.99
+2022-01-25 09:15:00+05:30 2022-03-10 09:15:00+05:30   6668.32
+2022-04-12 09:15:00+05:30 2022-07-22 09:15:00+05:30 -14236.85
 ```
 
-Four of the seven pullbacks recovered, but the one of April 2022 did not: the stock kept falling, the RSI stayed below 60 for three months, and with no stop-loss that one trade lost Rs 14,191, more than the two winners before it made together (Rs 12,612). That is the risk of buying dips without a stop. The max drawdown is the largest fall of the account from its highest value.
+Four of the seven pullbacks recovered, but the one of April 2022 did not: the stock kept falling, the RSI stayed below 60 for three months, and with no stop-loss that one trade lost Rs 14,237, more than the two winners before it made together (Rs 12,519). That is the risk of buying dips without a stop. The max drawdown is the largest fall of the account from its highest value.
 
 ## Try this
 

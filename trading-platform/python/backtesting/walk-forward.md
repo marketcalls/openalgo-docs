@@ -72,16 +72,16 @@ if __name__ == "__main__":
 
 <!-- output -->
 ```text
-WalkForwardResult(5 folds, objective 'net_profit', efficiency 0.25, 40% of folds profitable)
+WalkForwardResult(5 folds, objective 'net_profit', efficiency 0.24, 40% of folds profitable)
      in_sample_start in_sample_end out_of_sample_start out_of_sample_end  fast  slow  net_profit  trades
 fold
-1         2021-01-01    2022-11-14          2022-11-15        2023-08-30     5    30    -7463.78       4
-2         2021-10-21    2023-08-30          2023-08-31        2024-06-20     5    30    25289.76       3
-3         2022-08-08    2024-06-20          2024-06-21        2025-04-04     5    50   -10835.12       3
-4         2023-05-30    2025-04-04          2025-04-07        2026-01-22    20    30    24180.38       1
-5         2024-03-13    2026-01-22          2026-01-23        2026-11-11    20    50   -13874.13       2
-Net profit out of sample : Rs 17,297.11
-Efficiency               : 0.25
+1         2021-01-01    2022-11-14          2022-11-15        2023-08-30     5    30    -7640.02       4
+2         2021-10-21    2023-08-30          2023-08-31        2024-06-20     5    30    25124.56       3
+3         2022-08-08    2024-06-20          2024-06-21        2025-04-04     5    50   -11000.32       3
+4         2023-05-30    2025-04-04          2025-04-07        2026-01-22    20    30    24109.58       1
+5         2024-03-13    2026-01-22          2026-01-23        2026-11-11    20    50   -13968.53       2
+Net profit out of sample : Rs 16,625.27
+Efficiency               : 0.24
 Folds that made money    : 40%
 Drift                    : {'fast': 0.25, 'slow': 0.21}
 ```
@@ -94,8 +94,8 @@ Reading the folds:
 
 Reading the figures:
 
-* **Net profit out of sample:** the five traded stretches together, about four years, made Rs 17,297.11. For comparison, the sweep's best setting (fast 5, slow 30) made Rs 98,375.98 over the whole history, but it was picked knowing that history.
-* **Efficiency** (walk-forward efficiency): the out-of-sample profit per year over the average in-sample profit per year of the folds. 0.25 means the traded stretches earned about a quarter of what the searched stretches promised. Near 1, the picks held up out of sample; the walk-forward check below asks for at least 0.5.
+* **Net profit out of sample:** the five traded stretches together, about four years, made Rs 16,625.27. For comparison, the sweep's best setting (fast 5, slow 30) made Rs 96,750.18 over the whole history, but it was picked knowing that history.
+* **Efficiency** (walk-forward efficiency): the out-of-sample profit per year over the average in-sample profit per year of the folds. 0.24 means the traded stretches earned about a quarter of what the searched stretches promised. Near 1, the picks held up out of sample; the walk-forward check below asks for at least 0.5.
 * **Folds that made money:** the share of folds whose out-of-sample window made money, 40 percent here.
 * **Drift:** how far the pick moved from one fold to the next, on average, as a share of each range. Fast moved by a quarter of its range (5 to 20) between folds, slow by about a fifth. Settings that jump around are a sign that the search is fitting each stretch's noise.
 

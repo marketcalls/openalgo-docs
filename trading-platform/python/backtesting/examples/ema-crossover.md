@@ -59,15 +59,15 @@ print(trades.head(3).to_string(index=False, float_format="%.2f"))
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
                entry_time                 exit_time   net_pnl
-2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30  26742.48
-2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30 -10846.92
-2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30  -8306.89
+2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30  26695.28
+2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30 -10894.12
+2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30  -8354.09
 ```
 
 Only 4 of the 11 trades won, but a few long trends paid for the many short false starts. The engine loaded SBIN's bars from before 2021 by itself, so both EMAs had their values on the first day of the run. The max drawdown is the largest fall of the account from its highest value. Every crossover was decided at a day's close and filled at the next day's open (09:15), after delivery charges and slippage.

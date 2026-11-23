@@ -64,13 +64,13 @@ print(pf.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 4,14,556.58
-Return       : 207.28%
-Max drawdown : -16.34%
-Trades       : 66 (41% won), 2 still open
+Net profit   : Rs 40,004.67
+Return       : 20.00%
+Max drawdown : -24.68%
+Trades       : 63 (41% won), 1 still open
 Overfitting  : each strategy's own trades below; none of the account's trades together
-  EmaCrossover : too few trades to judge (13 closed, 30 needed)
-  InfyMacd     : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational
+  EmaCrossover : too few trades to judge (11 closed, 30 needed)
+  InfyMacd     : quick checks: 3 not judged, 1 informational
 ```
 
 A list gives back a **portfolio result** (`pf` here, a `bt.PortfolioResult`) instead of a `Result`. Its summary reads like one strategy's, for the whole account:
@@ -97,8 +97,8 @@ for name in pf.strategies:
 
 <!-- output -->
 ```text
-EmaCrossover : return 315.64%, max drawdown -21.98%, trades 13
-InfyMacd     : return 98.92%, max drawdown -28.18%, trades 53
+EmaCrossover : return 53.49%, max drawdown -29.42%, trades 11
+InfyMacd     : return -13.48%, max drawdown -41.39%, trades 52
 ```
 
 `pf.strategy("EmaCrossover")` has everything a backtest of one strategy has: its trade list, its metrics, its warnings and its own tearsheet. Its return is on its own capital, Rs 1,00,000, and the strategies' net profits add up to the account's. Whenever the account does not limit them (the next section says when it does), each strategy's figures are exactly those of a backtest of it alone.
@@ -122,12 +122,12 @@ print(pf.contribution[["net_pnl_rupees", "share_pct"]].round(2))
 <!-- output -->
 ```text
               EmaCrossover  InfyMacd
-EmaCrossover          1.00      0.02
-InfyMacd              0.02      1.00
+EmaCrossover          1.00      0.08
+InfyMacd              0.08      1.00
               net_pnl_rupees  share_pct
 strategy
-EmaCrossover       315635.23      76.14
-InfyMacd            98921.35      23.86
+EmaCrossover        53485.86      133.7
+InfyMacd           -13481.19      -33.7
 ```
 
 * `pf.correlation` compares the strategies' daily returns. Two strategies with a correlation near 0 rarely lose on the same days, which is what makes running them together smoother than either alone.
@@ -178,17 +178,17 @@ print(tight.refused[["strategy", "symbol", "side", "time", "reason"]].head(3).to
 
 <!-- output -->
 ```text
-Net profit   : Rs 99,273.31
-Return       : 99.27%
-Max drawdown : -17.12%
-Trades       : 54 (39% won), 2 still open
+Net profit   : Rs -24,667.04
+Return       : -24.67%
+Max drawdown : -46.86%
+Trades       : 45 (33% won), 1 still open
 Overfitting  : each strategy's own trades below; none of the account's trades together
-  SbinSixty  : too few trades to judge (8 closed, 30 needed)
-  InfySixty  : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational
+  SbinSixty  : too few trades to judge (7 closed, 30 needed)
+  InfySixty  : quick checks: 3 not judged, 1 informational
  strategy symbol side                      time         reason
-SbinSixty   SBIN  BUY 2021-06-01 09:15:00+05:30 account_margin
-SbinSixty   SBIN  BUY 2021-07-30 09:15:00+05:30 account_margin
-SbinSixty   SBIN  BUY 2021-12-23 09:15:00+05:30 account_margin
+InfySixty   INFY  BUY 2021-05-24 09:15:00+05:30 account_margin
+InfySixty   INFY  BUY 2021-07-30 09:15:00+05:30 account_margin
+InfySixty   INFY  BUY 2021-09-27 09:15:00+05:30 account_margin
 ```
 
 `account_margin` means the strategy's own capital had the cash, but the account's free cash did not: the other strategy held it. A refused buy is a trade the strategy did not take, so each strategy's result is no longer what it would be alone. Python also prints an `OrdersNotPlacedWarning` for each strategy that lost orders this way, and `tight.warnings` explains it with what to do.
@@ -233,18 +233,18 @@ print(both.net_positions[columns].tail(4).to_string(index=False))
 
 <!-- output -->
 ```text
-Net profit   : Rs 3,19,251.13
-Return       : 159.63%
-Max drawdown : -16.36%
-Trades       : 17 (47% won), 1 still open
+Net profit   : Rs 1,01,515.36
+Return       : 50.76%
+Max drawdown : -17.08%
+Trades       : 20 (60% won)
 Overfitting  : each strategy's own trades below; none of the account's trades together
-  EmaCrossover : too few trades to judge (13 closed, 30 needed)
-  RsiDip       : too few trades to judge (4 closed, 30 needed)
+  EmaCrossover : too few trades to judge (11 closed, 30 needed)
+  RsiDip       : too few trades to judge (9 closed, 30 needed)
                      time  net_units      holders  EmaCrossover_units  RsiDip_units
-2026-07-27 09:15:00+05:30        0.0                              0.0           0.0
-2026-08-13 09:15:00+05:30       21.0       RsiDip                 0.0          21.0
-2026-08-27 09:15:00+05:30        0.0                              0.0           0.0
-2026-09-16 09:15:00+05:30       72.0 EmaCrossover                72.0           0.0
+2026-07-03 09:15:00+05:30      150.0 EmaCrossover               150.0           0.0
+2026-09-08 09:15:00+05:30        0.0                              0.0           0.0
+2026-09-16 09:15:00+05:30      150.0       RsiDip                 0.0         150.0
+2026-10-30 09:15:00+05:30        0.0                              0.0           0.0
 ```
 
 Each strategy keeps **its own position**: its own buys and sells, its own trades and its own result, as if it traded SBIN alone. Your broker sees one position for SBIN, the sum of the two: `both.net_positions` shows it (`net_units`) with each strategy's shares and who held them (`holders`), a row each time it changed.
@@ -311,17 +311,18 @@ print(limited.trade_list()["exit_reason"].value_counts().to_dict())
 
 <!-- output -->
 ```text
-Net profit   : Rs -21,634.44
-Return       : -10.82%
-Max drawdown : -16.86%
-Trades       : 243 (40% won)
+Net profit   : Rs -18,340.21
+Return       : -9.17%
+Max drawdown : -10.47%
+Trades       : 213 (38% won)
 Overfitting  : each strategy's own trades below; none of the account's trades together
   SbinIntraday : quick checks: 3 not judged, 1 informational
   InfyIntraday : quick checks: 3 not judged, 1 informational
 strategy      reject_code
-InfyIntraday  account_loss_gate    10
-              trade_limit          25
-{'scheduler': 132, 'signal': 86, 'account_loss_limit': 25}
+InfyIntraday  account_loss_gate       1
+              trade_limit            31
+SbinIntraday  account_trade_limit     1
+{'scheduler': 125, 'signal': 84, 'account_loss_limit': 4}
 ```
 
 The second table counts the refused entries by strategy and code; a code missing from it refused nothing in this run.

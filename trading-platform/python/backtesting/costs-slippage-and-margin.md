@@ -52,12 +52,12 @@ print_summary(result)
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
-Charges      : Rs 3,322.91
+Charges      : Rs 3,836.94
 ```
 
 The net profit is after every charge. The **max drawdown** is the largest fall of the account from its highest value.
@@ -66,7 +66,7 @@ The net profit is after every charge. The **max drawdown** is the largest fall o
 
 A **fill** is an executed order: the price and quantity you actually traded. Each fill pays:
 
-* **Brokerage:** your broker's fee. With the default preset, delivery is free and an intraday or futures order pays 0.03 percent or Rs 20, whichever is lower.
+* **Brokerage:** your broker's fee. With the default preset (`"standard"`), a delivery order pays 2.5 percent of its value or Rs 20, whichever is lower; an intraday order 0.1 percent or Rs 20; a futures order 0.03 percent or Rs 20; an option order Rs 20.
 * **STT:** securities transaction tax (commodity transaction tax on MCX).
 * **Exchange charge, SEBI fee, stamp duty** (on the buy side) and **GST** (18 percent on the brokerage, exchange charge and SEBI fee).
 * **DP charge:** on the first delivery sell of a stock in a day, Rs 13 plus GST.
@@ -84,11 +84,11 @@ print(result.costs[columns].head(2).round(2).to_string(index=False))
 <!-- output -->
 ```text
 side  price_rupees  brokerage    stt  exchange_txn  sebi_fee  stamp_duty  gst  dp_charge  total  charged
- BUY        356.95        0.0  96.38          3.33      0.10       14.46 0.60       0.00 114.85   114.03
-SELL        456.95        0.0 123.38          4.26      0.12        0.00 0.77      15.34 143.86   143.49
+ BUY        356.95       20.0  96.38          3.33      0.10       14.46 4.20       0.00 138.45   137.63
+SELL        456.95       20.0 123.38          4.26      0.12        0.00 4.37      15.34 167.46   167.09
 ```
 
-Reading the buy: 270 shares at 356.95 is an order of Rs 96,377. Delivery brokerage is zero. STT is 0.1 percent of the value (Rs 96.38), stamp duty 0.015 percent (Rs 14.46), and the exchange charge, SEBI fee and GST add about Rs 4. The sell pays STT again, no stamp duty, and the DP charge of Rs 15.34. Every rate is the one in force on the trade's date. `total` adds up the charges as worked out; `charged` is what the account paid for the fill. The day's contract note rounds STT and stamp duty to whole rupees (Rs 96 and Rs 14 for the buy), so the buy paid Rs 114.03 and the sell Rs 143.49. A trade's charges are what its fills paid.
+Reading the buy: 270 shares at 356.95 is an order of Rs 96,377. Delivery brokerage is Rs 20, its cap (2.5 percent of the order would be far more). STT is 0.1 percent of the value (Rs 96.38), stamp duty 0.015 percent (Rs 14.46), and the exchange charge, SEBI fee and GST add about Rs 8. The sell pays STT again, no stamp duty, and the DP charge of Rs 15.34. Every rate is the one in force on the trade's date. `total` adds up the charges as worked out; `charged` is what the account paid for the fill. The day's contract note rounds STT and stamp duty to whole rupees (Rs 96 and Rs 14 for the buy), so the buy paid Rs 137.63 and the sell Rs 167.09. A trade's charges are what its fills paid.
 
 ## How do I use my own broker's brokerage?
 
@@ -96,7 +96,8 @@ Pass `costs=` to `bt.backtest`. The taxes and exchange charges apply under every
 
 | `costs=` | Brokerage |
 |---|---|
-| `"zerodha"` (the default) | Delivery free; intraday and futures 0.03 percent or Rs 20 per order, whichever is lower; options Rs 20 per order |
+| `"standard"` (the default) | Delivery 2.5 percent or Rs 20 per order, whichever is lower; intraday 0.1 percent or Rs 20; futures 0.03 percent or Rs 20; options Rs 20 per order |
+| `"zerodha"` | Delivery free; intraday and futures 0.03 percent or Rs 20 per order, whichever is lower; options Rs 20 per order (the default before openalgo 2.4.1) |
 | `"zero_brokerage"` | No brokerage |
 | `bt.costs.flat(20)` | Rs 20 per order |
 | `bt.costs.percent(0.03, 20)` | 0.03 percent of the order value, at most Rs 20 |
@@ -105,23 +106,23 @@ Pass `costs=` to `bt.backtest`. The taxes and exchange charges apply under every
 <!-- continues -->
 <!-- requires-server -->
 ```python
-# The same strategy with a broker that charges Rs 20 on every order, delivery included.
-flat = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
-                   costs=bt.costs.flat(20))
-print_summary(flat)
+# The same strategy with a broker that charges no brokerage on delivery.
+free_delivery = bt.backtest(EmaCrossover, client, start="2021-01-01", end="2026-11-11", capital=100_000,
+                            costs="zerodha")
+print_summary(free_delivery)
 ```
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,485.86
-Return       : 53.49%
-Max drawdown : -29.42%
+Net profit   : Rs 53,941.09
+Return       : 53.94%
+Max drawdown : -29.35%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
-Charges      : Rs 3,836.94
+Charges      : Rs 3,322.91
 ```
 
-Twenty-two orders at Rs 20 each (Rs 440), plus the GST on them, raised the charges and lowered the profit. To price one trade without a backtest, use the [cost calculator](support-functions/cost-calculator.md).
+With no brokerage on its 22 delivery orders (Rs 20 each under the default, Rs 440 plus the GST on it), the charges fall from Rs 3,836.94 to Rs 3,322.91 and the profit rises to Rs 53,941.09. To price one trade without a backtest, use the [cost calculator](support-functions/cost-calculator.md).
 
 ## What is slippage, and how do I change it?
 
@@ -147,15 +148,15 @@ print_summary(no_slippage)
 
 <!-- output -->
 ```text
-Net profit   : Rs 54,954.60
-Return       : 54.95%
-Max drawdown : -29.24%
+Net profit   : Rs 54,130.74
+Return       : 54.13%
+Max drawdown : -29.30%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
-Charges      : Rs 3,328.25
+Charges      : Rs 3,840.11
 ```
 
-Over 22 fills, the default slippage lowered the profit by about Rs 1,000. What it cost the fills themselves is `result.metrics["total_slippage"]`: Rs 706.85 for the first run. The profit differs by more because, with no slippage, five of the trades could buy one more share each. Keep it on: real fills are never exactly at the open.
+Over 22 fills, the default slippage lowered the profit by about Rs 650. What it cost the fills themselves is `result.metrics["total_slippage"]`: Rs 705.80 for the first run. The profit differs by a little less: with no slippage, three of the trades could buy one more share each, and those extra shares lost about Rs 58. Keep it on: real fills are never exactly at the open.
 
 ## Would it survive worse fills, or late orders?
 
@@ -177,12 +178,12 @@ print_summary(at_close)
 
 <!-- output -->
 ```text
-Net profit   : Rs 38,476.71
-Return       : 38.48%
-Max drawdown : -32.42%
+Net profit   : Rs 37,966.41
+Return       : 37.97%
+Max drawdown : -32.39%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
-Charges      : Rs 3,174.79
+Charges      : Rs 3,686.74
 ```
 
 Every buy and every sell one day late:
@@ -198,23 +199,23 @@ print_summary(late)
 
 <!-- output -->
 ```text
-Net profit   : Rs 42,017.30
-Return       : 42.02%
-Max drawdown : -31.64%
-Trades       : 10 (40% won)
-Overfitting  : too few trades to judge (10 closed, 30 needed)
-Charges      : Rs 2,905.05
+Net profit   : Rs 51,694.65
+Return       : 51.69%
+Max drawdown : -31.74%
+Trades       : 9 (44% won)
+Overfitting  : too few trades to judge (9 closed, 30 needed)
+Charges      : Rs 3,075.60
 ```
 
-The late run closed 10 trades, not 11. Its buy decided on 27 April 2023 was sized at that day's close, and by the time it could fill the price had risen by more than the 2 percent of cash kept back, so the order needed more money than the account had and was rejected (reject code `margin`). Python prints a warning about it at the end of the run:
+The late run closed 9 trades, not 11. Its buys decided on 27 April 2023 and 4 November 2024 were each sized at that day's close, and by the time they could fill the price had risen by more than the 2 percent of cash kept back, so each needed more money than the account had and was rejected (reject code `margin`). Python prints a warning about them at the end of the run:
 
 ```text
-OrdersNotPlacedWarning: 1 order was rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
+OrdersNotPlacedWarning: 2 orders were rejected because the margin the order needed was more than the free cash (reject_code 'margin'). See result.warnings.
 ```
 
 `late.orders` lists one more rejected order: a buy decided on 11 November 2026, the run's last day, whose one-day delay would have ended after the last bar (reject code `delay_past_close`). That is the delay working, so Python does not warn about it; `late.warnings` names it.
 
-How to read the two runs against the first (Rs 53,941.09): filled at the close, the crossover kept about 71 percent of its profit; a day late, about 78 percent, and both drawdowns were a little deeper. Its edge does not hang on getting the exact open. A strategy whose profit vanishes one bar late, or at the bar's close instead of its open, has an edge too thin to trade: real fills and real delays would take all of it. For more ways to tell a real edge from a lucky one, see the [overfitting checks](results-and-reports.md#overfitting-checks).
+How to read the two runs against the first (Rs 53,485.86): filled at the close, the crossover kept about 71 percent of its profit; a day late, about 97 percent, and both drawdowns were a little deeper. Its edge does not hang on getting the exact open. A strategy whose profit vanishes one bar late, or at the bar's close instead of its open, has an edge too thin to trade: real fills and real delays would take all of it. For more ways to tell a real edge from a lucky one, see the [overfitting checks](results-and-reports.md#overfitting-checks).
 
 A held order is waiting, not yet a position: `self.position.is_flat` stays `True` until it fills. The crossover buys only on the day the EMAs cross, so it cannot buy twice; a strategy that buys on every bar while it is flat would buy again while its first buy waits, so it should also check that `self.orders` (the orders still waiting) is empty.
 
@@ -291,17 +292,17 @@ print("first buy, part shares :", round(part.trade_list()["quantity"].iloc[0], 2
 
 <!-- output -->
 ```text
-Net profit   : Rs 55,819.69
-Return       : 55.82%
-Max drawdown : -29.82%
+Net profit   : Rs 55,193.09
+Return       : 55.19%
+Max drawdown : -29.87%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
-Charges      : Rs 3,416.24
+Charges      : Rs 3,926.15
 first buy, whole shares: 270.0
-first buy, part shares : 279.82
+first buy, part shares : 279.75
 ```
 
-With part shares the first buy was 279.82 shares, all the capital at the next day's open, against 270 whole shares. No cash stayed in a buffer or in the part of a share left over, so the profit is a little higher, and the drawdown a little deeper. The difference is small here; on a stock priced in thousands of rupees, or with a small capital, whole shares matter more.
+With part shares the first buy was 279.75 shares, all the capital at the next day's open, against 270 whole shares. No cash stayed in a buffer or in the part of a share left over, so the profit is a little higher, and the drawdown a little deeper. The difference is small here; on a stock priced in thousands of rupees, or with a small capital, whole shares matter more.
 
 ## How do I choose how many shares to buy?
 
@@ -340,7 +341,7 @@ Here there are two. The first: no lot or tick size was given for SBIN, so the en
 
 * **Contract-note rounding:** by default STT and stamp duty are rounded to the rupee once a day per contract note, as a broker does; `result.contract_notes` shows each note. Each fill pays its share of its note (`result.costs["charged"]`), and a trade pays what its fills paid, so the trades add up to the account. `costs=bt.costs.CostModel(rounding="calculator")` rounds each trade instead.
 * **Dated rates:** charges are built in from 1 July 2020, one schedule per rate change; `result.costs` names the `schedule` of each fill. An earlier start stops with a `CostError`: pass `costs=None`, or `bt.costs.CostModel(backfill=True)`.
-* **Not costed yet:** currency derivatives (CDS, BCD) and MCX options stop with a `CostError`; pass `costs=None`.
+* **Currencies and commodity options:** NSE currency futures and options (CDS) and MCX options on non-agri commodities are costed from openalgo 2.4.1. BSE currency derivatives (BCD) and options on agri commodities stop with a `CostError`; pass `costs=None`.
 * **Your own brokerage:** `bt.costs.custom(delivery=..., intraday=..., futures=..., options=..., dp_fee=...)`.
 * **Same-day delivery trades:** a CNC buy and sell of one stock on the same day is charged as intraday, with no DP charge.
 * **Slippage by class:** `bt.slippage.defaults()` lists every row and its source; `slippage={"INDEX_FUT": bt.ticks(2)}` replaces one row.

@@ -59,15 +59,15 @@ print(f"Average trade: Rs {(trades['quantity'] * trades['entry_price']).mean():,
 
 <!-- output -->
 ```text
-Net profit   : Rs -844.47
-Return       : -0.84%
-Max drawdown : -2.77%
-Trades       : 16 (31% won), 1 still open
+Net profit   : Rs -1,623.27
+Return       : -1.62%
+Max drawdown : -3.24%
+Trades       : 16 (25% won), 1 still open
 Overfitting  : too few trades to judge (16 closed, 30 needed)
 Average trade: Rs 9,301
 ```
 
-Each trade put about Rs 9,300 to work: 10 percent of the equity, rounded down to whole shares of a stock that cost over Rs 1,000 a share. So the 16 closed trades lost only Rs 844, and the account never fell more than 2.77 percent from its highest value (the max drawdown). With all the capital in every trade, the same signals lost Rs 9,345 with a drawdown of 23.82 percent. "1 still open" is the position bought at the last crossover and still held on 11 November 2026. Smaller positions mean smaller losses and smaller gains: sizing decides how much a strategy's ups and downs can hurt you.
+Each trade put about Rs 9,300 to work: 10 percent of the equity, rounded down to whole shares of a stock that cost over Rs 1,000 a share. So the 16 closed trades lost only Rs 1,623, and the account never fell more than 3.24 percent from its highest value (the max drawdown). With all the capital in every trade, the same signals lost Rs 10,379 with a drawdown of 24.37 percent. "1 still open" is the position bought at the last crossover and still held on 11 November 2026. Smaller positions mean smaller losses and smaller gains: sizing decides how much a strategy's ups and downs can hurt you.
 
 ## Try this
 

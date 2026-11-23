@@ -56,19 +56,19 @@ if __name__ == "__main__":
 <!-- output -->
 ```text
  fast  slow  net_profit  total_return  max_drawdown  sharpe  trades  objective
-    5    30    98375.98          0.98         -0.25    0.72      28   98375.98
-    5    50    65851.70          0.66         -0.28    0.55      25   65851.70
-    5   100    25437.38          0.25         -0.29    0.30      17   25437.38
-   10    30    69968.22          0.70         -0.23    0.57      23   69968.22
-   10    50    55576.39          0.56         -0.26    0.49      19   55576.39
-   10   100    18630.46          0.19         -0.28    0.25      14   18630.46
-   20    30    53972.84          0.54         -0.25    0.48      17   53972.84
-   20    50    53941.09          0.54         -0.29    0.47      11   53941.09
-   20   100    25892.34          0.26         -0.26    0.31       9   25892.34
+    5    30    96750.18          0.97         -0.25    0.72      28   96750.18
+    5    50    64512.42          0.65         -0.28    0.55      25   64512.42
+    5   100    24478.79          0.24         -0.29    0.30      17   24478.79
+   10    30    68560.72          0.69         -0.23    0.57      23   68560.72
+   10    50    54443.86          0.54         -0.26    0.48      19   54443.86
+   10   100    17800.49          0.18         -0.28    0.24      14   17800.49
+   20    30    52869.10          0.53         -0.25    0.48      17   52869.10
+   20    50    53485.86          0.53         -0.29    0.47      11   53485.86
+   20   100    25433.89          0.25         -0.26    0.31       9   25433.89
 best: {'fast': 5, 'slow': 30}
-Net profit   : Rs 98,375.98
-Return       : 98.38%
-Max drawdown : -25.15%
+Net profit   : Rs 96,750.18
+Return       : 96.75%
+Max drawdown : -25.27%
 Trades       : 28 (39% won), 1 still open
 Overfitting  : too few trades to judge (28 closed, 30 needed)
 ```
@@ -131,9 +131,9 @@ if __name__ == "__main__":
 ```text
 fast       5        10       20
 slow
-30    98376.0  69968.0  53973.0
-50    65852.0  55576.0  53941.0
-100   25437.0  18630.0  25892.0
+30    96750.0  68561.0  52869.0
+50    64512.0  54444.0  53486.0
+100   24479.0  17800.0  25434.0
 ```
 
 Every pair made money over these years, and the profit mostly fell as the averages got slower. Neighbouring cells agree, which is a better sign than one lone high number surrounded by poor ones.
@@ -172,17 +172,17 @@ if __name__ == "__main__":
 Neighbourhood           : passed
 Neighbours making money : 100%
 Median neighbour keeps  : 67%
-25th percentile keeps   : 62%
+25th percentile keeps   : 61%
 Warnings                : none
 Deflated Sharpe ratio   : 0.88
-Overfitting probability : 0.28
+Overfitting probability : 0.29
 Open sweep.html in your browser
 ```
 
 * **The neighbourhood** applies the [parameter neighbourhood](robustness.md#the-searching-checks) rule to the best row. Its neighbours are the settings one step away in the grid: fast 5 and slow 30 sit in a corner, so they have three (fast 5 with slow 50, fast 10 with slow 30, fast 10 with slow 50). The rule passes when about three quarters of the neighbours or more make money (the neighbour at the 25th percentile, with a quarter of them below it, is above break-even) and the median one (the middle one) keeps at least half of the best's figure. Here all three made money and the median kept 67 percent of the best's net profit: the best sits on a slope of good settings, not on a lone spike.
 * **The warnings:** when the best fails that rule, `sweep.warnings` holds a line that starts "The best combination (...) looks like a lone spike, not a plateau" and says to prefer a setting inside a plateau. This sweep has none.
 * **The deflated Sharpe ratio:** the best of 9 tries tends to show a higher Sharpe ratio than the strategy really has, because luck helped to pick it. This figure corrects for that: it is the probability, from 0 to 1, that the best setting's true Sharpe ratio is above what the best of 9 tries would show with no edge at all. Near 1 the best stands out from luck; near 0.5 or below it does not. Here it is 0.88, between the two: the best probably stands out from luck, but not clearly. The more settings you try, the higher the bar.
-* **The overfitting probability** (the probability of backtest overfitting): the sweep cuts the 1,453 trading days into 16 blocks and takes every way of choosing half of them as "the past", 12,870 ways. In each, it finds the best setting on that half and ranks it on the other half. The figure is the share of ways in which the past's best landed in the bottom half. Here it is 0.28. Near 0.5 or above, the search picked settings that did not hold up across the years. A figure near 0 does not prove the settings hold: every half comes from the same years, so a setting that rode one long trend ranks well in all of them.
+* **The overfitting probability** (the probability of backtest overfitting): the sweep cuts the 1,453 trading days into 16 blocks and takes every way of choosing half of them as "the past", 12,870 ways. In each, it finds the best setting on that half and ranks it on the other half. The figure is the share of ways in which the past's best landed in the bottom half. Here it is 0.29. Near 0.5 or above, the search picked settings that did not hold up across the years. A figure near 0 does not prove the settings hold: every half comes from the same years, so a setting that rode one long trend ranks well in all of them.
 * `sweep.overfitting` gives both figures with what they rest on: the best's Sharpe ratio per day, the one the best of the tries would show by luck, the settings tried, the days, the blocks and the splits.
 
 Passing proves nothing on its own: the [walk-forward](walk-forward.md#an-example) of this same sweep earned about a quarter of what its picks promised, so these figures are not a reason to trade the best row.
@@ -195,7 +195,7 @@ Below come the neighbourhood, with its verdict and a chart of the neighbours' ne
 
 <figure><img src="../../../.gitbook/assets/backtest-optimize-overfitting.png" alt="The Overfitting section of the heatmap page: six tiles, deflated Sharpe 0.879 (a probability), best Sharpe 0.0459 per session, by luck 0.0146 (the best of the tries), tries 9 combinations, overfitting 0.280 (a probability) and splits 12,870 of 16 blocks"><figcaption><p>The deflated Sharpe ratio and the probability of backtest overfitting</p></figcaption></figure>
 
-The tiles give the Sharpe ratios per trading day, not per year: the best setting's (0.0459), and the one the best of 9 tries would show by luck (0.0146). A chart under them shows how the past's best ranked in each of the 12,870 splits, and the Notes at the end of the page explain each figure.
+The tiles give the Sharpe ratios per trading day, not per year: the best setting's (0.0455), and the one the best of 9 tries would show by luck (0.0145). A chart under them shows how the past's best ranked in each of the 12,870 splits, and the Notes at the end of the page explain each figure.
 
 ## Should I trade the best values?
 

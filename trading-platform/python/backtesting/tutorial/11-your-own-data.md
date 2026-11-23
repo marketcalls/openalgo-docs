@@ -77,14 +77,14 @@ print(result.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
-The same bars give the same result as the first lesson, to the paisa: Rs 53,941.09 in 11 trades, with a max drawdown (the largest fall of the account from its highest value) of 29.35 percent. Passing the bars yourself changes nothing, until you change the bars.
+The same bars give the same result as the first lesson, to the paisa: Rs 53,485.86 in 11 trades, with a max drawdown (the largest fall of the account from its highest value) of 29.42 percent. Passing the bars yourself changes nothing, until you change the bars.
 
 Bars from `client.history` need nothing more, intraday ones included: the times of its 5-minute or 15-minute bars come with the Indian time zone (IST) attached. Intraday times without a time zone, as most spreadsheets hold them, need `tz="Asia/Kolkata"` in the `bt.backtest(...)` call, to say they are Indian time ([When do I pass tz=?](../data.md#when-do-i-pass-tz)).
 
@@ -105,9 +105,9 @@ print(late.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 30,738.50
-Return       : 30.74%
-Max drawdown : -29.38%
+Net profit   : Rs 30,568.34
+Return       : 30.57%
+Max drawdown : -29.40%
 Trades       : 7 (29% won)
 Overfitting  : too few trades to judge (7 closed, 30 needed)
 ```

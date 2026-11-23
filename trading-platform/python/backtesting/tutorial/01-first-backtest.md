@@ -61,9 +61,9 @@ print(result.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -107,7 +107,7 @@ Python also prints a warning, after your file's name and line number: `Unverifie
 
 ## What happened
 
-* The strategy turned Rs 1,00,000 into Rs 1,53,941.09: a net profit of Rs 53,941.09, or 53.94 percent, after all charges.
+* The strategy turned Rs 1,00,000 into Rs 1,53,485.86: a net profit of Rs 53,485.86, or 53.49 percent, after all charges.
 * Every buy and sell was decided at a day's close and filled at the next day's open, 09:15. A backtest never trades at a price it could not have seen.
 * The engine took Indian charges (brokerage, STT, exchange charges, stamp duty, GST and the rest) and slippage off every trade. **Slippage** is the small amount every fill loses to the market: you rarely get exactly the price you see.
 * Only 4 of the 11 trades made money, but a few long rises paid for the many small losses. The next lesson shows each trade.

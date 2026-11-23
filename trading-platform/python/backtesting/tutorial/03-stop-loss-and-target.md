@@ -8,7 +8,7 @@ In this lesson you add an exit to every trade of the [EMA crossover](01-first-ba
 
 The distance is written `bt.pct(3)`: 3 percent of your buying price.
 
-Without any of them, lesson 1 made Rs 53,941.09 (53.94 percent), with a max drawdown of -29.35 percent, from 11 trades.
+Without any of them, lesson 1 made Rs 53,485.86 (53.49 percent), with a max drawdown of -29.42 percent, from 11 trades.
 
 ## A stop-loss
 
@@ -52,14 +52,14 @@ print(result.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 40,561.33
-Return       : 40.56%
-Max drawdown : -23.17%
+Net profit   : Rs 40,079.49
+Return       : 40.08%
+Max drawdown : -23.30%
 Trades       : 11 (27% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
-**What changed:** the stop closed 7 of the 11 trades before the EMAs crossed back, so the worst fall of the account was smaller (-23.17 percent against -29.35), but it also sold some trades that recovered later, and the profit fell.
+**What changed:** the stop closed 7 of the 11 trades before the EMAs crossed back, so the worst fall of the account was smaller (-23.30 percent against -29.42), but it also sold some trades that recovered later, and the profit fell.
 
 The stop is checked every day, from the day you buy. On a CNC (delivery) position the engine holds it as a **GTT order** (good till triggered: an order your broker keeps open across days until its price is reached), the way your broker would hold it overnight.
 
@@ -86,9 +86,9 @@ print(result.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 32,913.22
-Return       : 32.91%
-Max drawdown : -22.28%
+Net profit   : Rs 32,623.40
+Return       : 32.62%
+Max drawdown : -22.33%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -118,9 +118,9 @@ print(result.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 64,544.99
-Return       : 64.54%
-Max drawdown : -24.44%
+Net profit   : Rs 63,499.78
+Return       : 63.50%
+Max drawdown : -24.55%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -131,10 +131,10 @@ Overfitting  : too few trades to judge (11 closed, 30 needed)
 
 | Exit added to `self.buy()` | Net profit | Return | Max drawdown | Trades won |
 |---|---|---|---|---|
-| None (lesson 1) | Rs 53,941.09 | 53.94% | -29.35% | 36% |
-| `stop=bt.pct(3)` | Rs 40,561.33 | 40.56% | -23.17% | 27% |
-| `target=bt.pct(20)` | Rs 32,913.22 | 32.91% | -22.28% | 36% |
-| `trail=bt.trail_pct(15)` | Rs 64,544.99 | 64.54% | -24.44% | 36% |
+| None (lesson 1) | Rs 53,485.86 | 53.49% | -29.42% | 36% |
+| `stop=bt.pct(3)` | Rs 40,079.49 | 40.08% | -23.30% | 27% |
+| `target=bt.pct(20)` | Rs 32,623.40 | 32.62% | -22.33% | 36% |
+| `trail=bt.trail_pct(15)` | Rs 63,499.78 | 63.50% | -24.55% | 36% |
 
 These numbers are for SBIN over these six years. Another stock or another period can rank the exits differently, so do not pick a setting only because it did best here; [Find Better Settings](09-find-better-settings.md) shows how to test that properly.
 

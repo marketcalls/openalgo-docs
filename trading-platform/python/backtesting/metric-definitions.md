@@ -46,9 +46,9 @@ print(result.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -66,10 +66,10 @@ print(table.loc[["cagr", "sharpe", "max_drawdown", "profit_factor"], ["label", "
 ```text
                           label     value      unit
 key
-cagr                       CAGR  0.076399  fraction
-sharpe             Sharpe ratio  0.469393     ratio
-max_drawdown   Maximum drawdown -0.293518  fraction
-profit_factor     Profit factor  1.945608     ratio
+cagr                       CAGR  0.075855  fraction
+sharpe             Sharpe ratio  0.466617     ratio
+max_drawdown   Maximum drawdown -0.294166  fraction
+profit_factor     Profit factor  1.934034     ratio
 ```
 
 How to read the units:
@@ -78,7 +78,7 @@ How to read the units:
 |---|---|
 | fraction | 0.01 is one percent: returns, rates, drawdowns and shares. `f"{value:.2%}"` prints a fraction as a percent |
 | rupees | Indian rupees |
-| ratio | A plain number, such as 1.95 |
+| ratio | A plain number, such as 1.93 |
 | count | A whole number |
 | days | Calendar days, which can have a fraction |
 | seconds | Seconds |
@@ -90,7 +90,7 @@ How to read the units:
 
 A few rules hold for every figure:
 
-* **Drawdowns are zero or negative.** A drawdown is a fall of the account from its highest value so far: `max_drawdown` of -0.2935 is a fall of 29.35 percent, and `max_drawdown_amount` of -500 is a fall of Rs 500.
+* **Drawdowns are zero or negative.** A drawdown is a fall of the account from its highest value so far: `max_drawdown` of -0.2942 is a fall of 29.42 percent, and `max_drawdown_amount` of -500 is a fall of Rs 500.
 * **NaN** means the data cannot give the figure, for example a Sharpe ratio with no ups and downs to measure. A trades table you build yourself for `metrics.analyse` without the columns `mae`, `mfe`, `mae_pct`, `mfe_pct` and `slippage` gives NaN for the figures that need them.
 * The **Benchmark** group appears only when the run has a benchmark, such as `benchmark="NIFTY"`.
 * Figures are measured from your capital, per trading session, after all charges. [Results and Reports](results-and-reports.md#more-options) has the details.

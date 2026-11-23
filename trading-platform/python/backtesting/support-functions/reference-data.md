@@ -168,7 +168,7 @@ print(fills[fills["time"].dt.strftime("%Y-%m-%d") == "2026-11-11"].to_string(ind
 
 <!-- output -->
 ```text
-NIFTY23NOV2625300CE: lot 65, tick 0.05, freeze 1800 from the reference tables (builtin:2026-11-17:a50a575215e7)
+NIFTY23NOV2625300CE: lot 65, tick 0.05, freeze 1800 from the reference tables (builtin:2026-11-23:2bb4a13ae99d)
 Net profit   : Rs -5,673.33
 Return       : -5.67%
 Max drawdown : -5.67%

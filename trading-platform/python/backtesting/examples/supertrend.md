@@ -56,9 +56,9 @@ print(result.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 43,285.99
-Return       : 43.29%
-Max drawdown : -29.73%
+Net profit   : Rs 41,874.82
+Return       : 41.87%
+Max drawdown : -29.98%
 Trades       : 24 (46% won), 1 still open
 Overfitting  : too few trades to judge (24 closed, 30 needed)
 ```

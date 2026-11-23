@@ -48,9 +48,9 @@ print(result.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -81,9 +81,9 @@ print(fifty.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 12,591.62
-Return       : 12.59%
-Max drawdown : -14.59%
+Net profit   : Rs 12,072.42
+Return       : 12.07%
+Max drawdown : -14.73%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -117,9 +117,9 @@ print(sooner.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 6,837.93
-Return       : 6.84%
-Max drawdown : -20.63%
+Net profit   : Rs 6,412.18
+Return       : 6.41%
+Max drawdown : -20.83%
 Trades       : 11 (18% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -153,9 +153,9 @@ print(stopped.trade_list()["exit_reason"].value_counts().to_dict())  # how many 
 
 <!-- output -->
 ```text
-Net profit   : Rs 24,010.20
-Return       : 24.01%
-Max drawdown : -28.48%
+Net profit   : Rs 23,401.54
+Return       : 23.40%
+Max drawdown : -28.60%
 Trades       : 11 (27% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 {'leg_sl': 7, 'signal': 4}
@@ -186,9 +186,9 @@ print(booked.trade_list()["exit_reason"].value_counts().to_dict())
 
 <!-- output -->
 ```text
-Net profit   : Rs 16,196.09
-Return       : 16.20%
-Max drawdown : -21.81%
+Net profit   : Rs 15,707.20
+Return       : 15.71%
+Max drawdown : -21.92%
 Trades       : 11 (27% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 {'leg_sl': 7, 'leg_target': 3, 'signal': 1}
@@ -217,9 +217,9 @@ print(trailed.trade_list()["exit_reason"].value_counts().to_dict())
 
 <!-- output -->
 ```text
-Net profit   : Rs 24,525.35
-Return       : 24.53%
-Max drawdown : -22.95%
+Net profit   : Rs 23,759.63
+Return       : 23.76%
+Max drawdown : -23.07%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 {'signal': 7, 'leg_sl': 4}
@@ -338,13 +338,13 @@ print(refused["reject_code"].value_counts().to_dict())
 
 <!-- output -->
 ```text
-Net profit   : Rs -16,690.98
-Return       : -16.69%
-Max drawdown : -18.48%
-Trades       : 73 (44% won)
-Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
-{'scheduler': 43, 'daily_profit_target': 16, 'signal': 14}
-{'entry_window': 10}
+Net profit   : Rs 416.22
+Return       : 0.42%
+Max drawdown : -4.77%
+Trades       : 45 (47% won)
+Overfitting  : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational; see result.robustness()
+{'scheduler': 34, 'daily_profit_target': 7, 'signal': 4}
+{'entry_window': 8}
 ```
 
 In the second line, `daily_profit_target` counts the trades the profit target closed. The last line counts the refused orders by their code: `trade_limit` for an entry over the cap, `daily_profit_gate` for an entry after the target was reached that day, and `entry_window` for an entry after the entry window's end (15:00 until 31 July 2026, 14:50 from 3 August). A code that is missing refused nothing in this run. Refusals by a limit you set are the limit working, so Python prints no warning about them; `result.warnings` counts them once, and the limits are named in the run's assumptions (`print(capped)`). As with the loss limit, a cap changes how often the strategy trades, not whether its rule has an edge.

@@ -65,15 +65,15 @@ if __name__ == "__main__":
 <!-- output -->
 ```text
  fast  slow  net_profit  trades
-   15    40    47365.98      11
-   10    60    46770.50      12
-   15    60    45099.67       8
-   15    50    44830.46      11
-   10    40    42564.76      14
+   15    40    46785.75      11
+   10    60    45974.59      12
+   15    60    44739.56       8
+   15    50    44296.27      11
+   10    40    41756.46      14
 Best: {'fast': 15, 'slow': 40}
 ```
 
-On 2021 to 2024 the pair 15 and 40 made the most, Rs 47,366. The 20 and 50 of the first lesson made Rs 38,522 on the same years and did not reach the top five.
+On 2021 to 2024 the pair 15 and 40 made the most, Rs 46,786. The 20 and 50 of the first lesson made Rs 38,125 on the same years and did not reach the top five.
 
 ## The heatmap
 
@@ -91,12 +91,12 @@ if __name__ == "__main__":
 ```text
 fast       10       15       20       25
 slow
-40    42565.0  47366.0  40035.0  33978.0
-50    34701.0  44830.0  38522.0  29568.0
-60    46770.0  45100.0   7146.0   9593.0
+40    41756.0  46786.0  39705.0  33614.0
+50    33971.0  44296.0  38125.0  29028.0
+60    45975.0  44740.0   6839.0   9113.0
 ```
 
-Every pair made money on these years, and the cells next to the winner (Rs 42,565, Rs 40,035 and Rs 44,830) did well too. That is a good sign. A lone best cell surrounded by losses would be a warning: more likely luck than a real edge.
+Every pair made money on these years, and the cells next to the winner (Rs 41,756, Rs 39,705 and Rs 44,296) did well too. That is a good sign. A lone best cell surrounded by losses would be a warning: more likely luck than a real edge.
 
 ## Check it on later dates
 
@@ -118,11 +118,11 @@ if __name__ == "__main__":
 
 <!-- output -->
 ```text
-Best pair, 2025-26 : Rs 15,917.73
-20 and 50, 2025-26 : Rs 11,369.47
+Best pair, 2025-26 : Rs 15,652.45
+20 and 50, 2025-26 : Rs 11,227.87
 ```
 
-The winner held up: on the new dates it made Rs 15,918 against Rs 11,369 for the original. But its lead shrank from Rs 8,844 on 2021 to 2024 to Rs 4,548 on 2025 and 2026. That is the usual picture: part of the best result was the past fitting itself, and only the later dates show how much of the edge was real.
+The winner held up: on the new dates it made Rs 15,652 against Rs 11,228 for the original. But its lead shrank from Rs 8,661 on 2021 to 2024 to Rs 4,425 on 2025 and 2026. That is the usual picture: part of the best result was the past fitting itself, and only the later dates show how much of the edge was real.
 
 ## Do not fool yourself
 

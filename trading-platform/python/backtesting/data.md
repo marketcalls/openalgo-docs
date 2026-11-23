@@ -44,9 +44,9 @@ print(result.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -112,9 +112,9 @@ print(own.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -146,9 +146,9 @@ print(late.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 30,738.50
-Return       : 30.74%
-Max drawdown : -29.38%
+Net profit   : Rs 30,568.34
+Return       : 30.57%
+Max drawdown : -29.40%
 Trades       : 7 (29% won)
 Overfitting  : too few trades to judge (7 closed, 30 needed)
 ```
@@ -267,9 +267,9 @@ print(same.summary())
 <!-- output -->
 ```text
 ['Date', 'Close', 'High', 'Low', 'Oi', 'Open', 'Volume']
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```

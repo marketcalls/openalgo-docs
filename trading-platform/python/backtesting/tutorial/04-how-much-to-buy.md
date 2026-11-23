@@ -51,9 +51,9 @@ print(f"Average buy  : Rs {invested.mean():,.0f}")
 
 <!-- output -->
 ```text
-Net profit   : Rs 25,351.07
-Return       : 25.35%
-Max drawdown : -23.46%
+Net profit   : Rs 24,831.87
+Return       : 24.83%
+Max drawdown : -23.59%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 Average buy  : Rs 67,267
@@ -87,15 +87,15 @@ print(f"Average buy  : Rs {invested.mean():,.0f}")
 
 <!-- output -->
 ```text
-Net profit   : Rs 28,200.50
-Return       : 28.20%
-Max drawdown : -17.50%
+Net profit   : Rs 27,720.47
+Return       : 27.72%
+Max drawdown : -17.62%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
-Average buy  : Rs 57,213
+Average buy  : Rs 57,086
 ```
 
-**What changed:** each trade put half the account to work and kept the other half in cash, so the profit was about half of lesson 1's and the drawdown much smaller (-17.50 percent against -29.35).
+**What changed:** each trade put half the account to work and kept the other half in cash, so the profit was about half of lesson 1's and the drawdown much smaller (-17.62 percent against -29.42).
 
 ## Risk-based sizing with a stop
 
@@ -124,12 +124,12 @@ print(f"Average buy  : Rs {invested.mean():,.0f}")
 
 <!-- output -->
 ```text
-Net profit   : Rs 12,929.84
-Return       : 12.93%
-Max drawdown : -8.73%
+Net profit   : Rs 11,712.98
+Return       : 11.71%
+Max drawdown : -8.52%
 Trades       : 11 (27% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
-Average buy  : Rs 33,703
+Average buy  : Rs 31,801
 ```
 
 **What changed:** each trade used about a third of the equity, and a trade stopped out lost about 1 percent of it. The max drawdown fell to under 9 percent, the smallest on this page, and so did the profit: less money at risk means less to gain as well as less to lose.
@@ -138,10 +138,10 @@ Average buy  : Rs 33,703
 
 | Size of each buy | Net profit | Return | Max drawdown | Average buy |
 |---|---|---|---|---|
-| All the capital (lesson 1) | Rs 53,941.09 | 53.94% | -29.35% | All the equity |
-| `qty=100` | Rs 25,351.07 | 25.35% | -23.46% | Rs 67,267 |
-| `size=bt.size.percent(50)` | Rs 28,200.50 | 28.20% | -17.50% | Rs 57,213 |
-| `size=bt.size.fixed_risk(1)`, `stop=bt.pct(3)` | Rs 12,929.84 | 12.93% | -8.73% | Rs 33,703 |
+| All the capital (lesson 1) | Rs 53,485.86 | 53.49% | -29.42% | All the equity |
+| `qty=100` | Rs 24,831.87 | 24.83% | -23.59% | Rs 67,267 |
+| `size=bt.size.percent(50)` | Rs 27,720.47 | 27.72% | -17.62% | Rs 57,086 |
+| `size=bt.size.fixed_risk(1)`, `stop=bt.pct(3)` | Rs 11,712.98 | 11.71% | -8.52% | Rs 31,801 |
 
 Profit and drawdown grow together with the money at work. Choose the size by the fall you can live with, then look at the profit.
 

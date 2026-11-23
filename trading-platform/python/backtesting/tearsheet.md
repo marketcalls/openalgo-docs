@@ -70,7 +70,7 @@ Under the header are the strategy's name (its class name, `EmaCrossover`), the d
 
 The **Overview** has twelve tiles, the headline figures of the run. The large number is the strategy's; the small line under it, such as "NIFTY 80.63%", is the same figure for simply holding NIFTY over the same dates. Green is a gain and red a loss.
 
-Here the tiles already tell the story of this run. The strategy returned 53.94 percent, 7.64 percent a year, while NIFTY returned 80.63 percent, 10.62 percent a year. Its worst fall was -29.35 percent against NIFTY's -17.23 percent, and its Sharpe ratio was 0.47 against NIFTY's 0.79. It spent 66.14 percent of the time in the market ("Time in market") and the rest in cash.
+Here the tiles already tell the story of this run. The strategy returned 53.49 percent, 7.59 percent a year, while NIFTY returned 80.63 percent, 10.62 percent a year. Its worst fall was -29.42 percent against NIFTY's -17.23 percent, and its Sharpe ratio was 0.47 against NIFTY's 0.79. It spent 66.14 percent of the time in the market ("Time in market") and the rest in cash.
 
 ## Performance
 
@@ -80,7 +80,7 @@ Here the tiles already tell the story of this run. The strategy returned 53.94 p
 
 * The **black line** (with grey shading under it) is the strategy; the **blue line** is NIFTY.
 * A flat stretch of the black line is a time the strategy held no shares, only cash.
-* Here the strategy climbed to about 120 percent early in 2026, then fell back to 53.94 percent. That fall is the max drawdown of the Overview.
+* Here the strategy climbed to about 120 percent early in 2026, then fell back to 53.49 percent. That fall is the max drawdown of the Overview.
 
 Hover over a chart with the mouse to read its values on any day.
 
@@ -94,7 +94,7 @@ A strategy whose rolling Sharpe is high in one short stretch and low everywhere 
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-horizons.png" alt="The Return and Risk by Horizon table: CAGR, max drawdown and Sharpe for the last 1 year, 3 years, 5 years and all-time"><figcaption><p>Performance: return and risk over the last 1, 3 and 5 years</p></figcaption></figure>
 
-**Return & Risk by Horizon** gives the CAGR (return per year), the max drawdown and the Sharpe ratio over the last year, the last 3 and 5 years, and the whole run. Here the last year lost 9.52 percent with a Sharpe of -0.42, while the last 3 years made 11.51 percent a year. A strategy that did well over the whole run but badly in the latest year is worth a closer look before you trade it.
+**Return & Risk by Horizon** gives the CAGR (return per year), the max drawdown and the Sharpe ratio over the last year, the last 3 and 5 years, and the whole run. Here the last year lost 9.56 percent with a Sharpe of -0.42, while the last 3 years made 11.51 percent a year. A strategy that did well over the whole run but badly in the latest year is worth a closer look before you trade it.
 
 ## Risk
 
@@ -102,13 +102,13 @@ A strategy whose rolling Sharpe is high in one short stretch and low everywhere 
 
 The red **Drawdown** chart shows how far the account was below its highest value so far, every day. At 0 the account stood at a new high; the deeper the red, the bigger the fall. The two deep valleys here are the falls of late 2021 to 2023 and of 2026.
 
-The tiles under it are the risk figures: the max drawdown, the conditional drawdown (the average of the deepest falls), the longest drawdown in days (903 here, against NIFTY's 463), the value at risk and expected shortfall of a single day, the volatility, the risk of ruin, the skew, the kurtosis and the tail ratio. The row "VS BENCHMARK - NIFTY" compares the strategy with NIFTY: beta, alpha, correlation, R squared, information ratio and Treynor ratio. Alpha is shown as a fraction: 0.02 is about 2 percent a year (1.55 percent before rounding).
+The tiles under it are the risk figures: the max drawdown, the conditional drawdown (the average of the deepest falls), the longest drawdown in days (907 here, against NIFTY's 463), the value at risk and expected shortfall of a single day, the volatility, the risk of ruin, the skew, the kurtosis and the tail ratio. The row "VS BENCHMARK - NIFTY" compares the strategy with NIFTY: beta, alpha, correlation, R squared, information ratio and Treynor ratio. Alpha is shown as a fraction: 0.01 is about 1 percent a year (1.50 percent before rounding).
 
 Below the tiles, **Rolling Beta** draws the beta over each half year: how closely the strategy followed NIFTY at each time.
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-worst-drawdowns.png" alt="The Worst Drawdowns table: the ten deepest falls with the day each started, the day it recovered or Not yet, its length in days and its depth, the worst -29.35 percent from 23 February 2026"><figcaption><p>Risk: the ten worst drawdowns</p></figcaption></figure>
 
-**Worst Drawdowns** lists the ten deepest falls: when each started, when the account got back to its earlier high ("Not yet" when it has not), how many days that took, and how deep it went. Here the worst fall, -29.35 percent, began on 23 February 2026 and had not recovered by the end of the run. The second, -28.06 percent, began on 4 November 2021 and took 903 days to recover. Read this table as a question: could you have waited two and a half years for the account to recover?
+**Worst Drawdowns** lists the ten deepest falls: when each started, when the account got back to its earlier high ("Not yet" when it has not), how many days that took, and how deep it went. Here the worst fall, -29.42 percent, began on 23 February 2026 and had not recovered by the end of the run. The second, -28.15 percent, began on 4 November 2021 and took 907 days to recover. Read this table as a question: could you have waited two and a half years for the account to recover?
 
 At the end of the section, **Consecutive Losing Streaks** counts how often the account fell on 1, 2, 3 or more days in a row. Here the longest run of falling days was 7.
 
@@ -124,7 +124,7 @@ The tiles under them give the best and worst month, the gain to pain ratio, the 
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-annual.png" alt="The Annual Returns chart: a black bar for the strategy and a blue bar for NIFTY in each year from 2021 to 2026, a dashed red line at the strategy's average year, and a table of each year's return"><figcaption><p>Monthly: each year against NIFTY</p></figcaption></figure>
 
-**Annual Returns** compares each calendar year: the black bar is the strategy and the blue bar NIFTY. The dashed red line is the strategy's average year. The table under it gives the numbers. Here 2023 stands out: the strategy lost 13.50 percent while NIFTY gained 20.03 percent.
+**Annual Returns** compares each calendar year: the black bar is the strategy and the blue bar NIFTY. The dashed red line is the strategy's average year. The table under it gives the numbers. Here 2023 stands out: the strategy lost 13.58 percent while NIFTY gained 20.03 percent.
 
 ## Distribution
 
@@ -132,7 +132,7 @@ The tiles under them give the best and worst month, the gain to pain ratio, the 
 
 This section shows how big the daily moves were:
 
-* The tiles give the best and worst day (8.93 and -14.20 percent here, against NIFTY's 4.74 and -5.93), the skew, the kurtosis and the outlier ratios. [Metrics Explained](metrics-explained.md#tail-risk) explains them.
+* The tiles give the best and worst day (8.95 and -14.23 percent here, against NIFTY's 4.74 and -5.93), the skew, the kurtosis and the outlier ratios. [Metrics Explained](metrics-explained.md#tail-risk) explains them.
 * **Daily Returns** is a histogram: each bar counts the days whose return fell in its range, green above zero and red below. The tall bar at 0 is the many days spent in cash. The dashed line marks the average day.
 * **Returns Spread** draws the daily and the monthly returns as box plots. The line runs from the lowest to the highest value, the box holds the middle half of the days (or months), and the mark inside it is the middle one, the median. A green box has a median above zero, a red one below.
 
@@ -150,14 +150,14 @@ The tiles sum up the closed trades: how many, the win rate, the profit factor, t
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-trading-cost.png" alt="The Trading Cost row: six tiles, turnover of closed trades Rs 28,32,598, charges Rs 3,323, slippage Rs 706.85, trading cost Rs 4,030, cost over gross P&L 7.04 percent and cost over turnover 14.2 basis points"><figcaption><p>Trades: what trading cost the closed trades</p></figcaption></figure>
 
-The **Trading Cost** row puts the two costs of trading side by side. A tile shows whole rupees from Rs 1,000 up and paise below, which is why slippage reads Rs 706.85 and the trading cost Rs 4,030. The figures below are as the tiles show them; `result.metrics` and the Charges table give them to the paisa.
+The **Trading Cost** row puts the two costs of trading side by side. A tile shows whole rupees from Rs 1,000 up and paise below, which is why slippage reads Rs 705.80 and the trading cost Rs 4,543. The figures below are as the tiles show them; `result.metrics` and the Charges table give them to the paisa.
 
-* **Turnover** (Rs 28,32,598): the value of every buy and every sell of the closed trades. The last tile measures the cost against it.
-* **Charges** (Rs 3,323): brokerage, STT and the other charges, itemised in the Charges table below.
-* **Slippage** (Rs 706.85): what the fills lost to slippage, each fill's price against its price before slippage. It is already inside the fill prices, so it is already in the gross and net P&L: the tile shows it, nothing takes it off a second time.
-* **Trading cost** (Rs 4,030): charges plus slippage, everything trading cost these trades.
-* **Cost / gross P&L** (7.04 percent): the share of the profit before charges that the trading cost took.
-* **Cost / turnover** (14.2 basis points; a basis point is 0.01 percent): Rs 142 of cost on every Rs 1,00,000 bought or sold. A trade pays it on its buy and on its sell, so it has to move about 0.28 percent just to pay its way. Watch this tile for a strategy that trades often.
+* **Turnover** (Rs 28,28,322): the value of every buy and every sell of the closed trades. The last tile measures the cost against it.
+* **Charges** (Rs 3,837): brokerage, STT and the other charges, itemised in the Charges table below.
+* **Slippage** (Rs 705.80): what the fills lost to slippage, each fill's price against its price before slippage. It is already inside the fill prices, so it is already in the gross and net P&L: the tile shows it, nothing takes it off a second time.
+* **Trading cost** (Rs 4,543): charges plus slippage, everything trading cost these trades.
+* **Cost / gross P&L** (7.92 percent): the share of the profit before charges that the trading cost took.
+* **Cost / turnover** (16.1 basis points; a basis point is 0.01 percent): Rs 161 of cost on every Rs 1,00,000 bought or sold. A trade pays it on its buy and on its sell, so it has to move about 0.32 percent just to pay its way. Watch this tile for a strategy that trades often.
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-mae-mfe.png" alt="The MAE and MFE block: six tiles (average MAE -5.10 percent, average MFE 20.56 percent, worst MAE Rs -16,608, best MFE Rs 80,823, edge ratio 4.03 and profit kept 52.08 percent), a red histogram of each trade's MAE and a green histogram of each trade's MFE in percent of capital at work, with the number of trades on the left axis, and two scatter charts of MAE and of MFE against each trade's return, with winners as green circles and the other trades as red crosses"><figcaption><p>Trades: how far each trade went against you and in your favour</p></figcaption></figure>
 
@@ -166,16 +166,16 @@ While a trade is open, its profit rises and falls. **MAE** (maximum adverse excu
 The six tiles:
 
 * **Avg MAE** (-5.10 percent) and **Avg MFE** (20.56 percent): on average a trade was at worst 5.10 percent down and at best 20.56 percent up.
-* **Worst MAE** (Rs -16,608): the deepest open loss of any trade. It was trade 10, which closed at that very loss.
+* **Worst MAE** (Rs -16,503): the deepest open loss of any trade. It was trade 10, which closed at that very loss.
 * **Best MFE** (Rs 80,823): the highest open profit of any trade. It was trade 9, which closed Rs 40,811.70 up before charges: it gave back half.
 * **Edge ratio** (4.03): the average MFE over the size of the average MAE (without its minus sign). Above 1, the trades moved further in your favour than against you; here four times as far.
-* **Profit kept** (52.08 percent): the winners' profit before charges over their best open profit. The four winners kept about half of what they had at their best.
+* **Profit kept** (52.09 percent): the winners' profit before charges over their best open profit. The four winners kept about half of what they had at their best.
 
 The four charts show each trade:
 
 * **MAE Distribution** and **MFE Distribution** count the trades by their MAE and by their MFE: the height of each bar, read on the axis at the left, is the number of trades in its range, and the dashed line is the average. Here no trade went more than 9.40 percent against, and seven of the 11 never got more than 10 percent ahead while four ran 29 to 60 percent ahead.
-* **MAE vs Return** puts each trade's MAE across and its return up: a green circle is a winner, a red cross a loser (or a flat trade). Read it against your stop-loss. A loser whose MAE is much deeper than its stop says the stop is not where the trades end: the price gapped through it and the exit filled beyond it, or (for an option or a GTT) the stop's limit order did not fill. A winner far to the left says a tighter stop would have cut it: trade 9 was 5.22 percent down at one point and still made 30.19 percent, so a stop closer than about 5 percent would have stopped it out. This strategy has no stop-loss, and most of its losers closed near their MAE, when the EMAs crossed back. The return is after charges and the MAE before them, so a loser that closed at its worst returned a little less than its MAE: trade 2 was 8.54 percent down at worst and returned -8.76 percent.
-* **MFE vs Return** puts each trade's MFE across and its return up. A winner that gave back most of its MFE says the exits are late. Here trades 1, 7 and 9 were 49 to 60 percent up at their best but closed 28 to 31 percent up: the crossover exit waits for the fast EMA to cross back, and they gave back a third to a half of each large rise. Trade 4 gave back the largest share: it was 29.05 percent up at its best and closed 9.59 percent up, about two thirds of its MFE gone. A target or a trailing stop ([Stop-Loss and Target](tutorial/03-stop-loss-and-target.md)) is the usual way to keep more of it.
+* **MAE vs Return** puts each trade's MAE across and its return up: a green circle is a winner, a red cross a loser (or a flat trade). Read it against your stop-loss. A loser whose MAE is much deeper than its stop says the stop is not where the trades end: the price gapped through it and the exit filled beyond it, or (for an option or a GTT) the stop's limit order did not fill. A winner far to the left says a tighter stop would have cut it: trade 9 was 5.22 percent down at one point and still made 30.15 percent, so a stop closer than about 5 percent would have stopped it out. This strategy has no stop-loss, and most of its losers closed near their MAE, when the EMAs crossed back. The return is after charges and the MAE before them, so a loser that closed at its worst returned a little less than its MAE: trade 2 was 8.54 percent down at worst and returned -8.80 percent.
+* **MFE vs Return** puts each trade's MFE across and its return up. A winner that gave back most of its MFE says the exits are late. Here trades 1, 7 and 9 were 49 to 60 percent up at their best but closed 28 to 31 percent up: the crossover exit waits for the fast EMA to cross back, and they gave back a third to a half of each large rise. Trade 4 gave back the largest share: it was 29.05 percent up at its best and closed 9.55 percent up, about two thirds of its MFE gone. A target or a trailing stop ([Stop-Loss and Target](tutorial/03-stop-loss-and-target.md)) is the usual way to keep more of it.
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-trade-list.png" alt="The Trade List: one row per closed trade with its entry and exit times, each written as the date over the time, quantity, entry and exit price, gross P&L, charges, net P&L, return, MAE and MFE in rupees, bars and days held, and the exit reason signal in the last column"><figcaption><p>Trades: the trade list, with each trade's MAE and MFE</p></figcaption></figure>
 
@@ -183,7 +183,7 @@ The **Trade List** has one row per closed trade, the same rows as `result.trade_
 
 <figure><img src="../../../.gitbook/assets/backtest-tearsheet-charges.png" alt="The Charges table: brokerage, STT, exchange transaction charge, SEBI fee, stamp duty, GST, the DP charge and the contract-note rounding, each in rupees and as a share of the total, then the total charges Rs 3,322.91, the slippage in fill prices Rs 706.85, the trading cost Rs 4,029.76, gross P&L, net P&L and charges as a share of gross P&L"><figcaption><p>Trades: the charges, item by item</p></figcaption></figure>
 
-**Charges** splits what the trades paid into each charge, in rupees and as a share of the total. For delivery (CNC) trades like these, STT is most of it: Rs 2,832.60 of Rs 3,322.91. The last item, **Contract-note rounding** (Rs 1.26 here), is what the rounding on each day's contract note added: STT and stamp duty are rounded to whole rupees there, and each trade pays its share. With it the trades add up to the account, so the net P&L here equals the net profit of the run. Under the total, **Slippage (in fill prices)** and **Trading cost** repeat the figures of the Trading Cost row; the slippage is already in the gross and net P&L below them. In all, charges took 5.80 percent of the gross profit.
+**Charges** splits what the trades paid into each charge, in rupees and as a share of the total. For delivery (CNC) trades like these, STT is most of it: Rs 2,828.32 of Rs 3,836.94. The last item, **Contract-note rounding** (Rs 0.87 here), is what the rounding on each day's contract note added: STT and stamp duty are rounded to whole rupees there, and each trade pays its share. With it the trades add up to the account, so the net P&L here equals the net profit of the run. Under the total, **Slippage (in fill prices)** and **Trading cost** repeat the figures of the Trading Cost row; the slippage is already in the gross and net P&L below them. In all, charges took 6.69 percent of the gross profit.
 
 When a strategy opens trades with a stop-loss, this section also has an **R-multiples** table: each trade's profit or loss in units of what its stop-loss risked.
 

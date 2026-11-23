@@ -46,9 +46,9 @@ print(result.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -116,9 +116,9 @@ print(filtered.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 18,269.21
-Return       : 18.27%
-Max drawdown : -30.22%
+Net profit   : Rs 17,628.71
+Return       : 17.63%
+Max drawdown : -30.46%
 Trades       : 10 (30% won)
 Overfitting  : too few trades to judge (10 closed, 30 needed)
 ```
@@ -155,9 +155,9 @@ print(macd.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 84,832.99
-Return       : 84.83%
-Max drawdown : -32.32%
+Net profit   : Rs 81,847.60
+Return       : 81.85%
+Max drawdown : -32.65%
 Trades       : 52 (42% won), 1 still open
 Overfitting  : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational; see result.robustness()
 ```
@@ -185,9 +185,9 @@ print(faster.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 69,968.22
-Return       : 69.97%
-Max drawdown : -23.24%
+Net profit   : Rs 68,560.72
+Return       : 68.56%
+Max drawdown : -23.31%
 Trades       : 23 (39% won), 1 still open
 Overfitting  : too few trades to judge (23 closed, 30 needed)
 ```
@@ -258,15 +258,15 @@ print(banks.trade_list().groupby("symbol")["net_pnl"].agg(["count", "sum"]).roun
 
 <!-- output -->
 ```text
-Net profit   : Rs 95,424.76
-Return       : 47.71%
-Max drawdown : -31.93%
+Net profit   : Rs 94,386.05
+Return       : 47.19%
+Max drawdown : -32.05%
 Trades       : 23 (43% won), 1 still open
 Overfitting  : too few trades to judge (23 closed, 30 needed)
            count       sum
 symbol
-ICICIBANK     12  22256.90
-SBIN          11  56538.23
+ICICIBANK     12  21600.00
+SBIN          11  56180.02
 ```
 
 All the symbols of one strategy trade on one exchange.
@@ -298,9 +298,9 @@ print(rules.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```

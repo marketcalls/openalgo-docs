@@ -164,51 +164,51 @@ if __name__ == "__main__":
 ```text
 RobustnessReport(MacdCrossover: 7 passed, 6 failed, 2 not judged, 2 informational)
  1 out_of_sample        passed
-   out of sample the sharpe is 0.65, 76.5% of the in-sample 0.85; the run made Rs
-   14,850 out of sample
+   out of sample the sharpe is 0.62, 74.9% of the in-sample 0.83; the run made Rs
+   14,125 out of sample
  2 random_out_of_sample failed
-   36.0% of 200 judged assignments kept 50% of the in-sample sharpe
+   33.0% of 200 judged assignments kept 50% of the in-sample sharpe
  3 walk_forward         failed
-   stitched out of sample Rs -32; efficiency 12.0%; 40.0% of 5 folds profitable; drift
-   fast 62.5%, slow 50.0%
+   stitched out of sample Rs -1,577; efficiency 8.2%; 40.0% of 5 folds profitable;
+   drift fast 62.5%, slow 50.0%
  4 vs_random            failed
-   the run's sharpe 0.55 is 0.37 times the best random run's 1.47; above 66.7% of
+   the run's sharpe 0.52 is 0.36 times the best random run's 1.45; above 66.5% of
    random runs
  5 permutation          failed
-   p = 0.463: 92 of 200 permuted runs at or above the run's sharpe of 0.55
+   p = 0.458: 91 of 200 permuted runs at or above the run's sharpe of 0.52
  6 noise                passed
-   median sharpe 0.52 keeps 94.9% of the run's 0.55; 100.0% of noise runs profitable;
-   the run above 66.0% of the noise runs and not above their 95th percentile 0.62
+   median sharpe 0.49 keeps 93.9% of the run's 0.52; 100.0% of noise runs profitable;
+   the run above 65.5% of the noise runs and not above their 95th percentile 0.60
  7 shifted              not judged
    n/a
  8 other_markets        passed
-   50.0% of 4 symbols profitable; median sharpe 0.16, 0.30 times the run's
+   50.0% of 4 symbols profitable; median sharpe 0.13, 0.24 times the run's
  9 stress               passed
-   83 of 400 candidates kept as shocks; under below_average, 96.6% of its shocks are
-   profitable against 95.0% of their generators' candidates, 1.02 times, over 3 judged
+   83 of 400 candidates kept as shocks; under recovery, 93.8% of its shocks are
+   profitable against 93.0% of their generators' candidates, 1.01 times, over 3 judged
    rules
 10 reshuffle            informational
-   95% of orders stay within -42.4% (the run's order -21.8%)
+   95% of orders stay within -42.7% (the run's order -22.4%)
 11 resample             failed
-   72.5% of paths profitable, ruin odds 9.0%
+   71.5% of paths profitable, ruin odds 9.0%
 12 random_exits         not judged
    n/a
 13 variance             failed
-   52.0% of paths profitable at a 29.6% win rate (71.5% at the run's 34.6%)
+   49.5% of paths profitable at a 29.6% win rate (70.5% at the run's 34.6%)
 14 delayed              passed
-   with entries one bar late the run made Rs 26,556 and keeps 74.9% of the run's
-   sharpe of 0.55; 100.0% of 8 delayed runs profitable
+   with entries one bar late the run made Rs 26,484 and keeps 77.7% of the run's
+   sharpe of 0.52; 100.0% of 8 delayed runs profitable
 15 liquidity            passed
    100.0% of 6 fill models profitable; the deepest maximum drawdown is 0.99 times the
-   run's -26.3%
+   run's -26.7%
 16 parameters           passed
-   100.0% of 8 neighbours profitable; the median keeps 100.0% and the 25th percentile
-   93.4% of the chosen sharpe of 0.55; the chosen one above 50.0% of the other
+   100.0% of 8 neighbours profitable; the median keeps 99.4% and the 25th percentile
+   93.0% of the chosen sharpe of 0.52; the chosen one above 50.0% of the other
    settings
 17 noise_optimization   informational
-   robust choice fast 12, slow 20 scores 0.67, by the neighbourhood rule on a plateau:
-   100.0% of its neighbours profitable, the median keeps 77.1%; on the run's bars it
-   makes 0.76 sharpe, and the plain optimum is the same setting
+   robust choice fast 12, slow 20 scores 0.65, by the neighbourhood rule on a plateau:
+   100.0% of its neighbours profitable, the median keeps 76.4%; on the run's bars it
+   makes 0.74 sharpe, and the plain optimum is the same setting
 Open macd_robustness.html in your browser
 ```
 
@@ -224,27 +224,27 @@ The last sentence suggests the [condition form](writing-strategies.md#can-i-writ
 
 ## Reading the MACD report
 
-The checks measure the Sharpe ratio unless you choose another figure with `objective=`. The run's Sharpe ratio was 0.55.
+The checks measure the Sharpe ratio unless you choose another figure with `objective=`. The run's Sharpe ratio was 0.52.
 
 **What held up.** The result does not hang on one exact detail:
 
-* **Parameter neighbourhood:** all 8 settings around fast 12 and slow 26 made money. The **median** one (the middle one, with as many settings above it as below) matched the chosen Sharpe ratio, and the one at the 25th **percentile** (a quarter of the settings below it) kept 93.4 percent of it. The chosen setting sits on a plateau, not on a lone spike.
-* **Noise:** with the prices of every bar moved a little at random, all 200 noisy histories made money, and their median kept 94.9 percent of the Sharpe ratio.
-* **Delayed orders** and **liquidity:** entering one bar late still made Rs 26,556, and every other fill price made money.
-* **Out of sample:** searched on the first 70 percent of the sessions alone, the best setting (fast 12, slow 20) made money on the last 30 percent it never saw, keeping 76.5 percent of its Sharpe ratio.
+* **Parameter neighbourhood:** all 8 settings around fast 12 and slow 26 made money. The **median** one (the middle one, with as many settings above it as below) nearly matched the chosen Sharpe ratio, and the one at the 25th **percentile** (a quarter of the settings below it) kept 93.0 percent of it. The chosen setting sits on a plateau, not on a lone spike.
+* **Noise:** with the prices of every bar moved a little at random, all 200 noisy histories made money, and their median kept 93.9 percent of the Sharpe ratio.
+* **Delayed orders** and **liquidity:** entering one bar late still made Rs 26,484, and every other fill price made money.
+* **Out of sample:** searched on the first 70 percent of the sessions alone, the best setting (fast 12, slow 20) made money on the last 30 percent it never saw, keeping 74.9 percent of its Sharpe ratio.
 * **Other markets** passed at its limit: 2 of the 4 other banks made money.
-* **Synthetic stress:** 83 of the 400 noisy and shuffled histories were harsher than the real one (a deeper fall, a longer wait for a new high or a deeper drop below the 200-day average), and the strategy made money on them about as often as on all of them: under the weakest rule, 96.6 percent of the harsh histories made money against 95.0 percent of all of them.
+* **Synthetic stress:** 83 of the 400 noisy and shuffled histories were harsher than the real one (a deeper fall, a longer wait for a new high or a deeper drop below the 200-day average), and the strategy made money on them about as often as on all of them: under the weakest rule, 93.8 percent of the harsh histories made money against 93.0 percent of all of them.
 
 **What did not.** The edge is small next to luck:
 
-* **Versus random:** a third of the random runs (random entries that hold trades as long as the strategy's, and the strategy on shuffled prices) did as well or better: the run beat 66.7 percent of them, and the best had a Sharpe ratio of 1.47.
-* **Permutation test:** the same daily moves of ICICIBANK put in another order gave the strategy at least the same Sharpe ratio in 92 of 200 shuffled histories. The test cannot tell the strategy's timing apart from the stock's own rise over these years.
-* **Random out of sample, trade resample** and **variance:** a few long trends paid for many small losses, so the result depends on which trades and which sessions you count. With 30 percent of the sessions set aside at random, the set-aside part kept half the Sharpe ratio in only 36 percent of the draws (the rule asks for 80). Drawn at random from its own trades, 27.5 percent of the paths did not make money; with 5 fewer winners in every 100 trades, about half did not.
-* **Walk-forward:** picking the best setting on each stretch of the past and trading it on the next lost Rs 32 over the five stretches together, and the pick moved a lot from one stretch to the next.
+* **Versus random:** a third of the random runs (random entries that hold trades as long as the strategy's, and the strategy on shuffled prices) did as well or better: the run beat 66.5 percent of them, and the best had a Sharpe ratio of 1.45.
+* **Permutation test:** the same daily moves of ICICIBANK put in another order gave the strategy at least the same Sharpe ratio in 91 of 200 shuffled histories. The test cannot tell the strategy's timing apart from the stock's own rise over these years.
+* **Random out of sample, trade resample** and **variance:** a few long trends paid for many small losses, so the result depends on which trades and which sessions you count. With 30 percent of the sessions set aside at random, the set-aside part kept half the Sharpe ratio in only 33 percent of the draws (the rule asks for 80). Drawn at random from its own trades, 28.5 percent of the paths did not make money; with 5 fewer winners in every 100 trades, about half did not.
+* **Walk-forward:** picking the best setting on each stretch of the past and trading it on the next lost Rs 1,577 over the five stretches together, and the pick moved a lot from one stretch to the next.
 
-**Not judged and informational.** Shifted bars needs bars finer than daily, and randomized exits needs a stop-loss or target to vary; this strategy has neither. The trade reshuffle shows that, put in other orders, the same closed trades fell more than 42.4 percent from a peak (a **drawdown**) in 5 percent of the orders, about twice the 21.8 percent of their real order. The noise-robust optimization picked fast 12 and slow 20 on the noisy histories, the same setting that is best on the real prices, and found it on a plateau.
+**Not judged and informational.** Shifted bars needs bars finer than daily, and randomized exits needs a stop-loss or target to vary; this strategy has neither. The trade reshuffle shows that, put in other orders, the same closed trades fell more than 42.7 percent from a peak (a **drawdown**) in 5 percent of the orders, about twice the 22.4 percent of their real order. The noise-robust optimization picked fast 12 and slow 20 on the noisy histories, the same setting that is best on the real prices, and found it on a plateau.
 
-None of this proves the strategy is overfitted. It says that its 47 percent return ([the example](examples/macd-crossover.md)) is not enough on its own to trust: the strategy is robust to small changes, but its edge over luck, and over simply holding the stock, is not shown. Compare it with NIFTY ([Compare with NIFTY](tutorial/08-compare-with-nifty.md)), test it on more symbols and years, and run it in sandbox mode ([Live Trading](../live-trading/README.md)) before you trade it with money.
+None of this proves the strategy is overfitted. It says that its 45 percent return ([the example](examples/macd-crossover.md)) is not enough on its own to trust: the strategy is robust to small changes, but its edge over luck, and over simply holding the stock, is not shown. Compare it with NIFTY ([Compare with NIFTY](tutorial/08-compare-with-nifty.md)), test it on more symbols and years, and run it in sandbox mode ([Live Trading](../live-trading/README.md)) before you trade it with money.
 
 ## The HTML report
 

@@ -43,9 +43,9 @@ print(result.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -93,12 +93,12 @@ print(worst[["start", "trough", "end", "depth", "days"]].round({"depth": 4, "day
 ```text
                          start                    trough                       end   depth      days
 rank
-1    2026-02-23 15:30:00+05:30 2026-09-08 15:30:00+05:30                       NaT -0.2935  261.0000
-2    2021-11-04 19:15:00+05:30 2022-07-15 15:30:00+05:30 2024-04-25 15:30:00+05:30 -0.2806  902.8438
-3    2024-06-03 15:30:00+05:30 2025-04-09 15:30:00+05:30 2025-10-27 15:30:00+05:30 -0.1840  511.0000
+1    2026-02-23 15:30:00+05:30 2026-09-08 15:30:00+05:30                       NaT -0.2942  261.0000
+2    2021-11-04 19:15:00+05:30 2022-07-15 15:30:00+05:30 2024-04-29 15:30:00+05:30 -0.2815  906.8438
+3    2024-06-03 15:30:00+05:30 2025-04-09 15:30:00+05:30 2025-10-27 15:30:00+05:30 -0.1850  511.0000
 ```
 
-`start` is the peak, `trough` the lowest point, `end` the day the account was back at the peak (`NaT`, no time, while it has not recovered), `depth` the fall as a fraction and `days` the calendar days it lasted. The deepest, 29.35 percent, is the max drawdown of the summary and has not recovered yet. The second peaked at 19:15 on 4 November 2021, the close of that year's Diwali Muhurat trading session.
+`start` is the peak, `trough` the lowest point, `end` the day the account was back at the peak (`NaT`, no time, while it has not recovered), `depth` the fall as a fraction and `days` the calendar days it lasted. The deepest, 29.42 percent, is the max drawdown of the summary and has not recovered yet. The second peaked at 19:15 on 4 November 2021, the close of that year's Diwali Muhurat trading session.
 
 ## Horizon summary
 
@@ -115,12 +115,12 @@ print(performance.horizons[["sessions", "total_return", "max_drawdown"]].round(4
              sessions  total_return  max_drawdown
 horizon
 1M                 22        0.0000        0.0000
-3M                 63       -0.0574       -0.0719
-6M                127       -0.0491       -0.0837
-1Y                248       -0.0952       -0.2935
-3Y                744        0.3866       -0.2935
-5Y               1240        0.0910       -0.2935
-Since start      1453        0.5394       -0.2935
+3M                 63       -0.0577       -0.0722
+6M                127       -0.0495       -0.0840
+1Y                248       -0.0955       -0.2942
+3Y                744        0.3865       -0.2942
+5Y               1240        0.0880       -0.2942
+Since start      1453        0.5349       -0.2942
 ```
 
 ## Losing streaks
@@ -162,12 +162,12 @@ print(vs_nifty.performance.benchmark_comparison("year").round(4).to_string())
 ```text
       strategy  benchmark  excess   beat
 year
-2021    0.2674     0.2412  0.0262   True
-2022    0.0634     0.0433  0.0201   True
-2023   -0.1350     0.2003 -0.3353  False
-2024    0.1883     0.0880  0.1002   True
-2025    0.2645     0.1051  0.1594   True
-2026   -0.1212    -0.0335 -0.0877  False
+2021    0.2670     0.2412  0.0258   True
+2022    0.0615     0.0433  0.0182   True
+2023   -0.1358     0.2003 -0.3361  False
+2024    0.1885     0.0880  0.1004   True
+2025    0.2649     0.1051  0.1598   True
+2026   -0.1215    -0.0335 -0.0881  False
 ```
 
 `excess` is the strategy's return minus NIFTY's, and `beat` is True in the years the strategy did better. The lesson [Compare with NIFTY](../tutorial/08-compare-with-nifty.md) explains the benchmark figures.
@@ -188,13 +188,13 @@ print("fell 30% or more:", study.bust_probability, "| gained 25% or more:", stud
 ```text
             final_return  max_drawdown
 percentile
-0.05             -0.3129       -0.5489
-0.50              0.6283       -0.3264
-0.95              2.4096       -0.2029
-fell 30% or more: 0.609 | gained 25% or more: 0.711
+0.05             -0.3159       -0.5493
+0.50              0.6249       -0.3270
+0.95              2.3992       -0.2035
+fell 30% or more: 0.612 | gained 25% or more: 0.709
 ```
 
-Read the 0.05 row as a bad case: one path in twenty did no better than that. Here 60.9 percent of the reshuffled paths fell 30 percent or more at some point, against the real run's 29.35 percent: the order of the days helped this run.
+Read the 0.05 row as a bad case: one path in twenty did no better than that. Here 61.2 percent of the reshuffled paths fell 30 percent or more at some point, against the real run's 29.42 percent: the order of the days helped this run.
 
 ## Several strategies
 
@@ -223,12 +223,12 @@ print(f"Together : {both.metrics['total_return']:.2%}")
 
 <!-- output -->
 ```text
-SBIN     : 53.94%
-RELIANCE : -9.34%
-Together : 22.30%
+SBIN     : 53.49%
+RELIANCE : -10.38%
+Together : 21.55%
 ```
 
-On the combined Rs 2,00,000 the pair made 22.30 percent: about the average of SBIN's gain and RELIANCE's loss.
+On the combined Rs 2,00,000 the pair made 21.55 percent: about the average of SBIN's gain and RELIANCE's loss.
 
 ## Reports
 

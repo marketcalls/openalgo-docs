@@ -48,9 +48,9 @@ print(result.summary())   # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -70,7 +70,7 @@ print(f"Return per year (CAGR): {result.metrics['cagr']:.2%}")
 
 <!-- output -->
 ```text
-Return per year (CAGR): 7.64%
+Return per year (CAGR): 7.59%
 ```
 
 `print(result)` prints the long version: every setting the run used and its warnings. Lesson: [Read the Results](tutorial/02-read-the-results.md); every figure: [Metric Definitions](metric-definitions.md).
@@ -92,9 +92,9 @@ print(trades[columns].head(3).round({"net_pnl": 2}).to_string())  # head(3): the
 ```text
                      entry_time                 exit_time  quantity  entry_price  exit_price   net_pnl
 trade
-1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30     270.0       356.95      456.95  26742.48
-2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30     246.0       503.15      460.20 -10846.92
-3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30     222.0       507.15      470.90  -8306.89
+1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30     270.0       356.95      456.95  26695.28
+2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30     246.0       503.15      460.20 -10894.12
+3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30     222.0       507.15      470.90  -8354.09
 ```
 
 Each trade was decided at a day's close and filled at the next day's open, 09:15. The table also has `direction`, `product`, `gross_pnl`, `charges`, `return_pct`, `bars_held`, `days_held`, `exit_reason`, `mae` and `mfe` (the worst and the best each trade's profit stood at while it was open), `mae_pct`, `mfe_pct` and `slippage`. `result.trade_list().to_csv("trades.csv")` saves it for a spreadsheet. Lesson: [Read the Results](tutorial/02-read-the-results.md).
@@ -123,9 +123,9 @@ print(stopped.trade_list()["exit_reason"].value_counts().to_dict())  # how many 
 
 <!-- output -->
 ```text
-Net profit   : Rs -10,002.82
-Return       : -10.00%
-Max drawdown : -23.38%
+Net profit   : Rs -10,381.80
+Return       : -10.38%
+Max drawdown : -23.56%
 Trades       : 11 (27% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 {'leg_sl': 7, 'leg_target': 3, 'signal': 1}
@@ -152,9 +152,9 @@ print(half.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 28,200.50
-Return       : 28.20%
-Max drawdown : -17.50%
+Net profit   : Rs 27,720.47
+Return       : 27.72%
+Max drawdown : -17.62%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -176,10 +176,10 @@ print(part.trade_list()["quantity"].head(3).round(2).tolist())
 
 <!-- output -->
 ```text
-[279.82, 253.53, 229.51]
+[279.75, 253.37, 229.28]
 ```
 
-The first trade bought 279.82 part shares, where the whole-share run bought 270. Your broker cannot fill part shares, so keep the default for a result you mean to trade. Lesson: [How Much to Buy](tutorial/04-how-much-to-buy.md).
+The first trade bought 279.75 part shares, where the whole-share run bought 270. Your broker cannot fill part shares, so keep the default for a result you mean to trade. Lesson: [How Much to Buy](tutorial/04-how-much-to-buy.md).
 
 ## Trade intraday
 
@@ -237,10 +237,10 @@ print(both.trade_list()["direction"].value_counts().to_dict())  # long and short
 
 <!-- output -->
 ```text
-Net profit   : Rs -2,780.07
-Return       : -2.78%
-Max drawdown : -4.81%
-Trades       : 95 (42% won)
+Net profit   : Rs -3,850.76
+Return       : -3.85%
+Max drawdown : -5.14%
+Trades       : 95 (41% won)
 Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
 {'short': 50, 'long': 45}
 ```
@@ -277,9 +277,9 @@ print("most trades in one day:", per_day.max())
 
 <!-- output -->
 ```text
-Net profit   : Rs -55,635.04
-Return       : -55.64%
-Max drawdown : -55.72%
+Net profit   : Rs -58,634.70
+Return       : -58.63%
+Max drawdown : -58.72%
 Trades       : 585 (34% won)
 Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
 most trades in one day: 7
@@ -313,7 +313,7 @@ print("most trades in one day:", once.trade_list()["entry_time"].dt.date.value_c
 
 <!-- output -->
 ```text
-Net profit   : Rs -30,417.73
+Net profit   : Rs -30,418.15
 Return       : -30.42%
 Max drawdown : -31.88%
 Trades       : 239 (32% won)
@@ -321,7 +321,7 @@ Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustnes
 most trades in one day: 1
 ```
 
-Over the year the breakout traded 585 times, up to 7 times on one day, and lost Rs 55,635.04: most of its trades met the 0.3 percent stop first, and the charges of so many trades add up. Held to one entry a day it traded 239 times and lost Rs 30,417.73. Fewer entries cut the charges, but the rule still loses: a limit on entries changes how often you trade, not whether the rule has an edge. For a few entries a day, count them in `self.state` the same way. From openalgo 2.4.0, `max_trades_per_day = 1` on the class does much the same in one line (it counts only entries that work or fill): see [Limit the trades of a day](#limit-the-trades-of-a-day). A live session's breakout behaves the same: see [Commodities on MCX](../live-trading/11-commodities-on-mcx.md#entries-repeat).
+Over the year the breakout traded 585 times, up to 7 times on one day, and lost Rs 58,634.70: most of its trades met the 0.3 percent stop first, and the charges of so many trades add up. Held to one entry a day it traded 239 times and lost Rs 30,418.15. Fewer entries cut the charges, but the rule still loses: a limit on entries changes how often you trade, not whether the rule has an edge. For a few entries a day, count them in `self.state` the same way. From openalgo 2.4.0, `max_trades_per_day = 1` on the class does much the same in one line (it counts only entries that work or fill): see [Limit the trades of a day](#limit-the-trades-of-a-day). A live session's breakout behaves the same: see [Commodities on MCX](../live-trading/11-commodities-on-mcx.md#entries-repeat).
 
 ## Enter the moment a level is touched
 
@@ -351,10 +351,10 @@ print(filled[["decided_at", "trigger_rupees", "average_fill_rupees"]].head(3).to
 
 <!-- output -->
 ```text
-Net profit   : Rs -88,509.96
-Return       : -88.51%
-Max drawdown : -88.52%
-Trades       : 1443 (33% won)
+Net profit   : Rs -96,424.32
+Return       : -96.42%
+Max drawdown : -96.43%
+Trades       : 1443 (31% won)
 Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
                decided_at  trigger_rupees  average_fill_rupees
 2025-11-03 09:20:00+05:30          946.25               946.45
@@ -362,7 +362,7 @@ Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustnes
 2025-11-03 10:40:00+05:30          948.75               948.95
 ```
 
-It traded 1,443 times in the year and lost 88.51 percent: buying on every touch of the last bar's high, with a stop this tight, enters far more often than the close-based breakout above (585 trades) and pays the stop and the charges each time. A touch is a faster entry, not a better rule; test the rule first. The three rows show each trigger and its fill: Rs 946.25 filled at Rs 946.45, the run's modelled slippage of Rs 0.20.
+It traded 1,443 times in the year and lost 96.42 percent: buying on every touch of the last bar's high, with a stop this tight, enters far more often than the close-based breakout above (585 trades) and pays the stop and the charges each time. A touch is a faster entry, not a better rule; test the rule first. The three rows show each trigger and its fill: Rs 946.25 filled at Rs 946.45, the run's modelled slippage of Rs 0.20.
 
 Each buy stop is decided at a bar's close and rests from the next bar. It triggers as soon as a trade reaches the trigger, inside the bar: a backtest checks it on one-minute bars, so it catches the touch within the 5-minute bar, and fills it at the trigger with the run's slippage (or at the open, when a bar gaps above it). While the strategy stays flat, each bar cancels the last buy stop and rests a new one at the new level; strategy orders can be cancelled, not changed. In a live session the buy stop rests at your broker as an SL-M order and the exchange triggers it; a stop-limit replaces it on NFO and BFO options, which take no SL-M. Two things to know: a fast breakout can fill several ticks above the trigger, since an SL-M fills at market once triggered, and in a live session the moment between the cancel and the new order is a gap in which a touch can be missed. The entry window still applies (no new MIS entry after its cut-off).
 
@@ -436,9 +436,9 @@ print(f"Beta         : {vs_nifty.metrics['beta']:.2f}")
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 Benchmark    : 80.63% return (NIFTY)
@@ -520,9 +520,9 @@ print(own.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -544,9 +544,9 @@ print(late.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 30,738.50
-Return       : 30.74%
-Max drawdown : -29.38%
+Net profit   : Rs 30,568.34
+Return       : 30.57%
+Max drawdown : -29.40%
 Trades       : 7 (29% won)
 Overfitting  : too few trades to judge (7 closed, 30 needed)
 ```
@@ -581,9 +581,9 @@ print([text for text in older.warnings if "backfilled" in text])  # the warning 
 
 <!-- output -->
 ```text
-Net profit   : Rs 1,04,087.35
-Return       : 104.09%
-Max drawdown : -35.12%
+Net profit   : Rs 1,02,927.63
+Return       : 102.93%
+Max drawdown : -35.25%
 Trades       : 17 (29% won)
 Overfitting  : too few trades to judge (17 closed, 30 needed)
 ['charges: the NSE_EQ_DELIVERY rates of cost schedule IN-2020-07-01 are backfilled for 6 fills, from 2019-03-19']
@@ -642,12 +642,12 @@ print("rebalance orders:", len(portfolio.orders))
 
 <!-- output -->
 ```text
-Net profit   : Rs 11,055.12
-Return       : 11.06%
-Max drawdown : -33.98%
+Net profit   : Rs 9,046.03
+Return       : 9.05%
+Max drawdown : -34.61%
 Trades       : no closed trades (4 still open)
 Overfitting  : too few trades to judge (0 closed, 30 needed)
-rebalance orders: 69
+rebalance orders: 71
 ```
 
 A rebalance trims and tops up holdings but never closes one, so the run has no closed trades (the summary counts the holdings still open): read `result.orders` and `result.final_positions`. Lesson: [Rebalance a Portfolio](tutorial/10-portfolio-rebalancing.md).
@@ -686,15 +686,15 @@ for name in pf.strategies:
 
 <!-- output -->
 ```text
-Net profit   : Rs 4,14,556.58
-Return       : 207.28%
-Max drawdown : -16.34%
-Trades       : 66 (41% won), 2 still open
+Net profit   : Rs 40,004.67
+Return       : 20.00%
+Max drawdown : -24.68%
+Trades       : 63 (41% won), 1 still open
 Overfitting  : each strategy's own trades below; none of the account's trades together
-  EmaCrossover : too few trades to judge (13 closed, 30 needed)
-  InfyMacd     : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational
-EmaCrossover : 315.64%
-InfyMacd     : 98.92%
+  EmaCrossover : too few trades to judge (11 closed, 30 needed)
+  InfyMacd     : quick checks: 3 not judged, 1 informational
+EmaCrossover : 53.49%
+InfyMacd     : -13.48%
 ```
 
 The summary is the account's, on Rs 2,00,000 (the two capitals together). Its Overfitting line checks each strategy's own trades, never the two strategies' trades together. `pf.strategy("InfyMacd")` is the full `Result` of one strategy, with its trade list and tearsheet, and `pf.tearsheet("portfolio.html")` writes one report for the account.
@@ -717,12 +717,12 @@ print(limited.trade_list()["exit_reason"].value_counts().to_dict())  # daily_pro
 
 <!-- output -->
 ```text
-Net profit   : Rs -16,008.88
-Return       : -16.01%
-Max drawdown : -17.81%
-Trades       : 72 (44% won)
+Net profit   : Rs -390.43
+Return       : -0.39%
+Max drawdown : -4.78%
+Trades       : 44 (45% won)
 Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
-{'scheduler': 43, 'daily_profit_target': 16, 'signal': 13}
+{'scheduler': 33, 'daily_profit_target': 7, 'signal': 4}
 ```
 
 An entry over the cap is rejected with `trade_limit` and one after the target with `daily_profit_gate`, both in `result.orders`; the cap never closes a position. `max_order_value=50_000` refuses an entry or add worth more than Rs 50,000 (`order_value_limit`), and never an exit. Each can be a class attribute instead. Lesson: [Orders and Risk](orders-and-risk.md#how-do-i-limit-the-trades-of-a-day); for several strategies, the account's own trade cap, profit target and loss limit: [Daily limits](several-strategies.md#daily-limits-for-each-strategy-and-for-the-account).

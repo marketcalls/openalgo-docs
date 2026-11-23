@@ -54,21 +54,21 @@ print(end.round(2).to_string(index=False))
 
 <!-- output -->
 ```text
-Net profit   : Rs 11,055.12
-Return       : 11.06%
-Max drawdown : -33.98%
+Net profit   : Rs 9,046.03
+Return       : 9.05%
+Max drawdown : -34.61%
 Trades       : no closed trades (4 still open)
 Overfitting  : too few trades to judge (0 closed, 30 needed)
 Benchmark    : 80.63% return (NIFTY)
-Orders       : 69
+Orders       : 71
   symbol  quantity_units  value_rupees  weight_pct
-HDFCBANK            33.0       26617.8       23.97
-    INFY            23.0       26565.0       23.92
-RELIANCE            20.0       26708.0       24.05
-     TCS            11.0       27193.1       24.49
+HDFCBANK            32.0       25811.2       23.67
+    INFY            23.0       26565.0       24.36
+RELIANCE            20.0       26708.0       24.49
+     TCS            11.0       27193.1       24.94
 ```
 
-Four stocks that went mostly sideways: the portfolio made 11.06 percent while NIFTY gained 80.63 percent, and it fell 34 percent from its peak on the way (the max drawdown: the largest fall from the highest value). Rebalancing cannot turn a weak basket into a strong one; it only keeps each stock near its share. The 69 orders are the quarterly trims and top-ups (a change smaller than one share sends no order), and at the end each stock is near 24.5 percent: 25 percent of the 98 percent invested.
+Four stocks that went mostly sideways: the portfolio made 9.05 percent while NIFTY gained 80.63 percent, and it fell 35 percent from its peak on the way (the max drawdown: the largest fall from the highest value). Rebalancing cannot turn a weak basket into a strong one; it only keeps each stock near its share. The 71 orders are the quarterly trims and top-ups (a change smaller than one share sends no order), and at the end each stock is near 24.5 percent: 25 percent of the 98 percent invested.
 
 A rebalance trims and tops up holdings but never sells one out, so the summary says `no closed trades (4 still open)`: the four holdings, valued at the last close. Read `result.orders` (every rebalance order is tagged `rebalance`) and `result.final_positions` instead of the trade list.
 

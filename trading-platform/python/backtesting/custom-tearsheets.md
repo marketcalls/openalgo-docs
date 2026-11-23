@@ -51,11 +51,11 @@ print(result.summary())
 
 <!-- output -->
 ```text
-Net profit   : Rs 3,15,635.23
-Return       : 315.64%
-Max drawdown : -21.98%
-Trades       : 13 (38% won), 1 still open
-Overfitting  : too few trades to judge (13 closed, 30 needed)
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
+Trades       : 11 (36% won)
+Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
 
 ## Your first custom tearsheet
@@ -250,7 +250,7 @@ sbin_charts.html
 | `report.scatter` | A table, with the columns named by `x=` and `y=` | `group=` names a column whose values get their own colour and a legend |
 | `report.heatmap` | A table of numbers, rows by columns | none |
 
-Every block also takes `title=` (charts and tables need one), `subtitle=`, `width=` (`"full"`, `"half"` or `"third"`) and, on charts, tables and tiles, `percent=True`, which shows fractions as percents (0.0764 as 7.64%). A chart draws at most six lines, groups or bar series (`report.MAX_SERIES`).
+Every block also takes `title=` (charts and tables need one), `subtitle=`, `width=` (`"full"`, `"half"` or `"third"`) and, on charts, tables and tiles, `percent=True`, which shows fractions as percents (0.0759 as 7.59%). A chart draws at most six lines, groups or bar series (`report.MAX_SERIES`).
 
 ## Tables, tiles and text
 

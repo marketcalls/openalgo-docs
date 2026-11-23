@@ -64,9 +64,9 @@ print(result.trade_list()["exit_reason"].value_counts().to_string())
 
 <!-- output -->
 ```text
-Net profit   : Rs -37,526.74
-Return       : -37.53%
-Max drawdown : -38.51%
+Net profit   : Rs -37,684.10
+Return       : -37.68%
+Max drawdown : -38.60%
 Trades       : 241 (38% won)
 Overfitting  : quick checks: 3 not judged, 1 informational; see result.robustness()
 exit_reason
@@ -76,7 +76,7 @@ leg_sl        76
 
 `exit_reason` says how a trade ended: 76 hit the stop-loss (`leg_sl`) and 165 were closed by the square-off (`scheduler`). The engine applied the NSE intraday rules by itself, intraday charges and slippage included. Its times follow the date: no new entry from 15:00 and square-off at 15:10 until 31 July 2026, then 14:50 and 15:00 from 3 August 2026, when NSE changed them. The max drawdown is the largest fall of the account from its highest value.
 
-Over the year the strategy lost Rs 37,526.74: about Rs 19,700 on the trades themselves and Rs 17,820 in charges, because it trades almost every day with all the capital. It lost money in every month but August 2026. Run on August to November 2026 alone, it loses about 5 percent, which looks like a small setback; the year shows that a breakout taken every day, either way, lost money on SBIN even before charges, and the intraday charges almost doubled the loss. That is why a test needs a long stretch of data: a few months cannot show how a strategy does through a year.
+Over the year the strategy lost Rs 37,684.10: about Rs 19,700 on the trades themselves and Rs 17,970 in charges, because it trades almost every day with all the capital. It lost money in every month but August 2026. Run on August to November 2026 alone, it loses about 5 percent, which looks like a small setback; the year shows that a breakout taken every day, either way, lost money on SBIN even before charges, and the intraday charges almost doubled the loss. That is why a test needs a long stretch of data: a few months cannot show how a strategy does through a year.
 
 The Overfitting line judges nothing here: its checks need a run that made money, and the trade reshuffle only reports ([Overfitting checks](../results-and-reports.md#overfitting-checks)).
 

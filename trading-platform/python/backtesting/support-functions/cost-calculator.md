@@ -35,7 +35,7 @@ Charges               : Rs 197.67
 Profit after charges  : Rs 1,882.33
 ```
 
-The quantity is always in units (shares), never lots, and prices and charges are in rupees.
+The quantity is in units (shares), and prices and charges are in rupees. For futures and options you can count in lots instead: see [Counting in lots](#counting-in-lots).
 
 ## What each charge is
 
@@ -60,7 +60,7 @@ gst           Rs    12.03
 total         Rs   197.67
 ```
 
-* `brokerage`: your broker's fee. The default is Zerodha's rates: 0.03 percent of each intraday order, at most Rs 20.
+* `brokerage`: your broker's fee. The default preset (`"standard"`) charges 0.1 percent of each intraday order, at most Rs 20.
 * `stt`: Securities Transaction Tax, paid on the sell side of an intraday share trade.
 * `exchange_txn`: the exchange's transaction charges (with the IPFT charge).
 * `sebi_fee`: the fee of SEBI, the market regulator.
@@ -86,33 +86,33 @@ print(f"DP charge  : Rs {dp.total:,.2f}")
 
 <!-- output -->
 ```text
-Round trip : Rs 227.29 (STT Rs 204.82)
+Round trip : Rs 274.49 (STT Rs 204.82)
 DP charge  : Rs 15.34
 ```
 
-The default preset charges no brokerage on delivery, so most of the cost is STT, 0.1 percent of each side. The DP charge (Rs 13 plus GST) is paid once per stock on each day you sell it from your holdings.
+The default preset charges Rs 20 brokerage on each delivery order (2.5 percent of the order value when that is lower), and STT, 0.1 percent of each side, is most of the rest. The DP charge (Rs 13 plus GST) is paid once per stock on each day you sell it from your holdings.
 
 ## Another broker's brokerage
 
-`brokerage=` takes a preset. The default (`"zerodha"`) is a percentage with a cap; `costs.flat(20)` is a flat Rs 20 an order. The difference shows on small trades, here 20 SBIN shares bought and sold intraday:
+`brokerage=` takes a preset. The default (`"standard"`) charges an intraday order 0.1 percent of its value, at most Rs 20; `"zerodha"` charges 0.03 percent, at most Rs 20. The difference shows on small trades, here 20 SBIN shares bought and sold intraday:
 
 <!-- requires-server -->
 <!-- continues -->
 ```python
 small = costs.round_trip_cost(sbin["open"], sbin["close"], 20, "2026-11-11", exchange="NSE", product="MIS")
-flat = costs.round_trip_cost(sbin["open"], sbin["close"], 20, "2026-11-11", exchange="NSE", product="MIS",
-                             brokerage=costs.flat(20))
+zerodha = costs.round_trip_cost(sbin["open"], sbin["close"], 20, "2026-11-11", exchange="NSE", product="MIS",
+                                brokerage="zerodha")
 print(f"Default preset : Rs {small.total:,.2f}")
-print(f"Flat Rs 20     : Rs {flat.total:,.2f}")
+print(f"zerodha preset : Rs {zerodha.total:,.2f}")
 ```
 
 <!-- output -->
 ```text
-Default preset : Rs 22.51
-Flat Rs 20     : Rs 54.72
+Default preset : Rs 54.72
+zerodha preset : Rs 22.51
 ```
 
-On 20 shares (about Rs 21,000 an order) the percentage preset charges about Rs 6 an order. On larger orders both reach Rs 20, because 0.03 percent of an order above Rs 66,667 reaches the cap. To use a preset in a backtest, see [Costs, Slippage and Margin](../costs-slippage-and-margin.md).
+On 20 shares (about Rs 21,000 an order) the `"zerodha"` preset charges about Rs 6 an order and the default Rs 20, its cap, which 0.1 percent of an order above Rs 20,000 reaches. On orders above Rs 66,667 both charge Rs 20. `costs.flat(amount)`, `costs.percent(percent, cap)` and `costs.custom(...)` describe any other broker. To use a preset in a backtest, see [Costs, Slippage and Margin](../costs-slippage-and-margin.md).
 
 ## Many trades at once
 
@@ -143,13 +143,45 @@ print(trades[["brokerage", "stt", "stamp_duty", "total"]].round(2).to_string(ind
       20.0  33.38        0.00  61.98
 ```
 
+## Counting in lots
+
+Commodity and currency traders count in lots, as a broker's online calculator does. Pass `lots=` with the contract's `symbol=` and `exchange=` instead of a quantity: the lot size and price multiplier for the trade date come from the built-in reference tables, so no server is needed. Here one lot of each, bought and sold on 23 November 2026, priced the way the broker's online calculator prices them (`brokerage="zerodha"` and `rounding="calculator"`):
+
+```python
+# The cost calculator alone: this block needs no OpenAlgo server
+from openalgo.backtest import costs
+
+# The online calculator's brokerage and rounding, for futures and options held overnight (NRML)
+calculator = {"brokerage": "zerodha", "rounding": "calculator", "product": "NRML"}
+
+# One lot each: an aluminium future and a copper call option on MCX, a dollar-rupee future and call option on NSE
+aluminium = costs.round_trip_cost(250, 252, date="2026-11-23", lots=1, symbol="ALUMINI31DEC26FUT", exchange="MCX", **calculator)
+copper = costs.round_trip_cost(100, 110, date="2026-11-23", lots=1, symbol="COPPER23DEC261360CE", exchange="MCX", **calculator)
+usdinr = costs.round_trip_cost(88.33, 88.3525, date="2026-11-23", lots=1, symbol="USDINR29DEC26FUT", exchange="CDS", **calculator)
+usdinr_call = costs.round_trip_cost(88.33, 88.3525, date="2026-11-23", lots=1, symbol="USDINR29DEC2688.5CE", exchange="CDS", **calculator)
+print(f"ALUMINI future, 1 lot     : Rs {aluminium.total:,.2f}")
+print(f"COPPER 1360 call, 1 lot   : Rs {copper.total:,.2f}")
+print(f"USDINR future, 1 lot      : Rs {usdinr.total:,.2f}")
+print(f"USDINR 88.50 call, 1 lot  : Rs {usdinr_call.total:,.2f}")
+```
+
+<!-- output -->
+```text
+ALUMINI future, 1 lot     : Rs 90.43
+COPPER 1360 call, 1 lot   : Rs 452.28
+USDINR future, 1 lot      : Rs 48.14
+USDINR 88.50 call, 1 lot  : Rs 116.42
+```
+
+Lots become price units, the unit a price is quoted in: one ALUMINI lot is 1,000 (one tonne, quoted per kilogram), one COPPER lot 2,500 (kilograms) and one USDINR lot 1,000 (dollars), so `quantity=1000` prices the same ALUMINI or USDINR lot. Pass one of `quantity=` and `lots=`, not both. Lots of a share, part lots, and a contract the tables do not cover raise an error. Currency futures and options on NSE are costed from openalgo 2.4.1; they can be backtested, but `bt.live` does not trade them yet.
+
 ## More options
 
-* Segments: NSE and BSE equity (delivery and intraday; BSE needs `bse_group=`), NFO and BFO futures and options, and MCX futures (they need `underlying=`, the commodity). Name one with `segment=` (one of `costs.SEGMENTS`, or `costs.segment_for(exchange, product, instrument)`) or with `exchange=` and `product=` (plus `instrument="FUT"` or `"OPT"`). Currency derivatives and MCX options raise `CostError`, as does anything the calculator does not recognise.
+* Segments: NSE and BSE equity (delivery and intraday; BSE needs `bse_group=`), NFO and BFO futures and options, MCX futures and options (they need `underlying=`, the commodity, or `symbol=`), and NSE currency futures and options (CDS). Name one with `segment=` (one of `costs.SEGMENTS`, or `costs.segment_for(exchange, product, instrument)`) or with `exchange=` and `product=` (plus `instrument="FUT"` or `"OPT"`). BSE currency derivatives (BCD) and options on agri commodities raise `CostError`, as does anything the calculator does not recognise.
 * `trade_cost(side, price, quantity, date, ...)` prices one order. A `CostBreakdown` has `brokerage`, `stt`, `exchange_txn`, `sebi_fee`, `stamp_duty`, `gst`, `total`, the `schedules` that priced it and `verified`.
 * `rounding="contract_note"` (default) returns unrounded amounts to be rounded per contract note; `rounding="calculator"` rounds each trade to the paisa the way the broker's online calculator does.
 * `costs.contract_note(trades)` rounds a day's trades the way a contract note (the statement your broker sends after each trading day) does: each charge summed per date and segment, STT and stamp duty to the rupee, the others to the paisa. That rule is an assumption, stated in `costs.CONTRACT_NOTE_RULE`.
-* Presets: `costs.zerodha()`, `zero_brokerage()`, `flat(amount)`, `percent(percent, cap)` and `custom(...)`.
+* Presets: `costs.standard()` (the default), `zerodha()`, `zero_brokerage()`, `flat(amount)`, `percent(percent, cap)` and `custom(...)`.
 * Rates are dated: `costs.schedules()` lists the built-in schedules from 1 July 2020, each with the date its rates were last checked. A trade before 1 July 2020 raises `CostError` unless the model is `CostModel(backfill=True)`. Rates not verified for a date still price the trade, with `verified=False` and an `UnverifiedScheduleWarning`.
 * `costs.CostModel(brokerage=..., rounding=..., schedules=[...], backfill=...)` builds a model with its own preset or corrected rates; pass it to `bt.backtest(costs=model)`.
 * `costs.exercise_stt(intrinsic, quantity, date)` is the STT on an exercised option.

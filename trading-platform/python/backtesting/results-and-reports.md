@@ -42,9 +42,9 @@ print(result.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 53,941.09
-Return       : 53.94%
-Max drawdown : -29.35%
+Net profit   : Rs 53,485.86
+Return       : 53.49%
+Max drawdown : -29.42%
 Trades       : 11 (36% won)
 Overfitting  : too few trades to judge (11 closed, 30 needed)
 ```
@@ -53,7 +53,7 @@ What the four lines mean:
 
 * **Net profit** is what the account gained, after all charges (brokerage, taxes and exchange fees).
 * **Return** is the net profit as a share of the starting capital.
-* **Max drawdown** is the largest fall of the account from its highest value so far: at its worst, the account was 29.35 percent below its peak.
+* **Max drawdown** is the largest fall of the account from its highest value so far: at its worst, the account was 29.42 percent below its peak.
 * **Trades** counts the closed trades (a buy and the sell that closed it) and the share of them that made money. A position still open at the end is counted beside them ("2 still open"), and a run with no closed trade says "no closed trades".
 
 `result.summary()` writes these lines as text. A run with `benchmark=` adds a fifth line with the benchmark's return (see [A benchmark](#a-benchmark)). `print(result)` prints something else: every setting the run used, its warnings and its P&L.
@@ -77,11 +77,11 @@ print(trades[columns].head().to_string(float_format="%.2f"))
 ```text
                      entry_time                 exit_time  quantity  entry_price  exit_price   net_pnl  return_pct exit_reason
 trade
-1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30    270.00       356.95      456.95  26742.48       27.75      signal
-2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30    246.00       503.15      460.20 -10846.92       -8.76      signal
-3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30    222.00       507.15      470.90  -8306.89       -7.38      signal
-4     2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30    217.00       487.85      535.85  10153.37        9.59      signal
-5     2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30    204.00       567.95      565.60   -752.17       -0.65      signal
+1     2021-05-11 09:15:00+05:30 2021-12-21 09:15:00+05:30    270.00       356.95      456.95  26695.28       27.70      signal
+2     2022-01-11 09:15:00+05:30 2022-03-04 09:15:00+05:30    246.00       503.15      460.20 -10894.12       -8.80      signal
+3     2022-04-06 09:15:00+05:30 2022-05-06 09:15:00+05:30    222.00       507.15      470.90  -8354.09       -7.42      signal
+4     2022-07-13 09:15:00+05:30 2023-01-30 09:15:00+05:30    216.00       487.85      535.85  10059.21        9.55      signal
+5     2023-04-28 09:15:00+05:30 2023-08-17 09:15:00+05:30    203.00       567.95      565.60   -795.96       -0.69      signal
 ```
 
 How to read a row:
@@ -115,8 +115,8 @@ trade
 1       27000.00   -594.00 50044.50    -0.62    51.93     54.00
 2      -10565.70 -10565.70 11279.10    -8.54     9.11     61.50
 3       -8047.50  -8047.50  3296.70    -7.15     2.93     55.50
-4       10416.00  -2853.55 30748.90    -2.70    29.05     54.25
-5        -479.40  -2886.60 11005.80    -2.49     9.50     61.20
+4       10368.00  -2840.40 30607.20    -2.70    29.05     54.00
+5        -477.05  -2872.45 10951.85    -2.49     9.50     60.90
 ```
 
 * `mae` (maximum adverse excursion) is the lowest the trade's profit stood at while it was open, before charges: zero or negative. Trade 1 was at worst Rs 594 down.
@@ -142,12 +142,12 @@ print(f"Last    : Rs {equity.iloc[-1]:,.2f} on {equity.index[-1].date()}")  # il
 
 <!-- output -->
 ```text
-Highest : Rs 217,898.05 on 2026-02-23
+Highest : Rs 217,453.30 on 2026-02-23
 Lowest  : Rs 100,000.00 on 2021-01-01
-Last    : Rs 153,941.09 on 2026-11-11
+Last    : Rs 153,485.86 on 2026-11-11
 ```
 
-The account never fell below the starting Rs 1,00,000. It peaked at Rs 2,17,898.05 in February 2026 and ended at Rs 1,53,941.09: that fall of 29.35 percent from the peak is the max drawdown of the summary. The last trade closed on 8 September 2026, so the account then held only cash and its value stopped moving.
+The account never fell below the starting Rs 1,00,000. It peaked at Rs 2,17,453.30 in February 2026 and ended at Rs 1,53,485.86: that fall of 29.42 percent from the peak is the max drawdown of the summary. The last trade closed on 8 September 2026, so the account then held only cash and its value stopped moving.
 
 ## Performance figures
 
@@ -166,14 +166,14 @@ print(f"Charges      : Rs {m['total_costs']:,.2f}")  # all charges of the closed
 
 <!-- output -->
 ```text
-CAGR         : 7.64%
+CAGR         : 7.59%
 Sharpe ratio : 0.47
 Exposure     : 66%
-Profit factor: 1.95
-Charges      : Rs 3,322.91
+Profit factor: 1.93
+Charges      : Rs 3,836.94
 ```
 
-Returns, rates and drawdowns are stored as fractions (0.0764 is 7.64 percent); the `:.2%` in the f-string prints them as percents. [Metrics Explained](metrics-explained.md) explains every figure in plain words, and [Metric Definitions](metric-definitions.md) gives its formula.
+Returns, rates and drawdowns are stored as fractions (0.0759 is 7.59 percent); the `:.2%` in the f-string prints them as percents. [Metrics Explained](metrics-explained.md) explains every figure in plain words, and [Metric Definitions](metric-definitions.md) gives its formula.
 
 ## Year by year
 
@@ -189,12 +189,12 @@ for year, value in result.performance.yearly_returns.items():
 
 <!-- output -->
 ```text
-2021  26.74%
-2022   6.34%
-2023 -13.50%
-2024  18.83%
-2025  26.45%
-2026 -12.12%
+2021  26.70%
+2022   6.15%
+2023 -13.58%
+2024  18.85%
+2025  26.49%
+2026 -12.15%
 ```
 
 ## The HTML tearsheet
@@ -258,7 +258,7 @@ print(f"Beta            : {m['beta']:.2f}")  # how strongly the strategy moved w
 
 <!-- output -->
 ```text
-Strategy return : 53.94%
+Strategy return : 53.49%
 NIFTY return    : 80.63%
 Beta            : 0.71
 ```
@@ -343,9 +343,9 @@ print(faster.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 69,968.22
-Return       : 69.97%
-Max drawdown : -23.24%
+Net profit   : Rs 68,560.72
+Return       : 68.56%
+Max drawdown : -23.31%
 Trades       : 23 (39% won), 1 still open
 Overfitting  : too few trades to judge (23 closed, 30 needed)
 ```
@@ -367,12 +367,12 @@ print(study.percentiles.loc[[0.05, 0.5, 0.95], ["final_return", "max_drawdown"]]
 ```text
             final_return  max_drawdown
 percentile
-0.05             -0.3129       -0.5489
-0.50              0.6283       -0.3264
-0.95              2.4096       -0.2029
+0.05             -0.3159       -0.5493
+0.50              0.6249       -0.3270
+0.95              2.3992       -0.2035
 ```
 
-The figures are fractions (0.6283 is 62.83 percent). Read it like this: the real run made 53.94 percent. With its days reshuffled, the middle (50th percentile) return was 62.83 percent and the middle drawdown 32.64 percent, but one path in twenty lost 31.29 percent or more. Results this spread out need a long test before you trust them. The tearsheet does not draw this study; call `result.monte_carlo()` for it.
+The figures are fractions (0.6249 is 62.49 percent). Read it like this: the real run made 53.49 percent. With its days reshuffled, the middle (50th percentile) return was 62.49 percent and the middle drawdown 32.70 percent, but one path in twenty lost 31.59 percent or more. Results this spread out need a long test before you trust them. The tearsheet does not draw this study; call `result.monte_carlo()` for it.
 
 ## Several strategies in one result
 

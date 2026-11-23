@@ -52,16 +52,16 @@ print(result.summary())  # net profit, return, drawdown and trades
 
 <!-- output -->
 ```text
-Net profit   : Rs 47,464.45
-Return       : 47.46%
-Max drawdown : -26.32%
+Net profit   : Rs 44,876.57
+Return       : 44.88%
+Max drawdown : -26.70%
 Trades       : 52 (35% won), 1 still open
 Overfitting  : quick checks: 3 failed (random_out_of_sample, resample, variance), 1 informational; see result.robustness()
 ```
 
 MACD crosses often on daily bars: 52 closed trades in under six years, and only about one in three won. A few long trends paid for the many small losses, which is how most trend strategies make money. "1 still open" is the position bought on 7 October 2026 and still held on 11 November 2026: it counts in the net profit at that day's close, but not among the closed trades. The max drawdown is the largest fall of the account from its highest value.
 
-The Overfitting line says three of the engine's quick checks of the trades failed. For example, when 30 percent of the sessions were set aside at random, they kept half of the Sharpe ratio of the others in only 36 percent of 200 draws, where the check asks for 80 percent. The profit came from a few long trends, so how well it holds up depends on which sessions are tested. That is not proof the strategy is overfitted, but it is a reason not to trust the figure alone: see [Overfitting checks](../results-and-reports.md#overfitting-checks).
+The Overfitting line says three of the engine's quick checks of the trades failed. For example, when 30 percent of the sessions were set aside at random, they kept half of the Sharpe ratio of the others in only 33 percent of 200 draws, where the check asks for 80 percent. The profit came from a few long trends, so how well it holds up depends on which sessions are tested. That is not proof the strategy is overfitted, but it is a reason not to trust the figure alone: see [Overfitting checks](../results-and-reports.md#overfitting-checks).
 
 Python also prints a warning at the end of this run:
 
