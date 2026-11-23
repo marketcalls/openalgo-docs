@@ -13,7 +13,7 @@ From Holdings short downward "Yes" -> "400: rejected order" / "Saved; no margin 
 Holdings short branch "No" -> "6. Record order" / "Open or trigger pending" / "SandboxOrders · OrderUpdateEvent"
 -> "7. Can fill now?" / "Fresh quote + MARKET, marketable LIMIT, or trigger met".
 Then two PARALLEL outcomes:
-"Yes" -> "Filled now" / "ExecutionEngine" / "Update trade + position";
+"Yes" -> "Filled now" / "ExecutionEngine" / "Trade, charges + position";
 "No" dashed -> "Filled later" / "WebSocket engine on a future price tick".
 These converge into "8. Reply" / "Success + order id" / "mode: analyze".
 Outside sandbox boundary below: Reply -> "9. Order announced" / "Order service, after sandbox reply" / "OrderPlacedEvent mode=analyze" / "place_order_with_auth" -> "Analyzer log" / "analyzer_logs · log_subscriber".

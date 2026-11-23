@@ -7,7 +7,7 @@ Service dashed arrow DOWN to small card "Action Center" / "Eligible semi-auto li
 Decision ON arrow DOWN labeled "sandbox_service.py" into large lower boundary "Sandbox · Analyzer mode on". Inside, three columns:
 LEFT boundary "Sandbox managers · sandbox/" containing five compact PARALLEL items (NO arrows between managers):
 "OrderManager: validate, block margin, store"
-"FundManager: 1 Cr capital, margin, P&L"
+"FundManager: 1 Cr capital, margin, P&L, charges"
 "PositionManager: netting, MTM on read"
 "HoldingsManager: CNC moves in at T+1"
 "GTTManager: single + OCO legs".

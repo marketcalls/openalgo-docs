@@ -39,9 +39,9 @@
   </div>
 
   <div class="grid" style="grid-template-columns:1fr 270px 1fr; gap:44px; margin-top:74px; align-items:start">
-    <div class="note" style="margin-top:66px"><span data-icon="lightbulb"></span><div>Whatever the order type, once its fill rule is met it takes the same booking path: trade, position, margin.</div></div>
+    <div class="note" style="margin-top:66px"><span data-icon="lightbulb"></span><div>Whatever the order type, once its fill rule is met it takes the same booking path: trade and charges, position, margin.</div></div>
     <div class="col" style="gap:44px">
-      <div class="node service stack hero" id="exe" style="width:270px; height:212px"><div class="ic" data-icon="receipt"></div><div class="tx"><b>6. Book the trade</b><span>trade row written, order complete</span><div class="chips"><span class="chip">_execute_order</span></div></div></div>
+      <div class="node service stack hero" id="exe" style="width:270px; height:212px"><div class="ic" data-icon="receipt"></div><div class="tx"><b>6. Book the trade</b><span>trade row written with its charges, charges debited from funds, order complete</span><div class="chips"><span class="chip">_execute_order</span></div></div></div>
       <div class="node data" id="ev" style="width:270px; min-width:0"><div class="ic" data-icon="megaphone"></div><div class="tx"><b>Event bus</b><span>fill and order-update events</span></div></div>
     </div>
     <div class="row" style="gap:44px; align-items:stretch">

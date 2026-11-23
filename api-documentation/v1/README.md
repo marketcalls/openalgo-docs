@@ -31,7 +31,7 @@ GET resources (`/instruments`, `/ticker/<symbol>`, `/chart`, `/telegram/*`) read
 
 ## Registered REST Inventory
 
-The current v1 surface contains **76 method/path pairs**. A resource with both GET and POST counts as two endpoints.
+The current v1 surface contains **77 method/path pairs**. A resource with both GET and POST counts as two endpoints.
 
 ### Order Management
 
@@ -60,6 +60,7 @@ The current v1 surface contains **76 method/path pairs**. A resource with both G
 | POST | `/openposition` | [Open position](./orders-api/openposition.md) |
 | POST | `/funds` | [Funds](./accounts-api/funds.md) |
 | POST | `/margin` | [Margin](./accounts-api/margin.md) |
+| POST | `/charges` | [Charges](./accounts-api/charges.md) |
 | POST | `/orderbook` | [Order book](./accounts-api/orderbook.md) |
 | POST | `/tradebook` | [Trade book](./accounts-api/tradebook.md) |
 | POST | `/positionbook` | [Position book](./accounts-api/positionbook.md) |

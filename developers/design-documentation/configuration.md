@@ -8,7 +8,7 @@ Analyzer mode implements GTT place, modify, cancel and orderbook through `sandbo
 
 ## Architecture Diagram
 
-<figure><img src="../../.gitbook/assets/diagram-sandbox-architecture-overview.png" alt="Sandbox architecture: service layer routes on get_analyze_mode to sandbox managers and sandbox.db or to the live broker, with execution engines, GTT maintenance and APScheduler workers"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-sandbox-architecture-overview.png" alt="Sandbox architecture: service layer routes on get_analyze_mode to sandbox managers and sandbox.db or to the live broker, with a fund manager that tracks capital, margin, P&L and charges, execution engines, GTT maintenance and APScheduler workers"><figcaption></figcaption></figure>
 
 ## Core Components
 
@@ -82,7 +82,19 @@ class SandboxTrades(Base):
     strategy = Column(String)
 
     trade_timestamp = Column(DateTime, default=datetime.now)
+
+    # What this fill was charged: STT and stamp duty to the nearest rupee, the rest to the paisa
+    brokerage = Column(Numeric(15, 2), default=0)
+    stt = Column(Numeric(15, 2), default=0)               # STT, or CTT on commodities
+    exchange_charges = Column(Numeric(15, 2), default=0)
+    sebi_charges = Column(Numeric(15, 2), default=0)
+    stamp_duty = Column(Numeric(15, 2), default=0)
+    gst = Column(Numeric(15, 2), default=0)
+    total_charges = Column(Numeric(15, 2), default=0)
 ```
+
+A trade made before charges were introduced reads zero in every charge column:
+it was never charged.
 
 #### SandboxPositions Table
 
@@ -172,6 +184,10 @@ class SandboxFunds(Base):
     unrealized_pnl = Column(Numeric(15, 2))       # Current MTM
     total_pnl = Column(Numeric(15, 2))            # realized + unrealized
 
+    # Brokerage and statutory charges, already taken out of available_balance
+    total_charges = Column(Numeric(15, 2))        # Since the last funds reset
+    today_charges = Column(Numeric(15, 2))        # Today only
+
     # Reset tracking
     last_reset_date = Column(DateTime)
     reset_count = Column(Integer, default=0)
@@ -181,6 +197,11 @@ class SandboxFunds(Base):
 ```
 total_capital = available_balance + used_margin + realized_pnl
 ```
+
+Charges are kept apart from P&L. Each fill's brokerage and statutory charges
+come out of `available_balance` and are added to `total_charges` and
+`today_charges`. `realized_pnl` stays gross, so it keeps agreeing with the
+position book, and `used_margin` is not touched.
 
 #### SandboxDailyPnL Table
 
@@ -197,6 +218,7 @@ class SandboxDailyPnL(Base):
     realized_pnl = Column(Numeric(15, 2))
     unrealized_pnl = Column(Numeric(15, 2))
     total_pnl = Column(Numeric(15, 2))
+    charges = Column(Numeric(15, 2))              # The day's brokerage and statutory charges
     portfolio_value = Column(Numeric(15, 2))
 
     created_at = Column(DateTime, default=datetime.now)
@@ -710,9 +732,43 @@ def _update_position(self, order, execution_price):
     fund_manager.validate_margin_consistency()
 ```
 
+#### Brokerage and Statutory Charges
+
+Every fill pays brokerage under the trader's own plan and the statutory
+charges: STT or CTT, exchange transaction charges, SEBI fees, stamp duty and
+GST. `sandbox/charges.py` holds the rate card and the arithmetic and performs
+no I/O.
+
+The charge is applied inside `_execute_order`, in the transaction that fills
+the order: the order is claimed, the trade is written with its charge columns,
+the total is debited from the funds row as a compare-and-set, and one commit
+lands all three. An order two threads reach is therefore charged once, and a
+fill that fails at its commit takes its charge back.
+
+| Surface | Purpose |
+|---|---|
+| `/sandbox/commissions` | The brokerage plan per segment, the charges switch, and the transaction cost report |
+| `/sandbox/calculator` | A brokerage calculator: buy, sell, quantity and exchange in, every charge and the net P&L out. Its lines are the ones a published brokerage calculator shows for the same trade |
+| `POST /api/v1/charges` | The charges for one order before it is placed. See [Charges](../../api-documentation/v1/accounts-api/charges.md) |
+
+Brokerage is two numbers per segment, an amount per executed order and a
+percentage of the trade value. With both set, the lower of the two is charged.
+Crypto is charged nothing until a venue fee is entered, and nothing is added to
+that fee.
+
+A trader is shown one market and never both: a broker on the Indian exchanges
+sees the Indian segments, calculator and statutory schedule, and a crypto venue
+sees the crypto ones, as a venue fee. The server decides which from the
+logged-in broker's plugin and sends that market's segments alone.
+
+Rounding follows a contract note: STT and stamp duty to the nearest rupee, CTT
+and every other line to the paisa, and a total that is always the sum of its
+lines. A fill is charged as a note for that one trade, and the calculator
+prices a buy and a sell together as one note for the two.
+
 #### Execution Flow Diagram
 
-<figure><img src="../../.gitbook/assets/diagram-sandbox-execution-engine-flow.png" alt="Sandbox execution engine: pending orders priced from WebSocket ticks or multiquotes, race and stale-quote checks, per order type fill rules, trade, position update and margin validation"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-sandbox-execution-engine-flow.png" alt="Sandbox execution engine: pending orders priced from WebSocket ticks or multiquotes, race and stale-quote checks, per order type fill rules, trade with its charges debited from funds, position update and margin validation"><figcaption></figcaption></figure>
 
 ---
 
@@ -1528,7 +1584,7 @@ def toggle_analyzer_mode(mode: bool):
 
 ## Complete Order Flow Diagram
 
-<figure><img src="../../.gitbook/assets/diagram-sandbox-complete-order-flow.png" alt="Complete sandbox order flow from POST /api/v1/placeorder through validation, margin blocking, order insert and immediate or engine-driven execution"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-sandbox-complete-order-flow.png" alt="Complete sandbox order flow from POST /api/v1/placeorder through validation, margin blocking, order insert and immediate or engine-driven execution that writes the trade with its charges"><figcaption></figcaption></figure>
 
 ---
 

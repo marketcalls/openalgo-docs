@@ -45,6 +45,9 @@ How to update:
 
 Never leave a blueprint, prompt and published PNG describing different behaviour.
 Do not manually paint over generated labels; correct the prompt and regenerate.
+When only one label changes, change that label alone with a masked edit and keep
+every other pixel of the published image: see "Changing one label" in
+`diagrams/README.md`. Such a record names the model that made the edit.
 
 ## Conventions
 

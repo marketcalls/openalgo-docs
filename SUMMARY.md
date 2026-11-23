@@ -148,6 +148,7 @@
     * [Ping](api-documentation/v1/accounts-api/ping.md)
     * [Funds](api-documentation/v1/accounts-api/funds.md)
     * [Margin](api-documentation/v1/accounts-api/margin.md)
+    * [Charges](api-documentation/v1/accounts-api/charges.md)
     * [Orderbook](api-documentation/v1/accounts-api/orderbook.md)
     * [Tradebook](api-documentation/v1/accounts-api/tradebook.md)
     * [PositionBook](api-documentation/v1/accounts-api/positionbook.md)

@@ -7,6 +7,7 @@ Account, analyzer, preference, and health endpoints share the OpenAlgo v1 base U
 | [Ping](ping.md) | Verify API-key authentication |
 | [Funds](funds.md) | Read account funds and limits |
 | [Margin](margin.md) | Calculate order margin requirements |
+| [Charges](charges.md) | Brokerage and statutory charges for an order, before it is placed |
 | [Order book](orderbook.md) | Read the current order book |
 | [Trade book](tradebook.md) | Read executed trades |
 | [Position book](positionbook.md) | Read open and closed positions |

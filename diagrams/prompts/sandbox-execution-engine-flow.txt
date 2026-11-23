@@ -13,7 +13,7 @@ YES arrow DOWN from Price sane -> middle boundary "5 · Fill rules by type", wit
 "SL" / "Trigger crossed + limit satisfiable" / "Fill at LTP"
 "SL-M" / "Trigger crossed" / "Fill at LTP"
 "Trigger pending" / "SL-M fills on trigger" / "SL fills, or moves to open if limit not met".
-Rule boundary dashed arrow UP to Keep pending labeled "rule not met". Rule boundary arrow DOWN labeled "any type that fills" -> "6 · Book trade" / "_execute_order" / "Write trade row; order complete".
+Rule boundary dashed arrow UP to Keep pending labeled "rule not met". Rule boundary arrow DOWN labeled "any type that fills" -> "6 · Book trade" / "_execute_order" / "Trade row + charges; debit funds; complete".
 Book trade -> RIGHT "7 · Update position" / "_update_position" / "New, add, reduce, close or reverse" / "Release margin + book P&L" -> RIGHT "8 · Check margin" / "validate_margin_consistency" / "Blocked margin matches positions; auto-reconcile mismatch".
 Book trade also arrow DOWN -> "EventBus" / "Fill + order-update events".
 Large legible exact rule text. Separate terminal for already-filled recovery; never book twice.

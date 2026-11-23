@@ -47,7 +47,19 @@ for (const record of records) {
     const imageHash = hash(png);
     if (imageHashes.has(imageHash)) failures.push(`${slug}: duplicate image content`);
     imageHashes.add(imageHash);
-    if (record.provider !== 'built-in image generator' || record.model_version !== 'unverified') {
+    // Two kinds of record. The original set came from a built-in generator
+    // whose model version is not exposed. A later change to one label is a
+    // masked edit through a named model: it records that model, the image it
+    // was made from and the rectangle that changed.
+    const builtIn = record.provider === 'built-in image generator'
+      && record.model_version === 'unverified';
+    const labelEdit = record.provider === 'fal.ai'
+      && typeof record.model_version === 'string' && record.model_version.includes('/')
+      && /^[0-9a-f]{64}$/.test(record.edit_of_sha256 ?? '')
+      && Array.isArray(record.edit_region) && record.edit_region.length === 4
+      && record.edit_region.every(Number.isInteger)
+      && Boolean(record.edit_note?.trim());
+    if (!builtIn && !labelEdit) {
       failures.push(`${slug}: generator provenance does not match this image set`);
     }
     if (record.visual_qa !== 'passed' || !record.qa_notes?.trim()) {

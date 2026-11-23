@@ -111,7 +111,7 @@ Orders require manual approval before execution.
 
 When `analyze_mode = True`:
 
-<figure><img src="../../.gitbook/assets/diagram-placeorder-sandbox-execution.png" alt="Analyzer mode sandbox execution: validation including the CNC sell holdings check, pricing, margin block (skipped for CNC sells, 400 with nothing recorded if virtual funds are short), a rejected order row when holdings were short, otherwise a SandboxOrders insert with an immediate or tick-driven fill, then the reply and OrderPlacedEvent to analyzer_logs"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/diagram-placeorder-sandbox-execution.png" alt="Analyzer mode sandbox execution: validation including the CNC sell holdings check, pricing, margin block (skipped for CNC sells, 400 with nothing recorded if virtual funds are short), a rejected order row when holdings were short, otherwise a SandboxOrders insert with an immediate or tick-driven fill that books the trade, its charges and the position, then the reply and OrderPlacedEvent to analyzer_logs"><figcaption></figcaption></figure>
 
 ## Broker Integration
 
