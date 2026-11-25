@@ -224,7 +224,7 @@ The Python SDK also ships an indicator library and visualization helpers. See [I
 | [**N8N**](trading-platform/n8n.md) | Workflow automation nodes |
 | [**Telegram**](trading-platform/telegram.md) | Bot notifications and commands |
 | [**WhatsApp**](trading-platform/whatsapp.md) | Notifications and bot commands |
-| [**Chrome Extension**](trading-platform/chrome-extension.md) | Browser-based order entry |
+| [**Chrome Extension**](trading-platform/chrome-extension.md) | One-click stock, futures and options buttons on any website, with live prices |
 
 #### AI and Agent Integration
 
