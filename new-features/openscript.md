@@ -21,6 +21,27 @@ Selecting a strategy or changing the chart's instrument/interval can run the tes
 
 A browser backtest sends no broker orders. Test inputs do not change a server deployment's saved inputs, and historical fills do not prove future execution prices.
 
+## Reading Other Timeframes
+
+A script can read a value from another timeframe of the same instrument with `req.timeframe`, or from another instrument with `req.symbol`:
+
+```
+fifteen = req.timeframe("15", close)   // the last finished 15 minute close
+three   = req.timeframe("3", close)    // the last 3 minute close inside each chart bar
+```
+
+On an intraday chart **any whole number of minutes works**, coarser or finer than the chart. On a 10 minute chart you can read 3, 15, 20, 25 or 60 minutes. A timeframe that is a whole multiple of the chart's interval is built from the chart's own candles; any other is built from finer candles the terminal fetches. On a daily or weekly chart, a minute timeframe is refused.
+
+Intraday candles start at the session open, so a 60 minute read on NSE runs 09:15 to 10:15, the same candles as a 60 minute chart and the broker. Before OpenScript 0.9.0 these reads started on the clock hour (09:15 to 09:30, then 09:30 to 10:30), so a saved study that reads 10, 20, 30 or 60 minutes shows different values after the upgrade, and the new values are the ones that match the chart.
+
+| Where the script runs | Timeframes it can read |
+|---|---|
+| A study or strategy on the chart | Any minute timeframe |
+| A backtest | Any minute timeframe; the extra candles are fetched before the run |
+| A strategy deployed on the server | Whole multiples of the deployment's interval only |
+
+A deployed strategy that reads a timeframe its interval does not divide into is refused when it starts, with a message naming the read. If a strategy is going to run live, write a timeframe that is a whole multiple of the interval it will be deployed on.
+
 ## Deploy on the Server
 
 1. Open **Strategies** on the right rail and choose **Deploy a strategy**.
