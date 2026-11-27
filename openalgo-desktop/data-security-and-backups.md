@@ -42,7 +42,7 @@ What this means day to day:
 
 * **Sign in after OpenAlgo starts.** Until you do, the API, the market data feed, TradingView and Chartink webhooks, MCP clients and your broker connection stay off; programs are told "Sign in to OpenAlgo to use the API". Telegram and WhatsApp bots you had switched on start when you sign in.
 * **Logging out or quitting locks everything again** and wipes the unlocked key from memory.
-* **By default only this computer can connect.** Access from other devices on your network is an explicit switch in Server Settings.
+* **By default only this computer can connect.** Access from other devices on your network is an explicit switch in Server Settings. See [Network Access and OpenAlgo Mobile](network-access-and-openalgo-mobile.md).
 
 ### Two-factor sign-in
 

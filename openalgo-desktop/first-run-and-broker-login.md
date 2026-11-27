@@ -120,6 +120,7 @@ Copy the API key from the **API Key** page and use the desktop's addresses:
 | --- | --- |
 | Python SDK | `host="http://127.0.0.1:5000"`, `ws_url="ws://127.0.0.1:8765"` |
 | Amibroker, Excel, your own code on this computer | `http://127.0.0.1:5000/api/v1/...` |
+| A phone, a tablet or another computer on your network | This computer's IP address instead of `127.0.0.1`: see [Network Access and OpenAlgo Mobile](network-access-and-openalgo-mobile.md) |
 | TradingView, GoCharting, Chartink (they call from the internet) | A tunnel: see [Webhooks and the Built-in ngrok Tunnel](webhooks-and-ngrok-tunnel.md) |
 | Claude Desktop and other AI clients (MCP) | Create an MCP token on the **API Key** page; the card shows a ready-made configuration to copy. The token is shown only once |
 

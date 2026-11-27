@@ -41,6 +41,7 @@
   * [Install on Linux](openalgo-desktop/install-on-linux.md)
   * [First Run and Broker Login](openalgo-desktop/first-run-and-broker-login.md)
   * [Ports and Server Settings](openalgo-desktop/ports-and-server-settings.md)
+  * [Network Access and OpenAlgo Mobile](openalgo-desktop/network-access-and-openalgo-mobile.md)
   * [Webhooks and the Built-in ngrok Tunnel](openalgo-desktop/webhooks-and-ngrok-tunnel.md)
   * [Data, Security and Backups](openalgo-desktop/data-security-and-backups.md)
   * [Updating and Uninstalling](openalgo-desktop/updating-and-uninstalling.md)

@@ -73,6 +73,15 @@ one at a time. See [Ports and Server Settings](ports-and-server-settings.md).
 
 No. One trader per installation, with one OpenAlgo account.
 
+### Can I use it from my phone or another computer?
+
+Yes, on the same home or office network. Turn on **Allow access from other
+devices** in **Server Settings**, restart OpenAlgo Desktop, and open
+`http://<this computer's IP address>:5000` in the other device's browser.
+Scripts on another computer use the same address for the API. The OpenAlgo
+Mobile app does not connect to OpenAlgo Desktop yet. See
+[Network Access and OpenAlgo Mobile](network-access-and-openalgo-mobile.md).
+
 ### Is the API the same as OpenAlgo web's?
 
 Yes, field for field: the same endpoints under `/api/v1`, the same requests,

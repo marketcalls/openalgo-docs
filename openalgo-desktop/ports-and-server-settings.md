@@ -84,6 +84,10 @@ to the internet. For alerts from TradingView and other internet services, use
 a tunnel instead: see
 [Webhooks and the Built-in ngrok Tunnel](webhooks-and-ngrok-tunnel.md).
 
+The firewall on each system, finding the computer's IP address, tools on
+another computer, OpenAlgo Mobile and what to do when a device cannot connect
+are in [Network Access and OpenAlgo Mobile](network-access-and-openalgo-mobile.md).
+
 ## The dashboard in a browser
 
 While the app runs, the same dashboard opens in any browser on the same

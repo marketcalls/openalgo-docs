@@ -105,6 +105,7 @@ workflow migration. These updates are documented against the
 * [Install on Linux](install-on-linux.md)
 * [First Run and Broker Login](first-run-and-broker-login.md)
 * [Ports and Server Settings](ports-and-server-settings.md)
+* [Network Access and OpenAlgo Mobile](network-access-and-openalgo-mobile.md), to use it from a phone, a tablet or another computer
 * [Webhooks and the Built-in ngrok Tunnel](webhooks-and-ngrok-tunnel.md)
 * [Data, Security and Backups](data-security-and-backups.md)
 * [Updating and Uninstalling](updating-and-uninstalling.md)
