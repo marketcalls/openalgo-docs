@@ -28,7 +28,7 @@ Click on the **Generate API Keys** ,Enter the Token Name as "OpenAlgo" or any na
 
 Click "**Add/Update Static IP**" next to Generate API Key
 
-<figure><img src="../../.gitbook/assets/Groww1.PNG" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/groww-static-ip.png" alt=""><figcaption></figcaption></figure>
 
 ### Important Points
 
