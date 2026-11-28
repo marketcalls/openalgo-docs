@@ -219,6 +219,7 @@ The Python SDK also ships an indicator library and visualization helpers. See [I
 | [**ChartInk**](trading-platform/chartink.md) | Scanner webhooks |
 | [**GoCharting**](trading-platform/gocharting.md) | Webhooks |
 | [**MetaTrader 5**](trading-platform/metatrader-5/README.md) | MQL5 library and Expert Advisors |
+| [**NinjaTrader 8**](trading-platform/ninjatrader-8/README.md) | NinjaScript SDK for strategies, indicators and add-ons |
 | [**Excel**](trading-platform/excel.md) | Excel add-in with native worksheet functions and real-time streaming |
 | [**Google Sheets**](trading-platform/google-spreadsheets.md) | Apps Script |
 | [**N8N**](trading-platform/n8n.md) | Workflow automation nodes |
