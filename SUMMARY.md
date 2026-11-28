@@ -369,6 +369,7 @@
   * [OpenAlgo MQL5 Functions](trading-platform/metatrader-5/openalgo-mql5-functions.md)
   * [Include the Header File](trading-platform/metatrader-5/include-the-header-file.md)
   * [Sample Expert Advisor](trading-platform/metatrader-5/sample-expert-advisor.md)
+  * [WebSocket Feed](trading-platform/metatrader-5/websocket-feed.md)
 * [Excel](trading-platform/excel.md)
 * [Google Spreadsheets](trading-platform/google-spreadsheets.md)
 * [N8N](trading-platform/n8n.md)
