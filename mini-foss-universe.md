@@ -55,6 +55,8 @@ SDKs are officially supported client packages intended for application developme
 | Go                  | [https://github.com/marketcalls/openalgo-go](https://github.com/marketcalls/openalgo-go)                         |
 | R                   | [https://github.com/marketcalls/openalgo-R-library](https://github.com/marketcalls/openalgo-R-library)           |
 | MATLAB              | [https://github.com/marketcalls/openalgo-matlab-library](https://github.com/marketcalls/openalgo-matlab-library) |
+| MetaTrader 5 (MQL5) | [https://github.com/marketcalls/openalgo-mt5-connector](https://github.com/marketcalls/openalgo-mt5-connector)   |
+| NinjaTrader 8 (NinjaScript) | [https://github.com/marketcalls/openalgo-nt8-connector](https://github.com/marketcalls/openalgo-nt8-connector) |
 
 ***
 
@@ -121,6 +123,8 @@ Each SDK and integration has dedicated documentation that includes installation 
 * RUST: https://docs.openalgo.in/trading-platform/rust
 * R: [https://docs.openalgo.in/trading-platform/r](https://docs.openalgo.in/trading-platform/r)
 * MATLAB: [https://docs.openalgo.in/trading-platform/matlab](https://docs.openalgo.in/trading-platform/matlab)
+* MetaTrader 5: [https://docs.openalgo.in/trading-platform/metatrader-5](https://docs.openalgo.in/trading-platform/metatrader-5)
+* NinjaTrader 8: [https://docs.openalgo.in/trading-platform/ninjatrader-8](https://docs.openalgo.in/trading-platform/ninjatrader-8)
 * Excel: [https://docs.openalgo.in/trading-platform/excel](https://docs.openalgo.in/trading-platform/excel)
 * Amibroker Plugin: [https://docs.openalgo.in/trading-platform/amibroker/amibroker-plugin](https://docs.openalgo.in/trading-platform/amibroker/amibroker-plugin)
 * Chrome Extension: [https://docs.openalgo.in/trading-platform/chrome-extension](https://docs.openalgo.in/trading-platform/chrome-extension)
