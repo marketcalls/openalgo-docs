@@ -16,13 +16,13 @@ openalgo = "1.1.0"
 tokio = { version = "1", features = ["full"] }
 ```
 
-#### Get the OpenAlgo apikey
+### Get the OpenAlgo apikey
 
 Make Sure that your OpenAlgo Application is running. Login to OpenAlgo Application with valid credentials and get the OpenAlgo apikey
 
 For detailed function parameters refer to the [API Documentation](https://docs.openalgo.in/api-documentation/v1)
 
-#### Getting Started with OpenAlgo
+### Getting Started with OpenAlgo
 
 First, import the OpenAlgo client and initialize it with your API key:
 
@@ -47,18 +47,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-#### Check OpenAlgo Version
+### Check OpenAlgo Version
 
 ```rust
 use openalgo::VERSION;
 println!("OpenAlgo version: {}", VERSION);
 ```
 
-#### Examples
+### Examples
 
 Please refer to the documentation on [order constants](https://docs.openalgo.in/api-documentation/v1/order-constants), and consult the API reference for details on optional parameters
 
-#### PlaceOrder example
+## Order API
+
+### PlaceOrder example
 
 To place a new market order:
 
@@ -104,7 +106,7 @@ Place Limit Order Response
 {"orderid": "250408001003813", "status": "success"}
 ```
 
-#### PlaceSmartOrder Example
+### PlaceSmartOrder Example
 
 To place a smart order considering the current position size:
 
@@ -128,7 +130,254 @@ Place Smart Market Order Response
 {"orderid": "250408000997543", "status": "success"}
 ```
 
-#### OptionsOrder Example
+### BasketOrder example
+
+To place a new basket order:
+
+```rust
+use openalgo::BasketOrderItem;
+
+let orders = vec![
+    BasketOrderItem::new("BHEL", "NSE", "BUY", 1, "MARKET", "MIS"),
+    BasketOrderItem::new("ZOMATO", "NSE", "SELL", 1, "MARKET", "MIS"),
+];
+
+let response = client.basket_order("Rust", orders).await?;
+println!("{:?}", response);
+```
+
+**Basket Order Response**
+
+```json
+{
+  "status": "success",
+  "results": [
+    {
+      "symbol": "BHEL",
+      "status": "success",
+      "orderid": "250408000999544"
+    },
+    {
+      "symbol": "ZOMATO",
+      "status": "success",
+      "orderid": "250408000997545"
+    }
+  ]
+}
+```
+
+### SplitOrder example
+
+To place a new split order:
+
+```rust
+let response = client.split_order(
+    "Rust",
+    "YESBANK",
+    "SELL",
+    "NSE",
+    105,
+    20,
+    "MARKET",
+    "MIS"
+).await?;
+println!("{:?}", response);
+```
+
+**SplitOrder Response**
+
+```json
+{
+  "status": "success",
+  "split_size": 20,
+  "total_quantity": 105,
+  "results": [
+    {
+      "order_num": 1,
+      "orderid": "250408001021467",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 2,
+      "orderid": "250408001021459",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 3,
+      "orderid": "250408001021466",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 4,
+      "orderid": "250408001021470",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 5,
+      "orderid": "250408001021471",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 6,
+      "orderid": "250408001021472",
+      "quantity": 5,
+      "status": "success"
+    }
+  ]
+}
+```
+
+### ModifyOrder Example
+
+To modify an existing order:
+
+```rust
+let response = client.modify_order(
+    "250408001002736",  // orderid
+    "Rust",             // strategy
+    "YESBANK",          // symbol
+    "BUY",              // action
+    "NSE",              // exchange
+    "LIMIT",            // pricetype
+    "CNC",              // product
+    "1",                // quantity
+    "16.5",             // price
+    Some("0"),          // disclosed_quantity (Option<&str>)
+    Some("0"),          // trigger_price (Option<&str>)
+    None                // extra
+).await?;
+println!("{:?}", response);
+```
+
+The `/modifyorder` endpoint requires every one of `apikey`, `strategy`, `exchange`, `symbol`, `orderid`, `action`, `product`, `pricetype`, `price`, `quantity`, `disclosed_quantity` and `trigger_price`. `None` omits the field from the JSON body, so pass `Some("0")` rather than `None` for `disclosed_quantity` and `trigger_price`.
+
+**Modify Order Response**
+
+```json
+{"orderid": "250408001002736", "status": "success"}
+```
+
+### CancelOrder Example
+
+To cancel an existing order:
+
+```rust
+let response = client.cancel_order(
+    "250408001002736",
+    "Rust"
+).await?;
+println!("{:?}", response);
+```
+
+**CancelOrder Response**
+
+```json
+{"orderid": "250408001002736", "status": "success"}
+```
+
+### CancelAllOrder Example
+
+To cancel all open orders and trigger pending orders
+
+```rust
+let response = client.cancel_all_order("Rust").await?;
+println!("{:?}", response);
+```
+
+**CancelAllOrder Response**
+
+```json
+{
+  "status": "success",
+  "message": "Canceled 5 orders. Failed to cancel 0 orders.",
+  "canceled_orders": [
+    "250408001042620",
+    "250408001042667",
+    "250408001042642",
+    "250408001043015",
+    "250408001043386"
+  ],
+  "failed_cancellations": []
+}
+```
+
+### ClosePosition Example
+
+To close all open positions across various exchanges
+
+```rust
+let response = client.close_position("Rust").await?;
+println!("{:?}", response);
+```
+
+**ClosePosition Response**
+
+```json
+{"message": "All Open Positions Squared Off", "status": "success"}
+```
+
+### OrderStatus Example
+
+To Get the Current OrderStatus
+
+```rust
+let response = client.order_status(
+    "250828000185002",
+    "Test Strategy"
+).await?;
+println!("{:?}", response);
+```
+
+**OrderStatus Response**
+
+```json
+{
+  "data": {
+    "action": "BUY",
+    "average_price": 18.95,
+    "exchange": "NSE",
+    "order_status": "complete",
+    "orderid": "250828000185002",
+    "price": 0,
+    "pricetype": "MARKET",
+    "product": "MIS",
+    "quantity": "1",
+    "symbol": "YESBANK",
+    "timestamp": "28-Aug-2025 09:59:10",
+    "trigger_price": 0
+  },
+  "status": "success"
+}
+```
+
+### OpenPosition Example
+
+To Get the Current OpenPosition
+
+```rust
+let response = client.open_position(
+    "Test Strategy",
+    "YESBANK",
+    "NSE",
+    "MIS"
+).await?;
+println!("{:?}", response);
+```
+
+**OpenPosition Response**
+
+```json
+{"quantity": "-10", "status": "success"}
+```
+
+## Options
+
+### OptionsOrder Example
 
 To place ATM options order
 
@@ -200,7 +449,7 @@ Place Options Order Response
 }
 ```
 
-#### OptionsMultiOrder Example
+### OptionsMultiOrder Example
 
 To place Iron Condor options order (Same Expiry)
 
@@ -276,580 +525,7 @@ Place OptionsMultiOrder Response
 }
 ```
 
-#### BasketOrder example
-
-To place a new basket order:
-
-```rust
-use openalgo::BasketOrderItem;
-
-let orders = vec![
-    BasketOrderItem::new("BHEL", "NSE", "BUY", 1, "MARKET", "MIS"),
-    BasketOrderItem::new("ZOMATO", "NSE", "SELL", 1, "MARKET", "MIS"),
-];
-
-let response = client.basket_order("Rust", orders).await?;
-println!("{:?}", response);
-```
-
-**Basket Order Response**
-
-```json
-{
-  "status": "success",
-  "results": [
-    {
-      "symbol": "BHEL",
-      "status": "success",
-      "orderid": "250408000999544"
-    },
-    {
-      "symbol": "ZOMATO",
-      "status": "success",
-      "orderid": "250408000997545"
-    }
-  ]
-}
-```
-
-#### SplitOrder example
-
-To place a new split order:
-
-```rust
-let response = client.split_order(
-    "Rust",
-    "YESBANK",
-    "SELL",
-    "NSE",
-    105,
-    20,
-    "MARKET",
-    "MIS"
-).await?;
-println!("{:?}", response);
-```
-
-**SplitOrder Response**
-
-```json
-{
-  "status": "success",
-  "split_size": 20,
-  "total_quantity": 105,
-  "results": [
-    {
-      "order_num": 1,
-      "orderid": "250408001021467",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 2,
-      "orderid": "250408001021459",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 3,
-      "orderid": "250408001021466",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 4,
-      "orderid": "250408001021470",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 5,
-      "orderid": "250408001021471",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 6,
-      "orderid": "250408001021472",
-      "quantity": 5,
-      "status": "success"
-    }
-  ]
-}
-```
-
-#### ModifyOrder Example
-
-To modify an existing order:
-
-```rust
-let response = client.modify_order(
-    "250408001002736",  // orderid
-    "Rust",             // strategy
-    "YESBANK",          // symbol
-    "BUY",              // action
-    "NSE",              // exchange
-    "LIMIT",            // pricetype
-    "CNC",              // product
-    "1",                // quantity
-    "16.5",             // price
-    Some("0"),          // disclosed_quantity (Option<&str>)
-    Some("0"),          // trigger_price (Option<&str>)
-    None                // extra
-).await?;
-println!("{:?}", response);
-```
-
-The `/modifyorder` endpoint requires every one of `apikey`, `strategy`, `exchange`, `symbol`, `orderid`, `action`, `product`, `pricetype`, `price`, `quantity`, `disclosed_quantity` and `trigger_price`. `None` omits the field from the JSON body, so pass `Some("0")` rather than `None` for `disclosed_quantity` and `trigger_price`.
-
-**Modify Order Response**
-
-```json
-{"orderid": "250408001002736", "status": "success"}
-```
-
-#### CancelOrder Example
-
-To cancel an existing order:
-
-```rust
-let response = client.cancel_order(
-    "250408001002736",
-    "Rust"
-).await?;
-println!("{:?}", response);
-```
-
-**CancelOrder Response**
-
-```json
-{"orderid": "250408001002736", "status": "success"}
-```
-
-#### CancelAllOrder Example
-
-To cancel all open orders and trigger pending orders
-
-```rust
-let response = client.cancel_all_order("Rust").await?;
-println!("{:?}", response);
-```
-
-**CancelAllOrder Response**
-
-```json
-{
-  "status": "success",
-  "message": "Canceled 5 orders. Failed to cancel 0 orders.",
-  "canceled_orders": [
-    "250408001042620",
-    "250408001042667",
-    "250408001042642",
-    "250408001043015",
-    "250408001043386"
-  ],
-  "failed_cancellations": []
-}
-```
-
-#### ClosePosition Example
-
-To close all open positions across various exchanges
-
-```rust
-let response = client.close_position("Rust").await?;
-println!("{:?}", response);
-```
-
-**ClosePosition Response**
-
-```json
-{"message": "All Open Positions Squared Off", "status": "success"}
-```
-
-#### OrderStatus Example
-
-To Get the Current OrderStatus
-
-```rust
-let response = client.order_status(
-    "250828000185002",
-    "Test Strategy"
-).await?;
-println!("{:?}", response);
-```
-
-**OrderStatus Response**
-
-```json
-{
-  "data": {
-    "action": "BUY",
-    "average_price": 18.95,
-    "exchange": "NSE",
-    "order_status": "complete",
-    "orderid": "250828000185002",
-    "price": 0,
-    "pricetype": "MARKET",
-    "product": "MIS",
-    "quantity": "1",
-    "symbol": "YESBANK",
-    "timestamp": "28-Aug-2025 09:59:10",
-    "trigger_price": 0
-  },
-  "status": "success"
-}
-```
-
-#### OpenPosition Example
-
-To Get the Current OpenPosition
-
-```rust
-let response = client.open_position(
-    "Test Strategy",
-    "YESBANK",
-    "NSE",
-    "MIS"
-).await?;
-println!("{:?}", response);
-```
-
-**OpenPosition Response**
-
-```json
-{"quantity": "-10", "status": "success"}
-```
-
-#### Quotes Example
-
-```rust
-let response = client.quotes("RELIANCE", "NSE").await?;
-println!("{:?}", response);
-```
-
-**Quotes Response**
-
-```json
-{
-  "status": "success",
-  "data": {
-    "open": 1172.0,
-    "high": 1196.6,
-    "low": 1163.3,
-    "ltp": 1187.75,
-    "ask": 1188.0,
-    "bid": 1187.85,
-    "prev_close": 1165.7,
-    "volume": 14414545
-  }
-}
-```
-
-#### MultiQuotes Example
-
-```rust
-let response = client.multi_quotes(&[
-    ("RELIANCE", "NSE"),
-    ("TCS", "NSE"),
-    ("INFY", "NSE")
-]).await?;
-println!("{:?}", response);
-```
-
-**MultiQuotes Response**
-
-```json
-{
-  "status": "success",
-  "results": [
-    {
-      "symbol": "RELIANCE",
-      "exchange": "NSE",
-      "data": {
-        "open": 1542.3,
-        "high": 1571.6,
-        "low": 1540.5,
-        "ltp": 1569.9,
-        "prev_close": 1539.7,
-        "ask": 1569.9,
-        "bid": 0,
-        "oi": 0,
-        "volume": 14054299
-      }
-    },
-    {
-      "symbol": "TCS",
-      "exchange": "NSE",
-      "data": {
-        "open": 3118.8,
-        "high": 3178,
-        "low": 3117,
-        "ltp": 3162.9,
-        "prev_close": 3119.2,
-        "ask": 0,
-        "bid": 3162.9,
-        "oi": 0,
-        "volume": 2508527
-      }
-    },
-    {
-      "symbol": "INFY",
-      "exchange": "NSE",
-      "data": {
-        "open": 1532.1,
-        "high": 1560.3,
-        "low": 1532.1,
-        "ltp": 1557.9,
-        "prev_close": 1530.6,
-        "ask": 0,
-        "bid": 1557.9,
-        "oi": 0,
-        "volume": 7575038
-      }
-    }
-  ]
-}
-```
-
-#### Depth Example
-
-```rust
-let response = client.depth("SBIN", "NSE").await?;
-println!("{:?}", response);
-```
-
-**Depth Response**
-
-```json
-{
-  "status": "success",
-  "data": {
-    "open": 760.0,
-    "high": 774.0,
-    "low": 758.15,
-    "ltp": 769.6,
-    "ltq": 205,
-    "prev_close": 746.9,
-    "volume": 9362799,
-    "oi": 161265750,
-    "totalbuyqty": 591351,
-    "totalsellqty": 835701,
-    "asks": [
-      {"price": 769.6, "quantity": 767},
-      {"price": 769.65, "quantity": 115},
-      {"price": 769.7, "quantity": 162},
-      {"price": 769.75, "quantity": 1121},
-      {"price": 769.8, "quantity": 430}
-    ],
-    "bids": [
-      {"price": 769.4, "quantity": 886},
-      {"price": 769.35, "quantity": 212},
-      {"price": 769.3, "quantity": 351},
-      {"price": 769.25, "quantity": 343},
-      {"price": 769.2, "quantity": 399}
-    ]
-  }
-}
-```
-
-#### History Example
-
-```rust
-let response = client.history_range(
-    "SBIN",
-    "NSE",
-    "5m",
-    "2025-04-01",
-    "2025-04-08"
-).await?;
-println!("{:?}", response);
-```
-
-**History Response**
-
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "timestamp": "2025-04-01T09:15:00+05:30",
-      "open": 766.5,
-      "high": 774.0,
-      "low": 763.2,
-      "close": 772.5,
-      "volume": 318625
-    },
-    {
-      "timestamp": "2025-04-01T09:20:00+05:30",
-      "open": 772.45,
-      "high": 774.95,
-      "low": 772.1,
-      "close": 773.2,
-      "volume": 197189
-    }
-  ]
-}
-```
-
-#### Intervals Example
-
-```rust
-let response = client.intervals().await?;
-println!("{:?}", response);
-```
-
-**Intervals Response**
-
-```json
-{
-  "status": "success",
-  "data": {
-    "months": [],
-    "weeks": [],
-    "days": ["D"],
-    "hours": ["1h"],
-    "minutes": ["10m", "15m", "1m", "30m", "3m", "5m"],
-    "seconds": []
-  }
-}
-```
-
-`intervals` reports only what the connected broker supports. The `interval` field of `/history` accepts this full set, and rejects anything else: `1s`, `5s`, `10s`, `15s`, `30s`, `45s`, `1m`, `2m`, `3m`, `5m`, `10m`, `15m`, `20m`, `30m`, `1h`, `2h`, `3h`, `4h`, `D`, `W`, `M`, `Q`, `Y`.
-
-#### OptionChain Example
-
-`expiry_date` is mandatory on `/optionchain`. `option_chain` returns the entire chain for that expiry; to limit it to a window around the ATM strike use `client.data.option_chain_strikes`, which adds a `strike_count` (1 to 100).
-
-```rust
-// Entire chain for the expiry
-let response = client.option_chain(
-    "NIFTY",
-    "NSE_INDEX",
-    "30DEC25"
-).await?;
-println!("{:?}", response);
-
-// 10 strikes above and below ATM
-let response = client.data.option_chain_strikes(
-    "NIFTY",
-    "NSE_INDEX",
-    "30DEC25",
-    10
-).await?;
-println!("{:?}", response);
-```
-
-**OptionChain Response**
-
-```json
-{
-    "status": "success",
-    "underlying": "NIFTY",
-    "underlying_ltp": 26215.55,
-    "expiry_date": "30DEC25",
-    "atm_strike": 26200.0,
-    "chain": [
-        {
-            "strike": 26100.0,
-            "ce": {
-                "symbol": "NIFTY30DEC2526100CE",
-                "label": "ITM2",
-                "ltp": 490,
-                "bid": 490,
-                "ask": 491,
-                "open": 540,
-                "high": 571,
-                "low": 444.75,
-                "prev_close": 496.8,
-                "volume": 1195800,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            },
-            "pe": {
-                "symbol": "NIFTY30DEC2526100PE",
-                "label": "OTM2",
-                "ltp": 193,
-                "bid": 191.2,
-                "ask": 193,
-                "open": 204.1,
-                "high": 229.95,
-                "low": 175.6,
-                "prev_close": 215.95,
-                "volume": 1832700,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            }
-        }
-    ]
-}
-```
-
-#### Symbol Example
-
-```rust
-let response = client.symbol("NIFTY30DEC25FUT", "NFO").await?;
-println!("{:?}", response);
-```
-
-**Symbol Response**
-
-```json
-{
-  "data": {
-    "brexchange": "NSE_FO",
-    "brsymbol": "NIFTY FUT 30 DEC 25",
-    "exchange": "NFO",
-    "expiry": "30-DEC-25",
-    "freeze_qty": 1800,
-    "id": 57900,
-    "instrumenttype": "FUT",
-    "lotsize": 65,
-    "name": "NIFTY",
-    "strike": 0,
-    "symbol": "NIFTY30DEC25FUT",
-    "tick_size": 10,
-    "token": "NSE_FO|49543"
-  },
-  "status": "success"
-}
-```
-
-#### Search Example
-
-```rust
-let response = client.search("NIFTY 26000 DEC CE", Some("NFO"), None).await?;
-println!("{:?}", response);
-```
-
-**Search Response**
-
-```json
-{
-  "data": [
-    {
-      "brexchange": "NSE_FO",
-      "brsymbol": "NIFTY 26000 CE 30 DEC 25",
-      "exchange": "NFO",
-      "expiry": "30-DEC-25",
-      "freeze_qty": 1800,
-      "instrumenttype": "CE",
-      "lotsize": 65,
-      "name": "NIFTY",
-      "strike": 26000,
-      "symbol": "NIFTY30DEC2526000CE",
-      "tick_size": 5,
-      "token": "NSE_FO|71399"
-    }
-  ],
-  "message": "Found 7 matching symbols",
-  "status": "success"
-}
-```
-
-#### OptionSymbol Example
+### OptionSymbol Example
 
 ATM Option
 
@@ -941,31 +617,77 @@ println!("{:?}", response);
 }
 ```
 
-#### SyntheticFuture Example
+### OptionChain Example
+
+`expiry_date` is mandatory on `/optionchain`. `option_chain` returns the entire chain for that expiry; to limit it to a window around the ATM strike use `client.data.option_chain_strikes`, which adds a `strike_count` (1 to 100).
 
 ```rust
-let response = client.synthetic_future(
+// Entire chain for the expiry
+let response = client.option_chain(
     "NIFTY",
     "NSE_INDEX",
-    "25NOV25"
+    "30DEC25"
+).await?;
+println!("{:?}", response);
+
+// 10 strikes above and below ATM
+let response = client.data.option_chain_strikes(
+    "NIFTY",
+    "NSE_INDEX",
+    "30DEC25",
+    10
 ).await?;
 println!("{:?}", response);
 ```
 
-**SyntheticFuture Response**
+**OptionChain Response**
 
 ```json
 {
-  "atm_strike": 25900.0,
-  "expiry": "25NOV25",
-  "status": "success",
-  "synthetic_future_price": 25980.05,
-  "underlying": "NIFTY",
-  "underlying_ltp": 25910.05
+    "status": "success",
+    "underlying": "NIFTY",
+    "underlying_ltp": 26215.55,
+    "expiry_date": "30DEC25",
+    "atm_strike": 26200.0,
+    "chain": [
+        {
+            "strike": 26100.0,
+            "ce": {
+                "symbol": "NIFTY30DEC2526100CE",
+                "label": "ITM2",
+                "ltp": 490,
+                "bid": 490,
+                "ask": 491,
+                "open": 540,
+                "high": 571,
+                "low": 444.75,
+                "prev_close": 496.8,
+                "volume": 1195800,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            },
+            "pe": {
+                "symbol": "NIFTY30DEC2526100PE",
+                "label": "OTM2",
+                "ltp": 193,
+                "bid": 191.2,
+                "ask": 193,
+                "open": 204.1,
+                "high": 229.95,
+                "low": 175.6,
+                "prev_close": 215.95,
+                "volume": 1832700,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            }
+        }
+    ]
 }
 ```
 
-#### OptionGreeks Example
+### OptionGreeks Example
 
 ```rust
 let response = client.option_greeks(
@@ -1007,7 +729,291 @@ println!("{:?}", response);
 }
 ```
 
-#### Expiry Example
+### SyntheticFuture Example
+
+```rust
+let response = client.synthetic_future(
+    "NIFTY",
+    "NSE_INDEX",
+    "25NOV25"
+).await?;
+println!("{:?}", response);
+```
+
+**SyntheticFuture Response**
+
+```json
+{
+  "atm_strike": 25900.0,
+  "expiry": "25NOV25",
+  "status": "success",
+  "synthetic_future_price": 25980.05,
+  "underlying": "NIFTY",
+  "underlying_ltp": 25910.05
+}
+```
+
+## Market Data
+
+### Quotes Example
+
+```rust
+let response = client.quotes("RELIANCE", "NSE").await?;
+println!("{:?}", response);
+```
+
+**Quotes Response**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "open": 1172.0,
+    "high": 1196.6,
+    "low": 1163.3,
+    "ltp": 1187.75,
+    "ask": 1188.0,
+    "bid": 1187.85,
+    "prev_close": 1165.7,
+    "volume": 14414545
+  }
+}
+```
+
+### MultiQuotes Example
+
+```rust
+let response = client.multi_quotes(&[
+    ("RELIANCE", "NSE"),
+    ("TCS", "NSE"),
+    ("INFY", "NSE")
+]).await?;
+println!("{:?}", response);
+```
+
+**MultiQuotes Response**
+
+```json
+{
+  "status": "success",
+  "results": [
+    {
+      "symbol": "RELIANCE",
+      "exchange": "NSE",
+      "data": {
+        "open": 1542.3,
+        "high": 1571.6,
+        "low": 1540.5,
+        "ltp": 1569.9,
+        "prev_close": 1539.7,
+        "ask": 1569.9,
+        "bid": 0,
+        "oi": 0,
+        "volume": 14054299
+      }
+    },
+    {
+      "symbol": "TCS",
+      "exchange": "NSE",
+      "data": {
+        "open": 3118.8,
+        "high": 3178,
+        "low": 3117,
+        "ltp": 3162.9,
+        "prev_close": 3119.2,
+        "ask": 0,
+        "bid": 3162.9,
+        "oi": 0,
+        "volume": 2508527
+      }
+    },
+    {
+      "symbol": "INFY",
+      "exchange": "NSE",
+      "data": {
+        "open": 1532.1,
+        "high": 1560.3,
+        "low": 1532.1,
+        "ltp": 1557.9,
+        "prev_close": 1530.6,
+        "ask": 0,
+        "bid": 1557.9,
+        "oi": 0,
+        "volume": 7575038
+      }
+    }
+  ]
+}
+```
+
+### Depth Example
+
+```rust
+let response = client.depth("SBIN", "NSE").await?;
+println!("{:?}", response);
+```
+
+**Depth Response**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "open": 760.0,
+    "high": 774.0,
+    "low": 758.15,
+    "ltp": 769.6,
+    "ltq": 205,
+    "prev_close": 746.9,
+    "volume": 9362799,
+    "oi": 161265750,
+    "totalbuyqty": 591351,
+    "totalsellqty": 835701,
+    "asks": [
+      {"price": 769.6, "quantity": 767},
+      {"price": 769.65, "quantity": 115},
+      {"price": 769.7, "quantity": 162},
+      {"price": 769.75, "quantity": 1121},
+      {"price": 769.8, "quantity": 430}
+    ],
+    "bids": [
+      {"price": 769.4, "quantity": 886},
+      {"price": 769.35, "quantity": 212},
+      {"price": 769.3, "quantity": 351},
+      {"price": 769.25, "quantity": 343},
+      {"price": 769.2, "quantity": 399}
+    ]
+  }
+}
+```
+
+### History Example
+
+```rust
+let response = client.history_range(
+    "SBIN",
+    "NSE",
+    "5m",
+    "2025-04-01",
+    "2025-04-08"
+).await?;
+println!("{:?}", response);
+```
+
+**History Response**
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "timestamp": "2025-04-01T09:15:00+05:30",
+      "open": 766.5,
+      "high": 774.0,
+      "low": 763.2,
+      "close": 772.5,
+      "volume": 318625
+    },
+    {
+      "timestamp": "2025-04-01T09:20:00+05:30",
+      "open": 772.45,
+      "high": 774.95,
+      "low": 772.1,
+      "close": 773.2,
+      "volume": 197189
+    }
+  ]
+}
+```
+
+### Intervals Example
+
+```rust
+let response = client.intervals().await?;
+println!("{:?}", response);
+```
+
+**Intervals Response**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "months": [],
+    "weeks": [],
+    "days": ["D"],
+    "hours": ["1h"],
+    "minutes": ["10m", "15m", "1m", "30m", "3m", "5m"],
+    "seconds": []
+  }
+}
+```
+
+`intervals` reports only what the connected broker supports. The `interval` field of `/history` accepts this full set, and rejects anything else: `1s`, `5s`, `10s`, `15s`, `30s`, `45s`, `1m`, `2m`, `3m`, `5m`, `10m`, `15m`, `20m`, `30m`, `1h`, `2h`, `3h`, `4h`, `D`, `W`, `M`, `Q`, `Y`.
+
+### Symbol Example
+
+```rust
+let response = client.symbol("NIFTY30DEC25FUT", "NFO").await?;
+println!("{:?}", response);
+```
+
+**Symbol Response**
+
+```json
+{
+  "data": {
+    "brexchange": "NSE_FO",
+    "brsymbol": "NIFTY FUT 30 DEC 25",
+    "exchange": "NFO",
+    "expiry": "30-DEC-25",
+    "freeze_qty": 1800,
+    "id": 57900,
+    "instrumenttype": "FUT",
+    "lotsize": 65,
+    "name": "NIFTY",
+    "strike": 0,
+    "symbol": "NIFTY30DEC25FUT",
+    "tick_size": 10,
+    "token": "NSE_FO|49543"
+  },
+  "status": "success"
+}
+```
+
+### Search Example
+
+```rust
+let response = client.search("NIFTY 26000 DEC CE", Some("NFO"), None).await?;
+println!("{:?}", response);
+```
+
+**Search Response**
+
+```json
+{
+  "data": [
+    {
+      "brexchange": "NSE_FO",
+      "brsymbol": "NIFTY 26000 CE 30 DEC 25",
+      "exchange": "NFO",
+      "expiry": "30-DEC-25",
+      "freeze_qty": 1800,
+      "instrumenttype": "CE",
+      "lotsize": 65,
+      "name": "NIFTY",
+      "strike": 26000,
+      "symbol": "NIFTY30DEC2526000CE",
+      "tick_size": 5,
+      "token": "NSE_FO|71399"
+    }
+  ],
+  "message": "Found 7 matching symbols",
+  "status": "success"
+}
+```
+
+### Expiry Example
 
 ```rust
 let response = client.expiry("NIFTY", "NFO", "options").await?;
@@ -1035,7 +1041,7 @@ println!("{:?}", response);
 }
 ```
 
-#### Instruments Example
+### Instruments Example
 
 ```rust
 let response = client.instruments(Some("NSE")).await?;
@@ -1067,37 +1073,9 @@ println!("{:?}", response);
 }
 ```
 
-#### Telegram Alert Example
+## Account
 
-```rust
-let response = client.telegram(
-    "<openalgo_loginid>",
-    "NIFTY crossed 26000!"
-).await?;
-println!("{:?}", response);
-```
-
-**Telegram Alert Response**
-
-```json
-{
-  "message": "Notification sent successfully",
-  "status": "success"
-}
-```
-
-With priority:
-
-```rust
-let response = client.telegram_priority(
-    "<openalgo_loginid>",
-    "Urgent: NIFTY crossed 26000!",
-    10
-).await?;
-println!("{:?}", response);
-```
-
-#### Funds Example
+### Funds Example
 
 ```rust
 let response = client.funds().await?;
@@ -1119,7 +1097,7 @@ println!("{:?}", response);
 }
 ```
 
-#### Margin Example
+### Margin Example
 
 ```rust
 use openalgo::MarginPosition;
@@ -1146,7 +1124,7 @@ println!("{:?}", response);
 }
 ```
 
-#### OrderBook Example
+### OrderBook Example
 
 ```rust
 let response = client.orderbook().await?;
@@ -1185,7 +1163,7 @@ println!("{:?}", response);
 }
 ```
 
-#### TradeBook Example
+### TradeBook Example
 
 ```rust
 let response = client.tradebook().await?;
@@ -1213,7 +1191,7 @@ println!("{:?}", response);
 }
 ```
 
-#### PositionBook Example
+### PositionBook Example
 
 ```rust
 let response = client.positionbook().await?;
@@ -1239,7 +1217,7 @@ println!("{:?}", response);
 }
 ```
 
-#### Holdings Example
+### Holdings Example
 
 ```rust
 let response = client.holdings().await?;
@@ -1272,7 +1250,51 @@ println!("{:?}", response);
 }
 ```
 
-#### Holidays Example
+### Analyzer Status Example
+
+```rust
+let response = client.analyzer_status().await?;
+println!("{:?}", response);
+```
+
+**Analyzer Status Response**
+
+```json
+{
+  "data": {
+    "analyze_mode": true,
+    "mode": "analyze",
+    "total_logs": 2
+  },
+  "status": "success"
+}
+```
+
+### Analyzer Toggle Example
+
+```rust
+// Switch to analyze mode (simulated responses)
+let response = client.analyzer_toggle(true).await?;
+println!("{:?}", response);
+```
+
+**Analyzer Toggle Response**
+
+```json
+{
+  "data": {
+    "analyze_mode": true,
+    "message": "Analyzer mode switched to analyze",
+    "mode": "analyze",
+    "total_logs": 2
+  },
+  "status": "success"
+}
+```
+
+## Utilities
+
+### Holidays Example
 
 ```rust
 let response = client.holidays(Some(2026)).await?;
@@ -1303,7 +1325,7 @@ println!("{:?}", response);
 }
 ```
 
-#### Timings Example
+### Timings Example
 
 ```rust
 let response = client.timings(Some("2025-12-19")).await?;
@@ -1327,49 +1349,39 @@ println!("{:?}", response);
 }
 ```
 
-#### Analyzer Status Example
+## Alerts
+
+### Telegram Alert Example
 
 ```rust
-let response = client.analyzer_status().await?;
+let response = client.telegram(
+    "<openalgo_loginid>",
+    "NIFTY crossed 26000!"
+).await?;
 println!("{:?}", response);
 ```
 
-**Analyzer Status Response**
+**Telegram Alert Response**
 
 ```json
 {
-  "data": {
-    "analyze_mode": true,
-    "mode": "analyze",
-    "total_logs": 2
-  },
+  "message": "Notification sent successfully",
   "status": "success"
 }
 ```
 
-#### Analyzer Toggle Example
+With priority:
 
 ```rust
-// Switch to analyze mode (simulated responses)
-let response = client.analyzer_toggle(true).await?;
+let response = client.telegram_priority(
+    "<openalgo_loginid>",
+    "Urgent: NIFTY crossed 26000!",
+    10
+).await?;
 println!("{:?}", response);
 ```
 
-**Analyzer Toggle Response**
-
-```json
-{
-  "data": {
-    "analyze_mode": true,
-    "message": "Analyzer mode switched to analyze",
-    "mode": "analyze",
-    "total_logs": 2
-  },
-  "status": "success"
-}
-```
-
-#### Endpoints not wrapped by the SDK
+## Endpoints not wrapped by the SDK
 
 The Rust SDK does not expose helpers for the GTT endpoints, `multioptiongreeks` or `ping`. Reach them by posting to the REST endpoint directly at `http://127.0.0.1:5000/api/v1/<endpoint>`, passing the same `apikey` field the SDK sends.
 
@@ -1433,11 +1445,13 @@ Individual items can fail while the batch still returns `"status": "success"`, s
 {"data": {"broker": "zerodha", "message": "pong"}, "status": "success"}
 ```
 
-#### WebSocket connection notes
+## WebSocket Feed
+
+### WebSocket connection notes
 
 The proxy listens on `ws://127.0.0.1:8765`. Every client authenticates with its OpenAlgo API key before subscribing, and a connection that has not authenticated within 15 seconds is closed. Subscriptions carry a mode: `1` for LTP, `2` for Quote and `3` for Depth. The strings `LTP`, `Quote` and `Depth` are accepted as well and are matched case-insensitively; Quote is the default when the field is omitted. LTP updates are throttled to one per symbol per 50 ms, so a fast-moving symbol still delivers at most 20 LTP messages a second.
 
-#### LTP Data (Streaming WebSocket)
+### LTP Data (Streaming WebSocket)
 
 `client.websocket()` returns an `OpenAlgoWebSocket`. Calling `connect()` opens the socket to `ws://127.0.0.1:8765`, sends the `{"action": "authenticate", "api_key": ...}` handshake for you, and hands back a command sender plus a data receiver. Wrap the sender in a `WsSubscriber` to subscribe, and read ticks off the receiver as `WsData` values. There is no callback closure form.
 
@@ -1487,7 +1501,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 LTP ticks are throttled by the proxy to one update per symbol per 50 ms.
 
-#### Quotes (Streaming WebSocket)
+### Quotes (Streaming WebSocket)
 
 ```rust
 use openalgo::{OpenAlgo, WsData, WsInstrument};
@@ -1527,7 +1541,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-#### Depth (Streaming WebSocket)
+### Depth (Streaming WebSocket)
 
 ```rust
 use openalgo::{OpenAlgo, WsData, WsInstrument};
@@ -1567,7 +1581,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-#### Cached Snapshots
+### Cached Snapshots
 
 `OpenAlgoWebSocket` also keeps a local snapshot cache, updated as ticks arrive. Pass `None` for both arguments to get every cached entry.
 
@@ -1577,7 +1591,7 @@ let quotes = ws.get_quotes(Some("NSE"), Some("RELIANCE"));
 let depth = ws.get_depth(Some("NSE"), Some("RELIANCE"));
 ```
 
-#### Order Updates (Streaming WebSocket)
+### Order Updates (Streaming WebSocket)
 
 The same proxy on port 8765 also carries account-scoped order updates. The Rust SDK does not wrap them, so send the raw frames on your own WebSocket connection: authenticate first, then subscribe.
 

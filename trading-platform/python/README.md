@@ -65,6 +65,8 @@ Upgrade with `pip install -U openalgo`.
 
 Please refer to the documentation on [order constants](../../api-documentation/v1/order-constants.md), and consult the API reference for details on optional parameters
 
+## Order API
+
 ### PlaceOrder example
 
 To place a new market order:
@@ -136,238 +138,6 @@ Place Smart Market Order Response
 
 ```json
 {'orderid': '250408000997543', 'status': 'success'}
-```
-
-### OptionsOrder Example
-
-To place ATM options order
-
-```python
-response = client.optionsorder(
-      strategy="python",
-      underlying="NIFTY",
-      exchange="NSE_INDEX",
-      expiry_date="28OCT25",
-      offset="ATM",
-      option_type="CE",
-      action="BUY",
-      quantity=65,
-      price_type="MARKET",
-      product="NRML",
-      splitsize = 0
-  )
-
-print(response)
-```
-
-Place Options Order Response
-
-```json
-{
-  "exchange": "NFO",
-  "offset": "ATM",
-  "option_type": "CE",
-  "orderid": "25102800000006",
-  "status": "success",
-  "symbol": "NIFTY28OCT2525950CE",
-  "underlying": "NIFTY28OCT25FUT",
-  "underlying_ltp": 25966.05
-}
-```
-
-To place ITM options order
-
-```python
-response = client.optionsorder(
-      strategy="python",
-      underlying="NIFTY",
-      exchange="NSE_INDEX",
-      expiry_date="28OCT25",
-      offset="ITM4",
-      option_type="PE",
-      action="BUY",
-      quantity=65,
-      price_type="MARKET",
-      product="NRML",
-      splitsize = 0
-  )
-
-print(response)
-```
-
-Place Options Order Response
-
-```json
-{
-  "exchange": "NFO",
-  "offset": "ITM4",
-  "option_type": "PE",
-  "orderid": "25102800000007",
-  "status": "success",
-  "symbol": "NIFTY28OCT2526150PE",
-  "underlying": "NIFTY28OCT25FUT",
-  "underlying_ltp": 25966.05
-}
-```
-
-To place OTM options order
-
-```python
-response = client.optionsorder(
-      strategy="python",
-      underlying="NIFTY",
-      exchange="NSE_INDEX",
-      expiry_date="28OCT25",
-      offset="OTM5",
-      option_type="CE",
-      action="BUY",
-      quantity=65,
-      price_type="MARKET",
-      product="NRML",
-      splitsize = 0
-  )
-
-print(response)
-```
-
-Place Options Order Response
-
-```json
-{
-  "exchange": "NFO",
-  "mode": "analyze",
-  "offset": "OTM5",
-  "option_type": "CE",
-  "orderid": "25102800000008",
-  "status": "success",
-  "symbol": "NIFTY28OCT2526200CE",
-  "underlying": "NIFTY28OCT25FUT",
-  "underlying_ltp": 25966.05
-}
-```
-
-### OptionsMultiOrder Example
-
-To place Iron options order (Same Expiry)
-
-```python
-response = client.optionsmultiorder(
-    strategy="Iron Condor Test",
-    underlying="NIFTY",
-    exchange="NSE_INDEX",
-    expiry_date="25NOV25",
-    legs=[
-        {"offset": "OTM6", "option_type": "CE", "action": "BUY", "quantity": 65},
-        {"offset": "OTM6", "option_type": "PE", "action": "BUY", "quantity": 65},
-        {"offset": "OTM4", "option_type": "CE", "action": "SELL", "quantity": 65},
-        {"offset": "OTM4", "option_type": "PE", "action": "SELL", "quantity": 65}
-    ]
-)
-
-print(response)
-```
-
-Place OptionsMultiOrder Response
-
-```json
-{
-    'status': 'success',
-    'underlying': 'NIFTY',
-    'underlying_ltp': 26050.45,
-    'results': [
-        {
-            'action': 'BUY',
-            'leg': 1,
-            'mode': 'analyze',
-            'offset': 'OTM6',
-            'option_type': 'CE',
-            'orderid': '25111996859688',
-            'status': 'success',
-            'symbol': 'NIFTY25NOV2526350CE'
-        },
-        {
-            'action': 'BUY',
-            'leg': 2,
-            'mode': 'analyze',
-            'offset': 'OTM6',
-            'option_type': 'PE',
-            'orderid': '25111996042210',
-            'status': 'success',
-            'symbol': 'NIFTY25NOV2525750PE'
-        },
-        {
-            'action': 'SELL',
-            'leg': 3,
-            'mode': 'analyze',
-            'offset': 'OTM4',
-            'option_type': 'CE',
-            'orderid': '25111922189638',
-            'status': 'success',
-            'symbol': 'NIFTY25NOV2526250CE'
-        },
-        {
-            'action': 'SELL',
-            'leg': 4,
-            'mode': 'analyze',
-            'offset': 'OTM4',
-            'option_type': 'PE',
-            'orderid': '25111919252668',
-            'status': 'success',
-            'symbol': 'NIFTY25NOV2525850PE'
-        }
-    ]
-}
-
-```
-
-To place Diagonal Spread options order (Different Expiry)
-
-```python
-response = client.optionsmultiorder(
-      strategy="Diagonal Spread Test",
-      underlying="NIFTY",
-      exchange="NSE_INDEX",
-      legs=[
-          {"offset": "ITM2", "option_type": "CE", "action": "BUY", "quantity": 65, "expiry_date": "30DEC25"},
-          {"offset": "OTM2", "option_type": "CE", "action": "SELL", "quantity": 65, "expiry_date": "25NOV25"}
-      ]
-  )
-
-print(response)
-
-```
-
-Place OptionsMultiOrder Response
-
-```json
-{
-    "results": [
-        {
-            "action": "BUY",
-            "leg": 1,
-            "mode": "analyze",
-            "offset": "ITM2",
-            "option_type": "CE",
-            "orderid": "25111933337854",
-            "status": "success",
-            "symbol": "NIFTY30DEC2525950CE"
-        },
-        {
-            "action": "SELL",
-            "leg": 2,
-            "mode": "analyze",
-            "offset": "OTM2",
-            "option_type": "CE",
-            "orderid": "25111957475473",
-            "status": "success",
-            "symbol": "NIFTY25NOV2526150CE"
-        }
-    ],
-    "status": "success",
-    "underlying": "NIFTY",
-    "underlying_ltp": 26052.65
-}
-
 ```
 
 ### BasketOrder example
@@ -628,6 +398,8 @@ OpenPosition Response
 {'quantity': '-10', 'status': 'success'}
 ```
 
+## GTT Orders
+
 ### PlaceGTTOrder Example
 
 A GTT (Good Till Triggered) order is a price trigger that sits with the broker until
@@ -831,6 +603,584 @@ API reference: [PlaceGTTOrder](../../api-documentation/v1/orders-api/placegttord
 [ModifyGTTOrder](../../api-documentation/v1/orders-api/modifygttorder.md),
 [CancelGTTOrder](../../api-documentation/v1/orders-api/cancelgttorder.md),
 [GTTOrderBook](../../api-documentation/v1/orders-api/gttorderbook.md).
+
+## Options
+
+### OptionsOrder Example
+
+To place ATM options order
+
+```python
+response = client.optionsorder(
+      strategy="python",
+      underlying="NIFTY",
+      exchange="NSE_INDEX",
+      expiry_date="28OCT25",
+      offset="ATM",
+      option_type="CE",
+      action="BUY",
+      quantity=65,
+      price_type="MARKET",
+      product="NRML",
+      splitsize = 0
+  )
+
+print(response)
+```
+
+Place Options Order Response
+
+```json
+{
+  "exchange": "NFO",
+  "offset": "ATM",
+  "option_type": "CE",
+  "orderid": "25102800000006",
+  "status": "success",
+  "symbol": "NIFTY28OCT2525950CE",
+  "underlying": "NIFTY28OCT25FUT",
+  "underlying_ltp": 25966.05
+}
+```
+
+To place ITM options order
+
+```python
+response = client.optionsorder(
+      strategy="python",
+      underlying="NIFTY",
+      exchange="NSE_INDEX",
+      expiry_date="28OCT25",
+      offset="ITM4",
+      option_type="PE",
+      action="BUY",
+      quantity=65,
+      price_type="MARKET",
+      product="NRML",
+      splitsize = 0
+  )
+
+print(response)
+```
+
+Place Options Order Response
+
+```json
+{
+  "exchange": "NFO",
+  "offset": "ITM4",
+  "option_type": "PE",
+  "orderid": "25102800000007",
+  "status": "success",
+  "symbol": "NIFTY28OCT2526150PE",
+  "underlying": "NIFTY28OCT25FUT",
+  "underlying_ltp": 25966.05
+}
+```
+
+To place OTM options order
+
+```python
+response = client.optionsorder(
+      strategy="python",
+      underlying="NIFTY",
+      exchange="NSE_INDEX",
+      expiry_date="28OCT25",
+      offset="OTM5",
+      option_type="CE",
+      action="BUY",
+      quantity=65,
+      price_type="MARKET",
+      product="NRML",
+      splitsize = 0
+  )
+
+print(response)
+```
+
+Place Options Order Response
+
+```json
+{
+  "exchange": "NFO",
+  "mode": "analyze",
+  "offset": "OTM5",
+  "option_type": "CE",
+  "orderid": "25102800000008",
+  "status": "success",
+  "symbol": "NIFTY28OCT2526200CE",
+  "underlying": "NIFTY28OCT25FUT",
+  "underlying_ltp": 25966.05
+}
+```
+
+### OptionsMultiOrder Example
+
+To place Iron options order (Same Expiry)
+
+```python
+response = client.optionsmultiorder(
+    strategy="Iron Condor Test",
+    underlying="NIFTY",
+    exchange="NSE_INDEX",
+    expiry_date="25NOV25",
+    legs=[
+        {"offset": "OTM6", "option_type": "CE", "action": "BUY", "quantity": 65},
+        {"offset": "OTM6", "option_type": "PE", "action": "BUY", "quantity": 65},
+        {"offset": "OTM4", "option_type": "CE", "action": "SELL", "quantity": 65},
+        {"offset": "OTM4", "option_type": "PE", "action": "SELL", "quantity": 65}
+    ]
+)
+
+print(response)
+```
+
+Place OptionsMultiOrder Response
+
+```json
+{
+    'status': 'success',
+    'underlying': 'NIFTY',
+    'underlying_ltp': 26050.45,
+    'results': [
+        {
+            'action': 'BUY',
+            'leg': 1,
+            'mode': 'analyze',
+            'offset': 'OTM6',
+            'option_type': 'CE',
+            'orderid': '25111996859688',
+            'status': 'success',
+            'symbol': 'NIFTY25NOV2526350CE'
+        },
+        {
+            'action': 'BUY',
+            'leg': 2,
+            'mode': 'analyze',
+            'offset': 'OTM6',
+            'option_type': 'PE',
+            'orderid': '25111996042210',
+            'status': 'success',
+            'symbol': 'NIFTY25NOV2525750PE'
+        },
+        {
+            'action': 'SELL',
+            'leg': 3,
+            'mode': 'analyze',
+            'offset': 'OTM4',
+            'option_type': 'CE',
+            'orderid': '25111922189638',
+            'status': 'success',
+            'symbol': 'NIFTY25NOV2526250CE'
+        },
+        {
+            'action': 'SELL',
+            'leg': 4,
+            'mode': 'analyze',
+            'offset': 'OTM4',
+            'option_type': 'PE',
+            'orderid': '25111919252668',
+            'status': 'success',
+            'symbol': 'NIFTY25NOV2525850PE'
+        }
+    ]
+}
+
+```
+
+To place Diagonal Spread options order (Different Expiry)
+
+```python
+response = client.optionsmultiorder(
+      strategy="Diagonal Spread Test",
+      underlying="NIFTY",
+      exchange="NSE_INDEX",
+      legs=[
+          {"offset": "ITM2", "option_type": "CE", "action": "BUY", "quantity": 65, "expiry_date": "30DEC25"},
+          {"offset": "OTM2", "option_type": "CE", "action": "SELL", "quantity": 65, "expiry_date": "25NOV25"}
+      ]
+  )
+
+print(response)
+
+```
+
+Place OptionsMultiOrder Response
+
+```json
+{
+    "results": [
+        {
+            "action": "BUY",
+            "leg": 1,
+            "mode": "analyze",
+            "offset": "ITM2",
+            "option_type": "CE",
+            "orderid": "25111933337854",
+            "status": "success",
+            "symbol": "NIFTY30DEC2525950CE"
+        },
+        {
+            "action": "SELL",
+            "leg": 2,
+            "mode": "analyze",
+            "offset": "OTM2",
+            "option_type": "CE",
+            "orderid": "25111957475473",
+            "status": "success",
+            "symbol": "NIFTY25NOV2526150CE"
+        }
+    ],
+    "status": "success",
+    "underlying": "NIFTY",
+    "underlying_ltp": 26052.65
+}
+
+```
+
+### OptionSymbol Example
+
+ATM Option
+
+```python
+response = client.optionsymbol(
+      underlying="NIFTY",
+      exchange="NSE_INDEX",
+      expiry_date="30DEC25",
+      offset="ATM",
+      option_type="CE"
+  )
+
+print(response)
+```
+
+**OptionSymbol Response**
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY30DEC2525950CE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+ITM Option
+
+```python
+response = client.optionsymbol(
+      underlying="NIFTY",
+      exchange="NSE_INDEX",
+      expiry_date="30DEC25",
+      offset="ITM3",
+      option_type="PE"
+  )
+
+print(response)
+```
+
+**OptionSymbol Response**
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY30DEC2526100PE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+OTM Option
+
+```python
+response = client.optionsymbol(
+      underlying="NIFTY",
+      exchange="NSE_INDEX",
+      expiry_date="30DEC25",
+      offset="OTM4",
+      option_type="CE"
+  )
+
+print(response)
+```
+
+**OptionSymbol Response**
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY30DEC2526150CE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+### OptionChain Example
+
+Note : To fetch entire option chain for a expiry remove the strike\_count (optional) parameter
+
+```python
+chain = client.optionchain(
+    underlying="NIFTY",
+    exchange="NSE_INDEX",
+    expiry_date="30DEC25",
+    strike_count=10
+)
+```
+
+**Symbols Response**
+
+```json
+{
+    "status": "success",
+    "underlying": "NIFTY",
+    "underlying_ltp": 26215.55,
+    "expiry_date": "30DEC25",
+    "atm_strike": 26200.0,
+    "chain": [
+        {
+            "strike": 26100.0,
+            "ce": {
+                "symbol": "NIFTY30DEC2526100CE",
+                "label": "ITM2",
+                "ltp": 490,
+                "bid": 490,
+                "ask": 491,
+                "open": 540,
+                "high": 571,
+                "low": 444.75,
+                "prev_close": 496.8,
+                "volume": 1195800,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            },
+            "pe": {
+                "symbol": "NIFTY30DEC2526100PE",
+                "label": "OTM2",
+                "ltp": 193,
+                "bid": 191.2,
+                "ask": 193,
+                "open": 204.1,
+                "high": 229.95,
+                "low": 175.6,
+                "prev_close": 215.95,
+                "volume": 1832700,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            }
+        },
+        {
+            "strike": 26150.0,
+            "ce": {
+                "symbol": "NIFTY30DEC2526150CE",
+                "label": "ITM1",
+                "ltp": 460.5,
+                "bid": 452.9,
+                "ask": 463,
+                "open": 475.8,
+                "high": 535.7,
+                "low": 414.6,
+                "prev_close": 461.05,
+                "volume": 183525,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            },
+            "pe": {
+                "symbol": "NIFTY30DEC2526150PE",
+                "label": "OTM1",
+                "ltp": 208.5,
+                "bid": 207.85,
+                "ask": 210.1,
+                "open": 218.2,
+                "high": 248.8,
+                "low": 190.75,
+                "prev_close": 233.7,
+                "volume": 332100,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            }
+        },
+        {
+            "strike": 26200.0,
+            "ce": {
+                "symbol": "NIFTY30DEC2526200CE",
+                "label": "ATM",
+                "ltp": 427,
+                "bid": 425.05,
+                "ask": 427,
+                "open": 449.95,
+                "high": 503.5,
+                "low": 384,
+                "prev_close": 433.2,
+                "volume": 2994000,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            },
+            "pe": {
+                "symbol": "NIFTY30DEC2526200PE",
+                "label": "ATM",
+                "ltp": 227.4,
+                "bid": 227.35,
+                "ask": 228.5,
+                "open": 251.9,
+                "high": 269.15,
+                "low": 205.95,
+                "prev_close": 251.9,
+                "volume": 3745350,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            }
+        },
+        {
+            "strike": 26250.0,
+            "ce": {
+                "symbol": "NIFTY30DEC2526250CE",
+                "label": "OTM1",
+                "ltp": 398,
+                "bid": 395.4,
+                "ask": 400.5,
+                "open": 442.1,
+                "high": 468.5,
+                "low": 355.75,
+                "prev_close": 401.9,
+                "volume": 407100,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            },
+            "pe": {
+                "symbol": "NIFTY30DEC2526250PE",
+                "label": "ITM1",
+                "ltp": 243.85,
+                "bid": 243.6,
+                "ask": 246.15,
+                "open": 264.25,
+                "high": 288,
+                "low": 222.15,
+                "prev_close": 269.7,
+                "volume": 487575,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            }
+        },
+        {
+            "strike": 26300.0,
+            "ce": {
+                "symbol": "NIFTY30DEC2526300CE",
+                "label": "OTM2",
+                "ltp": 367.55,
+                "bid": 364,
+                "ask": 367.55,
+                "open": 378,
+                "high": 437.4,
+                "low": 327.25,
+                "prev_close": 371.45,
+                "volume": 2416350,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            },
+            "pe": {
+                "symbol": "NIFTY30DEC2526300PE",
+                "label": "ITM2",
+                "ltp": 266,
+                "bid": 264.2,
+                "ask": 266.5,
+                "open": 263.1,
+                "high": 311.55,
+                "low": 240,
+                "prev_close": 289.85,
+                "volume": 2891100,
+                "oi": 0,
+                "lotsize": 65,
+                "tick_size": 0.05
+            }
+        }
+    ]
+}
+
+```
+
+### OptionGreeks Example
+
+```python
+response = client.optiongreeks(
+      symbol="NIFTY25NOV2526000CE",
+      exchange="NFO",
+      interest_rate=0.00,
+      underlying_symbol="NIFTY",
+      underlying_exchange="NSE_INDEX"
+  )
+
+print(response)
+```
+
+OptionGreeks  **Response**
+
+```
+{
+'days_to_expiry': 28.5071,
+ 'exchange': 'NFO',
+ 'expiry_date': '25-Nov-2025',
+ 'greeks': {'delta': 0.4967,
+  'gamma': 0.000352,
+  'rho': 9.733994,
+  'theta': -7.919,
+  'vega': 28.9489},
+ 'implied_volatility': 15.6,
+ 'interest_rate': 0.0,
+ 'option_price': 435,
+ 'option_type': 'CE',
+ 'spot_price': 25966.05,
+ 'status': 'success',
+ 'strike': 26000.0,
+ 'symbol': 'NIFTY25NOV2526000CE',
+ 'underlying': 'NIFTY'
+}
+```
+
+### SyntheticFuture Example
+
+```python
+response = client.syntheticfuture(
+      underlying="NIFTY",
+      exchange="NSE_INDEX",
+      expiry_date="25NOV25"
+  )
+
+print(response)
+```
+
+SyntheticFuture **Response**
+
+```
+{
+ 'atm_strike': 25900.0,
+ 'expiry': '25NOV25',
+ 'status': 'success',
+ 'synthetic_future_price': 25980.05,
+ 'underlying': 'NIFTY',
+ 'underlying_ltp': 25910.05
+}
+```
+
+## Market Data
 
 ### Quotes Example
 
@@ -1068,201 +1418,6 @@ print(response)
 }
 ```
 
-### OptionChain Example
-
-Note : To fetch entire option chain for a expiry remove the strike\_count (optional) parameter
-
-```python
-chain = client.optionchain(
-    underlying="NIFTY",
-    exchange="NSE_INDEX",
-    expiry_date="30DEC25",
-    strike_count=10
-)
-```
-
-**Symbols Response**
-
-```json
-{
-    "status": "success",
-    "underlying": "NIFTY",
-    "underlying_ltp": 26215.55,
-    "expiry_date": "30DEC25",
-    "atm_strike": 26200.0,
-    "chain": [
-        {
-            "strike": 26100.0,
-            "ce": {
-                "symbol": "NIFTY30DEC2526100CE",
-                "label": "ITM2",
-                "ltp": 490,
-                "bid": 490,
-                "ask": 491,
-                "open": 540,
-                "high": 571,
-                "low": 444.75,
-                "prev_close": 496.8,
-                "volume": 1195800,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            },
-            "pe": {
-                "symbol": "NIFTY30DEC2526100PE",
-                "label": "OTM2",
-                "ltp": 193,
-                "bid": 191.2,
-                "ask": 193,
-                "open": 204.1,
-                "high": 229.95,
-                "low": 175.6,
-                "prev_close": 215.95,
-                "volume": 1832700,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            }
-        },
-        {
-            "strike": 26150.0,
-            "ce": {
-                "symbol": "NIFTY30DEC2526150CE",
-                "label": "ITM1",
-                "ltp": 460.5,
-                "bid": 452.9,
-                "ask": 463,
-                "open": 475.8,
-                "high": 535.7,
-                "low": 414.6,
-                "prev_close": 461.05,
-                "volume": 183525,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            },
-            "pe": {
-                "symbol": "NIFTY30DEC2526150PE",
-                "label": "OTM1",
-                "ltp": 208.5,
-                "bid": 207.85,
-                "ask": 210.1,
-                "open": 218.2,
-                "high": 248.8,
-                "low": 190.75,
-                "prev_close": 233.7,
-                "volume": 332100,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            }
-        },
-        {
-            "strike": 26200.0,
-            "ce": {
-                "symbol": "NIFTY30DEC2526200CE",
-                "label": "ATM",
-                "ltp": 427,
-                "bid": 425.05,
-                "ask": 427,
-                "open": 449.95,
-                "high": 503.5,
-                "low": 384,
-                "prev_close": 433.2,
-                "volume": 2994000,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            },
-            "pe": {
-                "symbol": "NIFTY30DEC2526200PE",
-                "label": "ATM",
-                "ltp": 227.4,
-                "bid": 227.35,
-                "ask": 228.5,
-                "open": 251.9,
-                "high": 269.15,
-                "low": 205.95,
-                "prev_close": 251.9,
-                "volume": 3745350,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            }
-        },
-        {
-            "strike": 26250.0,
-            "ce": {
-                "symbol": "NIFTY30DEC2526250CE",
-                "label": "OTM1",
-                "ltp": 398,
-                "bid": 395.4,
-                "ask": 400.5,
-                "open": 442.1,
-                "high": 468.5,
-                "low": 355.75,
-                "prev_close": 401.9,
-                "volume": 407100,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            },
-            "pe": {
-                "symbol": "NIFTY30DEC2526250PE",
-                "label": "ITM1",
-                "ltp": 243.85,
-                "bid": 243.6,
-                "ask": 246.15,
-                "open": 264.25,
-                "high": 288,
-                "low": 222.15,
-                "prev_close": 269.7,
-                "volume": 487575,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            }
-        },
-        {
-            "strike": 26300.0,
-            "ce": {
-                "symbol": "NIFTY30DEC2526300CE",
-                "label": "OTM2",
-                "ltp": 367.55,
-                "bid": 364,
-                "ask": 367.55,
-                "open": 378,
-                "high": 437.4,
-                "low": 327.25,
-                "prev_close": 371.45,
-                "volume": 2416350,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            },
-            "pe": {
-                "symbol": "NIFTY30DEC2526300PE",
-                "label": "ITM2",
-                "ltp": 266,
-                "bid": 264.2,
-                "ask": 266.5,
-                "open": 263.1,
-                "high": 311.55,
-                "low": 240,
-                "prev_close": 289.85,
-                "volume": 2891100,
-                "oi": 0,
-                "lotsize": 65,
-                "tick_size": 0.05
-            }
-        }
-    ]
-}
-
-```
-
-
-
 ### Symbol Example
 
 ```python
@@ -1412,155 +1567,6 @@ print(response)
 }
 ```
 
-### OptionSymbol Example
-
-ATM Option
-
-```python
-response = client.optionsymbol(
-      underlying="NIFTY",
-      exchange="NSE_INDEX",
-      expiry_date="30DEC25",
-      offset="ATM",
-      option_type="CE"
-  )
-
-print(response)
-```
-
-**OptionSymbol Response**
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2525950CE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-ITM Option
-
-```python
-response = client.optionsymbol(
-      underlying="NIFTY",
-      exchange="NSE_INDEX",
-      expiry_date="30DEC25",
-      offset="ITM3",
-      option_type="PE"
-  )
-
-print(response)
-```
-
-**OptionSymbol Response**
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2526100PE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-OTM Option
-
-```python
-response = client.optionsymbol(
-      underlying="NIFTY",
-      exchange="NSE_INDEX",
-      expiry_date="30DEC25",
-      offset="OTM4",
-      option_type="CE"
-  )
-
-print(response)
-```
-
-**OptionSymbol Response**
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2526150CE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-### SyntheticFuture Example
-
-```python
-response = client.syntheticfuture(
-      underlying="NIFTY",
-      exchange="NSE_INDEX",
-      expiry_date="25NOV25"
-  )
-
-print(response)
-```
-
-SyntheticFuture **Response**
-
-```
-{
- 'atm_strike': 25900.0,
- 'expiry': '25NOV25',
- 'status': 'success',
- 'synthetic_future_price': 25980.05,
- 'underlying': 'NIFTY',
- 'underlying_ltp': 25910.05
-}
-```
-
-### OptionGreeks Example
-
-```python
-response = client.optiongreeks(
-      symbol="NIFTY25NOV2526000CE",
-      exchange="NFO",
-      interest_rate=0.00,
-      underlying_symbol="NIFTY",
-      underlying_exchange="NSE_INDEX"
-  )
-
-print(response)
-```
-
-OptionGreeks  **Response**
-
-```
-{
-'days_to_expiry': 28.5071,
- 'exchange': 'NFO',
- 'expiry_date': '25-Nov-2025',
- 'greeks': {'delta': 0.4967,
-  'gamma': 0.000352,
-  'rho': 9.733994,
-  'theta': -7.919,
-  'vega': 28.9489},
- 'implied_volatility': 15.6,
- 'interest_rate': 0.0,
- 'option_price': 435,
- 'option_type': 'CE',
- 'spot_price': 25966.05,
- 'status': 'success',
- 'strike': 26000.0,
- 'symbol': 'NIFTY25NOV2526000CE',
- 'underlying': 'NIFTY'
-}
-```
-
 ### Expiry Example
 
 ```python
@@ -1628,159 +1634,7 @@ Instruments **Response**
 3045     ONE POINT ONE SOL LTD    -1.0    ONEPOINT       0.01  10100000009939  
 ```
 
-### Telegram Alert Example
-
-```python
-response = client.telegram(
-      username="<openalgo_loginid>",
-      message="NIFTY crossed 26000!"
-  )
-
-print(response)
-```
-
-
-
-**Telegram Alert Response**
-
-```json
-{
-  "message": "Notification sent successfully",
-  "status": "success"
-}
-```
-
-#### WhatsApp Alert Example
-
-Prerequisites: open `/whatsapp` in the OpenAlgo web UI, click **Pair**, scan the QR with your phone. Pairing is admin-only on purpose: the REST API exposes only the send endpoint so a leaked API key cannot re-pair the device. Once paired, the bot auto-reconnects on every server boot from the encrypted session blob stored in `openalgo.db`.
-
-One unified call handles every common case: text, image, document, self-send, single recipient, or small broadcast (max 5).
-
-**Send to yourself (simplest case)**
-
-```python
-response = client.whatsapp("NIFTY crossed 26000!")
-print(response)
-```
-
-**WhatsApp Alert Response (`wait_for_delivery=True`, the default):**
-
-```json
-{
-  "status": "success",
-  "message": "Delivered to 1, failed 0",
-  "data": {
-    "sent":    ["<self>"],
-    "failed":  [],
-    "skipped": 0
-  }
-}
-```
-
-**Send to a single phone number**
-
-```python
-response = client.whatsapp(
-    "Order placed: BUY RELIANCE x 10 @ MARKET",
-    to="919876543210",
-)
-```
-
-**Small broadcast (up to 5 recipients)**
-
-```python
-response = client.whatsapp(
-    "Server maintenance starting in 10 minutes",
-    to=["919876543210", "919812345678", "919900112233"],
-)
-```
-
-**Send an image with caption**
-
-The path is read from the OpenAlgo server's filesystem. It must lie under `WHATSAPP_ATTACHMENT_ROOTS` (defaults to `<openalgo>/db/attachments/`).
-
-```python
-response = client.whatsapp(
-    to="919876543210",
-    image="/srv/charts/nifty_eod.png",
-    caption="NIFTY end-of-day chart",
-)
-```
-
-**Send a document (PDF, CSV, ...)**
-
-```python
-response = client.whatsapp(
-    "Daily P&L report attached.",
-    to="919876543210",
-    document="/srv/reports/2026-05-17.pdf",
-    filename="DailyPnL.pdf",
-)
-```
-
-**Fire-and-forget (skip the delivery report)**
-
-```python
-response = client.whatsapp(
-    "Stop-loss hit on BANKNIFTY!",
-    wait_for_delivery=False,
-)
-```
-
-**Send to a linked OpenAlgo user (legacy multi-recipient path)**
-
-```python
-response = client.whatsapp(
-    "Position update: BANKNIFTY 48000 CE now at +21% P&L.",
-    username="alice",
-)
-```
-
-### Discord Alert Example
-
-Posts to the Discord channel webhook saved on OpenAlgo's `/discord` page, while Discord is switched on at `/alerts`. At most 2000 characters; mentions are shown as text. The message is queued by default; `wait_for_delivery=True` posts it first and reports whether Discord accepted it. 30 requests per minute. New in openalgo 2.4.1.
-
-```python
-response = client.discord("**NIFTY** crossed 26000!")
-print(response)
-```
-
-**Discord Alert Response**
-
-```json
-{
-  "status": "success",
-  "message": "Notification queued."
-}
-```
-
-A refusal comes back with the server's message and the HTTP status in `code`:
-
-```json
-{
-  "status": "error",
-  "message": "Discord alerts are turned off. Turn them on from the Alerts page in OpenAlgo.",
-  "code": 409
-}
-```
-
-### Slack Alert Example
-
-Posts to the Slack incoming webhook saved on OpenAlgo's `/slack` page, while Slack is switched on at `/alerts`. At most 4000 characters; the server escapes `&`, `<` and `>`, so send the message as written. Queued by default, or posted first with `wait_for_delivery=True`. 30 requests per minute. New in openalgo 2.4.1.
-
-```python
-response = client.slack("*NIFTY* crossed 26000!", wait_for_delivery=True)
-print(response)
-```
-
-**Slack Alert Response**
-
-```json
-{
-  "status": "success",
-  "message": "Message sent to Slack."
-}
-```
+## Account
 
 ### Ping Example
 
@@ -2111,6 +1965,40 @@ Holdings Response
 
 ```
 
+### Analyzer Status Example
+
+```python
+response  = client.analyzerstatus()
+print(response)
+```
+
+Analyzer Status Response
+
+```json
+{'data': {'analyze_mode': True, 'mode': 'analyze', 'total_logs': 2},
+ 'status': 'success'}
+```
+
+### Analyzer Toggle Example
+
+```python
+# Switch to analyze mode (simulated responses)
+response = client.analyzertoggle(mode=True)
+print(response)
+```
+
+Analyzer Toggle Response
+
+```
+{'data': {'analyze_mode': True,
+  'message': 'Analyzer mode switched to analyze',
+  'mode': 'analyze',
+  'total_logs': 2},
+ 'status': 'success'}
+```
+
+## Utilities
+
 ### Holidays Example
 
 ```python
@@ -2176,39 +2064,163 @@ print(response)
 }
 ```
 
-### Analyzer Status Example
+## Alerts
+
+### Telegram Alert Example
 
 ```python
-response  = client.analyzerstatus()
+response = client.telegram(
+      username="<openalgo_loginid>",
+      message="NIFTY crossed 26000!"
+  )
+
 print(response)
 ```
 
-Analyzer Status Response
+
+
+**Telegram Alert Response**
 
 ```json
-{'data': {'analyze_mode': True, 'mode': 'analyze', 'total_logs': 2},
- 'status': 'success'}
+{
+  "message": "Notification sent successfully",
+  "status": "success"
+}
 ```
 
-### Analyzer Toggle Example
+### WhatsApp Alert Example
+
+Prerequisites: open `/whatsapp` in the OpenAlgo web UI, click **Pair**, scan the QR with your phone. Pairing is admin-only on purpose: the REST API exposes only the send endpoint so a leaked API key cannot re-pair the device. Once paired, the bot auto-reconnects on every server boot from the encrypted session blob stored in `openalgo.db`.
+
+One unified call handles every common case: text, image, document, self-send, single recipient, or small broadcast (max 5).
+
+**Send to yourself (simplest case)**
 
 ```python
-# Switch to analyze mode (simulated responses)
-response = client.analyzertoggle(mode=True)
+response = client.whatsapp("NIFTY crossed 26000!")
 print(response)
 ```
 
-Analyzer Toggle Response
+**WhatsApp Alert Response (`wait_for_delivery=True`, the default):**
 
-```
-{'data': {'analyze_mode': True,
-  'message': 'Analyzer mode switched to analyze',
-  'mode': 'analyze',
-  'total_logs': 2},
- 'status': 'success'}
+```json
+{
+  "status": "success",
+  "message": "Delivered to 1, failed 0",
+  "data": {
+    "sent":    ["<self>"],
+    "failed":  [],
+    "skipped": 0
+  }
+}
 ```
 
-### Strategy Module
+**Send to a single phone number**
+
+```python
+response = client.whatsapp(
+    "Order placed: BUY RELIANCE x 10 @ MARKET",
+    to="919876543210",
+)
+```
+
+**Small broadcast (up to 5 recipients)**
+
+```python
+response = client.whatsapp(
+    "Server maintenance starting in 10 minutes",
+    to=["919876543210", "919812345678", "919900112233"],
+)
+```
+
+**Send an image with caption**
+
+The path is read from the OpenAlgo server's filesystem. It must lie under `WHATSAPP_ATTACHMENT_ROOTS` (defaults to `<openalgo>/db/attachments/`).
+
+```python
+response = client.whatsapp(
+    to="919876543210",
+    image="/srv/charts/nifty_eod.png",
+    caption="NIFTY end-of-day chart",
+)
+```
+
+**Send a document (PDF, CSV, ...)**
+
+```python
+response = client.whatsapp(
+    "Daily P&L report attached.",
+    to="919876543210",
+    document="/srv/reports/2026-05-17.pdf",
+    filename="DailyPnL.pdf",
+)
+```
+
+**Fire-and-forget (skip the delivery report)**
+
+```python
+response = client.whatsapp(
+    "Stop-loss hit on BANKNIFTY!",
+    wait_for_delivery=False,
+)
+```
+
+**Send to a linked OpenAlgo user (legacy multi-recipient path)**
+
+```python
+response = client.whatsapp(
+    "Position update: BANKNIFTY 48000 CE now at +21% P&L.",
+    username="alice",
+)
+```
+
+### Discord Alert Example
+
+Posts to the Discord channel webhook saved on OpenAlgo's `/discord` page, while Discord is switched on at `/alerts`. At most 2000 characters; mentions are shown as text. The message is queued by default; `wait_for_delivery=True` posts it first and reports whether Discord accepted it. 30 requests per minute. New in openalgo 2.4.1.
+
+```python
+response = client.discord("**NIFTY** crossed 26000!")
+print(response)
+```
+
+**Discord Alert Response**
+
+```json
+{
+  "status": "success",
+  "message": "Notification queued."
+}
+```
+
+A refusal comes back with the server's message and the HTTP status in `code`:
+
+```json
+{
+  "status": "error",
+  "message": "Discord alerts are turned off. Turn them on from the Alerts page in OpenAlgo.",
+  "code": 409
+}
+```
+
+### Slack Alert Example
+
+Posts to the Slack incoming webhook saved on OpenAlgo's `/slack` page, while Slack is switched on at `/alerts`. At most 4000 characters; the server escapes `&`, `<` and `>`, so send the message as written. Queued by default, or posted first with `wait_for_delivery=True`. 30 requests per minute. New in openalgo 2.4.1.
+
+```python
+response = client.slack("*NIFTY* crossed 26000!", wait_for_delivery=True)
+print(response)
+```
+
+**Slack Alert Response**
+
+```json
+{
+  "status": "success",
+  "message": "Message sent to Slack."
+}
+```
+
+## Strategy Module
 
 OpenAlgo's `/strategy` module runs multi-leg options strategies with end-to-end risk
 management, plus a signal-driven mode for chart and scanner alerts. Two surfaces reach it,
@@ -2566,6 +2578,8 @@ Events an operator should not ignore:
 | `leg_expiry_fallback` | warn | The chain did not list the expiry rank the leg asked for, so a nearer one was used |
 | `flip_outgoing_exit_rejected` | critical | The outgoing side of a signal flip is still held |
 
+## Strategy Webhook
+
 ### Strategy Webhook Example
 
 The public webhook at `/strategy/webhook/<token>` is what charting and scanner alert
@@ -2590,6 +2604,8 @@ Every documented outcome is returned rather than raised, with its `result` label
 See [Strategy RMS From Python](strategy-management.md) for the full webhook guide,
 and the [Strategy RMS API](../../api-documentation/v1/strategy-rms-api/README.md)
 for every field of the nine methods above.
+
+## WebSocket Feed
 
 ### WebSocket cache and callback behavior
 

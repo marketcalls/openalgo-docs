@@ -167,34 +167,7 @@ doc openalgo.api                   % the same, in the Help browser
 
 Please refer to the documentation on [order constants](../api-documentation/v1/order-constants.md), and consult the API reference for details on optional parameters.
 
-### Ping Example
-
-Run this at the start of a script, before it trades: it confirms that the API key is valid and that your broker session is logged in.
-
-```matlab
-response = client.ping();
-disp(response)
-```
-
-#### Ping Response
-
-```json
-{
-  "status": "success",
-  "data": {
-    "message": "pong",
-    "broker": "yourbroker"
-  }
-}
-```
-
-`broker` is the broker your OpenAlgo server is connected to. An invalid API key, or a broker session that is missing or has expired, is answered with HTTP 403, which the client returns as an `http_error` struct with `code` 403. A simple pre-flight check:
-
-```matlab
-if ~strcmp(client.ping().status, "success")
-    error("OpenAlgo is not ready: check the API key and log in to your broker");
-end
-```
+## Order API
 
 ### PlaceOrder Example
 
@@ -265,6 +238,420 @@ disp(response)
 ```json
 {"orderid": "250408000997543", "status": "success"}
 ```
+
+### BasketOrder Example
+
+To place a new basket order:
+
+```matlab
+basket_orders = { ...
+    struct( ...
+        "symbol", "BHEL", ...
+        "exchange", "NSE", ...
+        "action", "BUY", ...
+        "quantity", 1, ...
+        "pricetype", "MARKET", ...
+        "product", "MIS"), ...
+    struct( ...
+        "symbol", "ZOMATO", ...
+        "exchange", "NSE", ...
+        "action", "SELL", ...
+        "quantity", 1, ...
+        "pricetype", "MARKET", ...
+        "product", "MIS")};
+response = client.basketorder(orders=basket_orders);
+disp(response)
+```
+
+#### Basket Order Response
+
+```json
+{
+  "status": "success",
+  "results": [
+    {"symbol": "BHEL", "status": "success", "orderid": "250408000999544"},
+    {"symbol": "ZOMATO", "status": "success", "orderid": "250408000997545"}
+  ]
+}
+```
+
+Numbers inside an order (here `quantity`) are sent as text.
+
+### SplitOrder Example
+
+To place a new split order:
+
+```matlab
+response = client.splitorder( ...
+    symbol="YESBANK", ...
+    exchange="NSE", ...
+    action="SELL", ...
+    quantity=105, ...
+    splitsize=20, ...
+    price_type="MARKET", ...
+    product="MIS");
+disp(response)
+```
+
+#### SplitOrder Response
+
+```json
+{
+  "status": "success",
+  "split_size": 20,
+  "total_quantity": 105,
+  "results": [
+    {"order_num": 1, "orderid": "250408001021467", "quantity": 20, "status": "success"},
+    {"order_num": 2, "orderid": "250408001021459", "quantity": 20, "status": "success"},
+    {"order_num": 3, "orderid": "250408001021466", "quantity": 20, "status": "success"},
+    {"order_num": 4, "orderid": "250408001021470", "quantity": 20, "status": "success"},
+    {"order_num": 5, "orderid": "250408001021471", "quantity": 20, "status": "success"},
+    {"order_num": 6, "orderid": "250408001021472", "quantity": 5, "status": "success"}
+  ]
+}
+```
+
+### ModifyOrder Example
+
+To modify an existing order:
+
+```matlab
+response = client.modifyorder( ...
+    order_id="250408001002736", ...
+    strategy="Test Strategy", ...
+    symbol="YESBANK", ...
+    action="BUY", ...
+    exchange="NSE", ...
+    price_type="LIMIT", ...
+    product="CNC", ...
+    quantity=1, ...
+    price=16.5);
+disp(response)
+```
+
+#### Modify Order Response
+
+```json
+{"orderid": "250408001002736", "status": "success"}
+```
+
+Pass order ids as text. `disclosed_quantity` and `trigger_price` default to `"0"`.
+
+### CancelOrder Example
+
+To cancel an existing order:
+
+```matlab
+response = client.cancelorder( ...
+    order_id="250408001002736", ...
+    strategy="Test Strategy");
+disp(response)
+```
+
+#### CancelOrder Response
+
+```json
+{"orderid": "250408001002736", "status": "success"}
+```
+
+### CancelAllOrder Example
+
+To cancel all open orders and trigger pending orders:
+
+```matlab
+response = client.cancelallorder(strategy="Test Strategy");
+disp(response)
+```
+
+#### CancelAllOrder Response
+
+```json
+{
+  "status": "success",
+  "message": "Canceled 5 orders. Failed to cancel 0 orders.",
+  "canceled_orders": [
+    "250408001042620",
+    "250408001042667",
+    "250408001042642",
+    "250408001043015",
+    "250408001043386"
+  ],
+  "failed_cancellations": []
+}
+```
+
+### ClosePosition Example
+
+To close all open positions across various exchanges:
+
+```matlab
+response = client.closeposition(strategy="Test Strategy");
+disp(response)
+```
+
+#### ClosePosition Response
+
+```json
+{"message": "All Open Positions Squared Off", "status": "success"}
+```
+
+### OrderStatus Example
+
+To get the current order status:
+
+```matlab
+response = client.orderstatus( ...
+    order_id="250828000185002", ...
+    strategy="Test Strategy");
+disp(response)
+```
+
+#### OrderStatus Response
+
+```json
+{
+  "data": {
+    "action": "BUY",
+    "average_price": 18.95,
+    "exchange": "NSE",
+    "order_status": "complete",
+    "orderid": "250828000185002",
+    "price": 0,
+    "pricetype": "MARKET",
+    "product": "MIS",
+    "quantity": "1",
+    "symbol": "YESBANK",
+    "timestamp": "28-Aug-2025 09:59:10",
+    "trigger_price": 0
+  },
+  "status": "success"
+}
+```
+
+```matlab
+>> response.data.order_status
+
+ans =
+
+    'complete'
+```
+
+### OpenPosition Example
+
+To get the current open position:
+
+```matlab
+response = client.openposition( ...
+    strategy="Test Strategy", ...
+    symbol="YESBANK", ...
+    exchange="NSE", ...
+    product="MIS");
+disp(response)
+```
+
+#### OpenPosition Response
+
+```json
+{"quantity": "-10", "status": "success"}
+```
+
+The quantity comes back as text, as the server sends it. Use `str2double(response.quantity)` to compute with it.
+
+## GTT Orders
+
+### PlaceGTTOrder Example
+
+A GTT (Good Till Triggered) order is a price trigger that sits with the broker until LTP crosses your level, then places the underlying order automatically.
+
+There are two shapes, and picking the wrong one is the usual mistake:
+
+| Type | Use when | Triggers | Orders fired |
+|------|----------|----------|--------------|
+| `SINGLE` | One entry or exit at a level | 1 | 1 |
+| `OCO` | You hold a position and want both a stoploss and a target, whichever hits first | 2 | 1 of 2, the other is auto-cancelled |
+
+For a **SINGLE**, exactly one of `triggerprice_sl` / `triggerprice_tg` carries your level and the other stays `0`. Pick by where the trigger sits relative to LTP: `triggerprice_sl` for a level **below** LTP (sell stop-loss, buy the dip), `triggerprice_tg` for one **above** (breakout buy, sell at target). A SINGLE has no stoploss leg, so the suffix is only a directional hint.
+
+For an **OCO**, the suffix is a real role and all four fields are required: `triggerprice_sl` with its `stoploss` limit, and `triggerprice_tg` with its `target` limit, where `triggerprice_sl < triggerprice_tg`.
+
+GTT accepts `CNC` and `NRML` only (the default is `CNC`). `MIS` is refused: a GTT can sit for days and MIS is squared off the same session. GTT prices and quantities are sent as JSON numbers, and for a SINGLE the `stoploss` and `target` fields are sent as `null`.
+
+```matlab
+% SINGLE: "Buy IDEA if it dips to 9.55, with a LIMIT order at 9.50"
+% LTP is above 9.55, so the trigger sits below it: triggerprice_sl
+response = client.placegttorder( ...
+    strategy="My GTT Strategy", ...
+    symbol="IDEA", ...
+    action="BUY", ...
+    exchange="NSE", ...
+    product="CNC", ...
+    quantity=1, ...
+    price_type="LIMIT", ...
+    price=9.50, ...
+    triggerprice_sl=9.55);
+disp(response)
+```
+
+```matlab
+% SINGLE: "Buy RELIANCE at MARKET if it breaks above 1450"
+% LTP is below 1450, so the trigger sits above it: triggerprice_tg
+response = client.placegttorder( ...
+    strategy="My GTT Strategy", ...
+    symbol="RELIANCE", ...
+    action="BUY", ...
+    exchange="NSE", ...
+    product="CNC", ...
+    quantity=1, ...
+    price_type="MARKET", ...
+    price=0, ...
+    triggerprice_tg=1450);
+```
+
+```matlab
+% OCO: "I am short 5 INFY. Stop me out at 1480, take profit at 1620"
+% price is 0: OCO prices each leg separately through stoploss and target
+response = client.placegttorder( ...
+    strategy="Bracket OCO", ...
+    trigger_type="OCO", ...
+    symbol="INFY", ...
+    action="SELL", ...
+    exchange="NSE", ...
+    product="CNC", ...
+    quantity=5, ...
+    price_type="LIMIT", ...
+    price=0, ...
+    triggerprice_sl=1480, ...
+    stoploss=1478, ...
+    triggerprice_tg=1620, ...
+    target=1622);
+```
+
+#### PlaceGTTOrder Response
+
+```json
+{"status": "success", "trigger_id": "23132604291205"}
+```
+
+Save the `trigger_id`: modify and cancel both need it.
+
+### ModifyGTTOrder Example
+
+Modify is a **full replacement**, not a patch. Every field on the trigger is replaced by what the call sends, so pass everything you want to keep rather than only the values that changed.
+
+```matlab
+response = client.modifygttorder( ...
+    trigger_id="23132604291205", ...
+    strategy="My GTT Strategy", ...
+    symbol="IDEA", ...
+    action="BUY", ...
+    exchange="NSE", ...
+    product="CNC", ...
+    quantity=1, ...
+    price_type="LIMIT", ...
+    price=9.60, ...             % was 9.50
+    triggerprice_sl=9.65);      % was 9.55
+disp(response)
+```
+
+#### ModifyGTTOrder Response
+
+```json
+{"status": "success", "trigger_id": "23132604291205"}
+```
+
+Trigger prices, limit prices, quantity and price type are modifiable. `trigger_type`, `symbol`, `exchange` and `action` are not: cancel and re-place instead. Only active GTTs can be modified; triggered, cancelled and expired ones are immutable.
+
+### CancelGTTOrder Example
+
+```matlab
+response = client.cancelgttorder( ...
+    trigger_id="23132604291205", ...
+    strategy="My GTT Strategy");
+disp(response)
+```
+
+#### CancelGTTOrder Response
+
+```json
+{"status": "success", "trigger_id": "23132604291205"}
+```
+
+Cancelling an OCO removes both legs atomically; there is no per-leg cancel.
+
+### GTTOrderBook Example
+
+By default this lists **active** triggers only, the ones that can still fire. Pass `status="all"` to include the history as well (triggered, cancelled, expired, rejected), ordered active first; in analyzer mode a fired leg also carries the `triggered_order_id` of the sandbox order it placed.
+
+```matlab
+% Active triggers only (default)
+response = client.gttorderbook();
+disp(response)
+
+% Active triggers first, then the triggered / cancelled / expired history
+response = client.gttorderbook(status="all");
+book = response.data;
+if isstruct(book)
+    book = num2cell(book);
+end
+for k = 1:numel(book)
+    gtt = book{k};
+    fprintf("%s %s %s %s\n", gtt.trigger_id, gtt.status, gtt.symbol, ...
+        mat2str(gtt.trigger_prices'));
+end
+```
+
+#### GTTOrderBook Response
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "trigger_id": "23132604291205",
+      "trigger_type": "single",
+      "status": "active",
+      "symbol": "IDEA",
+      "exchange": "NSE",
+      "trigger_prices": [9.55],
+      "last_price": 9.50,
+      "legs": [
+        {
+          "action": "BUY",
+          "quantity": 1,
+          "price": 9.50,
+          "pricetype": "LIMIT",
+          "product": "CNC"
+        }
+      ],
+      "created_at": "2026-04-29 12:18:42",
+      "updated_at": "",
+      "expires_at": ""
+    }
+  ]
+}
+```
+
+`trigger_prices` is sorted ascending: a SINGLE has one element and one leg, an OCO has two of each with the stoploss first.
+
+The library refuses an impossible trigger spec before anything leaves the machine, and returns the refusal in the same shape as an API error:
+
+```matlab
+>> % SINGLE with no trigger price at all
+>> e = client.placegttorder(symbol="IDEA", action="BUY", exchange="NSE", ...
+       product="CNC", quantity=1, price=9.50)
+
+e =
+
+  struct with fields:
+
+        status: 'error'
+       message: 'SINGLE GTT requires a positive triggerprice_sl or triggerprice_tg.'
+    error_type: 'validation_error'
+```
+
+API reference: [PlaceGTTOrder](../api-documentation/v1/orders-api/placegttorder.md), [ModifyGTTOrder](../api-documentation/v1/orders-api/modifygttorder.md), [CancelGTTOrder](../api-documentation/v1/orders-api/cancelgttorder.md), [GTTOrderBook](../api-documentation/v1/orders-api/gttorderbook.md).
+
+## Options
 
 ### OptionsOrder Example
 
@@ -501,415 +888,304 @@ end
 
 Each leg takes `offset`, `option_type`, `action` and `quantity`, and optionally `expiry_date`, `pricetype`, `product`, `price`, `trigger_price` and `disclosed_quantity`. BUY legs are executed first for margin efficiency, then SELL legs.
 
-### BasketOrder Example
+### OptionSymbol Example
 
-To place a new basket order:
+ATM Option:
 
 ```matlab
-basket_orders = { ...
-    struct( ...
-        "symbol", "BHEL", ...
-        "exchange", "NSE", ...
-        "action", "BUY", ...
-        "quantity", 1, ...
-        "pricetype", "MARKET", ...
-        "product", "MIS"), ...
-    struct( ...
-        "symbol", "ZOMATO", ...
-        "exchange", "NSE", ...
-        "action", "SELL", ...
-        "quantity", 1, ...
-        "pricetype", "MARKET", ...
-        "product", "MIS")};
-response = client.basketorder(orders=basket_orders);
+response = client.optionsymbol( ...
+    underlying="NIFTY", ...
+    exchange="NSE_INDEX", ...
+    expiry_date="30DEC25", ...
+    offset="ATM", ...
+    option_type="CE");
 disp(response)
 ```
 
-#### Basket Order Response
+#### OptionSymbol Response
 
 ```json
 {
   "status": "success",
-  "results": [
-    {"symbol": "BHEL", "status": "success", "orderid": "250408000999544"},
-    {"symbol": "ZOMATO", "status": "success", "orderid": "250408000997545"}
+  "symbol": "NIFTY30DEC2525950CE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+ITM Option:
+
+```matlab
+response = client.optionsymbol( ...
+    underlying="NIFTY", ...
+    exchange="NSE_INDEX", ...
+    expiry_date="30DEC25", ...
+    offset="ITM3", ...
+    option_type="PE");
+disp(response)
+```
+
+#### OptionSymbol Response
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY30DEC2526100PE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+OTM Option:
+
+```matlab
+response = client.optionsymbol( ...
+    underlying="NIFTY", ...
+    exchange="NSE_INDEX", ...
+    expiry_date="30DEC25", ...
+    offset="OTM4", ...
+    option_type="CE");
+disp(response)
+```
+
+#### OptionSymbol Response
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY30DEC2526150CE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+The `strategy` and `strike_int` parameters of `optionsymbol` are deprecated: they are still sent when given, with an `openalgo:deprecated` warning.
+
+### OptionChain Example
+
+Note: To fetch the entire option chain for an expiry, omit the `strike_count` parameter.
+
+```matlab
+chain = client.optionchain( ...
+    underlying="NIFTY", ...
+    exchange="NSE_INDEX", ...
+    expiry_date="30DEC25", ...
+    strike_count=10);
+```
+
+#### OptionChain Response
+
+```json
+{
+  "status": "success",
+  "underlying": "NIFTY",
+  "underlying_ltp": 26215.55,
+  "expiry_date": "30DEC25",
+  "atm_strike": 26200.0,
+  "chain": [
+    {
+      "strike": 26100.0,
+      "ce": {
+        "symbol": "NIFTY30DEC2526100CE", "label": "ITM2",
+        "ltp": 490, "bid": 490, "ask": 491,
+        "open": 540, "high": 571, "low": 444.75,
+        "prev_close": 496.8, "volume": 1195800, "oi": 0,
+        "lotsize": 65, "tick_size": 0.05
+      },
+      "pe": {
+        "symbol": "NIFTY30DEC2526100PE", "label": "OTM2",
+        "ltp": 193, "bid": 191.2, "ask": 193,
+        "open": 204.1, "high": 229.95, "low": 175.6,
+        "prev_close": 215.95, "volume": 1832700, "oi": 0,
+        "lotsize": 65, "tick_size": 0.05
+      }
+    },
+    {
+      "strike": 26200.0,
+      "ce": {
+        "symbol": "NIFTY30DEC2526200CE", "label": "ATM",
+        "ltp": 427, "bid": 425.05, "ask": 427,
+        "open": 449.95, "high": 503.5, "low": 384,
+        "prev_close": 433.2, "volume": 2994000, "oi": 0,
+        "lotsize": 65, "tick_size": 0.05
+      },
+      "pe": {
+        "symbol": "NIFTY30DEC2526200PE", "label": "ATM",
+        "ltp": 227.4, "bid": 227.35, "ask": 228.5,
+        "open": 251.9, "high": 269.15, "low": 205.95,
+        "prev_close": 251.9, "volume": 3745350, "oi": 0,
+        "lotsize": 65, "tick_size": 0.05
+      }
+    }
   ]
 }
 ```
 
-Numbers inside an order (here `quantity`) are sent as text.
-
-### SplitOrder Example
-
-To place a new split order:
+Print one line per strike. A side that does not exist is `null` in the JSON, so it is empty in MATLAB:
 
 ```matlab
-response = client.splitorder( ...
-    symbol="YESBANK", ...
-    exchange="NSE", ...
-    action="SELL", ...
-    quantity=105, ...
-    splitsize=20, ...
-    price_type="MARKET", ...
-    product="MIS");
+>> for k = 1:numel(chain.chain)
+       item = chain.chain(k);
+       ce = "-"; pe = "-";
+       if ~isempty(item.ce), ce = string(item.ce.ltp); end
+       if ~isempty(item.pe), pe = string(item.pe.ltp); end
+       fprintf("Strike: %g | CE: %s | PE: %s\n", item.strike, ce, pe);
+   end
+Strike: 26100 | CE: 490 | PE: 193
+Strike: 26200 | CE: 427 | PE: 227.4
+```
+
+### OptionGreeks Example
+
+```matlab
+response = client.optiongreeks( ...
+    symbol="NIFTY25NOV2526000CE", ...
+    exchange="NFO", ...
+    interest_rate=0.00, ...
+    underlying_symbol="NIFTY", ...
+    underlying_exchange="NSE_INDEX");
 disp(response)
 ```
 
-#### SplitOrder Response
+#### OptionGreeks Response
 
 ```json
 {
-  "status": "success",
-  "split_size": 20,
-  "total_quantity": 105,
-  "results": [
-    {"order_num": 1, "orderid": "250408001021467", "quantity": 20, "status": "success"},
-    {"order_num": 2, "orderid": "250408001021459", "quantity": 20, "status": "success"},
-    {"order_num": 3, "orderid": "250408001021466", "quantity": 20, "status": "success"},
-    {"order_num": 4, "orderid": "250408001021470", "quantity": 20, "status": "success"},
-    {"order_num": 5, "orderid": "250408001021471", "quantity": 20, "status": "success"},
-    {"order_num": 6, "orderid": "250408001021472", "quantity": 5, "status": "success"}
-  ]
-}
-```
-
-### ModifyOrder Example
-
-To modify an existing order:
-
-```matlab
-response = client.modifyorder( ...
-    order_id="250408001002736", ...
-    strategy="Test Strategy", ...
-    symbol="YESBANK", ...
-    action="BUY", ...
-    exchange="NSE", ...
-    price_type="LIMIT", ...
-    product="CNC", ...
-    quantity=1, ...
-    price=16.5);
-disp(response)
-```
-
-#### Modify Order Response
-
-```json
-{"orderid": "250408001002736", "status": "success"}
-```
-
-Pass order ids as text. `disclosed_quantity` and `trigger_price` default to `"0"`.
-
-### CancelOrder Example
-
-To cancel an existing order:
-
-```matlab
-response = client.cancelorder( ...
-    order_id="250408001002736", ...
-    strategy="Test Strategy");
-disp(response)
-```
-
-#### CancelOrder Response
-
-```json
-{"orderid": "250408001002736", "status": "success"}
-```
-
-### CancelAllOrder Example
-
-To cancel all open orders and trigger pending orders:
-
-```matlab
-response = client.cancelallorder(strategy="Test Strategy");
-disp(response)
-```
-
-#### CancelAllOrder Response
-
-```json
-{
-  "status": "success",
-  "message": "Canceled 5 orders. Failed to cancel 0 orders.",
-  "canceled_orders": [
-    "250408001042620",
-    "250408001042667",
-    "250408001042642",
-    "250408001043015",
-    "250408001043386"
-  ],
-  "failed_cancellations": []
-}
-```
-
-### ClosePosition Example
-
-To close all open positions across various exchanges:
-
-```matlab
-response = client.closeposition(strategy="Test Strategy");
-disp(response)
-```
-
-#### ClosePosition Response
-
-```json
-{"message": "All Open Positions Squared Off", "status": "success"}
-```
-
-### OrderStatus Example
-
-To get the current order status:
-
-```matlab
-response = client.orderstatus( ...
-    order_id="250828000185002", ...
-    strategy="Test Strategy");
-disp(response)
-```
-
-#### OrderStatus Response
-
-```json
-{
-  "data": {
-    "action": "BUY",
-    "average_price": 18.95,
-    "exchange": "NSE",
-    "order_status": "complete",
-    "orderid": "250828000185002",
-    "price": 0,
-    "pricetype": "MARKET",
-    "product": "MIS",
-    "quantity": "1",
-    "symbol": "YESBANK",
-    "timestamp": "28-Aug-2025 09:59:10",
-    "trigger_price": 0
+  "days_to_expiry": 28.5071,
+  "exchange": "NFO",
+  "expiry_date": "25-Nov-2025",
+  "greeks": {
+    "delta": 0.4967,
+    "gamma": 0.000352,
+    "rho": 9.733994,
+    "theta": -7.919,
+    "vega": 28.9489
   },
-  "status": "success"
+  "implied_volatility": 15.6,
+  "interest_rate": 0.0,
+  "option_price": 435,
+  "option_type": "CE",
+  "spot_price": 25966.05,
+  "status": "success",
+  "strike": 26000.0,
+  "symbol": "NIFTY25NOV2526000CE",
+  "underlying": "NIFTY"
 }
 ```
 
-```matlab
->> response.data.order_status
+Optional arguments: `interest_rate` (percent), `forward_price` (price against a custom forward instead of fetching the underlying), `underlying_symbol`, `underlying_exchange` and `expiry_time` (`"HH:MM"`). Leave any of them out (or `[]`) and it is not sent.
 
-ans =
+### MultiOptionGreeks Example
 
-    'complete'
-```
-
-### OpenPosition Example
-
-To get the current open position:
+Implied volatility and Greeks (Black-76) for up to 50 options in one request, for example both legs of a straddle or a whole strike ladder. Use `optiongreeks` for a single option.
 
 ```matlab
-response = client.openposition( ...
-    strategy="Test Strategy", ...
-    symbol="YESBANK", ...
-    exchange="NSE", ...
-    product="MIS");
+response = client.multioptiongreeks( ...
+    symbols={ ...
+        struct("symbol", "NIFTY30JUL2625000CE", "exchange", "NFO"), ...
+        struct("symbol", "NIFTY30JUL2625000PE", "exchange", "NFO")}, ...
+    interest_rate=7.0);
 disp(response)
 ```
 
-#### OpenPosition Response
-
-```json
-{"quantity": "-10", "status": "success"}
-```
-
-The quantity comes back as text, as the server sends it. Use `str2double(response.quantity)` to compute with it.
-
-### PlaceGTTOrder Example
-
-A GTT (Good Till Triggered) order is a price trigger that sits with the broker until LTP crosses your level, then places the underlying order automatically.
-
-There are two shapes, and picking the wrong one is the usual mistake:
-
-| Type | Use when | Triggers | Orders fired |
-|------|----------|----------|--------------|
-| `SINGLE` | One entry or exit at a level | 1 | 1 |
-| `OCO` | You hold a position and want both a stoploss and a target, whichever hits first | 2 | 1 of 2, the other is auto-cancelled |
-
-For a **SINGLE**, exactly one of `triggerprice_sl` / `triggerprice_tg` carries your level and the other stays `0`. Pick by where the trigger sits relative to LTP: `triggerprice_sl` for a level **below** LTP (sell stop-loss, buy the dip), `triggerprice_tg` for one **above** (breakout buy, sell at target). A SINGLE has no stoploss leg, so the suffix is only a directional hint.
-
-For an **OCO**, the suffix is a real role and all four fields are required: `triggerprice_sl` with its `stoploss` limit, and `triggerprice_tg` with its `target` limit, where `triggerprice_sl < triggerprice_tg`.
-
-GTT accepts `CNC` and `NRML` only (the default is `CNC`). `MIS` is refused: a GTT can sit for days and MIS is squared off the same session. GTT prices and quantities are sent as JSON numbers, and for a SINGLE the `stoploss` and `target` fields are sent as `null`.
-
-```matlab
-% SINGLE: "Buy IDEA if it dips to 9.55, with a LIMIT order at 9.50"
-% LTP is above 9.55, so the trigger sits below it: triggerprice_sl
-response = client.placegttorder( ...
-    strategy="My GTT Strategy", ...
-    symbol="IDEA", ...
-    action="BUY", ...
-    exchange="NSE", ...
-    product="CNC", ...
-    quantity=1, ...
-    price_type="LIMIT", ...
-    price=9.50, ...
-    triggerprice_sl=9.55);
-disp(response)
-```
-
-```matlab
-% SINGLE: "Buy RELIANCE at MARKET if it breaks above 1450"
-% LTP is below 1450, so the trigger sits above it: triggerprice_tg
-response = client.placegttorder( ...
-    strategy="My GTT Strategy", ...
-    symbol="RELIANCE", ...
-    action="BUY", ...
-    exchange="NSE", ...
-    product="CNC", ...
-    quantity=1, ...
-    price_type="MARKET", ...
-    price=0, ...
-    triggerprice_tg=1450);
-```
-
-```matlab
-% OCO: "I am short 5 INFY. Stop me out at 1480, take profit at 1620"
-% price is 0: OCO prices each leg separately through stoploss and target
-response = client.placegttorder( ...
-    strategy="Bracket OCO", ...
-    trigger_type="OCO", ...
-    symbol="INFY", ...
-    action="SELL", ...
-    exchange="NSE", ...
-    product="CNC", ...
-    quantity=5, ...
-    price_type="LIMIT", ...
-    price=0, ...
-    triggerprice_sl=1480, ...
-    stoploss=1478, ...
-    triggerprice_tg=1620, ...
-    target=1622);
-```
-
-#### PlaceGTTOrder Response
-
-```json
-{"status": "success", "trigger_id": "23132604291205"}
-```
-
-Save the `trigger_id`: modify and cancel both need it.
-
-### ModifyGTTOrder Example
-
-Modify is a **full replacement**, not a patch. Every field on the trigger is replaced by what the call sends, so pass everything you want to keep rather than only the values that changed.
-
-```matlab
-response = client.modifygttorder( ...
-    trigger_id="23132604291205", ...
-    strategy="My GTT Strategy", ...
-    symbol="IDEA", ...
-    action="BUY", ...
-    exchange="NSE", ...
-    product="CNC", ...
-    quantity=1, ...
-    price_type="LIMIT", ...
-    price=9.60, ...             % was 9.50
-    triggerprice_sl=9.65);      % was 9.55
-disp(response)
-```
-
-#### ModifyGTTOrder Response
-
-```json
-{"status": "success", "trigger_id": "23132604291205"}
-```
-
-Trigger prices, limit prices, quantity and price type are modifiable. `trigger_type`, `symbol`, `exchange` and `action` are not: cancel and re-place instead. Only active GTTs can be modified; triggered, cancelled and expired ones are immutable.
-
-### CancelGTTOrder Example
-
-```matlab
-response = client.cancelgttorder( ...
-    trigger_id="23132604291205", ...
-    strategy="My GTT Strategy");
-disp(response)
-```
-
-#### CancelGTTOrder Response
-
-```json
-{"status": "success", "trigger_id": "23132604291205"}
-```
-
-Cancelling an OCO removes both legs atomically; there is no per-leg cancel.
-
-### GTTOrderBook Example
-
-By default this lists **active** triggers only, the ones that can still fire. Pass `status="all"` to include the history as well (triggered, cancelled, expired, rejected), ordered active first; in analyzer mode a fired leg also carries the `triggered_order_id` of the sandbox order it placed.
-
-```matlab
-% Active triggers only (default)
-response = client.gttorderbook();
-disp(response)
-
-% Active triggers first, then the triggered / cancelled / expired history
-response = client.gttorderbook(status="all");
-book = response.data;
-if isstruct(book)
-    book = num2cell(book);
-end
-for k = 1:numel(book)
-    gtt = book{k};
-    fprintf("%s %s %s %s\n", gtt.trigger_id, gtt.status, gtt.symbol, ...
-        mat2str(gtt.trigger_prices'));
-end
-```
-
-#### GTTOrderBook Response
+#### MultiOptionGreeks Response
 
 ```json
 {
   "status": "success",
   "data": [
     {
-      "trigger_id": "23132604291205",
-      "trigger_type": "single",
-      "status": "active",
-      "symbol": "IDEA",
-      "exchange": "NSE",
-      "trigger_prices": [9.55],
-      "last_price": 9.50,
-      "legs": [
-        {
-          "action": "BUY",
-          "quantity": 1,
-          "price": 9.50,
-          "pricetype": "LIMIT",
-          "product": "CNC"
-        }
-      ],
-      "created_at": "2026-04-29 12:18:42",
-      "updated_at": "",
-      "expires_at": ""
+      "status": "success",
+      "symbol": "NIFTY30JUL2625000CE",
+      "exchange": "NFO",
+      "underlying": "NIFTY",
+      "strike": 25000.0,
+      "option_type": "CE",
+      "expiry_date": "30-Jul-2026",
+      "days_to_expiry": 28.5071,
+      "spot_price": 25966.05,
+      "option_price": 435,
+      "interest_rate": 7.0,
+      "implied_volatility": 15.25,
+      "greeks": {"delta": 0.52, "gamma": 0.0001, "theta": -4.97, "vega": 30.76, "rho": 0.001}
+    },
+    {
+      "status": "success",
+      "symbol": "NIFTY30JUL2625000PE",
+      "exchange": "NFO",
+      "underlying": "NIFTY",
+      "strike": 25000.0,
+      "option_type": "PE",
+      "expiry_date": "30-Jul-2026",
+      "days_to_expiry": 28.5071,
+      "spot_price": 25966.05,
+      "option_price": 128.4,
+      "interest_rate": 7.0,
+      "implied_volatility": 14.9,
+      "greeks": {"delta": -0.48, "gamma": 0.0001, "theta": -4.12, "vega": 30.41, "rho": -0.001}
     }
-  ]
+  ],
+  "summary": {"total": 2, "success": 2, "failed": 0}
 }
 ```
 
-`trigger_prices` is sorted ascending: a SINGLE has one element and one leg, an OCO has two of each with the stoploss first.
-
-The library refuses an impossible trigger spec before anything leaves the machine, and returns the refusal in the same shape as an API error:
+The options can also be given as a struct array, one option per element:
 
 ```matlab
->> % SINGLE with no trigger price at all
->> e = client.placegttorder(symbol="IDEA", action="BUY", exchange="NSE", ...
-       product="CNC", quantity=1, price=9.50)
+>> legs = struct("symbol", {"NIFTY30JUL2625000CE", "NIFTY30JUL2625000PE"}, "exchange", "NFO");
+>> greeks = client.multioptiongreeks(symbols=legs, interest_rate=7.0);
+>> arrayfun(@(x) x.greeks.delta, greeks.data)'
 
-e =
+ans =
 
-  struct with fields:
-
-        status: 'error'
-       message: 'SINGLE GTT requires a positive triggerprice_sl or triggerprice_tg.'
-    error_type: 'validation_error'
+    0.5200   -0.4800
 ```
 
-API reference: [PlaceGTTOrder](../api-documentation/v1/orders-api/placegttorder.md), [ModifyGTTOrder](../api-documentation/v1/orders-api/modifygttorder.md), [CancelGTTOrder](../api-documentation/v1/orders-api/cancelgttorder.md), [GTTOrderBook](../api-documentation/v1/orders-api/gttorderbook.md).
+* Each option needs `symbol` and `exchange` (NFO, BFO, CDS, MCX or CRYPTO); `underlying_symbol` and `underlying_exchange` are optional overrides. `expiry_time="HH:MM"` sets the expiry time for every option (for example `"23:30"` for MCX).
+* The client checks the list before sending: 1 to 50 options. Otherwise it returns a `validation_error` struct (`'Symbols array cannot be empty'`, `'Maximum 50 symbols allowed'`) without calling the server.
+* One option can fail while the rest succeed. The top-level `status` is then `"partial"` and the response is returned as is, so read `summary` and each item's `status` rather than the top-level status alone. A failed item has different fields, which makes `data` a cell array (see [Reading responses](#reading-responses)). When every option fails the server answers `"status": "error"`, which the client returns as an `api_error` struct with the server's message.
+
+### SyntheticFuture Example
+
+```matlab
+response = client.syntheticfuture( ...
+    underlying="NIFTY", ...
+    exchange="NSE_INDEX", ...
+    expiry_date="25NOV25");
+disp(response)
+```
+
+#### SyntheticFuture Response
+
+```json
+{
+  "atm_strike": 25900.0,
+  "expiry": "25NOV25",
+  "status": "success",
+  "synthetic_future_price": 25980.05,
+  "underlying": "NIFTY",
+  "underlying_ltp": 25910.05
+}
+```
+
+```matlab
+>> basis = response.synthetic_future_price - response.underlying_ltp
+
+basis =
+
+   70.0000
+```
+
+## Market Data
 
 ### Quotes Example
 
@@ -1218,80 +1494,6 @@ ans =
 
 `client.interval()` is the legacy name for the same call, kept for compatibility.
 
-### OptionChain Example
-
-Note: To fetch the entire option chain for an expiry, omit the `strike_count` parameter.
-
-```matlab
-chain = client.optionchain( ...
-    underlying="NIFTY", ...
-    exchange="NSE_INDEX", ...
-    expiry_date="30DEC25", ...
-    strike_count=10);
-```
-
-#### OptionChain Response
-
-```json
-{
-  "status": "success",
-  "underlying": "NIFTY",
-  "underlying_ltp": 26215.55,
-  "expiry_date": "30DEC25",
-  "atm_strike": 26200.0,
-  "chain": [
-    {
-      "strike": 26100.0,
-      "ce": {
-        "symbol": "NIFTY30DEC2526100CE", "label": "ITM2",
-        "ltp": 490, "bid": 490, "ask": 491,
-        "open": 540, "high": 571, "low": 444.75,
-        "prev_close": 496.8, "volume": 1195800, "oi": 0,
-        "lotsize": 65, "tick_size": 0.05
-      },
-      "pe": {
-        "symbol": "NIFTY30DEC2526100PE", "label": "OTM2",
-        "ltp": 193, "bid": 191.2, "ask": 193,
-        "open": 204.1, "high": 229.95, "low": 175.6,
-        "prev_close": 215.95, "volume": 1832700, "oi": 0,
-        "lotsize": 65, "tick_size": 0.05
-      }
-    },
-    {
-      "strike": 26200.0,
-      "ce": {
-        "symbol": "NIFTY30DEC2526200CE", "label": "ATM",
-        "ltp": 427, "bid": 425.05, "ask": 427,
-        "open": 449.95, "high": 503.5, "low": 384,
-        "prev_close": 433.2, "volume": 2994000, "oi": 0,
-        "lotsize": 65, "tick_size": 0.05
-      },
-      "pe": {
-        "symbol": "NIFTY30DEC2526200PE", "label": "ATM",
-        "ltp": 227.4, "bid": 227.35, "ask": 228.5,
-        "open": 251.9, "high": 269.15, "low": 205.95,
-        "prev_close": 251.9, "volume": 3745350, "oi": 0,
-        "lotsize": 65, "tick_size": 0.05
-      }
-    }
-  ]
-}
-```
-
-Print one line per strike. A side that does not exist is `null` in the JSON, so it is empty in MATLAB:
-
-```matlab
->> for k = 1:numel(chain.chain)
-       item = chain.chain(k);
-       ce = "-"; pe = "-";
-       if ~isempty(item.ce), ce = string(item.ce.ltp); end
-       if ~isempty(item.pe), pe = string(item.pe.ltp); end
-       fprintf("Strike: %g | CE: %s | PE: %s\n", item.strike, ce, pe);
-   end
-Strike: 26100 | CE: 490 | PE: 193
-Strike: 26200 | CE: 427 | PE: 227.4
-```
-
 ### Symbol Example
 
 ```matlab
@@ -1358,229 +1560,6 @@ disp(response)
 
 `exchange` is optional; leave it out to search every exchange.
 
-### OptionSymbol Example
-
-ATM Option:
-
-```matlab
-response = client.optionsymbol( ...
-    underlying="NIFTY", ...
-    exchange="NSE_INDEX", ...
-    expiry_date="30DEC25", ...
-    offset="ATM", ...
-    option_type="CE");
-disp(response)
-```
-
-#### OptionSymbol Response
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2525950CE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-ITM Option:
-
-```matlab
-response = client.optionsymbol( ...
-    underlying="NIFTY", ...
-    exchange="NSE_INDEX", ...
-    expiry_date="30DEC25", ...
-    offset="ITM3", ...
-    option_type="PE");
-disp(response)
-```
-
-#### OptionSymbol Response
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2526100PE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-OTM Option:
-
-```matlab
-response = client.optionsymbol( ...
-    underlying="NIFTY", ...
-    exchange="NSE_INDEX", ...
-    expiry_date="30DEC25", ...
-    offset="OTM4", ...
-    option_type="CE");
-disp(response)
-```
-
-#### OptionSymbol Response
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2526150CE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-The `strategy` and `strike_int` parameters of `optionsymbol` are deprecated: they are still sent when given, with an `openalgo:deprecated` warning.
-
-### SyntheticFuture Example
-
-```matlab
-response = client.syntheticfuture( ...
-    underlying="NIFTY", ...
-    exchange="NSE_INDEX", ...
-    expiry_date="25NOV25");
-disp(response)
-```
-
-#### SyntheticFuture Response
-
-```json
-{
-  "atm_strike": 25900.0,
-  "expiry": "25NOV25",
-  "status": "success",
-  "synthetic_future_price": 25980.05,
-  "underlying": "NIFTY",
-  "underlying_ltp": 25910.05
-}
-```
-
-```matlab
->> basis = response.synthetic_future_price - response.underlying_ltp
-
-basis =
-
-   70.0000
-```
-
-### OptionGreeks Example
-
-```matlab
-response = client.optiongreeks( ...
-    symbol="NIFTY25NOV2526000CE", ...
-    exchange="NFO", ...
-    interest_rate=0.00, ...
-    underlying_symbol="NIFTY", ...
-    underlying_exchange="NSE_INDEX");
-disp(response)
-```
-
-#### OptionGreeks Response
-
-```json
-{
-  "days_to_expiry": 28.5071,
-  "exchange": "NFO",
-  "expiry_date": "25-Nov-2025",
-  "greeks": {
-    "delta": 0.4967,
-    "gamma": 0.000352,
-    "rho": 9.733994,
-    "theta": -7.919,
-    "vega": 28.9489
-  },
-  "implied_volatility": 15.6,
-  "interest_rate": 0.0,
-  "option_price": 435,
-  "option_type": "CE",
-  "spot_price": 25966.05,
-  "status": "success",
-  "strike": 26000.0,
-  "symbol": "NIFTY25NOV2526000CE",
-  "underlying": "NIFTY"
-}
-```
-
-Optional arguments: `interest_rate` (percent), `forward_price` (price against a custom forward instead of fetching the underlying), `underlying_symbol`, `underlying_exchange` and `expiry_time` (`"HH:MM"`). Leave any of them out (or `[]`) and it is not sent.
-
-### MultiOptionGreeks Example
-
-Implied volatility and Greeks (Black-76) for up to 50 options in one request, for example both legs of a straddle or a whole strike ladder. Use `optiongreeks` for a single option.
-
-```matlab
-response = client.multioptiongreeks( ...
-    symbols={ ...
-        struct("symbol", "NIFTY30JUL2625000CE", "exchange", "NFO"), ...
-        struct("symbol", "NIFTY30JUL2625000PE", "exchange", "NFO")}, ...
-    interest_rate=7.0);
-disp(response)
-```
-
-#### MultiOptionGreeks Response
-
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "status": "success",
-      "symbol": "NIFTY30JUL2625000CE",
-      "exchange": "NFO",
-      "underlying": "NIFTY",
-      "strike": 25000.0,
-      "option_type": "CE",
-      "expiry_date": "30-Jul-2026",
-      "days_to_expiry": 28.5071,
-      "spot_price": 25966.05,
-      "option_price": 435,
-      "interest_rate": 7.0,
-      "implied_volatility": 15.25,
-      "greeks": {"delta": 0.52, "gamma": 0.0001, "theta": -4.97, "vega": 30.76, "rho": 0.001}
-    },
-    {
-      "status": "success",
-      "symbol": "NIFTY30JUL2625000PE",
-      "exchange": "NFO",
-      "underlying": "NIFTY",
-      "strike": 25000.0,
-      "option_type": "PE",
-      "expiry_date": "30-Jul-2026",
-      "days_to_expiry": 28.5071,
-      "spot_price": 25966.05,
-      "option_price": 128.4,
-      "interest_rate": 7.0,
-      "implied_volatility": 14.9,
-      "greeks": {"delta": -0.48, "gamma": 0.0001, "theta": -4.12, "vega": 30.41, "rho": -0.001}
-    }
-  ],
-  "summary": {"total": 2, "success": 2, "failed": 0}
-}
-```
-
-The options can also be given as a struct array, one option per element:
-
-```matlab
->> legs = struct("symbol", {"NIFTY30JUL2625000CE", "NIFTY30JUL2625000PE"}, "exchange", "NFO");
->> greeks = client.multioptiongreeks(symbols=legs, interest_rate=7.0);
->> arrayfun(@(x) x.greeks.delta, greeks.data)'
-
-ans =
-
-    0.5200   -0.4800
-```
-
-* Each option needs `symbol` and `exchange` (NFO, BFO, CDS, MCX or CRYPTO); `underlying_symbol` and `underlying_exchange` are optional overrides. `expiry_time="HH:MM"` sets the expiry time for every option (for example `"23:30"` for MCX).
-* The client checks the list before sending: 1 to 50 options. Otherwise it returns a `validation_error` struct (`'Symbols array cannot be empty'`, `'Maximum 50 symbols allowed'`) without calling the server.
-* One option can fail while the rest succeed. The top-level `status` is then `"partial"` and the response is returned as is, so read `summary` and each item's `status` rather than the top-level status alone. A failed item has different fields, which makes `data` a cell array (see [Reading responses](#reading-responses)). When every option fails the server answers `"status": "error"`, which the client returns as an `api_error` struct with the server's message.
-
 ### Expiry Example
 
 ```matlab
@@ -1646,200 +1625,36 @@ equities = nse(nse.instrumenttype == "EQ", :);
 writetable(nse, "nse_instruments.csv");
 ```
 
-### Telegram Alert Example
+## Account
+
+### Ping Example
+
+Run this at the start of a script, before it trades: it confirms that the API key is valid and that your broker session is logged in.
 
 ```matlab
-response = client.telegram( ...
-    username="<openalgo_loginid>", ...
-    message="NIFTY crossed 26000!");
+response = client.ping();
 disp(response)
 ```
 
-#### Telegram Alert Response
-
-```json
-{
-  "message": "Notification sent successfully",
-  "status": "success"
-}
-```
-
-`priority` (1 to 10, default 5) marks how urgent the alert is. The username is your OpenAlgo login, not your Telegram handle, and the account must be linked with `/link` in the OpenAlgo Telegram bot. For a message over several lines, build it with `sprintf`: `sprintf("Daily Summary\nWinning Trades: 8\nLosing Trades: 2")`.
-
-### WhatsApp Alert Example
-
-Prerequisites: open `/whatsapp` in the OpenAlgo web UI, click **Pair**, and scan the QR code with your phone. With no recipient the message goes to yourself:
-
-```matlab
-response = client.whatsapp("NIFTY crossed 26000!");
-disp(response)
-```
-
-#### WhatsApp Alert Response
-
-```json
-{
-  "status": "success",
-  "message": "Delivered to 1, failed 0",
-  "data": {"sent": ["<self>"], "failed": [], "skipped": 0}
-}
-```
-
-Other forms:
-
-```matlab
-% One number (E.164 digits)
-client.whatsapp("Are you free for a quick call?", to="919876543210");
-
-% A small broadcast (up to 5 numbers)
-client.whatsapp("Server maintenance in 10 minutes", ...
-    to=["919876543210" "919812345678"]);
-
-% An OpenAlgo user linked to WhatsApp
-client.whatsapp("Daily P&L report attached", username="alice", ...
-    document="/srv/reports/2026-05-17.pdf", filename="summary.pdf");
-
-% An image with a caption (the path is on the OpenAlgo server, not uploaded)
-client.whatsapp("NIFTY end-of-day chart", image="/srv/charts/nifty_eod.png");
-
-% Fire and forget: returns as soon as the message is queued
-client.whatsapp("Stop-loss hit on BANKNIFTY!", wait_for_delivery=false);
-```
-
-With `wait_for_delivery=false` the response is `{"status": "success", "message": "Queued for 1 recipient(s)", "queued": 1}`.
-
-`to` as a list (a cell array, or a string array with more than one element) is always sent as a JSON array, even with one number (`to={"919876543210"}`).
-
-A one-word message followed by exactly one more value is ambiguous in MATLAB: `client.whatsapp("note", "x")` reads as the extra field `note="x"` with no message. Name the message when it is a single word: `client.whatsapp(message="Done", to="919876543210")`.
-
-### Telegram Bot Management Example
-
-`telegram` sends you an alert. These methods manage the OpenAlgo Telegram bot itself: its configuration, starting and stopping it, the linked users and their preferences.
-
-```matlab
-% Read the configuration (the server masks the bot token)
-client.telegramconfig()
-
-% Change only the fields you pass
-client.updatetelegramconfig(polling_mode=true, rate_limit_per_minute=30);
-
-% Start and stop the bot
-client.telegramstart();
-client.telegramstop();
-```
-
-#### TelegramConfig Response
+#### Ping Response
 
 ```json
 {
   "status": "success",
   "data": {
-    "bot_token": "1234567890...",
-    "is_active": true,
-    "bot_username": "your_openalgo_bot",
-    "max_message_length": 4096,
-    "rate_limit_per_minute": 30,
-    "broadcast_enabled": true
+    "message": "pong",
+    "broker": "yourbroker"
   }
 }
 ```
 
-`updatetelegramconfig`, `telegramstart` and `telegramstop` answer with a status and a message, for example `{"status": "success", "message": "Bot started successfully"}`. `updatetelegramconfig` accepts `token`, `webhook_url`, `polling_mode`, `broadcast_enabled` and `rate_limit_per_minute` (1 to 120). `telegramstart` needs a bot token in the configuration ("Bot token not configured" otherwise). A stopped bot also stops the automatic order alerts, and `telegram()` is refused with HTTP 409 ("Telegram bot is stopped"). These endpoints answer an invalid or missing API key with HTTP 401.
+`broker` is the broker your OpenAlgo server is connected to. An invalid API key, or a broker session that is missing or has expired, is answered with HTTP 403, which the client returns as an `http_error` struct with `code` 403. A simple pre-flight check:
 
 ```matlab
-% Linked users, optionally filtered by broker or notification setting
-client.telegramusers()
-client.telegramusers(notifications_enabled=true)
+if ~strcmp(client.ping().status, "success")
+    error("OpenAlgo is not ready: check the API key and log in to your broker");
+end
 ```
-
-#### TelegramUsers Response
-
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "id": 1,
-      "telegram_id": 123456789,
-      "openalgo_username": "<openalgo_loginid>",
-      "first_name": "Your",
-      "last_name": "Name",
-      "telegram_username": "your_telegram_handle",
-      "broker": "yourbroker",
-      "notifications_enabled": true,
-      "created_at": "Tue, 06 Oct 2026 09:12:44 GMT",
-      "last_command_at": "Fri, 16 Oct 2026 08:58:10 GMT"
-    }
-  ],
-  "count": 1
-}
-```
-
-```matlab
-% Bot command statistics for the last 30 days (the server uses 7 when days is not given)
-client.telegramstats(30)          % or client.telegramstats(days=30)
-```
-
-#### TelegramStats Response
-
-```json
-{
-  "status": "success",
-  "data": {
-    "total_commands": 42,
-    "commands_by_type": {"orderbook": 18, "positions": 15, "pnl": 9},
-    "active_users": 1,
-    "top_users": [["your_telegram_handle", 42]],
-    "period_days": 30
-  }
-}
-```
-
-`top_users` mixes text and numbers, so it decodes to nested cell arrays: `response.data.top_users{1}{1}` is the handle and `response.data.top_users{1}{2}` the count.
-
-```matlab
-% One user's notification preferences
-client.telegrampreferences(123456789)
-
-% Change only the preferences you pass
-client.updatetelegrampreferences(123456789, daily_summary=true, summary_time="16:00");
-```
-
-#### TelegramPreferences Response
-
-```json
-{
-  "status": "success",
-  "data": {
-    "order_notifications": true,
-    "trade_notifications": true,
-    "pnl_notifications": true,
-    "daily_summary": true,
-    "summary_time": "16:00",
-    "language": "en",
-    "timezone": "Asia/Kolkata"
-  }
-}
-```
-
-`updatetelegrampreferences` accepts `order_notifications`, `trade_notifications`, `pnl_notifications`, `daily_summary`, `summary_time` (`"HH:MM"`), `language` and `timezone`, and answers `{"status": "success", "message": "Preferences updated successfully"}`.
-
-```matlab
-client.telegrambroadcast(message="Markets open in 15 minutes")
-```
-
-#### TelegramBroadcast Response
-
-```json
-{
-  "status": "success",
-  "message": "Broadcast sent to 0 users, failed for 0 users",
-  "success_count": 0,
-  "fail_count": 0
-}
-```
-
-The current server validates a broadcast but does not deliver it yet, so it reports zero deliveries. A message can be up to 4096 characters (an empty or longer one is refused locally as a `validation_error`), the server allows 5 broadcasts per minute, and it refuses them (HTTP 403) when broadcasting is disabled in the bot configuration. `filters` (a struct) is passed through for user filtering.
 
 ### Funds Example
 
@@ -2096,6 +1911,46 @@ disp(response)
 }
 ```
 
+### Analyzer Status Example
+
+```matlab
+response = client.analyzerstatus();
+disp(response)
+```
+
+#### Analyzer Status Response
+
+```json
+{
+  "data": {"analyze_mode": true, "mode": "analyze", "total_logs": 2},
+  "status": "success"
+}
+```
+
+### Analyzer Toggle Example
+
+```matlab
+% Switch to analyze mode (simulated responses)
+response = client.analyzertoggle(true);     % or client.analyzertoggle(mode=true)
+disp(response)
+```
+
+#### Analyzer Toggle Response
+
+```json
+{
+  "data": {
+    "analyze_mode": true,
+    "message": "Analyzer mode switched to analyze",
+    "mode": "analyze",
+    "total_logs": 2
+  },
+  "status": "success"
+}
+```
+
+Analyzer mode (sandbox mode) simulates orders instead of sending them to the broker, with sandbox capital, and responses then carry `"mode": "analyze"`. `client.analyzertoggle(false)` switches back to live orders. Always confirm analyzer mode before running a test script against a broker-connected server. Simulated MARKET orders need a live price, so they fail while the market is closed; use LIMIT orders to test on holidays. GTT triggers placed in analyzer mode carry a `GTT-...` trigger id and fire against live LTP exactly as they would at the broker.
+
 ### PnLSymbols Example
 
 Today's realized and unrealized P&L of the open sandbox positions, one entry per symbol. It works only while analyzer (sandbox) mode is on; in live mode the server answers HTTP 400 ("This endpoint is only available in sandbox/analyzer mode").
@@ -2137,6 +1992,8 @@ ans =
 
   125.5000
 ```
+
+## Utilities
 
 ### Holidays Example
 
@@ -2215,46 +2072,6 @@ ans =
    19-Dec-2025 09:15:00
 ```
 
-### Analyzer Status Example
-
-```matlab
-response = client.analyzerstatus();
-disp(response)
-```
-
-#### Analyzer Status Response
-
-```json
-{
-  "data": {"analyze_mode": true, "mode": "analyze", "total_logs": 2},
-  "status": "success"
-}
-```
-
-### Analyzer Toggle Example
-
-```matlab
-% Switch to analyze mode (simulated responses)
-response = client.analyzertoggle(true);     % or client.analyzertoggle(mode=true)
-disp(response)
-```
-
-#### Analyzer Toggle Response
-
-```json
-{
-  "data": {
-    "analyze_mode": true,
-    "message": "Analyzer mode switched to analyze",
-    "mode": "analyze",
-    "total_logs": 2
-  },
-  "status": "success"
-}
-```
-
-Analyzer mode (sandbox mode) simulates orders instead of sending them to the broker, with sandbox capital, and responses then carry `"mode": "analyze"`. `client.analyzertoggle(false)` switches back to live orders. Always confirm analyzer mode before running a test script against a broker-connected server. Simulated MARKET orders need a live price, so they fail while the market is closed; use LIMIT orders to test on holidays. GTT triggers placed in analyzer mode carry a `GTT-...` trigger id and fire against live LTP exactly as they would at the broker.
-
 ### Chart Preferences Example
 
 The chart workspace preferences OpenAlgo stores for your API key. Every name=value pair of `updatechart` is one preference; only the preferences you pass are changed.
@@ -2291,111 +2108,204 @@ disp(response)
 
 `updatechart` needs 1 to 50 preferences with names of at most 50 characters; anything else is returned as a `validation_error` struct without calling the server. Preference names that are not valid MATLAB names are renamed by `jsondecode` when you read them back with `chart`.
 
-### Error Handling
+## Alerts
 
-The client **returns** failures instead of raising them, so a trading loop handles a failed order the same way it handles a successful one. A failure is a struct with `status` `'error'`, a `message` and an `error_type`:
-
-```matlab
->> response = client.funds()
-
-response =
-
-  struct with fields:
-
-        status: 'error'
-       message: 'Failed to connect to the server. Please check if the server is running.'
-    error_type: 'connection_error'
-```
-
-| `error_type` | Cause |
-|--------------|-------|
-| `connection_error` | The server could not be reached |
-| `timeout_error` | The server did not answer within `timeout` seconds |
-| `http_error` | A non-200 HTTP status (`'HTTP 403: ...'`, with `code`) or another transport failure |
-| `api_error` | The server answered `"status": "error"` (its `message`, plus `code`) |
-| `json_error` | The server's answer was not valid JSON (with `raw_response`) |
-| `validation_error` | Refused locally before sending (GTT trigger rules, margin positions, the option list of `multioptiongreeks`, the preferences of `updatechart`, the message of `telegrambroadcast`) |
-| `no_data` | `history` or `instruments` returned nothing |
-| `processing_error` | Candles or instruments could not be converted to a timetable or table (with `raw_data`) |
-| `unknown_error` | Anything else, including a call after `client.close()` |
-
-For example, an invalid API key on `ping`:
+### Telegram Alert Example
 
 ```matlab
->> response = client.ping()
-
-response =
-
-  struct with fields:
-
-        status: 'error'
-       message: 'HTTP 403: {"status":"error","message":"Invalid openalgo apikey"}'
-          code: 403
-    error_type: 'http_error'
+response = client.telegram( ...
+    username="<openalgo_loginid>", ...
+    message="NIFTY crossed 26000!");
+disp(response)
 ```
 
-A typical check:
+#### Telegram Alert Response
+
+```json
+{
+  "message": "Notification sent successfully",
+  "status": "success"
+}
+```
+
+`priority` (1 to 10, default 5) marks how urgent the alert is. The username is your OpenAlgo login, not your Telegram handle, and the account must be linked with `/link` in the OpenAlgo Telegram bot. For a message over several lines, build it with `sprintf`: `sprintf("Daily Summary\nWinning Trades: 8\nLosing Trades: 2")`.
+
+### WhatsApp Alert Example
+
+Prerequisites: open `/whatsapp` in the OpenAlgo web UI, click **Pair**, and scan the QR code with your phone. With no recipient the message goes to yourself:
 
 ```matlab
-response = client.placeorder(strategy="Test Strategy", symbol="NHPC", action="BUY", ...
-    exchange="NSE", price_type="MARKET", product="MIS", quantity=1);
-
-if strcmp(response.status, "success")
-    fprintf("Order placed: %s\n", response.orderid);
-else
-    fprintf("Order failed (%s): %s\n", response.error_type, response.message);
-end
+response = client.whatsapp("NIFTY crossed 26000!");
+disp(response)
 ```
 
-`history` and `instruments` return a timetable or table on success, so test them with `istimetable` and `istable` first; `ticker(format="txt")` returns a character vector on success, so test it with `ischar`.
+#### WhatsApp Alert Response
 
-Programming mistakes are MATLAB errors, so they stop a script instead of reaching the broker. Each call below raises an error with the message shown under it:
+```json
+{
+  "status": "success",
+  "message": "Delivered to 1, failed 0",
+  "data": {"sent": ["<self>"], "failed": [], "skipped": 0}
+}
+```
+
+Other forms:
 
 ```matlab
-client.placeorder(symbol="NHPC", action="BUY")
-% placeorder() missing 1 required keyword-only argument: 'exchange'
+% One number (E.164 digits)
+client.whatsapp("Are you free for a quick call?", to="919876543210");
 
-client.quotes("RELIANCE", "NSE")
-% quotes() missing 2 required keyword-only arguments: 'symbol' and 'exchange'
+% A small broadcast (up to 5 numbers)
+client.whatsapp("Server maintenance in 10 minutes", ...
+    to=["919876543210" "919812345678"]);
 
-client.strategystart(strategy_id=7)
-% strategystart() missing 1 required keyword-only argument: 'mode'
+% An OpenAlgo user linked to WhatsApp
+client.whatsapp("Daily P&L report attached", username="alice", ...
+    document="/srv/reports/2026-05-17.pdf", filename="summary.pdf");
 
-client.holidays(2026, foo=1)
-% holidays() got an unexpected keyword argument 'foo'
+% An image with a caption (the path is on the OpenAlgo server, not uploaded)
+client.whatsapp("NIFTY end-of-day chart", image="/srv/charts/nifty_eod.png");
+
+% Fire and forget: returns as soon as the message is queued
+client.whatsapp("Stop-loss hit on BANKNIFTY!", wait_for_delivery=false);
 ```
 
-(`client.quotes("RELIANCE", "NSE")` reads `"RELIANCE"` as a parameter name, so both required parameters are missing. Use `client.quotes(symbol="RELIANCE", exchange="NSE")`.)
+With `wait_for_delivery=false` the response is `{"status": "success", "message": "Queued for 1 recipient(s)", "queued": 1}`.
 
-Every error has an identifier you can test in `try`/`catch`:
+`to` as a list (a cell array, or a string array with more than one element) is always sent as a JSON array, even with one number (`to={"919876543210"}`).
 
-| Identifier | Raised when |
-|------------|-------------|
-| `openalgo:missingArgument` | A required parameter is missing |
-| `openalgo:unexpectedArgument` | An unknown name on a method that takes no extra fields |
-| `openalgo:duplicateArgument` | The same parameter is given twice |
-| `openalgo:invalidArguments` | The argument list cannot be parsed (for example too many positional values) |
-| `openalgo:typeError` | A value of the wrong kind, for example `orders` that is not a list |
-| `openalgo:valueError` | An invalid value, for example `openalgo.Strategy` without a token |
-| `openalgo:clientClosed` | `send` on a closed `openalgo.Strategy` |
-| `openalgo:notImplemented` | The removed `Strategy.strategyorder` |
-| `openalgo:FeedAPI:badArgument`, `openalgo:FeedAPI:missingArgument` | Wrong arguments to a feed method |
+A one-word message followed by exactly one more value is ambiguous in MATLAB: `client.whatsapp("note", "x")` reads as the extra field `note="x"` with no message. Name the message when it is a single word: `client.whatsapp(message="Done", to="919876543210")`.
+
+### Telegram Bot Management Example
+
+`telegram` sends you an alert. These methods manage the OpenAlgo Telegram bot itself: its configuration, starting and stopping it, the linked users and their preferences.
 
 ```matlab
-try
-    response = client.placeorder(symbol="NHPC", action="BUY");
-catch ME
-    if strcmp(ME.identifier, "openalgo:missingArgument")
-        fprintf("Fix the call: %s\n", ME.message);
-    else
-        rethrow(ME);
-    end
-end
+% Read the configuration (the server masks the bot token)
+client.telegramconfig()
+
+% Change only the fields you pass
+client.updatetelegramconfig(polling_mode=true, rate_limit_per_minute=30);
+
+% Start and stop the bot
+client.telegramstart();
+client.telegramstop();
 ```
 
-Deprecated parameters (`strike_int` on the option methods and `strategy` on `optionsymbol`) still work and warn with the identifier `openalgo:deprecated`. Silence the warning with `warning("off", "openalgo:deprecated")`.
+#### TelegramConfig Response
 
-### Strategy Module
+```json
+{
+  "status": "success",
+  "data": {
+    "bot_token": "1234567890...",
+    "is_active": true,
+    "bot_username": "your_openalgo_bot",
+    "max_message_length": 4096,
+    "rate_limit_per_minute": 30,
+    "broadcast_enabled": true
+  }
+}
+```
+
+`updatetelegramconfig`, `telegramstart` and `telegramstop` answer with a status and a message, for example `{"status": "success", "message": "Bot started successfully"}`. `updatetelegramconfig` accepts `token`, `webhook_url`, `polling_mode`, `broadcast_enabled` and `rate_limit_per_minute` (1 to 120). `telegramstart` needs a bot token in the configuration ("Bot token not configured" otherwise). A stopped bot also stops the automatic order alerts, and `telegram()` is refused with HTTP 409 ("Telegram bot is stopped"). These endpoints answer an invalid or missing API key with HTTP 401.
+
+```matlab
+% Linked users, optionally filtered by broker or notification setting
+client.telegramusers()
+client.telegramusers(notifications_enabled=true)
+```
+
+#### TelegramUsers Response
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "telegram_id": 123456789,
+      "openalgo_username": "<openalgo_loginid>",
+      "first_name": "Your",
+      "last_name": "Name",
+      "telegram_username": "your_telegram_handle",
+      "broker": "yourbroker",
+      "notifications_enabled": true,
+      "created_at": "Tue, 06 Oct 2026 09:12:44 GMT",
+      "last_command_at": "Fri, 16 Oct 2026 08:58:10 GMT"
+    }
+  ],
+  "count": 1
+}
+```
+
+```matlab
+% Bot command statistics for the last 30 days (the server uses 7 when days is not given)
+client.telegramstats(30)          % or client.telegramstats(days=30)
+```
+
+#### TelegramStats Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "total_commands": 42,
+    "commands_by_type": {"orderbook": 18, "positions": 15, "pnl": 9},
+    "active_users": 1,
+    "top_users": [["your_telegram_handle", 42]],
+    "period_days": 30
+  }
+}
+```
+
+`top_users` mixes text and numbers, so it decodes to nested cell arrays: `response.data.top_users{1}{1}` is the handle and `response.data.top_users{1}{2}` the count.
+
+```matlab
+% One user's notification preferences
+client.telegrampreferences(123456789)
+
+% Change only the preferences you pass
+client.updatetelegrampreferences(123456789, daily_summary=true, summary_time="16:00");
+```
+
+#### TelegramPreferences Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "order_notifications": true,
+    "trade_notifications": true,
+    "pnl_notifications": true,
+    "daily_summary": true,
+    "summary_time": "16:00",
+    "language": "en",
+    "timezone": "Asia/Kolkata"
+  }
+}
+```
+
+`updatetelegrampreferences` accepts `order_notifications`, `trade_notifications`, `pnl_notifications`, `daily_summary`, `summary_time` (`"HH:MM"`), `language` and `timezone`, and answers `{"status": "success", "message": "Preferences updated successfully"}`.
+
+```matlab
+client.telegrambroadcast(message="Markets open in 15 minutes")
+```
+
+#### TelegramBroadcast Response
+
+```json
+{
+  "status": "success",
+  "message": "Broadcast sent to 0 users, failed for 0 users",
+  "success_count": 0,
+  "fail_count": 0
+}
+```
+
+The current server validates a broadcast but does not deliver it yet, so it reports zero deliveries. A message can be up to 4096 characters (an empty or longer one is refused locally as a `validation_error`), the server allows 5 broadcasts per minute, and it refuses them (HTTP 403) when broadcasting is disabled in the bot configuration. `filters` (a struct) is passed through for user filtering.
+
+## Strategy Module
 
 OpenAlgo's `/strategy` module runs multi-leg options strategies with end-to-end risk management, plus a signal-driven mode for TradingView alerts. Two surfaces reach it, and they take different credentials:
 
@@ -2758,6 +2668,8 @@ Events an operator should not ignore:
 | `leg_expiry_fallback` | warn | The chain did not list the expiry rank the leg asked for, so a nearer one was used |
 | `flip_outgoing_exit_rejected` | critical | The outgoing side of a signal flip is still held |
 
+## Strategy Webhook
+
 ### Strategy Webhook Example
 
 The public webhook at `/strategy/webhook/<token>` is what TradingView and other alert senders post to. It is not under `/api/v1` and takes no API key: the `oaws_` token in the URL is the whole credential. It is shown exactly once, in the browser, when the strategy is created or its token is rotated; no endpoint returns it. Treat it as a password, and keep it out of scripts you share (for example read it with `getenv("OPENALGO_WEBHOOK_TOKEN")`).
@@ -2838,7 +2750,7 @@ s =
 
 See the [Strategy RMS API](../api-documentation/v1/strategy-rms-api/README.md) for every field of the nine strategy methods above.
 
-### Streaming WebSocket Feed
+## Streaming WebSocket Feed
 
 The feed streams live data from the OpenAlgo WebSocket server (port 8765 by default): LTP, full quotes, market depth, and the account's order updates.
 
@@ -3303,3 +3215,107 @@ With `verbose=1` or higher the reconnect attempts and the replayed subscriptions
 ```
 
 The client also sends a WebSocket keepalive ping every 20 seconds and treats the connection as dropped when no pong arrives within 10 seconds. Change these through `client.ping_interval` and `client.ping_timeout` before `connect()` if needed.
+
+## Error Handling
+
+The client **returns** failures instead of raising them, so a trading loop handles a failed order the same way it handles a successful one. A failure is a struct with `status` `'error'`, a `message` and an `error_type`:
+
+```matlab
+>> response = client.funds()
+
+response =
+
+  struct with fields:
+
+        status: 'error'
+       message: 'Failed to connect to the server. Please check if the server is running.'
+    error_type: 'connection_error'
+```
+
+| `error_type` | Cause |
+|--------------|-------|
+| `connection_error` | The server could not be reached |
+| `timeout_error` | The server did not answer within `timeout` seconds |
+| `http_error` | A non-200 HTTP status (`'HTTP 403: ...'`, with `code`) or another transport failure |
+| `api_error` | The server answered `"status": "error"` (its `message`, plus `code`) |
+| `json_error` | The server's answer was not valid JSON (with `raw_response`) |
+| `validation_error` | Refused locally before sending (GTT trigger rules, margin positions, the option list of `multioptiongreeks`, the preferences of `updatechart`, the message of `telegrambroadcast`) |
+| `no_data` | `history` or `instruments` returned nothing |
+| `processing_error` | Candles or instruments could not be converted to a timetable or table (with `raw_data`) |
+| `unknown_error` | Anything else, including a call after `client.close()` |
+
+For example, an invalid API key on `ping`:
+
+```matlab
+>> response = client.ping()
+
+response =
+
+  struct with fields:
+
+        status: 'error'
+       message: 'HTTP 403: {"status":"error","message":"Invalid openalgo apikey"}'
+          code: 403
+    error_type: 'http_error'
+```
+
+A typical check:
+
+```matlab
+response = client.placeorder(strategy="Test Strategy", symbol="NHPC", action="BUY", ...
+    exchange="NSE", price_type="MARKET", product="MIS", quantity=1);
+
+if strcmp(response.status, "success")
+    fprintf("Order placed: %s\n", response.orderid);
+else
+    fprintf("Order failed (%s): %s\n", response.error_type, response.message);
+end
+```
+
+`history` and `instruments` return a timetable or table on success, so test them with `istimetable` and `istable` first; `ticker(format="txt")` returns a character vector on success, so test it with `ischar`.
+
+Programming mistakes are MATLAB errors, so they stop a script instead of reaching the broker. Each call below raises an error with the message shown under it:
+
+```matlab
+client.placeorder(symbol="NHPC", action="BUY")
+% placeorder() missing 1 required keyword-only argument: 'exchange'
+
+client.quotes("RELIANCE", "NSE")
+% quotes() missing 2 required keyword-only arguments: 'symbol' and 'exchange'
+
+client.strategystart(strategy_id=7)
+% strategystart() missing 1 required keyword-only argument: 'mode'
+
+client.holidays(2026, foo=1)
+% holidays() got an unexpected keyword argument 'foo'
+```
+
+(`client.quotes("RELIANCE", "NSE")` reads `"RELIANCE"` as a parameter name, so both required parameters are missing. Use `client.quotes(symbol="RELIANCE", exchange="NSE")`.)
+
+Every error has an identifier you can test in `try`/`catch`:
+
+| Identifier | Raised when |
+|------------|-------------|
+| `openalgo:missingArgument` | A required parameter is missing |
+| `openalgo:unexpectedArgument` | An unknown name on a method that takes no extra fields |
+| `openalgo:duplicateArgument` | The same parameter is given twice |
+| `openalgo:invalidArguments` | The argument list cannot be parsed (for example too many positional values) |
+| `openalgo:typeError` | A value of the wrong kind, for example `orders` that is not a list |
+| `openalgo:valueError` | An invalid value, for example `openalgo.Strategy` without a token |
+| `openalgo:clientClosed` | `send` on a closed `openalgo.Strategy` |
+| `openalgo:notImplemented` | The removed `Strategy.strategyorder` |
+| `openalgo:FeedAPI:badArgument`, `openalgo:FeedAPI:missingArgument` | Wrong arguments to a feed method |
+
+```matlab
+try
+    response = client.placeorder(symbol="NHPC", action="BUY");
+catch ME
+    if strcmp(ME.identifier, "openalgo:missingArgument")
+        fprintf("Fix the call: %s\n", ME.message);
+    else
+        rethrow(ME);
+    end
+end
+```
+
+Deprecated parameters (`strike_int` on the option methods and `strategy` on `optionsymbol`) still work and warn with the identifier `openalgo:deprecated`. Silence the warning with `warning("off", "openalgo:deprecated")`.

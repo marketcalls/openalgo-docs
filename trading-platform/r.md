@@ -109,6 +109,8 @@ The examples below show each response as the JSON the server returns, because it
 
 Please refer to the documentation on [order constants](../api-documentation/v1/order-constants.md), and consult the API reference for details on optional parameters
 
+## Order API
+
 ### PlaceOrder Example
 
 To place a new market order:
@@ -179,6 +181,428 @@ print(response)
 ```json
 {"orderid": "250408000997543", "status": "success"}
 ```
+
+### BasketOrder Example
+
+To place a new basket order:
+
+```r
+basket_orders <- list(
+  list(
+    symbol = "BHEL",
+    exchange = "NSE",
+    action = "BUY",
+    quantity = 1,
+    pricetype = "MARKET",
+    product = "MIS"
+  ),
+  list(
+    symbol = "ZOMATO",
+    exchange = "NSE",
+    action = "SELL",
+    quantity = 1,
+    pricetype = "MARKET",
+    product = "MIS"
+  )
+)
+response <- client$basketorder(orders = basket_orders)
+print(response)
+```
+
+#### Basket Order Response
+
+```json
+{
+  "status": "success",
+  "results": [
+    {
+      "symbol": "BHEL",
+      "status": "success",
+      "orderid": "250408000999544"
+    },
+    {
+      "symbol": "ZOMATO",
+      "status": "success",
+      "orderid": "250408000997545"
+    }
+  ]
+}
+```
+
+### SplitOrder Example
+
+To place a new split order:
+
+```r
+response <- client$splitorder(
+  symbol = "YESBANK",
+  exchange = "NSE",
+  action = "SELL",
+  quantity = 105,
+  splitsize = 20,
+  price_type = "MARKET",
+  product = "MIS"
+)
+print(response)
+```
+
+#### SplitOrder Response
+
+```json
+{
+  "status": "success",
+  "split_size": 20,
+  "total_quantity": 105,
+  "results": [
+    {"order_num": 1, "orderid": "250408001021467", "quantity": 20, "status": "success"},
+    {"order_num": 2, "orderid": "250408001021459", "quantity": 20, "status": "success"},
+    {"order_num": 3, "orderid": "250408001021466", "quantity": 20, "status": "success"},
+    {"order_num": 4, "orderid": "250408001021470", "quantity": 20, "status": "success"},
+    {"order_num": 5, "orderid": "250408001021471", "quantity": 20, "status": "success"},
+    {"order_num": 6, "orderid": "250408001021472", "quantity": 5, "status": "success"}
+  ]
+}
+```
+
+### ModifyOrder Example
+
+To modify an existing order:
+
+```r
+response <- client$modifyorder(
+  order_id = "250408001002736",
+  strategy = "Test Strategy",
+  symbol = "YESBANK",
+  action = "BUY",
+  exchange = "NSE",
+  price_type = "LIMIT",
+  product = "CNC",
+  quantity = 1,
+  price = 16.5
+)
+print(response)
+```
+
+#### Modify Order Response
+
+```json
+{"orderid": "250408001002736", "status": "success"}
+```
+
+### CancelOrder Example
+
+To cancel an existing order:
+
+```r
+response <- client$cancelorder(
+  order_id = "250408001002736",
+  strategy = "Test Strategy"
+)
+print(response)
+```
+
+#### CancelOrder Response
+
+```json
+{"orderid": "250408001002736", "status": "success"}
+```
+
+### CancelAllOrder Example
+
+To cancel all open orders and trigger pending orders
+
+```r
+response <- client$cancelallorder(
+  strategy = "Test Strategy"
+)
+print(response)
+```
+
+#### CancelAllOrder Response
+
+```json
+{
+  "status": "success",
+  "message": "Canceled 5 orders. Failed to cancel 0 orders.",
+  "canceled_orders": [
+    "250408001042620",
+    "250408001042667",
+    "250408001042642",
+    "250408001043015",
+    "250408001043386"
+  ],
+  "failed_cancellations": []
+}
+```
+
+### ClosePosition Example
+
+To close all open positions across various exchanges
+
+```r
+response <- client$closeposition(
+  strategy = "Test Strategy"
+)
+print(response)
+```
+
+#### ClosePosition Response
+
+```json
+{"message": "All Open Positions Squared Off", "status": "success"}
+```
+
+### OrderStatus Example
+
+To Get the Current OrderStatus
+
+```r
+response <- client$orderstatus(
+  order_id = "250828000185002",
+  strategy = "Test Strategy"
+)
+print(response)
+```
+
+#### OrderStatus Response
+
+```json
+{
+  "data": {
+    "action": "BUY",
+    "average_price": 18.95,
+    "exchange": "NSE",
+    "order_status": "complete",
+    "orderid": "250828000185002",
+    "price": 0,
+    "pricetype": "MARKET",
+    "product": "MIS",
+    "quantity": "1",
+    "symbol": "YESBANK",
+    "timestamp": "28-Aug-2025 09:59:10",
+    "trigger_price": 0
+  },
+  "status": "success"
+}
+```
+
+```r
+response$data$order_status
+#> [1] "complete"
+```
+
+### OpenPosition Example
+
+To Get the Current OpenPosition
+
+```r
+response <- client$openposition(
+  strategy = "Test Strategy",
+  symbol = "YESBANK",
+  exchange = "NSE",
+  product = "MIS"
+)
+print(response)
+```
+
+#### OpenPosition Response
+
+```json
+{"quantity": "-10", "status": "success"}
+```
+
+The quantity comes back as a string, as the server sends it. Use `as.numeric(response$quantity)` to compute with it.
+
+## GTT Orders
+
+### PlaceGTTOrder Example
+
+A GTT (Good Till Triggered) order is a price trigger that sits with the broker until LTP crosses your level, then places the underlying order automatically.
+
+There are two shapes, and picking the wrong one is the usual mistake:
+
+| Type | Use when | Triggers | Orders fired |
+|------|----------|----------|--------------|
+| `SINGLE` | One entry or exit at a level | 1 | 1 |
+| `OCO` | You hold a position and want both a stoploss and a target, whichever hits first | 2 | 1 of 2, the other is auto-cancelled |
+
+For a **SINGLE**, exactly one of `triggerprice_sl` / `triggerprice_tg` carries your level and the other stays `0`. Pick by where the trigger sits relative to LTP: `triggerprice_sl` for a level **below** LTP (sell stop-loss, buy the dip), `triggerprice_tg` for one **above** (breakout buy, sell at target). A SINGLE has no stoploss leg, so the suffix is only a directional hint.
+
+For an **OCO**, the suffix is a real role and all four fields are required: `triggerprice_sl` with its `stoploss` limit, and `triggerprice_tg` with its `target` limit, where `triggerprice_sl < triggerprice_tg`.
+
+GTT accepts `CNC` and `NRML` only. `MIS` is refused: a GTT can sit for days and MIS is squared off the same session.
+
+```r
+# SINGLE: "Buy IDEA if it dips to 9.55, with a LIMIT order at 9.50"
+# LTP is above 9.55, so the trigger sits below it: triggerprice_sl
+response <- client$placegttorder(
+  strategy = "My GTT Strategy",
+  symbol = "IDEA",
+  action = "BUY",
+  exchange = "NSE",
+  product = "CNC",
+  quantity = 1,
+  price_type = "LIMIT",
+  price = 9.50,
+  triggerprice_sl = 9.55
+)
+print(response)
+```
+
+```r
+# SINGLE: "Buy RELIANCE at MARKET if it breaks above 1450"
+# LTP is below 1450, so the trigger sits above it: triggerprice_tg
+response <- client$placegttorder(
+  strategy = "My GTT Strategy",
+  symbol = "RELIANCE",
+  action = "BUY",
+  exchange = "NSE",
+  product = "CNC",
+  quantity = 1,
+  price_type = "MARKET",
+  price = 0,
+  triggerprice_tg = 1450
+)
+```
+
+```r
+# OCO: "I am short 5 INFY. Stop me out at 1480, take profit at 1620"
+# price is 0: OCO prices each leg separately through stoploss and target
+response <- client$placegttorder(
+  strategy = "Bracket OCO",
+  trigger_type = "OCO",
+  symbol = "INFY",
+  action = "SELL",
+  exchange = "NSE",
+  product = "CNC",
+  quantity = 5,
+  price_type = "LIMIT",
+  price = 0,
+  triggerprice_sl = 1480,
+  stoploss = 1478,
+  triggerprice_tg = 1620,
+  target = 1622
+)
+```
+
+#### PlaceGTTOrder Response
+
+```json
+{"status": "success", "trigger_id": "23132604291205"}
+```
+
+Save the `trigger_id`: modify and cancel both need it.
+
+### ModifyGTTOrder Example
+
+Modify is a **full replacement**, not a patch. Every field on the trigger is replaced by what the call sends, so pass everything you want to keep rather than only the values that changed.
+
+```r
+response <- client$modifygttorder(
+  trigger_id = "23132604291205",
+  strategy = "My GTT Strategy",
+  symbol = "IDEA",
+  action = "BUY",
+  exchange = "NSE",
+  product = "CNC",
+  quantity = 1,
+  price_type = "LIMIT",
+  price = 9.60,           # was 9.50
+  triggerprice_sl = 9.65  # was 9.55
+)
+print(response)
+```
+
+#### ModifyGTTOrder Response
+
+```json
+{"status": "success", "trigger_id": "23132604291205"}
+```
+
+Trigger prices, limit prices, quantity and pricetype are modifiable. `trigger_type`, `symbol`, `exchange` and `action` are not: cancel and re-place instead. Only active GTTs can be modified; triggered, cancelled and expired ones are immutable.
+
+### CancelGTTOrder Example
+
+```r
+response <- client$cancelgttorder(
+  trigger_id = "23132604291205",
+  strategy = "My GTT Strategy"
+)
+print(response)
+```
+
+#### CancelGTTOrder Response
+
+```json
+{"status": "success", "trigger_id": "23132604291205"}
+```
+
+Cancelling an OCO removes both legs atomically; there is no per-leg cancel.
+
+### GTTOrderBook Example
+
+By default this lists **active** triggers only, the ones that can still fire. Pass `status = "all"` to include the history as well (triggered, cancelled, expired, rejected), ordered active first; in analyzer mode a fired leg also carries the `triggered_order_id` of the sandbox order it placed.
+
+```r
+# Active triggers only (default)
+response <- client$gttorderbook()
+print(response)
+
+# Active triggers first, then the triggered / cancelled / expired history
+response <- client$gttorderbook(status = "all")
+for (gtt in response$data) {
+  cat(gtt$trigger_id, gtt$status, gtt$symbol, unlist(gtt$trigger_prices), "\n")
+}
+```
+
+#### GTTOrderBook Response
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "trigger_id": "23132604291205",
+      "trigger_type": "single",
+      "status": "active",
+      "symbol": "IDEA",
+      "exchange": "NSE",
+      "trigger_prices": [9.55],
+      "last_price": 9.50,
+      "legs": [
+        {
+          "action": "BUY",
+          "quantity": 1,
+          "price": 9.50,
+          "pricetype": "LIMIT",
+          "product": "CNC"
+        }
+      ],
+      "created_at": "2026-04-29 12:18:42",
+      "updated_at": "",
+      "expires_at": ""
+    }
+  ]
+}
+```
+
+`trigger_prices` is sorted ascending: a SINGLE has one element and one leg, an OCO has two of each with the stoploss first.
+
+The SDK refuses an impossible trigger spec before anything leaves the machine, and returns the refusal in the same shape as an API error:
+
+```r
+# SINGLE with no trigger price at all
+str(client$placegttorder(symbol = "IDEA", action = "BUY", exchange = "NSE",
+                         product = "CNC", quantity = 1, price = 9.50))
+#> List of 3
+#>  $ status    : chr "error"
+#>  $ message   : chr "SINGLE GTT requires a positive triggerprice_sl or triggerprice_tg."
+#>  $ error_type: chr "validation_error"
+```
+
+API reference: [PlaceGTTOrder](../api-documentation/v1/orders-api/placegttorder.md), [ModifyGTTOrder](../api-documentation/v1/orders-api/modifygttorder.md), [CancelGTTOrder](../api-documentation/v1/orders-api/cancelgttorder.md), [GTTOrderBook](../api-documentation/v1/orders-api/gttorderbook.md).
+
+## Options
 
 ### OptionsOrder Example
 
@@ -414,423 +838,338 @@ for (leg in response$results) {
 }
 ```
 
-### BasketOrder Example
+### OptionSymbol Example
 
-To place a new basket order:
+ATM Option
 
 ```r
-basket_orders <- list(
-  list(
-    symbol = "BHEL",
-    exchange = "NSE",
-    action = "BUY",
-    quantity = 1,
-    pricetype = "MARKET",
-    product = "MIS"
-  ),
-  list(
-    symbol = "ZOMATO",
-    exchange = "NSE",
-    action = "SELL",
-    quantity = 1,
-    pricetype = "MARKET",
-    product = "MIS"
-  )
+response <- client$optionsymbol(
+  underlying = "NIFTY",
+  exchange = "NSE_INDEX",
+  expiry_date = "30DEC25",
+  offset = "ATM",
+  option_type = "CE"
 )
-response <- client$basketorder(orders = basket_orders)
 print(response)
 ```
 
-#### Basket Order Response
+#### OptionSymbol Response
 
 ```json
 {
   "status": "success",
-  "results": [
+  "symbol": "NIFTY30DEC2525950CE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+ITM Option
+
+```r
+response <- client$optionsymbol(
+  underlying = "NIFTY",
+  exchange = "NSE_INDEX",
+  expiry_date = "30DEC25",
+  offset = "ITM3",
+  option_type = "PE"
+)
+print(response)
+```
+
+#### OptionSymbol Response
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY30DEC2526100PE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+OTM Option
+
+```r
+response <- client$optionsymbol(
+  underlying = "NIFTY",
+  exchange = "NSE_INDEX",
+  expiry_date = "30DEC25",
+  offset = "OTM4",
+  option_type = "CE"
+)
+print(response)
+```
+
+#### OptionSymbol Response
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY30DEC2526150CE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+### OptionChain Example
+
+Note: To fetch the entire option chain for an expiry, omit the `strike_count` (optional) parameter
+
+```r
+chain <- client$optionchain(
+  underlying = "NIFTY",
+  exchange = "NSE_INDEX",
+  expiry_date = "30DEC25",
+  strike_count = 10
+)
+```
+
+#### OptionChain Response
+
+```json
+{
+  "status": "success",
+  "underlying": "NIFTY",
+  "underlying_ltp": 26215.55,
+  "expiry_date": "30DEC25",
+  "atm_strike": 26200.0,
+  "chain": [
     {
-      "symbol": "BHEL",
-      "status": "success",
-      "orderid": "250408000999544"
+      "strike": 26100.0,
+      "ce": {
+        "symbol": "NIFTY30DEC2526100CE",
+        "label": "ITM2",
+        "ltp": 490,
+        "bid": 490,
+        "ask": 491,
+        "open": 540,
+        "high": 571,
+        "low": 444.75,
+        "prev_close": 496.8,
+        "volume": 1195800,
+        "oi": 0,
+        "lotsize": 65,
+        "tick_size": 0.05
+      },
+      "pe": {
+        "symbol": "NIFTY30DEC2526100PE",
+        "label": "OTM2",
+        "ltp": 193,
+        "bid": 191.2,
+        "ask": 193,
+        "open": 204.1,
+        "high": 229.95,
+        "low": 175.6,
+        "prev_close": 215.95,
+        "volume": 1832700,
+        "oi": 0,
+        "lotsize": 65,
+        "tick_size": 0.05
+      }
     },
     {
-      "symbol": "ZOMATO",
-      "status": "success",
-      "orderid": "250408000997545"
+      "strike": 26200.0,
+      "ce": {
+        "symbol": "NIFTY30DEC2526200CE",
+        "label": "ATM",
+        "ltp": 427,
+        "bid": 425.05,
+        "ask": 427,
+        "open": 449.95,
+        "high": 503.5,
+        "low": 384,
+        "prev_close": 433.2,
+        "volume": 2994000,
+        "oi": 0,
+        "lotsize": 65,
+        "tick_size": 0.05
+      },
+      "pe": {
+        "symbol": "NIFTY30DEC2526200PE",
+        "label": "ATM",
+        "ltp": 227.4,
+        "bid": 227.35,
+        "ask": 228.5,
+        "open": 251.9,
+        "high": 269.15,
+        "low": 205.95,
+        "prev_close": 251.9,
+        "volume": 3745350,
+        "oi": 0,
+        "lotsize": 65,
+        "tick_size": 0.05
+      }
     }
   ]
 }
 ```
 
-### SplitOrder Example
-
-To place a new split order:
+Print one line per strike:
 
 ```r
-response <- client$splitorder(
-  symbol = "YESBANK",
-  exchange = "NSE",
-  action = "SELL",
-  quantity = 105,
-  splitsize = 20,
-  price_type = "MARKET",
-  product = "MIS"
-)
-print(response)
-```
-
-#### SplitOrder Response
-
-```json
-{
-  "status": "success",
-  "split_size": 20,
-  "total_quantity": 105,
-  "results": [
-    {"order_num": 1, "orderid": "250408001021467", "quantity": 20, "status": "success"},
-    {"order_num": 2, "orderid": "250408001021459", "quantity": 20, "status": "success"},
-    {"order_num": 3, "orderid": "250408001021466", "quantity": 20, "status": "success"},
-    {"order_num": 4, "orderid": "250408001021470", "quantity": 20, "status": "success"},
-    {"order_num": 5, "orderid": "250408001021471", "quantity": 20, "status": "success"},
-    {"order_num": 6, "orderid": "250408001021472", "quantity": 5, "status": "success"}
-  ]
+for (item in chain$chain) {
+  ce_ltp <- if (is.null(item$ce)) "-" else item$ce$ltp
+  pe_ltp <- if (is.null(item$pe)) "-" else item$pe$ltp
+  cat("Strike:", item$strike, "| CE:", ce_ltp, "| PE:", pe_ltp, "\n")
 }
+#> Strike: 26100 | CE: 490 | PE: 193
+#> Strike: 26200 | CE: 427 | PE: 227.4
 ```
 
-### ModifyOrder Example
-
-To modify an existing order:
+### OptionGreeks Example
 
 ```r
-response <- client$modifyorder(
-  order_id = "250408001002736",
-  strategy = "Test Strategy",
-  symbol = "YESBANK",
-  action = "BUY",
-  exchange = "NSE",
-  price_type = "LIMIT",
-  product = "CNC",
-  quantity = 1,
-  price = 16.5
+response <- client$optiongreeks(
+  symbol = "NIFTY25NOV2526000CE",
+  exchange = "NFO",
+  interest_rate = 0.00,
+  underlying_symbol = "NIFTY",
+  underlying_exchange = "NSE_INDEX"
 )
 print(response)
 ```
 
-#### Modify Order Response
-
-```json
-{"orderid": "250408001002736", "status": "success"}
-```
-
-### CancelOrder Example
-
-To cancel an existing order:
-
-```r
-response <- client$cancelorder(
-  order_id = "250408001002736",
-  strategy = "Test Strategy"
-)
-print(response)
-```
-
-#### CancelOrder Response
-
-```json
-{"orderid": "250408001002736", "status": "success"}
-```
-
-### CancelAllOrder Example
-
-To cancel all open orders and trigger pending orders
-
-```r
-response <- client$cancelallorder(
-  strategy = "Test Strategy"
-)
-print(response)
-```
-
-#### CancelAllOrder Response
+#### OptionGreeks Response
 
 ```json
 {
-  "status": "success",
-  "message": "Canceled 5 orders. Failed to cancel 0 orders.",
-  "canceled_orders": [
-    "250408001042620",
-    "250408001042667",
-    "250408001042642",
-    "250408001043015",
-    "250408001043386"
-  ],
-  "failed_cancellations": []
-}
-```
-
-### ClosePosition Example
-
-To close all open positions across various exchanges
-
-```r
-response <- client$closeposition(
-  strategy = "Test Strategy"
-)
-print(response)
-```
-
-#### ClosePosition Response
-
-```json
-{"message": "All Open Positions Squared Off", "status": "success"}
-```
-
-### OrderStatus Example
-
-To Get the Current OrderStatus
-
-```r
-response <- client$orderstatus(
-  order_id = "250828000185002",
-  strategy = "Test Strategy"
-)
-print(response)
-```
-
-#### OrderStatus Response
-
-```json
-{
-  "data": {
-    "action": "BUY",
-    "average_price": 18.95,
-    "exchange": "NSE",
-    "order_status": "complete",
-    "orderid": "250828000185002",
-    "price": 0,
-    "pricetype": "MARKET",
-    "product": "MIS",
-    "quantity": "1",
-    "symbol": "YESBANK",
-    "timestamp": "28-Aug-2025 09:59:10",
-    "trigger_price": 0
+  "days_to_expiry": 28.5071,
+  "exchange": "NFO",
+  "expiry_date": "25-Nov-2025",
+  "greeks": {
+    "delta": 0.4967,
+    "gamma": 0.000352,
+    "rho": 9.733994,
+    "theta": -7.919,
+    "vega": 28.9489
   },
-  "status": "success"
+  "implied_volatility": 15.6,
+  "interest_rate": 0.0,
+  "option_price": 435,
+  "option_type": "CE",
+  "spot_price": 25966.05,
+  "status": "success",
+  "strike": 26000.0,
+  "symbol": "NIFTY25NOV2526000CE",
+  "underlying": "NIFTY"
 }
 ```
 
-```r
-response$data$order_status
-#> [1] "complete"
-```
+Optional arguments: `interest_rate` (percent), `forward_price` (price against a custom forward instead of fetching the underlying), `underlying_symbol`, `underlying_exchange` and `expiry_time` (`"HH:MM"`). Leave any of them out (or `NULL`) and it is not sent.
 
-### OpenPosition Example
+### MultiOptionGreeks Example
 
-To Get the Current OpenPosition
+Implied volatility and Greeks for up to 50 options in one request, for example both legs of a straddle or a whole strike ladder. Use `optiongreeks()` for a single option.
 
 ```r
-response <- client$openposition(
-  strategy = "Test Strategy",
-  symbol = "YESBANK",
-  exchange = "NSE",
-  product = "MIS"
+response <- client$multioptiongreeks(
+  symbols = list(
+    list(symbol = "NIFTY30JUL2625000CE", exchange = "NFO"),
+    list(symbol = "NIFTY30JUL2625000PE", exchange = "NFO")
+  ),
+  interest_rate = 7.0
 )
 print(response)
 ```
 
-#### OpenPosition Response
-
-```json
-{"quantity": "-10", "status": "success"}
-```
-
-The quantity comes back as a string, as the server sends it. Use `as.numeric(response$quantity)` to compute with it.
-
-### PlaceGTTOrder Example
-
-A GTT (Good Till Triggered) order is a price trigger that sits with the broker until LTP crosses your level, then places the underlying order automatically.
-
-There are two shapes, and picking the wrong one is the usual mistake:
-
-| Type | Use when | Triggers | Orders fired |
-|------|----------|----------|--------------|
-| `SINGLE` | One entry or exit at a level | 1 | 1 |
-| `OCO` | You hold a position and want both a stoploss and a target, whichever hits first | 2 | 1 of 2, the other is auto-cancelled |
-
-For a **SINGLE**, exactly one of `triggerprice_sl` / `triggerprice_tg` carries your level and the other stays `0`. Pick by where the trigger sits relative to LTP: `triggerprice_sl` for a level **below** LTP (sell stop-loss, buy the dip), `triggerprice_tg` for one **above** (breakout buy, sell at target). A SINGLE has no stoploss leg, so the suffix is only a directional hint.
-
-For an **OCO**, the suffix is a real role and all four fields are required: `triggerprice_sl` with its `stoploss` limit, and `triggerprice_tg` with its `target` limit, where `triggerprice_sl < triggerprice_tg`.
-
-GTT accepts `CNC` and `NRML` only. `MIS` is refused: a GTT can sit for days and MIS is squared off the same session.
-
-```r
-# SINGLE: "Buy IDEA if it dips to 9.55, with a LIMIT order at 9.50"
-# LTP is above 9.55, so the trigger sits below it: triggerprice_sl
-response <- client$placegttorder(
-  strategy = "My GTT Strategy",
-  symbol = "IDEA",
-  action = "BUY",
-  exchange = "NSE",
-  product = "CNC",
-  quantity = 1,
-  price_type = "LIMIT",
-  price = 9.50,
-  triggerprice_sl = 9.55
-)
-print(response)
-```
-
-```r
-# SINGLE: "Buy RELIANCE at MARKET if it breaks above 1450"
-# LTP is below 1450, so the trigger sits above it: triggerprice_tg
-response <- client$placegttorder(
-  strategy = "My GTT Strategy",
-  symbol = "RELIANCE",
-  action = "BUY",
-  exchange = "NSE",
-  product = "CNC",
-  quantity = 1,
-  price_type = "MARKET",
-  price = 0,
-  triggerprice_tg = 1450
-)
-```
-
-```r
-# OCO: "I am short 5 INFY. Stop me out at 1480, take profit at 1620"
-# price is 0: OCO prices each leg separately through stoploss and target
-response <- client$placegttorder(
-  strategy = "Bracket OCO",
-  trigger_type = "OCO",
-  symbol = "INFY",
-  action = "SELL",
-  exchange = "NSE",
-  product = "CNC",
-  quantity = 5,
-  price_type = "LIMIT",
-  price = 0,
-  triggerprice_sl = 1480,
-  stoploss = 1478,
-  triggerprice_tg = 1620,
-  target = 1622
-)
-```
-
-#### PlaceGTTOrder Response
-
-```json
-{"status": "success", "trigger_id": "23132604291205"}
-```
-
-Save the `trigger_id`: modify and cancel both need it.
-
-### ModifyGTTOrder Example
-
-Modify is a **full replacement**, not a patch. Every field on the trigger is replaced by what the call sends, so pass everything you want to keep rather than only the values that changed.
-
-```r
-response <- client$modifygttorder(
-  trigger_id = "23132604291205",
-  strategy = "My GTT Strategy",
-  symbol = "IDEA",
-  action = "BUY",
-  exchange = "NSE",
-  product = "CNC",
-  quantity = 1,
-  price_type = "LIMIT",
-  price = 9.60,           # was 9.50
-  triggerprice_sl = 9.65  # was 9.55
-)
-print(response)
-```
-
-#### ModifyGTTOrder Response
-
-```json
-{"status": "success", "trigger_id": "23132604291205"}
-```
-
-Trigger prices, limit prices, quantity and pricetype are modifiable. `trigger_type`, `symbol`, `exchange` and `action` are not: cancel and re-place instead. Only active GTTs can be modified; triggered, cancelled and expired ones are immutable.
-
-### CancelGTTOrder Example
-
-```r
-response <- client$cancelgttorder(
-  trigger_id = "23132604291205",
-  strategy = "My GTT Strategy"
-)
-print(response)
-```
-
-#### CancelGTTOrder Response
-
-```json
-{"status": "success", "trigger_id": "23132604291205"}
-```
-
-Cancelling an OCO removes both legs atomically; there is no per-leg cancel.
-
-### GTTOrderBook Example
-
-By default this lists **active** triggers only, the ones that can still fire. Pass `status = "all"` to include the history as well (triggered, cancelled, expired, rejected), ordered active first; in analyzer mode a fired leg also carries the `triggered_order_id` of the sandbox order it placed.
-
-```r
-# Active triggers only (default)
-response <- client$gttorderbook()
-print(response)
-
-# Active triggers first, then the triggered / cancelled / expired history
-response <- client$gttorderbook(status = "all")
-for (gtt in response$data) {
-  cat(gtt$trigger_id, gtt$status, gtt$symbol, unlist(gtt$trigger_prices), "\n")
-}
-```
-
-#### GTTOrderBook Response
+#### MultiOptionGreeks Response
 
 ```json
 {
   "status": "success",
   "data": [
     {
-      "trigger_id": "23132604291205",
-      "trigger_type": "single",
-      "status": "active",
-      "symbol": "IDEA",
-      "exchange": "NSE",
-      "trigger_prices": [9.55],
-      "last_price": 9.50,
-      "legs": [
-        {
-          "action": "BUY",
-          "quantity": 1,
-          "price": 9.50,
-          "pricetype": "LIMIT",
-          "product": "CNC"
-        }
-      ],
-      "created_at": "2026-04-29 12:18:42",
-      "updated_at": "",
-      "expires_at": ""
+      "status": "success",
+      "symbol": "NIFTY30JUL2625000CE",
+      "exchange": "NFO",
+      "underlying": "NIFTY",
+      "strike": 25000.0,
+      "option_type": "CE",
+      "expiry_date": "30-Jul-2026",
+      "days_to_expiry": 28.5071,
+      "spot_price": 25966.05,
+      "option_price": 435,
+      "interest_rate": 7.0,
+      "implied_volatility": 15.25,
+      "greeks": {"delta": 0.52, "gamma": 0.0001, "theta": -4.97, "vega": 30.76, "rho": 0.001}
+    },
+    {
+      "status": "success",
+      "symbol": "NIFTY30JUL2625000PE",
+      "exchange": "NFO",
+      "underlying": "NIFTY",
+      "strike": 25000.0,
+      "option_type": "PE",
+      "expiry_date": "30-Jul-2026",
+      "days_to_expiry": 28.5071,
+      "spot_price": 25966.05,
+      "option_price": 128.4,
+      "interest_rate": 7.0,
+      "implied_volatility": 14.9,
+      "greeks": {"delta": -0.48, "gamma": 0.0001, "theta": -4.12, "vega": 30.41, "rho": -0.001}
     }
-  ]
+  ],
+  "summary": {"total": 2, "success": 2, "failed": 0}
 }
 ```
 
-`trigger_prices` is sorted ascending: a SINGLE has one element and one leg, an OCO has two of each with the stoploss first.
-
-The SDK refuses an impossible trigger spec before anything leaves the machine, and returns the refusal in the same shape as an API error:
+The options can also be given as a data frame, one option per row:
 
 ```r
-# SINGLE with no trigger price at all
-str(client$placegttorder(symbol = "IDEA", action = "BUY", exchange = "NSE",
-                         product = "CNC", quantity = 1, price = 9.50))
-#> List of 3
-#>  $ status    : chr "error"
-#>  $ message   : chr "SINGLE GTT requires a positive triggerprice_sl or triggerprice_tg."
-#>  $ error_type: chr "validation_error"
+legs <- data.frame(symbol = c("NIFTY30JUL2625000CE", "NIFTY30JUL2625000PE"),
+                   exchange = "NFO")
+greeks <- client$multioptiongreeks(symbols = legs, interest_rate = 7.0)
+sapply(greeks$data, function(x) x$greeks$delta)
+#> [1]  0.52 -0.48
 ```
 
-API reference: [PlaceGTTOrder](../api-documentation/v1/orders-api/placegttorder.md), [ModifyGTTOrder](../api-documentation/v1/orders-api/modifygttorder.md), [CancelGTTOrder](../api-documentation/v1/orders-api/cancelgttorder.md), [GTTOrderBook](../api-documentation/v1/orders-api/gttorderbook.md).
+* Each option needs `symbol` and `exchange` (NFO, BFO, CDS, MCX or CRYPTO); `underlying_symbol` and `underlying_exchange` are optional overrides. `expiry_time = "HH:MM"` sets the expiry time for every option (for example `"23:30"` for MCX).
+* The client checks the list before sending: 1 to 50 options, each with a `symbol` and an `exchange`. Otherwise it returns a `validation_error` list without calling the server.
+* One option can fail while the rest succeed. The top-level `status` is then `"partial"`, so read `summary` and each item's `status` rather than the top-level status alone. When every option fails the server answers `"status": "error"`, which the client returns as an `api_error` list with the server's message.
+
+API reference: [MultiOptionGreeks](../api-documentation/v1/data-api/multioptiongreeks.md).
+
+### SyntheticFuture Example
+
+```r
+response <- client$syntheticfuture(
+  underlying = "NIFTY",
+  exchange = "NSE_INDEX",
+  expiry_date = "25NOV25"
+)
+print(response)
+```
+
+#### SyntheticFuture Response
+
+```json
+{
+  "atm_strike": 25900.0,
+  "expiry": "25NOV25",
+  "status": "success",
+  "synthetic_future_price": 25980.05,
+  "underlying": "NIFTY",
+  "underlying_ltp": 25910.05
+}
+```
+
+```r
+basis <- response$synthetic_future_price - response$underlying_ltp
+basis
+#> [1] 70
+```
+
+## Market Data
 
 ### Quotes Example
 
@@ -1124,111 +1463,6 @@ unlist(response$data$minutes)
 
 `client$interval()` is an older name for the same call and still works.
 
-### OptionChain Example
-
-Note: To fetch the entire option chain for an expiry, omit the `strike_count` (optional) parameter
-
-```r
-chain <- client$optionchain(
-  underlying = "NIFTY",
-  exchange = "NSE_INDEX",
-  expiry_date = "30DEC25",
-  strike_count = 10
-)
-```
-
-#### OptionChain Response
-
-```json
-{
-  "status": "success",
-  "underlying": "NIFTY",
-  "underlying_ltp": 26215.55,
-  "expiry_date": "30DEC25",
-  "atm_strike": 26200.0,
-  "chain": [
-    {
-      "strike": 26100.0,
-      "ce": {
-        "symbol": "NIFTY30DEC2526100CE",
-        "label": "ITM2",
-        "ltp": 490,
-        "bid": 490,
-        "ask": 491,
-        "open": 540,
-        "high": 571,
-        "low": 444.75,
-        "prev_close": 496.8,
-        "volume": 1195800,
-        "oi": 0,
-        "lotsize": 65,
-        "tick_size": 0.05
-      },
-      "pe": {
-        "symbol": "NIFTY30DEC2526100PE",
-        "label": "OTM2",
-        "ltp": 193,
-        "bid": 191.2,
-        "ask": 193,
-        "open": 204.1,
-        "high": 229.95,
-        "low": 175.6,
-        "prev_close": 215.95,
-        "volume": 1832700,
-        "oi": 0,
-        "lotsize": 65,
-        "tick_size": 0.05
-      }
-    },
-    {
-      "strike": 26200.0,
-      "ce": {
-        "symbol": "NIFTY30DEC2526200CE",
-        "label": "ATM",
-        "ltp": 427,
-        "bid": 425.05,
-        "ask": 427,
-        "open": 449.95,
-        "high": 503.5,
-        "low": 384,
-        "prev_close": 433.2,
-        "volume": 2994000,
-        "oi": 0,
-        "lotsize": 65,
-        "tick_size": 0.05
-      },
-      "pe": {
-        "symbol": "NIFTY30DEC2526200PE",
-        "label": "ATM",
-        "ltp": 227.4,
-        "bid": 227.35,
-        "ask": 228.5,
-        "open": 251.9,
-        "high": 269.15,
-        "low": 205.95,
-        "prev_close": 251.9,
-        "volume": 3745350,
-        "oi": 0,
-        "lotsize": 65,
-        "tick_size": 0.05
-      }
-    }
-  ]
-}
-```
-
-Print one line per strike:
-
-```r
-for (item in chain$chain) {
-  ce_ltp <- if (is.null(item$ce)) "-" else item$ce$ltp
-  pe_ltp <- if (is.null(item$pe)) "-" else item$pe$ltp
-  cat("Strike:", item$strike, "| CE:", ce_ltp, "| PE:", pe_ltp, "\n")
-}
-#> Strike: 26100 | CE: 490 | PE: 193
-#> Strike: 26200 | CE: 427 | PE: 227.4
-```
-
 ### Symbol Example
 
 ```r
@@ -1310,232 +1544,6 @@ print(response)
 
 `exchange` is optional; leave it out to search every exchange.
 
-### OptionSymbol Example
-
-ATM Option
-
-```r
-response <- client$optionsymbol(
-  underlying = "NIFTY",
-  exchange = "NSE_INDEX",
-  expiry_date = "30DEC25",
-  offset = "ATM",
-  option_type = "CE"
-)
-print(response)
-```
-
-#### OptionSymbol Response
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2525950CE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-ITM Option
-
-```r
-response <- client$optionsymbol(
-  underlying = "NIFTY",
-  exchange = "NSE_INDEX",
-  expiry_date = "30DEC25",
-  offset = "ITM3",
-  option_type = "PE"
-)
-print(response)
-```
-
-#### OptionSymbol Response
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2526100PE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-OTM Option
-
-```r
-response <- client$optionsymbol(
-  underlying = "NIFTY",
-  exchange = "NSE_INDEX",
-  expiry_date = "30DEC25",
-  offset = "OTM4",
-  option_type = "CE"
-)
-print(response)
-```
-
-#### OptionSymbol Response
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2526150CE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-### SyntheticFuture Example
-
-```r
-response <- client$syntheticfuture(
-  underlying = "NIFTY",
-  exchange = "NSE_INDEX",
-  expiry_date = "25NOV25"
-)
-print(response)
-```
-
-#### SyntheticFuture Response
-
-```json
-{
-  "atm_strike": 25900.0,
-  "expiry": "25NOV25",
-  "status": "success",
-  "synthetic_future_price": 25980.05,
-  "underlying": "NIFTY",
-  "underlying_ltp": 25910.05
-}
-```
-
-```r
-basis <- response$synthetic_future_price - response$underlying_ltp
-basis
-#> [1] 70
-```
-
-### OptionGreeks Example
-
-```r
-response <- client$optiongreeks(
-  symbol = "NIFTY25NOV2526000CE",
-  exchange = "NFO",
-  interest_rate = 0.00,
-  underlying_symbol = "NIFTY",
-  underlying_exchange = "NSE_INDEX"
-)
-print(response)
-```
-
-#### OptionGreeks Response
-
-```json
-{
-  "days_to_expiry": 28.5071,
-  "exchange": "NFO",
-  "expiry_date": "25-Nov-2025",
-  "greeks": {
-    "delta": 0.4967,
-    "gamma": 0.000352,
-    "rho": 9.733994,
-    "theta": -7.919,
-    "vega": 28.9489
-  },
-  "implied_volatility": 15.6,
-  "interest_rate": 0.0,
-  "option_price": 435,
-  "option_type": "CE",
-  "spot_price": 25966.05,
-  "status": "success",
-  "strike": 26000.0,
-  "symbol": "NIFTY25NOV2526000CE",
-  "underlying": "NIFTY"
-}
-```
-
-Optional arguments: `interest_rate` (percent), `forward_price` (price against a custom forward instead of fetching the underlying), `underlying_symbol`, `underlying_exchange` and `expiry_time` (`"HH:MM"`). Leave any of them out (or `NULL`) and it is not sent.
-
-### MultiOptionGreeks Example
-
-Implied volatility and Greeks for up to 50 options in one request, for example both legs of a straddle or a whole strike ladder. Use `optiongreeks()` for a single option.
-
-```r
-response <- client$multioptiongreeks(
-  symbols = list(
-    list(symbol = "NIFTY30JUL2625000CE", exchange = "NFO"),
-    list(symbol = "NIFTY30JUL2625000PE", exchange = "NFO")
-  ),
-  interest_rate = 7.0
-)
-print(response)
-```
-
-#### MultiOptionGreeks Response
-
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "status": "success",
-      "symbol": "NIFTY30JUL2625000CE",
-      "exchange": "NFO",
-      "underlying": "NIFTY",
-      "strike": 25000.0,
-      "option_type": "CE",
-      "expiry_date": "30-Jul-2026",
-      "days_to_expiry": 28.5071,
-      "spot_price": 25966.05,
-      "option_price": 435,
-      "interest_rate": 7.0,
-      "implied_volatility": 15.25,
-      "greeks": {"delta": 0.52, "gamma": 0.0001, "theta": -4.97, "vega": 30.76, "rho": 0.001}
-    },
-    {
-      "status": "success",
-      "symbol": "NIFTY30JUL2625000PE",
-      "exchange": "NFO",
-      "underlying": "NIFTY",
-      "strike": 25000.0,
-      "option_type": "PE",
-      "expiry_date": "30-Jul-2026",
-      "days_to_expiry": 28.5071,
-      "spot_price": 25966.05,
-      "option_price": 128.4,
-      "interest_rate": 7.0,
-      "implied_volatility": 14.9,
-      "greeks": {"delta": -0.48, "gamma": 0.0001, "theta": -4.12, "vega": 30.41, "rho": -0.001}
-    }
-  ],
-  "summary": {"total": 2, "success": 2, "failed": 0}
-}
-```
-
-The options can also be given as a data frame, one option per row:
-
-```r
-legs <- data.frame(symbol = c("NIFTY30JUL2625000CE", "NIFTY30JUL2625000PE"),
-                   exchange = "NFO")
-greeks <- client$multioptiongreeks(symbols = legs, interest_rate = 7.0)
-sapply(greeks$data, function(x) x$greeks$delta)
-#> [1]  0.52 -0.48
-```
-
-* Each option needs `symbol` and `exchange` (NFO, BFO, CDS, MCX or CRYPTO); `underlying_symbol` and `underlying_exchange` are optional overrides. `expiry_time = "HH:MM"` sets the expiry time for every option (for example `"23:30"` for MCX).
-* The client checks the list before sending: 1 to 50 options, each with a `symbol` and an `exchange`. Otherwise it returns a `validation_error` list without calling the server.
-* One option can fail while the rest succeed. The top-level `status` is then `"partial"`, so read `summary` and each item's `status` rather than the top-level status alone. When every option fails the server answers `"status": "error"`, which the client returns as an `api_error` list with the server's message.
-
-API reference: [MultiOptionGreeks](../api-documentation/v1/data-api/multioptiongreeks.md).
-
 ### Expiry Example
 
 ```r
@@ -1596,242 +1604,7 @@ equities <- nse[nse$instrumenttype == "EQ", ]
 write.csv(nse, "nse_instruments.csv", row.names = FALSE)
 ```
 
-### Telegram Alert Example
-
-```r
-response <- client$telegram(
-  username = "<openalgo_loginid>",
-  message = "NIFTY crossed 26000!"
-)
-print(response)
-```
-
-#### Telegram Alert Response
-
-```json
-{
-  "message": "Notification sent successfully",
-  "status": "success"
-}
-```
-
-`priority` (1 to 10, default 5) marks how urgent the alert is. The username is your OpenAlgo login, not your Telegram handle, and the account must be linked with `/link` in the OpenAlgo Telegram bot.
-
-### Telegram Bot Management Example
-
-`telegram()` sends you an alert. These methods manage the OpenAlgo Telegram bot itself: its configuration, starting and stopping it, the linked users and their preferences.
-
-```r
-# Read the configuration (the server masks the bot token)
-client$telegramconfig()
-
-# Change only the fields you pass
-client$updatetelegramconfig(polling_mode = TRUE, rate_limit_per_minute = 30)
-
-# Start and stop the bot
-client$telegramstart()
-client$telegramstop()
-```
-
-#### TelegramConfig Response
-
-```json
-{
-  "status": "success",
-  "data": {
-    "bot_token": "1234567890...",
-    "is_active": true,
-    "bot_username": "your_openalgo_bot",
-    "max_message_length": 4096,
-    "rate_limit_per_minute": 30,
-    "broadcast_enabled": true
-  }
-}
-```
-
-`updatetelegramconfig()`, `telegramstart()` and `telegramstop()` answer with a status and a message, for example `{"status": "success", "message": "Bot started successfully"}`. `updatetelegramconfig()` accepts `token`, `webhook_url`, `polling_mode`, `broadcast_enabled` and `rate_limit_per_minute` (1 to 120). `telegramstart()` needs a bot token in the configuration. A stopped bot also stops the automatic order alerts and refuses `telegram()` notifications.
-
-```r
-# Linked users, optionally filtered by broker or notification setting
-client$telegramusers()
-client$telegramusers(notifications_enabled = TRUE)
-```
-
-#### TelegramUsers Response
-
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "id": 1,
-      "telegram_id": 123456789,
-      "openalgo_username": "<openalgo_loginid>",
-      "first_name": "Your",
-      "last_name": "Name",
-      "telegram_username": "your_telegram_handle",
-      "broker": "yourbroker",
-      "notifications_enabled": true,
-      "created_at": "Tue, 06 Oct 2026 09:12:44 GMT",
-      "last_command_at": "Fri, 16 Oct 2026 08:58:10 GMT"
-    }
-  ],
-  "count": 1
-}
-```
-
-```r
-# Bot command statistics for the last 30 days (the server uses 7 when days is not given)
-client$telegramstats(days = 30)
-```
-
-#### TelegramStats Response
-
-```json
-{
-  "status": "success",
-  "data": {
-    "total_commands": 42,
-    "commands_by_type": {"orderbook": 18, "positions": 15, "pnl": 9},
-    "active_users": 1,
-    "top_users": [["your_telegram_handle", 42]],
-    "period_days": 30
-  }
-}
-```
-
-```r
-# One user's notification preferences
-client$telegrampreferences(telegram_id = 123456789)
-
-# Change only the preferences you pass
-client$updatetelegrampreferences(telegram_id = 123456789,
-                                 daily_summary = TRUE, summary_time = "16:00")
-```
-
-#### TelegramPreferences Response
-
-```json
-{
-  "status": "success",
-  "data": {
-    "order_notifications": true,
-    "trade_notifications": true,
-    "pnl_notifications": true,
-    "daily_summary": true,
-    "summary_time": "16:00",
-    "language": "en",
-    "timezone": "Asia/Kolkata"
-  }
-}
-```
-
-`updatetelegrampreferences()` accepts `order_notifications`, `trade_notifications`, `pnl_notifications`, `daily_summary`, `summary_time` (`"HH:MM"`), `language` and `timezone`, and answers `{"status": "success", "message": "Preferences updated successfully"}`.
-
-```r
-client$telegrambroadcast(message = "Markets open in 15 minutes")
-```
-
-#### TelegramBroadcast Response
-
-```json
-{
-  "status": "success",
-  "message": "Broadcast sent to 0 users, failed for 0 users",
-  "success_count": 0,
-  "fail_count": 0
-}
-```
-
-The current server validates a broadcast but does not deliver it yet, so it reports zero deliveries. A message can be up to 4096 characters, the server allows 5 broadcasts per minute, and it refuses them (HTTP 403) when broadcasting is disabled in the bot configuration. `filters` (a named list) is passed through for user filtering.
-
-### WhatsApp Alert Example
-
-Prerequisites: open `/whatsapp` in the OpenAlgo web UI, click **Pair**, scan the QR with your phone. Pairing is admin-only on purpose: the REST API exposes only the send endpoint so a leaked API key cannot re-pair the device.
-
-One call handles every common case: text, image, document, self-send, single recipient, or small broadcast (max 5).
-
-**Send to yourself (simplest case)**
-
-```r
-response <- client$whatsapp("NIFTY crossed 26000!")
-print(response)
-```
-
-#### WhatsApp Alert Response
-
-```json
-{
-  "status": "success",
-  "message": "Delivered to 1, failed 0",
-  "data": {
-    "sent": ["<self>"],
-    "failed": [],
-    "skipped": 0
-  }
-}
-```
-
-**Send to a single phone number**
-
-```r
-response <- client$whatsapp(
-  "Order placed: BUY RELIANCE x 10 @ MARKET",
-  to = "919876543210"
-)
-```
-
-**Small broadcast (up to 5 recipients)**
-
-```r
-response <- client$whatsapp(
-  "Server maintenance starting in 10 minutes",
-  to = c("919876543210", "919812345678", "919900112233")
-)
-```
-
-**Send an image with caption**
-
-The path is read from the OpenAlgo server's filesystem, not uploaded by the call. It must lie under the server's attachment roots (by default `db/attachments/` in the OpenAlgo folder).
-
-```r
-response <- client$whatsapp(
-  to = "919876543210",
-  image = "/srv/charts/nifty_eod.png",
-  caption = "NIFTY end-of-day chart"
-)
-```
-
-**Send a document (PDF, CSV, ...)**
-
-```r
-response <- client$whatsapp(
-  "Daily P&L report attached.",
-  to = "919876543210",
-  document = "/srv/reports/2026-05-17.pdf",
-  filename = "DailyPnL.pdf"
-)
-```
-
-**Fire-and-forget (skip the delivery report)**
-
-```r
-response <- client$whatsapp(
-  "Stop-loss hit on BANKNIFTY!",
-  wait_for_delivery = FALSE
-)
-```
-
-With `wait_for_delivery = FALSE` the response is `{"status": "success", "message": "Queued for 1 recipient(s)", "queued": 1}`.
-
-**Send to a linked OpenAlgo user**
-
-```r
-response <- client$whatsapp(
-  "Position update: BANKNIFTY 48000 CE now at +21% P&L.",
-  username = "alice"
-)
-```
+## Account
 
 ### Ping Example
 
@@ -2123,6 +1896,87 @@ print(response)
 }
 ```
 
+### Analyzer Status Example
+
+```r
+response <- client$analyzerstatus()
+print(response)
+```
+
+#### Analyzer Status Response
+
+```json
+{
+  "data": {"analyze_mode": true, "mode": "analyze", "total_logs": 2},
+  "status": "success"
+}
+```
+
+### Analyzer Toggle Example
+
+```r
+# Switch to analyze mode (simulated responses)
+response <- client$analyzertoggle(mode = TRUE)
+print(response)
+```
+
+#### Analyzer Toggle Response
+
+```json
+{
+  "data": {
+    "analyze_mode": true,
+    "message": "Analyzer mode switched to analyze",
+    "mode": "analyze",
+    "total_logs": 2
+  },
+  "status": "success"
+}
+```
+
+Analyzer mode (sandbox mode) simulates orders instead of sending them to the broker, with sandbox capital, and responses then carry `"mode": "analyze"`. `client$analyzertoggle(mode = FALSE)` switches back to live orders. Always confirm analyzer mode before running a test script against a broker-connected server. Simulated MARKET orders need a live price, so they fail while the market is closed; use LIMIT orders to test on holidays.
+
+### PnLSymbols Example
+
+Today's realized and unrealized P&L of the open sandbox positions, one entry per symbol. It works only while analyzer (sandbox) mode is on; in live mode the server answers HTTP 400 ("This endpoint is only available in sandbox/analyzer mode").
+
+```r
+response <- client$pnlsymbols()
+print(response)
+```
+
+#### PnLSymbols Response
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "symbol": "RELIANCE",
+      "exchange": "NSE",
+      "product": "MIS",
+      "quantity": 10,
+      "pnl": 125.5,
+      "unrealized_pnl": 100.0,
+      "today_realized_pnl": 25.5,
+      "total_pnl_today": 125.5
+    }
+  ],
+  "total_pnl": 125.5,
+  "total_unrealized_pnl": 100.0,
+  "total_today_realized_pnl": 25.5,
+  "total_pnl_today": 125.5,
+  "mode": "analyze"
+}
+```
+
+```r
+response$total_pnl_today
+#> [1] 125.5
+```
+
+## Utilities
+
 ### Holidays Example
 
 ```r
@@ -2232,86 +2086,246 @@ print(response)
 
 `updatechart()` needs 1 to 50 preferences with names of at most 50 characters; anything else is returned as a `validation_error` list without calling the server.
 
-### Analyzer Status Example
+## Alerts
+
+### Telegram Alert Example
 
 ```r
-response <- client$analyzerstatus()
+response <- client$telegram(
+  username = "<openalgo_loginid>",
+  message = "NIFTY crossed 26000!"
+)
 print(response)
 ```
 
-#### Analyzer Status Response
+#### Telegram Alert Response
 
 ```json
 {
-  "data": {"analyze_mode": true, "mode": "analyze", "total_logs": 2},
+  "message": "Notification sent successfully",
   "status": "success"
 }
 ```
 
-### Analyzer Toggle Example
+`priority` (1 to 10, default 5) marks how urgent the alert is. The username is your OpenAlgo login, not your Telegram handle, and the account must be linked with `/link` in the OpenAlgo Telegram bot.
+
+### WhatsApp Alert Example
+
+Prerequisites: open `/whatsapp` in the OpenAlgo web UI, click **Pair**, scan the QR with your phone. Pairing is admin-only on purpose: the REST API exposes only the send endpoint so a leaked API key cannot re-pair the device.
+
+One call handles every common case: text, image, document, self-send, single recipient, or small broadcast (max 5).
+
+**Send to yourself (simplest case)**
 
 ```r
-# Switch to analyze mode (simulated responses)
-response <- client$analyzertoggle(mode = TRUE)
+response <- client$whatsapp("NIFTY crossed 26000!")
 print(response)
 ```
 
-#### Analyzer Toggle Response
+#### WhatsApp Alert Response
 
 ```json
 {
+  "status": "success",
+  "message": "Delivered to 1, failed 0",
   "data": {
-    "analyze_mode": true,
-    "message": "Analyzer mode switched to analyze",
-    "mode": "analyze",
-    "total_logs": 2
-  },
-  "status": "success"
+    "sent": ["<self>"],
+    "failed": [],
+    "skipped": 0
+  }
 }
 ```
 
-Analyzer mode (sandbox mode) simulates orders instead of sending them to the broker, with sandbox capital, and responses then carry `"mode": "analyze"`. `client$analyzertoggle(mode = FALSE)` switches back to live orders. Always confirm analyzer mode before running a test script against a broker-connected server. Simulated MARKET orders need a live price, so they fail while the market is closed; use LIMIT orders to test on holidays.
-
-### PnLSymbols Example
-
-Today's realized and unrealized P&L of the open sandbox positions, one entry per symbol. It works only while analyzer (sandbox) mode is on; in live mode the server answers HTTP 400 ("This endpoint is only available in sandbox/analyzer mode").
+**Send to a single phone number**
 
 ```r
-response <- client$pnlsymbols()
-print(response)
+response <- client$whatsapp(
+  "Order placed: BUY RELIANCE x 10 @ MARKET",
+  to = "919876543210"
+)
 ```
 
-#### PnLSymbols Response
+**Small broadcast (up to 5 recipients)**
+
+```r
+response <- client$whatsapp(
+  "Server maintenance starting in 10 minutes",
+  to = c("919876543210", "919812345678", "919900112233")
+)
+```
+
+**Send an image with caption**
+
+The path is read from the OpenAlgo server's filesystem, not uploaded by the call. It must lie under the server's attachment roots (by default `db/attachments/` in the OpenAlgo folder).
+
+```r
+response <- client$whatsapp(
+  to = "919876543210",
+  image = "/srv/charts/nifty_eod.png",
+  caption = "NIFTY end-of-day chart"
+)
+```
+
+**Send a document (PDF, CSV, ...)**
+
+```r
+response <- client$whatsapp(
+  "Daily P&L report attached.",
+  to = "919876543210",
+  document = "/srv/reports/2026-05-17.pdf",
+  filename = "DailyPnL.pdf"
+)
+```
+
+**Fire-and-forget (skip the delivery report)**
+
+```r
+response <- client$whatsapp(
+  "Stop-loss hit on BANKNIFTY!",
+  wait_for_delivery = FALSE
+)
+```
+
+With `wait_for_delivery = FALSE` the response is `{"status": "success", "message": "Queued for 1 recipient(s)", "queued": 1}`.
+
+**Send to a linked OpenAlgo user**
+
+```r
+response <- client$whatsapp(
+  "Position update: BANKNIFTY 48000 CE now at +21% P&L.",
+  username = "alice"
+)
+```
+
+### Telegram Bot Management Example
+
+`telegram()` sends you an alert. These methods manage the OpenAlgo Telegram bot itself: its configuration, starting and stopping it, the linked users and their preferences.
+
+```r
+# Read the configuration (the server masks the bot token)
+client$telegramconfig()
+
+# Change only the fields you pass
+client$updatetelegramconfig(polling_mode = TRUE, rate_limit_per_minute = 30)
+
+# Start and stop the bot
+client$telegramstart()
+client$telegramstop()
+```
+
+#### TelegramConfig Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "bot_token": "1234567890...",
+    "is_active": true,
+    "bot_username": "your_openalgo_bot",
+    "max_message_length": 4096,
+    "rate_limit_per_minute": 30,
+    "broadcast_enabled": true
+  }
+}
+```
+
+`updatetelegramconfig()`, `telegramstart()` and `telegramstop()` answer with a status and a message, for example `{"status": "success", "message": "Bot started successfully"}`. `updatetelegramconfig()` accepts `token`, `webhook_url`, `polling_mode`, `broadcast_enabled` and `rate_limit_per_minute` (1 to 120). `telegramstart()` needs a bot token in the configuration. A stopped bot also stops the automatic order alerts and refuses `telegram()` notifications.
+
+```r
+# Linked users, optionally filtered by broker or notification setting
+client$telegramusers()
+client$telegramusers(notifications_enabled = TRUE)
+```
+
+#### TelegramUsers Response
 
 ```json
 {
   "status": "success",
   "data": [
     {
-      "symbol": "RELIANCE",
-      "exchange": "NSE",
-      "product": "MIS",
-      "quantity": 10,
-      "pnl": 125.5,
-      "unrealized_pnl": 100.0,
-      "today_realized_pnl": 25.5,
-      "total_pnl_today": 125.5
+      "id": 1,
+      "telegram_id": 123456789,
+      "openalgo_username": "<openalgo_loginid>",
+      "first_name": "Your",
+      "last_name": "Name",
+      "telegram_username": "your_telegram_handle",
+      "broker": "yourbroker",
+      "notifications_enabled": true,
+      "created_at": "Tue, 06 Oct 2026 09:12:44 GMT",
+      "last_command_at": "Fri, 16 Oct 2026 08:58:10 GMT"
     }
   ],
-  "total_pnl": 125.5,
-  "total_unrealized_pnl": 100.0,
-  "total_today_realized_pnl": 25.5,
-  "total_pnl_today": 125.5,
-  "mode": "analyze"
+  "count": 1
 }
 ```
 
 ```r
-response$total_pnl_today
-#> [1] 125.5
+# Bot command statistics for the last 30 days (the server uses 7 when days is not given)
+client$telegramstats(days = 30)
 ```
 
-### Strategy Module
+#### TelegramStats Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "total_commands": 42,
+    "commands_by_type": {"orderbook": 18, "positions": 15, "pnl": 9},
+    "active_users": 1,
+    "top_users": [["your_telegram_handle", 42]],
+    "period_days": 30
+  }
+}
+```
+
+```r
+# One user's notification preferences
+client$telegrampreferences(telegram_id = 123456789)
+
+# Change only the preferences you pass
+client$updatetelegrampreferences(telegram_id = 123456789,
+                                 daily_summary = TRUE, summary_time = "16:00")
+```
+
+#### TelegramPreferences Response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "order_notifications": true,
+    "trade_notifications": true,
+    "pnl_notifications": true,
+    "daily_summary": true,
+    "summary_time": "16:00",
+    "language": "en",
+    "timezone": "Asia/Kolkata"
+  }
+}
+```
+
+`updatetelegrampreferences()` accepts `order_notifications`, `trade_notifications`, `pnl_notifications`, `daily_summary`, `summary_time` (`"HH:MM"`), `language` and `timezone`, and answers `{"status": "success", "message": "Preferences updated successfully"}`.
+
+```r
+client$telegrambroadcast(message = "Markets open in 15 minutes")
+```
+
+#### TelegramBroadcast Response
+
+```json
+{
+  "status": "success",
+  "message": "Broadcast sent to 0 users, failed for 0 users",
+  "success_count": 0,
+  "fail_count": 0
+}
+```
+
+The current server validates a broadcast but does not deliver it yet, so it reports zero deliveries. A message can be up to 4096 characters, the server allows 5 broadcasts per minute, and it refuses them (HTTP 403) when broadcasting is disabled in the bot configuration. `filters` (a named list) is passed through for user filtering.
+
+## Strategy Module
 
 OpenAlgo's `/strategy` module runs multi-leg options strategies with end-to-end risk management, plus a signal-driven mode for TradingView alerts. Two surfaces reach it, and they take different credentials:
 
@@ -2651,6 +2665,8 @@ Events an operator should not ignore:
 | `leg_expiry_fallback` | warn | The chain did not list the expiry rank the leg asked for, so a nearer one was used |
 | `flip_outgoing_exit_rejected` | critical | The outgoing side of a signal flip is still held |
 
+## Strategy Webhook
+
 ### Strategy Webhook Example
 
 The public webhook at `/strategy/webhook/<token>` is what TradingView and other alert senders post to. It is not under `/api/v1` and takes no API key: the `oaws_` token in the URL is the whole credential. It is shown exactly once, in the browser, when the strategy is created or its token is rotated. Treat it as a password, and keep it out of scripts you share (for example read it with `Sys.getenv("OPENALGO_WEBHOOK_TOKEN")`). The SDK's `Strategy()` object speaks its protocol:
@@ -2710,7 +2726,7 @@ Other members of the webhook object:
 
 See the [Strategy RMS API](../api-documentation/v1/strategy-rms-api/README.md) for every field of the methods above.
 
-### WebSocket Feed in R
+## WebSocket Feed in R
 
 The feed streams live data from the OpenAlgo WebSocket server (port 8765 by default): LTP, full quotes, market depth, and the account's order updates.
 
@@ -3143,7 +3159,7 @@ client <- api(api_key = "...", host = "http://127.0.0.1:5000", auto_reconnect = 
 
 With `verbose = 1` or higher the reconnect attempts and the replayed subscriptions are logged under the `[WS]` and `[SUB]` tags.
 
-### Error Handling
+## Error Handling
 
 The client **returns** failures instead of raising them, so a trading loop handles a failed order the same way it handles a successful one. A failure is a named list with `status = "error"`, a `message` and an `error_type`:
 

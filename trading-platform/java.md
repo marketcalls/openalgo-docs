@@ -63,7 +63,7 @@ Please refer to the documentation on [order constants](https://docs.openalgo.in/
 
 ***
 
-## API Reference
+## Order API
 
 ### PlaceOrder Example
 
@@ -373,6 +373,212 @@ System.out.println("Quantity: " + response.get("quantity").getAsInt());
 }
 ```
 
+***
+
+## Options
+
+### OptionsOrder Example
+
+To place ATM options order:
+
+```java
+JsonObject response = client.optionsorder(
+    "NIFTY",      // underlying
+    "NSE_INDEX",  // exchange
+    "ATM",        // offset
+    "CE",         // optionType
+    "BUY",        // action
+    65            // quantity
+);
+System.out.println("Status: " + response.get("status").getAsString());
+System.out.println("OrderId: " + response.get("orderid").getAsString());
+```
+
+**OptionsOrder Response**
+
+```json
+{
+  "status": "success",
+  "orderid": "25102800000006",
+  "symbol": "NIFTY30DEC2526200CE",
+  "exchange": "NFO",
+  "underlying": "NIFTY",
+  "underlying_ltp": 26215.55
+}
+```
+
+### OptionsMultiOrder Example
+
+To place multi-leg options strategy (e.g., Bull Call Spread):
+
+```java
+List<Map<String, Object>> legs = new ArrayList<>();
+
+// Leg 1: Buy ATM CE
+Map<String, Object> leg1 = new HashMap<>();
+leg1.put("offset", "ATM");
+leg1.put("option_type", "CE");
+leg1.put("action", "BUY");
+leg1.put("quantity", 65);
+leg1.put("product", "NRML");
+legs.add(leg1);
+
+// Leg 2: Sell OTM1 CE
+Map<String, Object> leg2 = new HashMap<>();
+leg2.put("offset", "OTM1");
+leg2.put("option_type", "CE");
+leg2.put("action", "SELL");
+leg2.put("quantity", 65);
+leg2.put("product", "NRML");
+legs.add(leg2);
+
+// Place multi-leg order with expiry.
+// The exchange is the UNDERLYING's exchange (NSE_INDEX here), not NFO.
+JsonObject response = client.optionsmultiorder("MyStrategy", "NIFTY", "NSE_INDEX", legs, "30DEC25");
+
+// Or without expiry (uses nearest expiry)
+JsonObject response = client.optionsmultiorder("MyStrategy", "NIFTY", "NSE_INDEX", legs);
+
+System.out.println("Status: " + response.get("status").getAsString());
+```
+
+**OptionsMultiOrder Response**
+
+```json
+{
+  "status": "success",
+  "mode": "analyze",
+  "underlying": "NIFTY",
+  "underlying_ltp": 26172.4,
+  "results": [
+    {
+      "leg": 1,
+      "action": "BUY",
+      "offset": "ATM",
+      "option_type": "CE",
+      "symbol": "NIFTY30DEC2526150CE",
+      "exchange": "NFO",
+      "orderid": "25122337669355",
+      "status": "success"
+    },
+    {
+      "leg": 2,
+      "action": "SELL",
+      "offset": "OTM1",
+      "option_type": "CE",
+      "symbol": "NIFTY30DEC2526200CE",
+      "exchange": "NFO",
+      "orderid": "25122347595003",
+      "status": "success"
+    }
+  ]
+}
+```
+
+### OptionSymbol Example
+
+```java
+// Nearest expiry
+JsonObject response = client.optionsymbol("NIFTY", "NSE_INDEX", "ATM", "CE");
+
+// With an explicit expiry in DDMMMYY format
+JsonObject response = client.optionsymbol("NIFTY", "NSE_INDEX", "ATM", "CE", "30DEC25");
+
+System.out.println("Symbol: " + response.get("symbol").getAsString());
+```
+
+**OptionSymbol Response**
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY30DEC2525950CE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+### OptionChain Example
+
+```java
+JsonObject response = client.optionchain("NIFTY", "NSE_INDEX", "30DEC25", 10);
+System.out.println("Status: " + response.get("status").getAsString());
+System.out.println("Underlying: " + response.get("underlying").getAsString());
+System.out.println("ATM Strike: " + response.get("atm_strike").getAsInt());
+```
+
+**OptionChain Response**
+
+```json
+{
+  "status": "success",
+  "underlying": "NIFTY",
+  "underlying_ltp": 26215.55,
+  "expiry_date": "30DEC25",
+  "atm_strike": 26200,
+  "chain": [
+    {
+      "strike": 26100,
+      "ce": {"symbol": "NIFTY30DEC2526100CE", "label": "ITM2", "ltp": 490},
+      "pe": {"symbol": "NIFTY30DEC2526100PE", "label": "OTM2", "ltp": 193}
+    }
+  ]
+}
+```
+
+### OptionGreeks Example
+
+```java
+JsonObject response = client.optiongreeks("NIFTY25NOV2526000CE", "NFO");
+System.out.println("Status: " + response.get("status").getAsString());
+```
+
+**OptionGreeks Response**
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY25NOV2526000CE",
+  "spot_price": 25966.05,
+  "option_price": 435,
+  "implied_volatility": 15.6,
+  "days_to_expiry": 28.51,
+  "greeks": {
+    "delta": 0.4967,
+    "gamma": 0.000352,
+    "theta": -7.919,
+    "vega": 28.9489
+  }
+}
+```
+
+### SyntheticFuture Example
+
+```java
+JsonObject response = client.syntheticfuture("NIFTY", "NSE_INDEX", "25NOV25");
+System.out.println("Status: " + response.get("status").getAsString());
+```
+
+**SyntheticFuture Response**
+
+```json
+{
+  "status": "success",
+  "underlying": "NIFTY",
+  "underlying_ltp": 25910.05,
+  "expiry": "25NOV25",
+  "atm_strike": 25900.0,
+  "synthetic_future_price": 25980.05
+}
+```
+
+***
+
+## Market Data
+
 ### Quotes Example
 
 ```java
@@ -404,6 +610,37 @@ if (response.has("data")) {
     "prev_close": 1565.1,
     "volume": 10184852
   }
+}
+```
+
+### MultiQuotes Example
+
+```java
+List<Map<String, String>> symbols = new ArrayList<>();
+symbols.add(Map.of("symbol", "RELIANCE", "exchange", "NSE"));
+symbols.add(Map.of("symbol", "TCS", "exchange", "NSE"));
+
+JsonObject response = client.multiquotes(symbols);
+System.out.println("Status: " + response.get("status").getAsString());
+```
+
+**MultiQuotes Response**
+
+```json
+{
+  "status": "success",
+  "results": [
+    {
+      "symbol": "RELIANCE",
+      "exchange": "NSE",
+      "data": {"open": 1542.3, "high": 1571.6, "low": 1540.5, "ltp": 1569.9, "volume": 14054299}
+    },
+    {
+      "symbol": "TCS",
+      "exchange": "NSE",
+      "data": {"open": 3118.8, "high": 3178, "low": 3117, "ltp": 3162.9, "volume": 2508527}
+    }
+  ]
 }
 ```
 
@@ -553,37 +790,6 @@ System.out.println("Status: " + response.get("status").getAsString());
 }
 ```
 
-### MultiQuotes Example
-
-```java
-List<Map<String, String>> symbols = new ArrayList<>();
-symbols.add(Map.of("symbol", "RELIANCE", "exchange", "NSE"));
-symbols.add(Map.of("symbol", "TCS", "exchange", "NSE"));
-
-JsonObject response = client.multiquotes(symbols);
-System.out.println("Status: " + response.get("status").getAsString());
-```
-
-**MultiQuotes Response**
-
-```json
-{
-  "status": "success",
-  "results": [
-    {
-      "symbol": "RELIANCE",
-      "exchange": "NSE",
-      "data": {"open": 1542.3, "high": 1571.6, "low": 1540.5, "ltp": 1569.9, "volume": 14054299}
-    },
-    {
-      "symbol": "TCS",
-      "exchange": "NSE",
-      "data": {"open": 3118.8, "high": 3178, "low": 3117, "ltp": 3162.9, "volume": 2508527}
-    }
-  ]
-}
-```
-
 ### Expiry Example
 
 `instrumenttype` is `futures` or `options`, and the exchange must be a derivatives exchange: NFO, BFO, MCX, CDS, NCO, BCD, NCDEX or CRYPTO.
@@ -600,52 +806,6 @@ System.out.println("Status: " + response.get("status").getAsString());
   "status": "success",
   "message": "Found 18 expiry dates for NIFTY options in NFO",
   "data": ["10-JUL-25", "17-JUL-25", "24-JUL-25", "31-JUL-25", "07-AUG-25"]
-}
-```
-
-### OptionSymbol Example
-
-```java
-// Nearest expiry
-JsonObject response = client.optionsymbol("NIFTY", "NSE_INDEX", "ATM", "CE");
-
-// With an explicit expiry in DDMMMYY format
-JsonObject response = client.optionsymbol("NIFTY", "NSE_INDEX", "ATM", "CE", "30DEC25");
-
-System.out.println("Symbol: " + response.get("symbol").getAsString());
-```
-
-**OptionSymbol Response**
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2525950CE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-### SyntheticFuture Example
-
-```java
-JsonObject response = client.syntheticfuture("NIFTY", "NSE_INDEX", "25NOV25");
-System.out.println("Status: " + response.get("status").getAsString());
-```
-
-**SyntheticFuture Response**
-
-```json
-{
-  "status": "success",
-  "underlying": "NIFTY",
-  "underlying_ltp": 25910.05,
-  "expiry": "25NOV25",
-  "atm_strike": 25900.0,
-  "synthetic_future_price": 25980.05
 }
 ```
 
@@ -687,6 +847,36 @@ System.out.println("Status: " + response.get("status").getAsString());
 }
 ```
 
+***
+
+## Account
+
+### Funds Example
+
+```java
+JsonObject response = client.funds();
+System.out.println("Status: " + response.get("status").getAsString());
+if (response.has("data")) {
+    JsonObject data = response.getAsJsonObject("data");
+    System.out.println("Available Cash: " + data.get("availablecash").getAsString());
+}
+```
+
+**Funds Response**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "availablecash": "320.66",
+    "collateral": "0.00",
+    "m2mrealized": "3.27",
+    "m2munrealized": "-7.88",
+    "utiliseddebits": "679.34"
+  }
+}
+```
+
 ### Margin Example
 
 Up to 50 positions per request. `quantity`, `price` and `trigger_price` go over the wire as strings.
@@ -723,184 +913,6 @@ System.out.println("Status: " + response.get("status").getAsString());
     "total_margin_required": 91555.7625,
     "span_margin": 0.0,
     "exposure_margin": 91555.7625
-  }
-}
-```
-
-### OptionsOrder Example
-
-To place ATM options order:
-
-```java
-JsonObject response = client.optionsorder(
-    "NIFTY",      // underlying
-    "NSE_INDEX",  // exchange
-    "ATM",        // offset
-    "CE",         // optionType
-    "BUY",        // action
-    65            // quantity
-);
-System.out.println("Status: " + response.get("status").getAsString());
-System.out.println("OrderId: " + response.get("orderid").getAsString());
-```
-
-**OptionsOrder Response**
-
-```json
-{
-  "status": "success",
-  "orderid": "25102800000006",
-  "symbol": "NIFTY30DEC2526200CE",
-  "exchange": "NFO",
-  "underlying": "NIFTY",
-  "underlying_ltp": 26215.55
-}
-```
-
-### OptionsMultiOrder Example
-
-To place multi-leg options strategy (e.g., Bull Call Spread):
-
-```java
-List<Map<String, Object>> legs = new ArrayList<>();
-
-// Leg 1: Buy ATM CE
-Map<String, Object> leg1 = new HashMap<>();
-leg1.put("offset", "ATM");
-leg1.put("option_type", "CE");
-leg1.put("action", "BUY");
-leg1.put("quantity", 65);
-leg1.put("product", "NRML");
-legs.add(leg1);
-
-// Leg 2: Sell OTM1 CE
-Map<String, Object> leg2 = new HashMap<>();
-leg2.put("offset", "OTM1");
-leg2.put("option_type", "CE");
-leg2.put("action", "SELL");
-leg2.put("quantity", 65);
-leg2.put("product", "NRML");
-legs.add(leg2);
-
-// Place multi-leg order with expiry.
-// The exchange is the UNDERLYING's exchange (NSE_INDEX here), not NFO.
-JsonObject response = client.optionsmultiorder("MyStrategy", "NIFTY", "NSE_INDEX", legs, "30DEC25");
-
-// Or without expiry (uses nearest expiry)
-JsonObject response = client.optionsmultiorder("MyStrategy", "NIFTY", "NSE_INDEX", legs);
-
-System.out.println("Status: " + response.get("status").getAsString());
-```
-
-**OptionsMultiOrder Response**
-
-```json
-{
-  "status": "success",
-  "mode": "analyze",
-  "underlying": "NIFTY",
-  "underlying_ltp": 26172.4,
-  "results": [
-    {
-      "leg": 1,
-      "action": "BUY",
-      "offset": "ATM",
-      "option_type": "CE",
-      "symbol": "NIFTY30DEC2526150CE",
-      "exchange": "NFO",
-      "orderid": "25122337669355",
-      "status": "success"
-    },
-    {
-      "leg": 2,
-      "action": "SELL",
-      "offset": "OTM1",
-      "option_type": "CE",
-      "symbol": "NIFTY30DEC2526200CE",
-      "exchange": "NFO",
-      "orderid": "25122347595003",
-      "status": "success"
-    }
-  ]
-}
-```
-
-### OptionChain Example
-
-```java
-JsonObject response = client.optionchain("NIFTY", "NSE_INDEX", "30DEC25", 10);
-System.out.println("Status: " + response.get("status").getAsString());
-System.out.println("Underlying: " + response.get("underlying").getAsString());
-System.out.println("ATM Strike: " + response.get("atm_strike").getAsInt());
-```
-
-**OptionChain Response**
-
-```json
-{
-  "status": "success",
-  "underlying": "NIFTY",
-  "underlying_ltp": 26215.55,
-  "expiry_date": "30DEC25",
-  "atm_strike": 26200,
-  "chain": [
-    {
-      "strike": 26100,
-      "ce": {"symbol": "NIFTY30DEC2526100CE", "label": "ITM2", "ltp": 490},
-      "pe": {"symbol": "NIFTY30DEC2526100PE", "label": "OTM2", "ltp": 193}
-    }
-  ]
-}
-```
-
-### OptionGreeks Example
-
-```java
-JsonObject response = client.optiongreeks("NIFTY25NOV2526000CE", "NFO");
-System.out.println("Status: " + response.get("status").getAsString());
-```
-
-**OptionGreeks Response**
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY25NOV2526000CE",
-  "spot_price": 25966.05,
-  "option_price": 435,
-  "implied_volatility": 15.6,
-  "days_to_expiry": 28.51,
-  "greeks": {
-    "delta": 0.4967,
-    "gamma": 0.000352,
-    "theta": -7.919,
-    "vega": 28.9489
-  }
-}
-```
-
-### Funds Example
-
-```java
-JsonObject response = client.funds();
-System.out.println("Status: " + response.get("status").getAsString());
-if (response.has("data")) {
-    JsonObject data = response.getAsJsonObject("data");
-    System.out.println("Available Cash: " + data.get("availablecash").getAsString());
-}
-```
-
-**Funds Response**
-
-```json
-{
-  "status": "success",
-  "data": {
-    "availablecash": "320.66",
-    "collateral": "0.00",
-    "m2mrealized": "3.27",
-    "m2munrealized": "-7.88",
-    "utiliseddebits": "679.34"
   }
 }
 ```
@@ -1015,60 +1027,6 @@ System.out.println("Status: " + response.get("status").getAsString());
 }
 ```
 
-### Telegram Alert Example
-
-```java
-JsonObject response = client.telegram("<openalgo_loginid>", "NIFTY crossed 26000!", 5);
-System.out.println("Status: " + response.get("status").getAsString());
-```
-
-**Telegram Alert Response**
-
-```json
-{
-  "status": "success",
-  "message": "Notification sent successfully"
-}
-```
-
-### Holidays Example
-
-```java
-JsonObject response = client.holidays(2025);
-System.out.println("Status: " + response.get("status").getAsString());
-```
-
-**Holidays Response**
-
-```json
-{
-  "status": "success",
-  "data": [
-    {"date": "2025-02-26", "description": "Maha Shivaratri", "holiday_type": "TRADING_HOLIDAY"},
-    {"date": "2025-03-14", "description": "Holi", "holiday_type": "TRADING_HOLIDAY"}
-  ]
-}
-```
-
-### Timings Example
-
-```java
-JsonObject response = client.timings("2025-12-19");
-System.out.println("Status: " + response.get("status").getAsString());
-```
-
-**Timings Response**
-
-```json
-{
-  "status": "success",
-  "data": [
-    {"exchange": "NSE", "start_time": 1734584100000, "end_time": 1734606600000},
-    {"exchange": "BSE", "start_time": 1734584100000, "end_time": 1734606600000}
-  ]
-}
-```
-
 ### Analyzer Status Example
 
 ```java
@@ -1113,7 +1071,69 @@ System.out.println("Status: " + response.get("status").getAsString());
 
 ***
 
-### Endpoints not wrapped by the SDK
+## Utilities
+
+### Holidays Example
+
+```java
+JsonObject response = client.holidays(2025);
+System.out.println("Status: " + response.get("status").getAsString());
+```
+
+**Holidays Response**
+
+```json
+{
+  "status": "success",
+  "data": [
+    {"date": "2025-02-26", "description": "Maha Shivaratri", "holiday_type": "TRADING_HOLIDAY"},
+    {"date": "2025-03-14", "description": "Holi", "holiday_type": "TRADING_HOLIDAY"}
+  ]
+}
+```
+
+### Timings Example
+
+```java
+JsonObject response = client.timings("2025-12-19");
+System.out.println("Status: " + response.get("status").getAsString());
+```
+
+**Timings Response**
+
+```json
+{
+  "status": "success",
+  "data": [
+    {"exchange": "NSE", "start_time": 1734584100000, "end_time": 1734606600000},
+    {"exchange": "BSE", "start_time": 1734584100000, "end_time": 1734606600000}
+  ]
+}
+```
+
+***
+
+## Alerts
+
+### Telegram Alert Example
+
+```java
+JsonObject response = client.telegram("<openalgo_loginid>", "NIFTY crossed 26000!", 5);
+System.out.println("Status: " + response.get("status").getAsString());
+```
+
+**Telegram Alert Response**
+
+```json
+{
+  "status": "success",
+  "message": "Notification sent successfully"
+}
+```
+
+***
+
+## Endpoints not wrapped by the SDK
 
 The Java SDK does not expose helpers for the GTT endpoints, `multioptiongreeks` or `ping`. Reach them by posting to the REST endpoint directly at `http://127.0.0.1:5000/api/v1/<endpoint>`, passing the same `apikey` field the SDK sends.
 
@@ -1176,6 +1196,8 @@ Individual items can fail while the batch still returns `"status": "success"`, s
 ```json
 {"data": {"broker": "zerodha", "message": "pong"}, "status": "success"}
 ```
+
+***
 
 ## WebSocket Streaming
 
@@ -1298,8 +1320,6 @@ Map<String, Object> depthData = client.getDepth("MCX", "CRUDEOIL16JAN26FUT");
 }
 ```
 
-***
-
 ### WebSocket connection notes
 
 The proxy listens on `ws://127.0.0.1:8765`. Every client authenticates with its OpenAlgo API key before subscribing, and a connection that has not authenticated within 15 seconds is closed. Subscriptions carry a mode: `1` for LTP, `2` for Quote and `3` for Depth. The strings `LTP`, `Quote` and `Depth` are accepted as well and are matched case-insensitively; Quote is the default when the field is omitted. LTP updates are throttled to one per symbol per 50 ms, so a fast-moving symbol delivers at most 20 LTP messages a second.
@@ -1351,7 +1371,7 @@ Every subsequent status change on any order in the account then arrives as:
 
 ***
 
-### Error Handling
+## Error Handling
 
 ```java
 JsonObject response = client.placeorder("INVALID", "BUY", "NSE");
@@ -1363,9 +1383,9 @@ if (!"success".equals(response.get("status").getAsString())) {
 
 ***
 
-### Complete API Reference
+## Complete API Reference
 
-#### Order Management
+### Order Management
 
 | Method              | Description                              |
 | ------------------- | ---------------------------------------- |
@@ -1378,14 +1398,14 @@ if (!"success".equals(response.get("status").getAsString())) {
 | `orderstatus()`     | Get status of a specific order           |
 | `openposition()`    | Get current open position quantity       |
 
-#### Basket & Split Orders
+### Basket & Split Orders
 
 | Method          | Description                               |
 | --------------- | ----------------------------------------- |
 | `basketorder()` | Place multiple orders in a single request |
 | `splitorder()`  | Split large order into smaller chunks     |
 
-#### Options Trading
+### Options Trading
 
 | Method                | Description                      |
 | --------------------- | -------------------------------- |
@@ -1397,7 +1417,7 @@ if (!"success".equals(response.get("status").getAsString())) {
 | `syntheticfuture()`   | Calculate synthetic future price |
 | `expiry()`            | Get expiry dates for symbol      |
 
-#### Market Data
+### Market Data
 
 | Method          | Description                       |
 | --------------- | --------------------------------- |
@@ -1407,7 +1427,7 @@ if (!"success".equals(response.get("status").getAsString())) {
 | `history()`     | Get historical OHLCV data         |
 | `intervals()`   | Get supported time intervals      |
 
-#### Symbol & Search
+### Symbol & Search
 
 | Method          | Description              |
 | --------------- | ------------------------ |
@@ -1415,7 +1435,7 @@ if (!"success".equals(response.get("status").getAsString())) {
 | `search()`      | Search for symbols       |
 | `instruments()` | Download all instruments |
 
-#### Account & Portfolio
+### Account & Portfolio
 
 | Method           | Description                   |
 | ---------------- | ----------------------------- |
@@ -1426,7 +1446,7 @@ if (!"success".equals(response.get("status").getAsString())) {
 | `positionbook()` | Get position book             |
 | `holdings()`     | Get stock holdings            |
 
-#### Utilities
+### Utilities
 
 | Method             | Description                     |
 | ------------------ | ------------------------------- |
@@ -1436,7 +1456,7 @@ if (!"success".equals(response.get("status").getAsString())) {
 | `analyzerstatus()` | Get analyzer mode status        |
 | `analyzertoggle()` | Toggle analyze/live mode        |
 
-#### WebSocket Streaming
+### WebSocket Streaming
 
 | Method               | Description                 |
 | -------------------- | --------------------------- |
@@ -1454,11 +1474,13 @@ if (!"success".equals(response.get("status").getAsString())) {
 
 ***
 
-### License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-### Links
+***
+
+## Links
 
 * [OpenAlgo Platform](https://openalgo.in/)
 * [API Documentation](https://docs.openalgo.in/api-documentation/v1)

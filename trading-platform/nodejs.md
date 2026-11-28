@@ -8,13 +8,13 @@ To install the OpenAlgo Node.js library, use npm:
 npm install openalgo
 ```
 
-#### Get the OpenAlgo apikey
+### Get the OpenAlgo apikey
 
 Make Sure that your OpenAlgo Application is running. Login to OpenAlgo Application with valid credentials and get the OpenAlgo apikey
 
 For detailed function parameters refer to the [API Documentation](https://docs.openalgo.in/api-documentation/v1)
 
-#### Getting Started with OpenAlgo
+### Getting Started with OpenAlgo
 
 First, import the OpenAlgo class from the library and initialize it with your API key:
 
@@ -27,18 +27,20 @@ import OpenAlgo from 'openalgo';
 const client = new OpenAlgo('your_api_key_here', 'http://127.0.0.1:5000');
 ```
 
-#### Check OpenAlgo Version
+### Check OpenAlgo Version
 
 ```javascript
 import { version } from 'openalgo';
 console.log(version);
 ```
 
-#### Examples
+### Examples
 
 Please refer to the documentation on [order constants](https://docs.openalgo.in/api-documentation/v1/order-constants), and consult the API reference for details on optional parameters
 
-#### PlaceOrder example
+## Order API
+
+### PlaceOrder example
 
 To place a new market order:
 
@@ -85,7 +87,7 @@ Place Limit Order Response
 {"orderid": "250408001003813", "status": "success"}
 ```
 
-#### PlaceSmartOrder Example
+### PlaceSmartOrder Example
 
 To place a smart order considering the current position size:
 
@@ -109,7 +111,263 @@ Place Smart Market Order Response
 {"orderid": "250408000997543", "status": "success"}
 ```
 
-#### OptionsOrder Example
+### BasketOrder example
+
+To place a new basket order:
+
+```javascript
+const basketOrders = [
+    {
+        symbol: "BHEL",
+        exchange: "NSE",
+        action: "BUY",
+        quantity: 1,
+        pricetype: "MARKET",
+        product: "MIS"
+    },
+    {
+        symbol: "ZOMATO",
+        exchange: "NSE",
+        action: "SELL",
+        quantity: 1,
+        pricetype: "MARKET",
+        product: "MIS"
+    }
+];
+const response = await client.basketOrder({ orders: basketOrders });
+console.log(response);
+```
+
+**Basket Order Response**
+
+```json
+{
+  "status": "success",
+  "results": [
+    {
+      "symbol": "BHEL",
+      "status": "success",
+      "orderid": "250408000999544"
+    },
+    {
+      "symbol": "ZOMATO",
+      "status": "success",
+      "orderid": "250408000997545"
+    }
+  ]
+}
+```
+
+### SplitOrder example
+
+To place a new split order:
+
+```javascript
+const response = await client.splitOrder({
+    symbol: "YESBANK",
+    exchange: "NSE",
+    action: "SELL",
+    quantity: 105,
+    splitSize: 20,
+    priceType: "MARKET",
+    product: "MIS"
+});
+console.log(response);
+```
+
+**SplitOrder Response**
+
+```json
+{
+  "status": "success",
+  "split_size": 20,
+  "total_quantity": 105,
+  "results": [
+    {
+      "order_num": 1,
+      "orderid": "250408001021467",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 2,
+      "orderid": "250408001021459",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 3,
+      "orderid": "250408001021466",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 4,
+      "orderid": "250408001021470",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 5,
+      "orderid": "250408001021471",
+      "quantity": 20,
+      "status": "success"
+    },
+    {
+      "order_num": 6,
+      "orderid": "250408001021472",
+      "quantity": 5,
+      "status": "success"
+    }
+  ]
+}
+```
+
+### ModifyOrder Example
+
+To modify an existing order:
+
+```javascript
+const response = await client.modifyOrder({
+    orderId: "250408001002736",
+    strategy: "NodeJS",
+    symbol: "YESBANK",
+    action: "BUY",
+    exchange: "NSE",
+    priceType: "LIMIT",
+    product: "CNC",
+    quantity: 1,
+    price: 16.5
+});
+console.log(response);
+```
+
+**Modify Order Response**
+
+```json
+{"orderid": "250408001002736", "status": "success"}
+```
+
+### CancelOrder Example
+
+To cancel an existing order:
+
+```javascript
+const response = await client.cancelOrder({
+    orderId: "250408001002736",
+    strategy: "NodeJS"
+});
+console.log(response);
+```
+
+**Cancelorder Response**
+
+```json
+{"orderid": "250408001002736", "status": "success"}
+```
+
+### CancelAllOrder Example
+
+To cancel all open orders and trigger pending orders
+
+```javascript
+const response = await client.cancelAllOrder({
+    strategy: "NodeJS"
+});
+console.log(response);
+```
+
+**Cancelallorder Response**
+
+```json
+{
+  "status": "success",
+  "message": "Canceled 5 orders. Failed to cancel 0 orders.",
+  "canceled_orders": [
+    "250408001042620",
+    "250408001042667",
+    "250408001042642",
+    "250408001043015",
+    "250408001043386"
+  ],
+  "failed_cancellations": []
+}
+```
+
+### ClosePosition Example
+
+To close all open positions across various exchanges
+
+```javascript
+const response = await client.closePosition({
+    strategy: "NodeJS"
+});
+console.log(response);
+```
+
+**ClosePosition Response**
+
+```json
+{"message": "All Open Positions Squared Off", "status": "success"}
+```
+
+### OrderStatus Example
+
+To Get the Current OrderStatus
+
+```javascript
+const response = await client.orderStatus({
+    orderId: "250828000185002",
+    strategy: "Test Strategy"
+});
+console.log(response);
+```
+
+**Orderstatus Response**
+
+```json
+{
+  "data": {
+    "action": "BUY",
+    "average_price": 18.95,
+    "exchange": "NSE",
+    "order_status": "complete",
+    "orderid": "250828000185002",
+    "price": 0,
+    "pricetype": "MARKET",
+    "product": "MIS",
+    "quantity": "1",
+    "symbol": "YESBANK",
+    "timestamp": "28-Aug-2025 09:59:10",
+    "trigger_price": 0
+  },
+  "status": "success"
+}
+```
+
+### OpenPosition Example
+
+To Get the Current OpenPosition
+
+```javascript
+const response = await client.openPosition({
+    strategy: "Test Strategy",
+    symbol: "YESBANK",
+    exchange: "NSE",
+    product: "MIS"
+});
+console.log(response);
+```
+
+OpenPosition Response
+
+```json
+{"quantity": "-10", "status": "success"}
+```
+
+## Options
+
+### OptionsOrder Example
 
 To place ATM options order
 
@@ -214,7 +472,7 @@ Place Options Order Response
 }
 ```
 
-#### OptionsMultiOrder Example
+### OptionsMultiOrder Example
 
 To place Iron Condor options order (Same Expiry)
 
@@ -333,458 +591,90 @@ Place OptionsMultiOrder Response
 }
 ```
 
-#### BasketOrder example
+### OptionSymbol Example
 
-To place a new basket order:
+ATM Option
 
 ```javascript
-const basketOrders = [
-    {
-        symbol: "BHEL",
-        exchange: "NSE",
-        action: "BUY",
-        quantity: 1,
-        pricetype: "MARKET",
-        product: "MIS"
-    },
-    {
-        symbol: "ZOMATO",
-        exchange: "NSE",
-        action: "SELL",
-        quantity: 1,
-        pricetype: "MARKET",
-        product: "MIS"
-    }
-];
-const response = await client.basketOrder({ orders: basketOrders });
+const response = await client.optionSymbol({
+    underlying: "NIFTY",
+    exchange: "NSE_INDEX",
+    expiryDate: "30DEC25",
+    offset: "ATM",
+    optionType: "CE"
+});
 console.log(response);
 ```
 
-**Basket Order Response**
+**OptionSymbol Response**
 
 ```json
 {
   "status": "success",
-  "results": [
-    {
-      "symbol": "BHEL",
-      "status": "success",
-      "orderid": "250408000999544"
-    },
-    {
-      "symbol": "ZOMATO",
-      "status": "success",
-      "orderid": "250408000997545"
-    }
-  ]
+  "symbol": "NIFTY30DEC2525950CE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
 }
 ```
 
-#### SplitOrder example
-
-To place a new split order:
+ITM Option
 
 ```javascript
-const response = await client.splitOrder({
-    symbol: "YESBANK",
-    exchange: "NSE",
-    action: "SELL",
-    quantity: 105,
-    splitSize: 20,
-    priceType: "MARKET",
-    product: "MIS"
+const response = await client.optionSymbol({
+    underlying: "NIFTY",
+    exchange: "NSE_INDEX",
+    expiryDate: "30DEC25",
+    offset: "ITM3",
+    optionType: "PE"
 });
 console.log(response);
 ```
 
-**SplitOrder Response**
+**OptionSymbol Response**
 
 ```json
 {
   "status": "success",
-  "split_size": 20,
-  "total_quantity": 105,
-  "results": [
-    {
-      "order_num": 1,
-      "orderid": "250408001021467",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 2,
-      "orderid": "250408001021459",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 3,
-      "orderid": "250408001021466",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 4,
-      "orderid": "250408001021470",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 5,
-      "orderid": "250408001021471",
-      "quantity": 20,
-      "status": "success"
-    },
-    {
-      "order_num": 6,
-      "orderid": "250408001021472",
-      "quantity": 5,
-      "status": "success"
-    }
-  ]
+  "symbol": "NIFTY30DEC2526100PE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
 }
 ```
 
-#### ModifyOrder Example
-
-To modify an existing order:
+OTM Option
 
 ```javascript
-const response = await client.modifyOrder({
-    orderId: "250408001002736",
-    strategy: "NodeJS",
-    symbol: "YESBANK",
-    action: "BUY",
-    exchange: "NSE",
-    priceType: "LIMIT",
-    product: "CNC",
-    quantity: 1,
-    price: 16.5
+const response = await client.optionSymbol({
+    underlying: "NIFTY",
+    exchange: "NSE_INDEX",
+    expiryDate: "30DEC25",
+    offset: "OTM4",
+    optionType: "CE"
 });
 console.log(response);
 ```
 
-**Modify Order Response**
-
-```json
-{"orderid": "250408001002736", "status": "success"}
-```
-
-#### CancelOrder Example
-
-To cancel an existing order:
-
-```javascript
-const response = await client.cancelOrder({
-    orderId: "250408001002736",
-    strategy: "NodeJS"
-});
-console.log(response);
-```
-
-**Cancelorder Response**
-
-```json
-{"orderid": "250408001002736", "status": "success"}
-```
-
-#### CancelAllOrder Example
-
-To cancel all open orders and trigger pending orders
-
-```javascript
-const response = await client.cancelAllOrder({
-    strategy: "NodeJS"
-});
-console.log(response);
-```
-
-**Cancelallorder Response**
+**OptionSymbol Response**
 
 ```json
 {
   "status": "success",
-  "message": "Canceled 5 orders. Failed to cancel 0 orders.",
-  "canceled_orders": [
-    "250408001042620",
-    "250408001042667",
-    "250408001042642",
-    "250408001043015",
-    "250408001043386"
-  ],
-  "failed_cancellations": []
+  "symbol": "NIFTY30DEC2526150CE",
+  "exchange": "NFO",
+  "lotsize": 65,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
 }
 ```
 
-#### ClosePosition Example
-
-To close all open positions across various exchanges
-
-```javascript
-const response = await client.closePosition({
-    strategy: "NodeJS"
-});
-console.log(response);
-```
-
-**ClosePosition Response**
-
-```json
-{"message": "All Open Positions Squared Off", "status": "success"}
-```
-
-#### OrderStatus Example
-
-To Get the Current OrderStatus
-
-```javascript
-const response = await client.orderStatus({
-    orderId: "250828000185002",
-    strategy: "Test Strategy"
-});
-console.log(response);
-```
-
-**Orderstatus Response**
-
-```json
-{
-  "data": {
-    "action": "BUY",
-    "average_price": 18.95,
-    "exchange": "NSE",
-    "order_status": "complete",
-    "orderid": "250828000185002",
-    "price": 0,
-    "pricetype": "MARKET",
-    "product": "MIS",
-    "quantity": "1",
-    "symbol": "YESBANK",
-    "timestamp": "28-Aug-2025 09:59:10",
-    "trigger_price": 0
-  },
-  "status": "success"
-}
-```
-
-#### OpenPosition Example
-
-To Get the Current OpenPosition
-
-```javascript
-const response = await client.openPosition({
-    strategy: "Test Strategy",
-    symbol: "YESBANK",
-    exchange: "NSE",
-    product: "MIS"
-});
-console.log(response);
-```
-
-OpenPosition Response
-
-```json
-{"quantity": "-10", "status": "success"}
-```
-
-#### Quotes Example
-
-```javascript
-const response = await client.quotes({ symbol: "RELIANCE", exchange: "NSE" });
-console.log(response);
-```
-
-**Quotes response**
-
-```json
-{
-  "status": "success",
-  "data": {
-    "open": 1172.0,
-    "high": 1196.6,
-    "low": 1163.3,
-    "ltp": 1187.75,
-    "ask": 1188.0,
-    "bid": 1187.85,
-    "prev_close": 1165.7,
-    "volume": 14414545
-  }
-}
-```
-
-#### MultiQuotes Example
-
-```javascript
-const response = await client.multiQuotes({
-    symbols: [
-        { symbol: "RELIANCE", exchange: "NSE" },
-        { symbol: "TCS", exchange: "NSE" },
-        { symbol: "INFY", exchange: "NSE" }
-    ]
-});
-console.log(response);
-```
-
-**MultiQuotes response**
-
-```json
-{
-  "status": "success",
-  "results": [
-    {
-      "symbol": "RELIANCE",
-      "exchange": "NSE",
-      "data": {
-        "open": 1542.3,
-        "high": 1571.6,
-        "low": 1540.5,
-        "ltp": 1569.9,
-        "prev_close": 1539.7,
-        "ask": 1569.9,
-        "bid": 0,
-        "oi": 0,
-        "volume": 14054299
-      }
-    },
-    {
-      "symbol": "TCS",
-      "exchange": "NSE",
-      "data": {
-        "open": 3118.8,
-        "high": 3178,
-        "low": 3117,
-        "ltp": 3162.9,
-        "prev_close": 3119.2,
-        "ask": 0,
-        "bid": 3162.9,
-        "oi": 0,
-        "volume": 2508527
-      }
-    },
-    {
-      "symbol": "INFY",
-      "exchange": "NSE",
-      "data": {
-        "open": 1532.1,
-        "high": 1560.3,
-        "low": 1532.1,
-        "ltp": 1557.9,
-        "prev_close": 1530.6,
-        "ask": 0,
-        "bid": 1557.9,
-        "oi": 0,
-        "volume": 7575038
-      }
-    }
-  ]
-}
-```
-
-#### Depth Example
-
-```javascript
-const response = await client.depth({ symbol: "SBIN", exchange: "NSE" });
-console.log(response);
-```
-
-**Depth Response**
-
-```json
-{
-  "status": "success",
-  "data": {
-    "open": 760.0,
-    "high": 774.0,
-    "low": 758.15,
-    "ltp": 769.6,
-    "ltq": 205,
-    "prev_close": 746.9,
-    "volume": 9362799,
-    "oi": 161265750,
-    "totalbuyqty": 591351,
-    "totalsellqty": 835701,
-    "asks": [
-      { "price": 769.6, "quantity": 767 },
-      { "price": 769.65, "quantity": 115 },
-      { "price": 769.7, "quantity": 162 },
-      { "price": 769.75, "quantity": 1121 },
-      { "price": 769.8, "quantity": 430 }
-    ],
-    "bids": [
-      { "price": 769.4, "quantity": 886 },
-      { "price": 769.35, "quantity": 212 },
-      { "price": 769.3, "quantity": 351 },
-      { "price": 769.25, "quantity": 343 },
-      { "price": 769.2, "quantity": 399 }
-    ]
-  }
-}
-```
-
-#### History Example
-
-```javascript
-const response = await client.history({
-    symbol: "SBIN",
-    exchange: "NSE",
-    interval: "5m",
-    startDate: "2025-04-01",
-    endDate: "2025-04-08"
-});
-console.log(response);
-```
-
-The REST endpoint answers with `{"status": "success", "data": [...]}`; `history()` unwraps it and hands back the candle array directly, returning the raw error object instead when the call fails. Every candle carries an `oi` field, populated for F&O exchanges and `0` elsewhere.
-
-**History Response**
-
-```json
-[
-  {
-    "timestamp": 1759290300,
-    "open": 772.5,
-    "high": 774.0,
-    "low": 763.2,
-    "close": 766.5,
-    "volume": 318625
-  },
-  {
-    "timestamp": 1759290600,
-    "open": 773.2,
-    "high": 774.95,
-    "low": 772.1,
-    "close": 772.45,
-    "volume": 197189
-  }
-]
-```
-
-#### Intervals Example
-
-```javascript
-const response = await client.intervals();
-console.log(response);
-```
-
-**Intervals response**
-
-```json
-{
-  "status": "success",
-  "data": {
-    "months": [],
-    "weeks": [],
-    "days": ["D"],
-    "hours": ["1h"],
-    "minutes": ["10m", "15m", "1m", "30m", "3m", "5m"],
-    "seconds": []
-  }
-}
-```
-
-`intervals` reports only what the connected broker supports. The `interval` field of `/history` accepts this full set, and rejects anything else: `1s`, `5s`, `10s`, `15s`, `30s`, `45s`, `1m`, `2m`, `3m`, `5m`, `10m`, `15m`, `20m`, `30m`, `1h`, `2h`, `3h`, `4h`, `D`, `W`, `M`, `Q`, `Y`.
-
-#### OptionChain Example
+### OptionChain Example
 
 Note: To fetch entire option chain for an expiry, remove the strikeCount (optional) parameter
 
@@ -878,179 +768,7 @@ console.log(response);
 }
 ```
 
-#### Symbol Example
-
-```javascript
-const response = await client.symbol({
-    symbol: "NIFTY30DEC25FUT",
-    exchange: "NFO"
-});
-console.log(response);
-```
-
-**Symbols Response**
-
-```json
-{
-  "data": {
-    "brexchange": "NSE_FO",
-    "brsymbol": "NIFTY FUT 30 DEC 25",
-    "exchange": "NFO",
-    "expiry": "30-DEC-25",
-    "freeze_qty": 1800,
-    "id": 57900,
-    "instrumenttype": "FUT",
-    "lotsize": 65,
-    "name": "NIFTY",
-    "strike": 0,
-    "symbol": "NIFTY30DEC25FUT",
-    "tick_size": 10,
-    "token": "NSE_FO|49543"
-  },
-  "status": "success"
-}
-```
-
-#### Search Example
-
-```javascript
-const response = await client.search({ query: "NIFTY 26000 DEC CE", exchange: "NFO" });
-console.log(response);
-```
-
-**Search Response**
-
-```json
-{
-  "data": [
-    {
-      "brexchange": "NSE_FO",
-      "brsymbol": "NIFTY 26000 CE 30 DEC 25",
-      "exchange": "NFO",
-      "expiry": "30-DEC-25",
-      "freeze_qty": 1800,
-      "instrumenttype": "CE",
-      "lotsize": 65,
-      "name": "NIFTY",
-      "strike": 26000,
-      "symbol": "NIFTY30DEC2526000CE",
-      "tick_size": 5,
-      "token": "NSE_FO|71399"
-    }
-  ],
-  "message": "Found 7 matching symbols",
-  "status": "success"
-}
-```
-
-#### OptionSymbol Example
-
-ATM Option
-
-```javascript
-const response = await client.optionSymbol({
-    underlying: "NIFTY",
-    exchange: "NSE_INDEX",
-    expiryDate: "30DEC25",
-    offset: "ATM",
-    optionType: "CE"
-});
-console.log(response);
-```
-
-**OptionSymbol Response**
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2525950CE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-ITM Option
-
-```javascript
-const response = await client.optionSymbol({
-    underlying: "NIFTY",
-    exchange: "NSE_INDEX",
-    expiryDate: "30DEC25",
-    offset: "ITM3",
-    optionType: "PE"
-});
-console.log(response);
-```
-
-**OptionSymbol Response**
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2526100PE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-OTM Option
-
-```javascript
-const response = await client.optionSymbol({
-    underlying: "NIFTY",
-    exchange: "NSE_INDEX",
-    expiryDate: "30DEC25",
-    offset: "OTM4",
-    optionType: "CE"
-});
-console.log(response);
-```
-
-**OptionSymbol Response**
-
-```json
-{
-  "status": "success",
-  "symbol": "NIFTY30DEC2526150CE",
-  "exchange": "NFO",
-  "lotsize": 65,
-  "tick_size": 5,
-  "freeze_qty": 1800,
-  "underlying_ltp": 25966.4
-}
-```
-
-#### SyntheticFuture Example
-
-```javascript
-const response = await client.syntheticFuture({
-    underlying: "NIFTY",
-    exchange: "NSE_INDEX",
-    expiryDate: "25NOV25"
-});
-console.log(response);
-```
-
-SyntheticFuture **Response**
-
-```json
-{
- "atm_strike": 25900.0,
- "expiry": "25NOV25",
- "status": "success",
- "synthetic_future_price": 25980.05,
- "underlying": "NIFTY",
- "underlying_ltp": 25910.05
-}
-```
-
-#### OptionGreeks Example
+### OptionGreeks Example
 
 ```javascript
 const response = await client.optionGreeks({
@@ -1089,7 +807,295 @@ OptionGreeks **Response**
 }
 ```
 
-#### Expiry Example
+### SyntheticFuture Example
+
+```javascript
+const response = await client.syntheticFuture({
+    underlying: "NIFTY",
+    exchange: "NSE_INDEX",
+    expiryDate: "25NOV25"
+});
+console.log(response);
+```
+
+SyntheticFuture **Response**
+
+```json
+{
+ "atm_strike": 25900.0,
+ "expiry": "25NOV25",
+ "status": "success",
+ "synthetic_future_price": 25980.05,
+ "underlying": "NIFTY",
+ "underlying_ltp": 25910.05
+}
+```
+
+## Market Data
+
+### Quotes Example
+
+```javascript
+const response = await client.quotes({ symbol: "RELIANCE", exchange: "NSE" });
+console.log(response);
+```
+
+**Quotes response**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "open": 1172.0,
+    "high": 1196.6,
+    "low": 1163.3,
+    "ltp": 1187.75,
+    "ask": 1188.0,
+    "bid": 1187.85,
+    "prev_close": 1165.7,
+    "volume": 14414545
+  }
+}
+```
+
+### MultiQuotes Example
+
+```javascript
+const response = await client.multiQuotes({
+    symbols: [
+        { symbol: "RELIANCE", exchange: "NSE" },
+        { symbol: "TCS", exchange: "NSE" },
+        { symbol: "INFY", exchange: "NSE" }
+    ]
+});
+console.log(response);
+```
+
+**MultiQuotes response**
+
+```json
+{
+  "status": "success",
+  "results": [
+    {
+      "symbol": "RELIANCE",
+      "exchange": "NSE",
+      "data": {
+        "open": 1542.3,
+        "high": 1571.6,
+        "low": 1540.5,
+        "ltp": 1569.9,
+        "prev_close": 1539.7,
+        "ask": 1569.9,
+        "bid": 0,
+        "oi": 0,
+        "volume": 14054299
+      }
+    },
+    {
+      "symbol": "TCS",
+      "exchange": "NSE",
+      "data": {
+        "open": 3118.8,
+        "high": 3178,
+        "low": 3117,
+        "ltp": 3162.9,
+        "prev_close": 3119.2,
+        "ask": 0,
+        "bid": 3162.9,
+        "oi": 0,
+        "volume": 2508527
+      }
+    },
+    {
+      "symbol": "INFY",
+      "exchange": "NSE",
+      "data": {
+        "open": 1532.1,
+        "high": 1560.3,
+        "low": 1532.1,
+        "ltp": 1557.9,
+        "prev_close": 1530.6,
+        "ask": 0,
+        "bid": 1557.9,
+        "oi": 0,
+        "volume": 7575038
+      }
+    }
+  ]
+}
+```
+
+### Depth Example
+
+```javascript
+const response = await client.depth({ symbol: "SBIN", exchange: "NSE" });
+console.log(response);
+```
+
+**Depth Response**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "open": 760.0,
+    "high": 774.0,
+    "low": 758.15,
+    "ltp": 769.6,
+    "ltq": 205,
+    "prev_close": 746.9,
+    "volume": 9362799,
+    "oi": 161265750,
+    "totalbuyqty": 591351,
+    "totalsellqty": 835701,
+    "asks": [
+      { "price": 769.6, "quantity": 767 },
+      { "price": 769.65, "quantity": 115 },
+      { "price": 769.7, "quantity": 162 },
+      { "price": 769.75, "quantity": 1121 },
+      { "price": 769.8, "quantity": 430 }
+    ],
+    "bids": [
+      { "price": 769.4, "quantity": 886 },
+      { "price": 769.35, "quantity": 212 },
+      { "price": 769.3, "quantity": 351 },
+      { "price": 769.25, "quantity": 343 },
+      { "price": 769.2, "quantity": 399 }
+    ]
+  }
+}
+```
+
+### History Example
+
+```javascript
+const response = await client.history({
+    symbol: "SBIN",
+    exchange: "NSE",
+    interval: "5m",
+    startDate: "2025-04-01",
+    endDate: "2025-04-08"
+});
+console.log(response);
+```
+
+The REST endpoint answers with `{"status": "success", "data": [...]}`; `history()` unwraps it and hands back the candle array directly, returning the raw error object instead when the call fails. Every candle carries an `oi` field, populated for F&O exchanges and `0` elsewhere.
+
+**History Response**
+
+```json
+[
+  {
+    "timestamp": 1759290300,
+    "open": 772.5,
+    "high": 774.0,
+    "low": 763.2,
+    "close": 766.5,
+    "volume": 318625
+  },
+  {
+    "timestamp": 1759290600,
+    "open": 773.2,
+    "high": 774.95,
+    "low": 772.1,
+    "close": 772.45,
+    "volume": 197189
+  }
+]
+```
+
+### Intervals Example
+
+```javascript
+const response = await client.intervals();
+console.log(response);
+```
+
+**Intervals response**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "months": [],
+    "weeks": [],
+    "days": ["D"],
+    "hours": ["1h"],
+    "minutes": ["10m", "15m", "1m", "30m", "3m", "5m"],
+    "seconds": []
+  }
+}
+```
+
+`intervals` reports only what the connected broker supports. The `interval` field of `/history` accepts this full set, and rejects anything else: `1s`, `5s`, `10s`, `15s`, `30s`, `45s`, `1m`, `2m`, `3m`, `5m`, `10m`, `15m`, `20m`, `30m`, `1h`, `2h`, `3h`, `4h`, `D`, `W`, `M`, `Q`, `Y`.
+
+### Symbol Example
+
+```javascript
+const response = await client.symbol({
+    symbol: "NIFTY30DEC25FUT",
+    exchange: "NFO"
+});
+console.log(response);
+```
+
+**Symbols Response**
+
+```json
+{
+  "data": {
+    "brexchange": "NSE_FO",
+    "brsymbol": "NIFTY FUT 30 DEC 25",
+    "exchange": "NFO",
+    "expiry": "30-DEC-25",
+    "freeze_qty": 1800,
+    "id": 57900,
+    "instrumenttype": "FUT",
+    "lotsize": 65,
+    "name": "NIFTY",
+    "strike": 0,
+    "symbol": "NIFTY30DEC25FUT",
+    "tick_size": 10,
+    "token": "NSE_FO|49543"
+  },
+  "status": "success"
+}
+```
+
+### Search Example
+
+```javascript
+const response = await client.search({ query: "NIFTY 26000 DEC CE", exchange: "NFO" });
+console.log(response);
+```
+
+**Search Response**
+
+```json
+{
+  "data": [
+    {
+      "brexchange": "NSE_FO",
+      "brsymbol": "NIFTY 26000 CE 30 DEC 25",
+      "exchange": "NFO",
+      "expiry": "30-DEC-25",
+      "freeze_qty": 1800,
+      "instrumenttype": "CE",
+      "lotsize": 65,
+      "name": "NIFTY",
+      "strike": 26000,
+      "symbol": "NIFTY30DEC2526000CE",
+      "tick_size": 5,
+      "token": "NSE_FO|71399"
+    }
+  ],
+  "message": "Found 7 matching symbols",
+  "status": "success"
+}
+```
+
+### Expiry Example
 
 ```javascript
 const response = await client.expiry({
@@ -1129,7 +1135,7 @@ console.log(response);
 }
 ```
 
-#### Instruments Example
+### Instruments Example
 
 ```javascript
 const response = await client.instruments({ exchange: "NSE" });
@@ -1167,41 +1173,9 @@ Instruments **Response**
 }
 ```
 
-#### Telegram Alert Example
+## Account
 
-```javascript
-const response = await client.telegram({
-    username: "<openalgo_loginid>",
-    message: "NIFTY crossed 26000!"
-});
-console.log(response);
-```
-
-**Telegram Alert Response**
-
-```json
-{
-  "message": "Notification sent successfully",
-  "status": "success"
-}
-```
-
-#### WhatsApp Alert Example
-
-`whatsapp()` posts to `/whatsapp/notify`. Give it a `username`, a `to` (a phone number in E.164 digits, or an array of up to five for a small broadcast), or neither, in which case the message goes to the paired device's own number.
-
-```javascript
-const response = await client.whatsapp({
-    username: "<openalgo_loginid>",
-    message: "NIFTY crossed 26000!"
-});
-console.log(response);
-```
-
-The device must already be paired from the `/whatsapp` page in OpenAlgo; an unpaired device returns HTTP 409 rather than queueing the message.
-
-
-#### Funds Example
+### Funds Example
 
 ```javascript
 const response = await client.funds();
@@ -1223,7 +1197,7 @@ console.log(response);
 }
 ```
 
-#### Margin Example
+### Margin Example
 
 ```javascript
 const response = await client.margin({
@@ -1262,7 +1236,7 @@ console.log(response);
 }
 ```
 
-#### OrderBook Example
+### OrderBook Example
 
 ```javascript
 const response = await client.orderbook();
@@ -1312,7 +1286,7 @@ console.log(response);
 }
 ```
 
-#### TradeBook Example
+### TradeBook Example
 
 ```javascript
 const response = await client.tradebook();
@@ -1351,7 +1325,7 @@ TradeBook Response
 }
 ```
 
-#### PositionBook Example
+### PositionBook Example
 
 ```javascript
 const response = await client.positionbook();
@@ -1395,7 +1369,7 @@ console.log(response);
 }
 ```
 
-#### Holdings Example
+### Holdings Example
 
 ```javascript
 const response = await client.holdings();
@@ -1444,7 +1418,47 @@ Holdings Response
 }
 ```
 
-#### Holidays Example
+### Analyzer Status Example
+
+```javascript
+const response = await client.analyzerstatus();
+console.log(response);
+```
+
+Analyzer Status Response
+
+```json
+{
+  "data": { "analyze_mode": true, "mode": "analyze", "total_logs": 2 },
+  "status": "success"
+}
+```
+
+### Analyzer Toggle Example
+
+```javascript
+// Switch to analyze mode (simulated responses)
+const response = await client.analyzertoggle({ mode: true });
+console.log(response);
+```
+
+Analyzer Toggle Response
+
+```json
+{
+  "data": {
+    "analyze_mode": true,
+    "message": "Analyzer mode switched to analyze",
+    "mode": "analyze",
+    "total_logs": 2
+  },
+  "status": "success"
+}
+```
+
+## Utilities
+
+### Holidays Example
 
 ```javascript
 const response = await client.holidays({ year: 2026 });
@@ -1488,7 +1502,7 @@ console.log(response);
 }
 ```
 
-#### Timings Example
+### Timings Example
 
 ```javascript
 const response = await client.timings({ date: "2025-12-19" });
@@ -1512,45 +1526,42 @@ console.log(response);
 }
 ```
 
-#### Analyzer Status Example
+## Alerts
+
+### Telegram Alert Example
 
 ```javascript
-const response = await client.analyzerstatus();
+const response = await client.telegram({
+    username: "<openalgo_loginid>",
+    message: "NIFTY crossed 26000!"
+});
 console.log(response);
 ```
 
-Analyzer Status Response
+**Telegram Alert Response**
 
 ```json
 {
-  "data": { "analyze_mode": true, "mode": "analyze", "total_logs": 2 },
+  "message": "Notification sent successfully",
   "status": "success"
 }
 ```
 
-#### Analyzer Toggle Example
+### WhatsApp Alert Example
+
+`whatsapp()` posts to `/whatsapp/notify`. Give it a `username`, a `to` (a phone number in E.164 digits, or an array of up to five for a small broadcast), or neither, in which case the message goes to the paired device's own number.
 
 ```javascript
-// Switch to analyze mode (simulated responses)
-const response = await client.analyzertoggle({ mode: true });
+const response = await client.whatsapp({
+    username: "<openalgo_loginid>",
+    message: "NIFTY crossed 26000!"
+});
 console.log(response);
 ```
 
-Analyzer Toggle Response
+The device must already be paired from the `/whatsapp` page in OpenAlgo; an unpaired device returns HTTP 409 rather than queueing the message.
 
-```json
-{
-  "data": {
-    "analyze_mode": true,
-    "message": "Analyzer mode switched to analyze",
-    "mode": "analyze",
-    "total_logs": 2
-  },
-  "status": "success"
-}
-```
-
-#### Endpoints not wrapped by the SDK
+## Endpoints not wrapped by the SDK
 
 The Node.js SDK does not expose helpers for the GTT endpoints, `multioptiongreeks` or `ping`. Reach them by posting to the REST endpoint directly at `http://127.0.0.1:5000/api/v1/<endpoint>`, passing the same `apikey` field the SDK sends.
 
@@ -1614,11 +1625,13 @@ Individual items can fail while the batch still returns `"status": "success"`, s
 {"data": {"broker": "zerodha", "message": "pong"}, "status": "success"}
 ```
 
-#### WebSocket connection notes
+## WebSocket Feed
+
+### WebSocket connection notes
 
 The proxy listens on `ws://127.0.0.1:8765`. Every client authenticates with its OpenAlgo API key before subscribing, and a connection that has not authenticated within 15 seconds is closed. Subscriptions carry a mode: `1` for LTP, `2` for Quote and `3` for Depth. The strings `LTP`, `Quote` and `Depth` are accepted as well and are matched case-insensitively; Quote is the default when the field is omitted. LTP updates are throttled to one per symbol per 50 ms, so a fast-moving symbol delivers at most 20 LTP messages a second.
 
-#### LTP Data (Streaming Websocket)
+### LTP Data (Streaming Websocket)
 
 ```javascript
 import OpenAlgo from 'openalgo';
@@ -1664,7 +1677,7 @@ async function runLTPTest() {
 runLTPTest();
 ```
 
-#### Quotes (Streaming Websocket)
+### Quotes (Streaming Websocket)
 
 ```javascript
 import OpenAlgo from 'openalgo';
@@ -1709,7 +1722,7 @@ async function runQuoteTest() {
 runQuoteTest();
 ```
 
-#### Depth (Streaming Websocket)
+### Depth (Streaming Websocket)
 
 ```javascript
 import OpenAlgo from 'openalgo';
@@ -1754,7 +1767,7 @@ async function runDepthTest() {
 runDepthTest();
 ```
 
-#### Order Updates (Streaming WebSocket)
+### Order Updates (Streaming WebSocket)
 
 The same proxy on port 8765 also carries account-scoped order updates. The Node.js SDK does not wrap them, so send the raw frames on your own WebSocket connection: authenticate first, then subscribe.
 
